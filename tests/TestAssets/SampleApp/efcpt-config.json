@@ -1,0 +1,9 @@
+{
+  "names": {
+    "root-namespace": "Sample.App",
+    "dbcontext-name": "SampleContext"
+  },
+  "code-generation": {
+    "use-t4": false
+  }
+}

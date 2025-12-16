@@ -1,0 +1,237 @@
+<Project>
+
+  <!--
+    JD.Efcpt.Build main MSBuild integration for efcpt.
+
+    This file wires the JD.Efcpt.Build.Tasks assembly into consuming projects and defines the
+    multi-stage pipeline used to generate EF Core models from a SQL Server DACPAC via efcpt.
+
+    The high-level pipeline is:
+      1. EfcptResolveInputs      - locate the .sqlproj and resolve config/renaming/template inputs
+      2. EfcptEnsureDacpac       - build or reuse a DACPAC for the resolved sqlproj
+      3. EfcptStageInputs        - copy config/renaming/templates into a single output directory
+      4. EfcptComputeFingerprint - compute a fingerprint over all inputs to detect changes
+      5. EfcptGenerateModels     - invoke efcpt to generate C# model files when the fingerprint changes
+      6. EfcptAddToCompile       - add generated .g.cs files to the Compile item group
+
+    Consumers typically enable the pipeline by setting MSBuild properties such as:
+
+      <PropertyGroup>
+        <EfcptEnabled>true</EfcptEnabled>
+        <EfcptSqlProj>path-to-your.sqlproj</EfcptSqlProj> 
+        <EfcptConfig>efcpt-config.json</EfcptConfig>      
+        <EfcptRenaming>efcpt.renaming.json</EfcptRenaming>
+        <EfcptTemplateDir>Template</EfcptTemplateDir>
+      </PropertyGroup>
+
+    See the README for a full walkthrough and property reference.
+  -->
+
+  <!-- Resolve the tasks assembly -->
+  <PropertyGroup>
+    <!-- Prefer the packed layout under /tasks/net8.0 when present (NuGet package scenario) -->
+    <_EfcptTasksDir>$(MSBuildThisFileDirectory)..\tasks\net8.0\</_EfcptTasksDir>
+    <_EfcptTasksAssembly>$(_EfcptTasksDir)JD.Efcpt.Build.Tasks.dll</_EfcptTasksAssembly>
+
+    <!-- Dev/CI fallback: use the sibling Tasks project build output when the packed layout is not present -->
+    <_EfcptTasksDir Condition="!Exists('$(_EfcptTasksAssembly)')">$(MSBuildThisFileDirectory)..\..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net8.0\</_EfcptTasksDir>
+    <_EfcptTasksAssembly Condition="!Exists('$(_EfcptTasksAssembly)')">$(_EfcptTasksDir)JD.Efcpt.Build.Tasks.dll</_EfcptTasksAssembly>
+  </PropertyGroup>
+
+  <!-- Register MSBuild tasks from the tasks assembly -->
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs"
+             AssemblyFile="$(_EfcptTasksAssembly)"
+             Condition="Exists('$(_EfcptTasksAssembly)')" />
+
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.EnsureDacpacBuilt"
+             AssemblyFile="$(_EfcptTasksAssembly)"
+             Condition="Exists('$(_EfcptTasksAssembly)')" />
+
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.StageEfcptInputs"
+             AssemblyFile="$(_EfcptTasksAssembly)"
+             Condition="Exists('$(_EfcptTasksAssembly)')" />
+
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.ComputeFingerprint"
+             AssemblyFile="$(_EfcptTasksAssembly)"
+             Condition="Exists('$(_EfcptTasksAssembly)')" />
+
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.RunEfcpt"
+             AssemblyFile="$(_EfcptTasksAssembly)"
+             Condition="Exists('$(_EfcptTasksAssembly)')" />
+
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.RenameGeneratedFiles"
+             AssemblyFile="$(_EfcptTasksAssembly)"
+             Condition="Exists('$(_EfcptTasksAssembly)')" />
+
+  <!--
+    Stage 1: resolve the SQL project and key efcpt inputs (config, renaming, template).
+
+    Inputs (selected MSBuild properties):
+      - EfcptEnabled           : master switch, must be 'true' to run the pipeline
+      - EfcptSqlProj           : optional override path to the .sqlproj to use
+      - EfcptConfig            : optional override path to efcpt-config.json
+      - EfcptRenaming          : optional override path to efcpt.renaming.json
+      - EfcptTemplateDir       : optional override path to the template directory
+      - EfcptSolutionDir       : optional solution root to probe for inputs
+      - EfcptProbeSolutionDir  : boolean-like flag controlling whether SolutionDir is probed (default: true)
+      - EfcptOutput            : output directory used by later stages
+      - EfcptDumpResolvedInputs: when 'true', write resolved-inputs.json for debugging
+  -->
+  <Target Name="EfcptResolveInputs"
+          Condition="'$(EfcptEnabled)' == 'true'">
+    <ResolveSqlProjAndInputs
+        ProjectFullPath="$(MSBuildProjectFullPath)"
+        ProjectDirectory="$(MSBuildProjectDirectory)"
+        Configuration="$(Configuration)"
+        ProjectReferences="@(ProjectReference)"
+        SqlProjOverride="$(EfcptSqlProj)"
+        ConfigOverride="$(EfcptConfig)"
+        RenamingOverride="$(EfcptRenaming)"
+        TemplateDirOverride="$(EfcptTemplateDir)"
+        SolutionDir="$(EfcptSolutionDir)"
+        ProbeSolutionDir="$(EfcptProbeSolutionDir)"
+        OutputDir="$(EfcptOutput)"
+        DefaultsRoot="$(MSBuildThisFileDirectory)..\contentFiles\any\any\Defaults"
+        DumpResolvedInputs="$(EfcptDumpResolvedInputs)">
+      <Output TaskParameter="SqlProjPath" PropertyName="_EfcptSqlProj" />
+      <Output TaskParameter="ResolvedConfigPath" PropertyName="_EfcptResolvedConfig" />
+      <Output TaskParameter="ResolvedRenamingPath" PropertyName="_EfcptResolvedRenaming" />
+      <Output TaskParameter="ResolvedTemplateDir" PropertyName="_EfcptResolvedTemplateDir" />
+    </ResolveSqlProjAndInputs>
+  </Target>
+
+  <!--
+    Stage 2: ensure a DACPAC exists and is up to date for the resolved SQL project.
+
+    Inputs:
+      - _EfcptSqlProj     : sqlproj path resolved by EfcptResolveInputs
+      - Configuration     : build configuration used for the sqlproj
+      - MSBuildBinPath    : used to derive MsBuildExe on Windows
+      - EfcptDotNetExe    : optional path to dotnet for cross-platform builds
+      - EfcptLogVerbosity : controls logging verbosity for the task
+
+    Outputs:
+      - _EfcptDacpacPath  : full path to the resulting DACPAC
+  -->
+  <Target Name="EfcptEnsureDacpac"
+          DependsOnTargets="EfcptResolveInputs"
+          Condition="'$(EfcptEnabled)' == 'true'">
+    <EnsureDacpacBuilt
+        SqlProjPath="$(_EfcptSqlProj)"
+        Configuration="$(Configuration)"
+        MsBuildExe="$(MSBuildBinPath)msbuild.exe"
+        DotNetExe="$(EfcptDotNetExe)"
+        LogVerbosity="$(EfcptLogVerbosity)">
+      <Output TaskParameter="DacpacPath" PropertyName="_EfcptDacpacPath" />
+    </EnsureDacpacBuilt>
+  </Target>
+
+  <!--
+    Stage 3: copy configuration, renaming, and templates into the working output directory.
+
+    Inputs:
+      - EfcptOutput          : directory where staged assets will be placed
+      - _EfcptResolvedConfig : config path resolved by EfcptResolveInputs
+      - _EfcptResolvedRenaming : renaming path resolved by EfcptResolveInputs
+      - _EfcptResolvedTemplateDir : template directory resolved by EfcptResolveInputs
+  -->
+  <Target Name="EfcptStageInputs"
+          DependsOnTargets="EfcptEnsureDacpac"
+          Condition="'$(EfcptEnabled)' == 'true'">
+    <StageEfcptInputs
+        OutputDir="$(EfcptOutput)"
+        ConfigPath="$(_EfcptResolvedConfig)"
+        RenamingPath="$(_EfcptResolvedRenaming)"
+        TemplateDir="$(_EfcptResolvedTemplateDir)"
+        LogVerbosity="$(EfcptLogVerbosity)">
+      <Output TaskParameter="StagedConfigPath" PropertyName="_EfcptStagedConfig" />
+      <Output TaskParameter="StagedRenamingPath" PropertyName="_EfcptStagedRenaming" />
+      <Output TaskParameter="StagedTemplateDir" PropertyName="_EfcptStagedTemplateDir" />
+    </StageEfcptInputs>
+  </Target>
+
+  <!--
+    Stage 4: compute a fingerprint over the DACPAC and staged inputs to detect changes.
+
+    Inputs:
+      - _EfcptDacpacPath       : DACPAC produced or reused by EfcptEnsureDacpac
+      - _EfcptStagedConfig     : config file staged by EfcptStageInputs
+      - _EfcptStagedRenaming   : renaming file staged by EfcptStageInputs
+      - _EfcptStagedTemplateDir: template directory staged by EfcptStageInputs
+      - EfcptFingerprintFile   : path to the fingerprint cache file
+  -->
+  <Target Name="EfcptComputeFingerprint"
+          DependsOnTargets="EfcptStageInputs"
+          Condition="'$(EfcptEnabled)' == 'true'">
+    <ComputeFingerprint
+        DacpacPath="$(_EfcptDacpacPath)"
+        ConfigPath="$(_EfcptStagedConfig)"
+        RenamingPath="$(_EfcptStagedRenaming)"
+        TemplateDir="$(_EfcptStagedTemplateDir)"
+        FingerprintFile="$(EfcptFingerprintFile)"
+        LogVerbosity="$(EfcptLogVerbosity)">
+      <Output TaskParameter="Fingerprint" PropertyName="_EfcptFingerprint" />
+      <Output TaskParameter="HasChanged" PropertyName="_EfcptFingerprintChanged" />
+    </ComputeFingerprint>
+  </Target>
+
+  <!--
+    Stage 5: run efcpt to generate EF Core model files when the fingerprint has changed.
+
+    This target is wired to run before CoreCompile so that generated files are available for
+    compilation in the same build.
+
+    Inputs (selected MSBuild properties):
+      - EfcptToolMode      : controls how the efcpt dotnet tool is resolved (auto/tool-manifest/global)
+      - EfcptToolPackageId : optional package id used when restoring/updating a global tool
+      - EfcptToolVersion   : optional version constraint for the tool package
+      - EfcptToolRestore   : boolean-like flag indicating whether to restore/update the tool
+      - EfcptToolCommand   : name of the efcpt command to run (default: efcpt)
+      - EfcptToolPath      : explicit path to the efcpt executable (bypasses dotnet tool resolution)
+      - EfcptDotNetExe     : path to the dotnet host executable
+      - EfcptOutput        : working directory for the efcpt invocation
+      - EfcptGeneratedDir  : directory where generated C# files are written
+      - EfcptLogVerbosity  : controls logging verbosity
+  -->
+  <Target Name="EfcptGenerateModels"
+          DependsOnTargets="EfcptComputeFingerprint"
+          BeforeTargets="CoreCompile"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptFingerprintChanged)' == 'true'">
+    <MakeDir Directories="$(EfcptGeneratedDir)" />
+    <RunEfcpt
+        ToolMode="$(EfcptToolMode)"
+        ToolPackageId="$(EfcptToolPackageId)"
+        ToolVersion="$(EfcptToolVersion)"
+        ToolRestore="$(EfcptToolRestore)"
+        ToolCommand="$(EfcptToolCommand)"
+        ToolPath="$(EfcptToolPath)"
+        DotNetExe="$(EfcptDotNetExe)"
+        WorkingDirectory="$(EfcptOutput)"
+        DacpacPath="$(_EfcptDacpacPath)"
+        ConfigPath="$(_EfcptStagedConfig)"
+        RenamingPath="$(_EfcptStagedRenaming)"
+        TemplateDir="$(_EfcptStagedTemplateDir)"
+        OutputDir="$(EfcptGeneratedDir)"
+        LogVerbosity="$(EfcptLogVerbosity)" />
+    <RenameGeneratedFiles
+        GeneratedDir="$(EfcptGeneratedDir)"
+        LogVerbosity="$(EfcptLogVerbosity)" />
+    <WriteLinesToFile File="$(EfcptStampFile)" Lines="$(_EfcptFingerprint)" Overwrite="true" />
+  </Target>
+
+  <!--
+    Stage 6: always include generated files in the Compile item group when present.
+
+    This target runs before CoreCompile but after EfcptGenerateModels, and will pick up previously
+    generated files even when the fingerprint has not changed in the current build.
+  -->
+  <Target Name="EfcptAddToCompile"
+          BeforeTargets="CoreCompile"
+          DependsOnTargets="EfcptGenerateModels"
+          Condition="'$(EfcptEnabled)' == 'true' and Exists('$(EfcptGeneratedDir)')">
+    <ItemGroup>
+      <Compile Include="$(EfcptGeneratedDir)**\*.g.cs" Visible="false" />
+    </ItemGroup>
+  </Target>
+
+</Project>

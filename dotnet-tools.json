@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "erikej.efcorepowertools.cli": {
+      "version": "10.1.1055",
+      "commands": [
+        "efcpt"
+      ],
+      "rollForward": false
+    }
+  }
+}

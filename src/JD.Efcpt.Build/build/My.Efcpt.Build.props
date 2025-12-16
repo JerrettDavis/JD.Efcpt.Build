@@ -1,0 +1,37 @@
+<Project>
+  <PropertyGroup>
+    <!-- Enablement -->
+    <EfcptEnabled Condition="'$(EfcptEnabled)'==''">true</EfcptEnabled>
+
+    <!-- Output -->
+    <EfcptOutput Condition="'$(EfcptOutput)'==''">$(BaseIntermediateOutputPath)efcpt\</EfcptOutput>
+    <EfcptGeneratedDir Condition="'$(EfcptGeneratedDir)'==''">$(EfcptOutput)Generated\</EfcptGeneratedDir>
+
+    <!-- Input overrides -->
+    <EfcptSqlProj Condition="'$(EfcptSqlProj)'==''"></EfcptSqlProj>
+    <EfcptConfig Condition="'$(EfcptConfig)'==''">efcpt-config.json</EfcptConfig>
+    <EfcptRenaming Condition="'$(EfcptRenaming)'==''">efcpt.renaming.json</EfcptRenaming>
+    <EfcptTemplateDir Condition="'$(EfcptTemplateDir)'==''">Template</EfcptTemplateDir>
+
+    <!-- Solution probing -->
+    <EfcptSolutionDir Condition="'$(EfcptSolutionDir)'==''">$(SolutionDir)</EfcptSolutionDir>
+    <EfcptProbeSolutionDir Condition="'$(EfcptProbeSolutionDir)'==''">true</EfcptProbeSolutionDir>
+
+    <!-- Tooling -->
+    <EfcptToolMode Condition="'$(EfcptToolMode)'==''">auto</EfcptToolMode>
+    <EfcptToolPackageId Condition="'$(EfcptToolPackageId)'==''">ErikEJ.EFCorePowerTools.Cli</EfcptToolPackageId>
+    <EfcptToolVersion Condition="'$(EfcptToolVersion)'==''">10.*</EfcptToolVersion>
+    <EfcptToolRestore Condition="'$(EfcptToolRestore)'==''">true</EfcptToolRestore>
+    <EfcptToolCommand Condition="'$(EfcptToolCommand)'==''">efcpt</EfcptToolCommand>
+    <EfcptToolPath Condition="'$(EfcptToolPath)'==''"></EfcptToolPath>
+    <EfcptDotNetExe Condition="'$(EfcptDotNetExe)'==''">dotnet</EfcptDotNetExe>
+
+    <!-- Fingerprinting -->
+    <EfcptFingerprintFile Condition="'$(EfcptFingerprintFile)'==''">$(EfcptOutput)fingerprint.txt</EfcptFingerprintFile>
+    <EfcptStampFile Condition="'$(EfcptStampFile)'==''">$(EfcptOutput).efcpt.stamp</EfcptStampFile>
+
+    <!-- Diagnostics -->
+    <EfcptLogVerbosity Condition="'$(EfcptLogVerbosity)'==''">minimal</EfcptLogVerbosity>
+    <EfcptDumpResolvedInputs Condition="'$(EfcptDumpResolvedInputs)'==''">false</EfcptDumpResolvedInputs>
+  </PropertyGroup>
+</Project>

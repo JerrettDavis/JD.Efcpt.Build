@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <EfcptBuildRoot Condition="'$(EfcptBuildRoot)'==''">$(MSBuildThisFileDirectory)..\..\..\src\JD.Efcpt.Build\</EfcptBuildRoot>
+  </PropertyGroup>
+
+  <Import Project="$(EfcptBuildRoot)build\JD.Efcpt.Build.props" />
+
+  <PropertyGroup>
+    <EfcptEnabled>true</EfcptEnabled>
+    <EfcptLogVerbosity>detailed</EfcptLogVerbosity>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SampleDatabase\Sample.Database.sqlproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>None</OutputItemType>
+    </ProjectReference>
+  </ItemGroup>
+
+  <Import Project="$(EfcptBuildRoot)build\JD.Efcpt.Build.targets" />
+
+  <!-- Run the efcpt pipeline for this sample app on every build when enabled -->
+  <Target Name="EfcptSamplePipeline"
+          AfterTargets="Build"
+          DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpac;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels;EfcptAddToCompile"
+          Condition="'$(EfcptEnabled)' == 'true'">
+    <Message Text="EfcptSamplePipeline completed." Importance="High" />
+  </Target>
+</Project>
