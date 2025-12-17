@@ -4,6 +4,7 @@ using Xunit;
 
 namespace JD.Efcpt.Build.Tests;
 
+[Collection(nameof(AssemblySetup))]
 public class EnsureDacpacBuiltTests
 {
     [Fact]

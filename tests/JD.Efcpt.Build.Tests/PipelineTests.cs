@@ -6,8 +6,11 @@ using Xunit.Abstractions;
 
 namespace JD.Efcpt.Build.Tests;
 
-public class PipelineTests(ITestOutputHelper outputHelper)
+[Collection(nameof(AssemblySetup))]
+public class PipelineTests(ITestOutputHelper outputHelper) : IDisposable
 {
+    
+    
     [Fact]
     public void Generates_and_renames_when_fingerprint_changes()
     {
@@ -130,6 +133,11 @@ public class PipelineTests(ITestOutputHelper outputHelper)
         TestFileSystem.CopyDirectory(TestPaths.Asset("SampleApp"), appDir);
         TestFileSystem.CopyDirectory(TestPaths.Asset("SampleDatabase"), dbDir);
         
+        
+        var initialFakes = Environment.GetEnvironmentVariable("EFCPT_FAKE_BUILD");
+
+        Environment.SetEnvironmentVariable("EFCPT_FAKE_BUILD", "1");
+        
         Assert.True(Directory.Exists(appDir));
 
         Path.Combine(dbDir, "Sample.Database.sqlproj");
@@ -153,6 +161,7 @@ public class PipelineTests(ITestOutputHelper outputHelper)
         };
         Assert.True(resolve.Execute(), TestOutput.DescribeErrors(engine));
 
+        Environment.SetEnvironmentVariable("EFCPT_FAKE_BUILD", null);
         var ensure = new EnsureDacpacBuilt
         {
             BuildEngine = engine,
@@ -240,5 +249,27 @@ public class PipelineTests(ITestOutputHelper outputHelper)
         Assert.Contains("DbSet<Post>", combined);
         Assert.Contains("DbSet<Account>", combined);
         Assert.Contains("DbSet<Upload>", combined);
+        
+        Environment.SetEnvironmentVariable("EFCPT_FAKE_BUILD", initialFakes);
+    }
+
+    public void Dispose()
+    {
+        using var folder = new TestFolder();
+
+        var dbDir = folder.CreateDir("SampleDatabase");
+        var dacpac = Path.Combine(dbDir, "bin", "Debug", "Sample.Database.dacpac");
+
+        try
+        {
+            File.Delete(dacpac);
+
+        }
+        catch (Exception)
+        {
+            // ignore
+        }
+        
+        Environment.SetEnvironmentVariable("EFCPT_FAKE_BUILD", null);
     }
 }
