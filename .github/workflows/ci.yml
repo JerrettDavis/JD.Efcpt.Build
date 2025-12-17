@@ -188,7 +188,6 @@ jobs:
           --output ./artifacts
           /p:ContinuousIntegrationBuild=true
           /p:IncludeSymbols=${{ env.INCLUDE_SYMBOLS }}
-          /p:SymbolPackageFormat=snupkg
           /p:Version=${{ env.PACKAGE_VERSION }}
           /p:AssemblyVersion=${{ env.ASSEMBLY_VERSION }}
           /p:FileVersion=${{ env.FILE_VERSION }}
