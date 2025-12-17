@@ -201,73 +201,72 @@ public sealed class RunEfcpt : Task
             var workingDir = Path.GetFullPath(WorkingDirectory);
             var args = BuildArgs();
 
-            // Determine the effective invocation for logging purposes so that the
-            // log reflects the actual command that will be executed on each
-            // platform and tool mode (manifest vs global vs explicit path).
-            var effectiveCommand = ToolCommand;
-            var effectiveArgs = args;
-
-            if (PathUtils.HasExplicitPath(ToolPath))
-            {
-                effectiveCommand = PathUtils.FullPath(ToolPath, workingDir);
-            }
-            else
-            {
-                var manifestDir = FindManifestDir(workingDir);
-                var useManifest = string.Equals(ToolMode, "tool-manifest", StringComparison.OrdinalIgnoreCase)
-                                  || (string.Equals(ToolMode, "auto", StringComparison.OrdinalIgnoreCase) && manifestDir is not null);
-
-                if (useManifest)
-                {
-                    // In manifest mode we always invoke via "dotnet tool run <ToolCommand> -- <args>".
-                    effectiveCommand = DotNetExe;
-                    effectiveArgs = $"tool run {ToolCommand} -- {args}";
-                }
-            }
-
-            log.Info($"Running in working directory {workingDir}: {effectiveCommand} {effectiveArgs}");
-            log.Info($"Output will be written to {OutputDir}");
-            Directory.CreateDirectory(workingDir);
-            Directory.CreateDirectory(OutputDir);
-
             var fake = Environment.GetEnvironmentVariable("EFCPT_FAKE_EFCPT");
             if (!string.IsNullOrWhiteSpace(fake))
             {
-                var sample = Path.Combine(OutputDir, "SampleModel.cs");
+                log.Info($"Running in working directory {workingDir}: (fake efcpt) {args}");
+                log.Info($"Output will be written to {OutputDir}");
+                Directory.CreateDirectory(workingDir);
                 Directory.CreateDirectory(OutputDir);
+
+                var sample = Path.Combine(OutputDir, "SampleModel.cs");
                 File.WriteAllText(sample, $"// generated from {DacpacPath}");
                 log.Detail("EFCPT_FAKE_EFCPT set; wrote sample output.");
                 return true;
             }
 
+            // Determine whether we will use a local tool manifest or fall back to the global tool.
+            var manifestDir = FindManifestDir(workingDir);
+            var useManifest = string.Equals(ToolMode, "tool-manifest", StringComparison.OrdinalIgnoreCase)
+                              || (string.Equals(ToolMode, "auto", StringComparison.OrdinalIgnoreCase) && manifestDir is not null);
+
+            string invokeExe;
+            string invokeArgs;
+            string invokeCwd;
+
             if (PathUtils.HasExplicitPath(ToolPath))
             {
-                var command = PathUtils.FullPath(ToolPath, workingDir);
-                RunProcess(log, command, args, workingDir);
-                return true;
+                // Explicit executable path always wins and bypasses dotnet tool resolution.
+                invokeExe = PathUtils.FullPath(ToolPath, workingDir);
+                invokeArgs = args;
+                invokeCwd = workingDir;
             }
-
-            var manifestDir2 = FindManifestDir(workingDir);
-            var useManifest2 = string.Equals(ToolMode, "tool-manifest", StringComparison.OrdinalIgnoreCase)
-                               || (string.Equals(ToolMode, "auto", StringComparison.OrdinalIgnoreCase) && manifestDir2 is not null);
-
-            if (useManifest2)
+            else if (useManifest)
             {
-                if (IsTrue(ToolRestore))
-                    RunProcess(log, DotNetExe, "tool restore", manifestDir2 ?? workingDir);
-
-                var cmd = $"tool run {ToolCommand} -- {args}";
-                RunProcess(log, DotNetExe, cmd, workingDir);
+                // In manifest mode we always invoke via "dotnet tool run <ToolCommand> -- <args>".
+                invokeExe = DotNetExe;
+                invokeArgs = $"tool run {ToolCommand} -- {args}";
+                invokeCwd = workingDir;
             }
             else
             {
-                if (IsTrue(ToolRestore) && PathUtils.HasValue(ToolPackageId))
+                // Global mode: rely on a globally installed efcpt on PATH.
+                invokeExe = ToolCommand;
+                invokeArgs = args;
+                invokeCwd = workingDir;
+            }
+
+            log.Info($"Running in working directory {invokeCwd}: {invokeExe} {invokeArgs}");
+            log.Info($"Output will be written to {OutputDir}");
+            Directory.CreateDirectory(workingDir);
+            Directory.CreateDirectory(OutputDir);
+
+            if (useManifest)
+            {
+                if (IsTrue(ToolRestore))
+                    RunProcess(log, DotNetExe, "tool restore", manifestDir ?? workingDir);
+
+                RunProcess(log, invokeExe, invokeArgs, invokeCwd);
+            }
+            else
+            {
+                if (!PathUtils.HasExplicitPath(ToolPath) && IsTrue(ToolRestore) && PathUtils.HasValue(ToolPackageId))
                 {
                     var versionArg = string.IsNullOrWhiteSpace(ToolVersion) ? "" : $" --version \"{ToolVersion}\"";
                     RunProcess(log, DotNetExe, $"tool update --global {ToolPackageId}{versionArg}", workingDir);
                 }
 
-                RunProcess(log, ToolCommand, args, workingDir);
+                RunProcess(log, invokeExe, invokeArgs, invokeCwd);
             }
 
             return true;
