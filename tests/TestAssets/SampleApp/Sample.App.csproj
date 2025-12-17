@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
@@ -11,7 +11,8 @@
 
   <PropertyGroup>
     <EfcptEnabled>true</EfcptEnabled>
-    <EfcptLogVerbosity>detailed</EfcptLogVerbosity>
+    <EfcptLogVerbosity>diagnostic</EfcptLogVerbosity>
+    <EfcptDumpResolvedInputs>true</EfcptDumpResolvedInputs>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +20,14 @@
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <OutputItemType>None</OutputItemType>
     </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.1">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.1" />
   </ItemGroup>
 
   <Import Project="$(EfcptBuildRoot)build\JD.Efcpt.Build.targets" />

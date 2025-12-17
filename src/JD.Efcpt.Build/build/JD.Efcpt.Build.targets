@@ -115,7 +115,7 @@
         ToolCommand="$(EfcptToolCommand)"
         ToolPath="$(EfcptToolPath)"
         DotNetExe="$(EfcptDotNetExe)"
-        WorkingDirectory="$(EfcptOutput)"
+        WorkingDirectory="$(ProjectDir)"
         DacpacPath="$(_EfcptDacpacPath)"
         ConfigPath="$(_EfcptStagedConfig)"
         RenamingPath="$(_EfcptStagedRenaming)"

@@ -198,6 +198,8 @@ public sealed class RunEfcpt : Task
 
         try
         {
+            log.Info($"Running in working directory {WorkingDirectory}: efcpt {BuildArgs()}");
+            log.Info($"Output will be written to {OutputDir}");
             Directory.CreateDirectory(WorkingDirectory);
             Directory.CreateDirectory(OutputDir);
 
@@ -257,7 +259,7 @@ public sealed class RunEfcpt : Task
         => string.Equals(value, "true", StringComparison.OrdinalIgnoreCase) || value == "1" || string.Equals(value, "yes", StringComparison.OrdinalIgnoreCase);
 
     private string BuildArgs()
-        => $"\"{DacpacPath}\" {Provider} -i \"{ConfigPath}\" -r \"{RenamingPath}\" -o \"{OutputDir}\"";
+        => $"\"{DacpacPath}\" {Provider} -i \"{ConfigPath}\" -r \"{RenamingPath}\"" + (WorkingDirectory.Equals(OutputDir) ? string.Empty : $" -o \"{OutputDir}\"");
 
     private static string? FindManifestDir(string start)
     {
@@ -296,8 +298,8 @@ public sealed class RunEfcpt : Task
         var stderr = p.StandardError.ReadToEnd();
         p.WaitForExit();
 
-        if (!string.IsNullOrWhiteSpace(stdout)) log.Detail(stdout);
-        if (!string.IsNullOrWhiteSpace(stderr)) log.Detail(stderr);
+        if (!string.IsNullOrWhiteSpace(stdout)) log.Info(stdout);
+        if (!string.IsNullOrWhiteSpace(stderr)) log.Error(stderr);
 
         if (p.ExitCode != 0)
             throw new InvalidOperationException($"Process failed ({p.ExitCode}): {exe} {finalArgs}");
