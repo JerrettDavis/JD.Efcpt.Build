@@ -34,10 +34,15 @@ jobs:
       - name: Build (Release)
         run: dotnet build JD.Efcpt.Build.sln --configuration Release --no-restore /p:ContinuousIntegrationBuild=true
 
+      - name: Ensure SampleDatabase restored
+        run: |
+          dotnet restore tests/TestAssets/SampleDatabase/Sample.Database.sqlproj
+
       - name: Test with coverage
         run: |
           dotnet test JD.Efcpt.Build.sln \
             --configuration Release \
+            --no-build \
             --collect:"XPlat Code Coverage" \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Include="[JD.Efcpt.Build*]*" \
@@ -142,6 +147,10 @@ jobs:
           /p:AssemblyVersion=${{ env.ASSEMBLY_VERSION }}
           /p:FileVersion=${{ env.FILE_VERSION }}
           /p:PackageVersion=${{ env.PACKAGE_VERSION }}
+
+      - name: Ensure SampleDatabase restored (Release)
+        run: |
+          dotnet restore tests/TestAssets/SampleDatabase/Sample.Database.sqlproj
 
       - name: Test with coverage (Release)
         run: |
