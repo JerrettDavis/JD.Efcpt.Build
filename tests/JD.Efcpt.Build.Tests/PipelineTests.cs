@@ -188,7 +188,6 @@ public class PipelineTests(ITestOutputHelper outputHelper) : IDisposable
 
         outputHelper.WriteLine("Dacpac Last Write Time: " + File.GetLastWriteTimeUtc(ensure.DacpacPath).ToString("o"));
         outputHelper.WriteLine("Dacpac Size: " + File.ReadAllBytes(ensure.DacpacPath).Length.ToString());
-        outputHelper.WriteLine("Dacpac Content: " + File.ReadAllText(ensure.DacpacPath));
 
         var fingerprintFile = Path.Combine(outputDir, "fingerprint.txt");
         var fingerprint = new ComputeFingerprint
