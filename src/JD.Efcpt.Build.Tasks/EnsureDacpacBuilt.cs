@@ -165,8 +165,8 @@ public sealed class EnsureDacpacBuilt : Task
         var useMsbuildExe = !string.IsNullOrWhiteSpace(MsBuildExe) && File.Exists(MsBuildExe);
         var requestedFileName = useMsbuildExe ? MsBuildExe : DotNetExe;
         var requestedArgs = useMsbuildExe
-            ? $"\"{sqlproj}\" /t:Build /p:Configuration=\"{Configuration}\" /nologo"
-            : $"msbuild \"{sqlproj}\" /t:Build /p:Configuration=\"{Configuration}\" /nologo";
+            ? $"\"{sqlproj}\" /t:Restore /t:Build /p:Configuration=\"{Configuration}\" /nologo"
+            : $"msbuild \"{sqlproj}\" /t:Restore /t:Build /p:Configuration=\"{Configuration}\" /nologo";
         var (fileName, args) = NormalizeCommand(requestedFileName, requestedArgs);
 
         var psi = new ProcessStartInfo
