@@ -217,8 +217,17 @@ public sealed class RunEfcpt : Task
 
             // Determine whether we will use a local tool manifest or fall back to the global tool.
             var manifestDir = FindManifestDir(workingDir);
-            var useManifest = string.Equals(ToolMode, "tool-manifest", StringComparison.OrdinalIgnoreCase)
-                              || (string.Equals(ToolMode, "auto", StringComparison.OrdinalIgnoreCase) && manifestDir is not null);
+            var mode = ToolMode ?? "auto";
+
+            // On non-Windows, a bare efcpt executable is unlikely to exist unless explicitly provided
+            // via ToolPath. To avoid fragile PATH assumptions on CI agents, treat "auto" as
+            // "tool-manifest" whenever a manifest is present *or* when running on non-Windows and
+            // no explicit ToolPath was supplied.
+            var forceManifestOnNonWindows = !OperatingSystem.IsWindows() && !PathUtils.HasExplicitPath(ToolPath);
+
+            var useManifest = string.Equals(mode, "tool-manifest", StringComparison.OrdinalIgnoreCase)
+                              || (string.Equals(mode, "auto", StringComparison.OrdinalIgnoreCase)
+                                  && (manifestDir is not null || forceManifestOnNonWindows));
 
             string invokeExe;
             string invokeArgs;
@@ -253,8 +262,13 @@ public sealed class RunEfcpt : Task
 
             if (useManifest)
             {
+                // Prefer running tool restore in the manifest directory when we have one; if we are
+                // forcing manifest mode on non-Windows without a discovered manifest directory, fall
+                // back to the working directory so that dotnet will use the nearest manifest or the
+                // default global location.
+                var restoreCwd = manifestDir ?? workingDir;
                 if (IsTrue(ToolRestore))
-                    RunProcess(log, DotNetExe, "tool restore", manifestDir ?? workingDir);
+                    RunProcess(log, DotNetExe, "tool restore", restoreCwd);
 
                 RunProcess(log, invokeExe, invokeArgs, invokeCwd);
             }
