@@ -34,9 +34,15 @@ jobs:
       - name: Build (Release)
         run: dotnet build JD.Efcpt.Build.sln --configuration Release --no-restore /p:ContinuousIntegrationBuild=true
 
-      - name: Ensure SampleDatabase restored
+      - name: Ensure Samples restored
         run: |
           dotnet restore tests/TestAssets/SampleDatabase/Sample.Database.sqlproj
+          dotnet restore tests/TestAssets/SampleApp/Sample.App.csproj
+          
+      - name: Ensure Samples build
+        run: |
+          dotnet build --configuration Release tests/TestAssets/SampleDatabase/Sample.Database.sqlproj
+          dotnet build --configuration Release tests/TestAssets/SampleApp/Sample.App.csproj
 
       - name: Test with coverage
         run: |
