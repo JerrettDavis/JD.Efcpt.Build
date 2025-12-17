@@ -46,6 +46,8 @@ public class EnsureDacpacBuiltTests
 
         File.SetLastWriteTimeUtc(sqlproj, DateTime.UtcNow);
         File.SetLastWriteTimeUtc(dacpac, DateTime.UtcNow.AddMinutes(-5));
+        
+        var initialFakes = Environment.GetEnvironmentVariable("EFCPT_FAKE_BUILD");
 
         Environment.SetEnvironmentVariable("EFCPT_FAKE_BUILD", "1");
 
@@ -65,5 +67,7 @@ public class EnsureDacpacBuiltTests
         Assert.Equal(Path.GetFullPath(dacpac), task.DacpacPath);
         var content = File.ReadAllText(dacpac);
         Assert.Contains("fake dacpac", content);
+        
+        Environment.SetEnvironmentVariable("EFCPT_FAKE_BUILD", initialFakes);
     }
 }

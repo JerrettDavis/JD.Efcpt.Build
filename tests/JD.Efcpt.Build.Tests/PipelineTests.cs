@@ -2,10 +2,11 @@ using Microsoft.Build.Utilities;
 using JD.Efcpt.Build.Tasks;
 using JD.Efcpt.Build.Tests.Infrastructure;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace JD.Efcpt.Build.Tests;
 
-public class PipelineTests
+public class PipelineTests(ITestOutputHelper outputHelper)
 {
     [Fact]
     public void Generates_and_renames_when_fingerprint_changes()
@@ -128,6 +129,8 @@ public class PipelineTests
         var dbDir = folder.CreateDir("SampleDatabase");
         TestFileSystem.CopyDirectory(TestPaths.Asset("SampleApp"), appDir);
         TestFileSystem.CopyDirectory(TestPaths.Asset("SampleDatabase"), dbDir);
+        
+        Assert.True(Directory.Exists(appDir));
 
         Path.Combine(dbDir, "Sample.Database.sqlproj");
         var csproj = Path.Combine(appDir, "Sample.App.csproj");
@@ -168,6 +171,15 @@ public class PipelineTests
             TemplateDir = resolve.ResolvedTemplateDir
         };
         Assert.True(stage.Execute(), TestOutput.DescribeErrors(engine));
+        
+        Assert.True(File.Exists(stage.StagedConfigPath));
+        Assert.True(File.Exists(stage.StagedRenamingPath));
+        Assert.True(File.Exists(ensure.DacpacPath));
+        Assert.True(Directory.Exists(stage.StagedTemplateDir));
+
+        outputHelper.WriteLine("Dacpac Last Write Time: " + File.GetLastWriteTimeUtc(ensure.DacpacPath).ToString("o"));
+        outputHelper.WriteLine("Dacpac Size: " + File.ReadAllBytes(ensure.DacpacPath).Length.ToString());
+        outputHelper.WriteLine("Dacpac Content: " + File.ReadAllText(ensure.DacpacPath));
 
         var fingerprintFile = Path.Combine(outputDir, "fingerprint.txt");
         var fingerprint = new ComputeFingerprint
@@ -180,6 +192,9 @@ public class PipelineTests
             FingerprintFile = fingerprintFile
         };
         Assert.True(fingerprint.Execute(), TestOutput.DescribeErrors(engine));
+        
+        Assert.True(File.Exists(fingerprintFile));
+        Assert.True(Directory.Exists(appDir));
 
         var run = new RunEfcpt
         {
@@ -193,7 +208,12 @@ public class PipelineTests
             TemplateDir = stage.StagedTemplateDir,
             OutputDir = generatedDir
         };
-        Assert.True(run.Execute(), TestOutput.DescribeErrors(engine));
+
+        var result = run.Execute();
+        
+        outputHelper.WriteLine(string.Join(Environment.NewLine, engine.Messages.Select(e => e.Message)));
+        
+        Assert.True(result, TestOutput.DescribeErrors(engine));
 
         // Locate generated model files; efcpt writes into a Models subfolder by default
         var generatedRoot = Path.Combine(appDir, "obj", "efcpt", "Generated", "Models");

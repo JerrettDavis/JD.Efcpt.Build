@@ -158,7 +158,7 @@ public sealed class EnsureDacpacBuilt : Task
             var dest = Path.Combine(Path.GetDirectoryName(sqlproj)!, "bin", Configuration, projectName + ".dacpac");
             Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
             File.WriteAllText(dest, "fake dacpac");
-            log.Detail($"EFCPT_FAKE_BUILD set; wrote {dest}");
+            log.Info($"EFCPT_FAKE_BUILD set to {fake}; wrote {dest}");
             return;
         }
 
