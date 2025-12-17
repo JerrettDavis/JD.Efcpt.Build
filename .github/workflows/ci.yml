@@ -31,6 +31,11 @@ jobs:
           dotnet restore JD.Efcpt.Build.sln --use-lock-file
           dotnet tool restore
 
+      - name: Install efcpt global tool
+        run: |
+          dotnet tool install -g erikej.efcorepowertools.cli --version 10.1.1055
+          echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
+
       - name: Build (Release)
         run: dotnet build JD.Efcpt.Build.sln --configuration Release --no-restore /p:ContinuousIntegrationBuild=true
 
@@ -125,6 +130,11 @@ jobs:
         run: |
           dotnet restore JD.Efcpt.Build.sln --use-lock-file
           dotnet tool restore
+
+      - name: Install efcpt global tool
+        run: |
+          dotnet tool install -g erikej.efcorepowertools.cli --version 10.1.1055
+          echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
 
       - name: Fetch tags
         run: git fetch --prune --tags
