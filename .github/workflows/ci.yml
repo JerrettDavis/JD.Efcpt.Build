@@ -49,6 +49,7 @@ jobs:
           dotnet test JD.Efcpt.Build.sln \
             --configuration Release \
             --no-build \
+            /p:EfcptToolMode=tool-manifest \
             --collect:"XPlat Code Coverage" \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Include="[JD.Efcpt.Build*]*" \
@@ -163,6 +164,7 @@ jobs:
           dotnet test JD.Efcpt.Build.sln \
             --configuration Release \
             --no-build \
+            /p:EfcptToolMode=tool-manifest \
             --collect:"XPlat Code Coverage" \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Include="[JD.Efcpt.Build*]*" \
