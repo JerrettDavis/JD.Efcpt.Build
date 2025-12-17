@@ -9,32 +9,33 @@
     <Description>MSBuild targets + tasks to generate EF Core models from a sqlproj DACPAC using efcpt.</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 
-    <!-- This project is just for packing build assets -->
     <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <NoWarn>$(NoWarn);NU5128</NoWarn>
+
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\JD.Efcpt.Build.Tasks\JD.Efcpt.Build.Tasks.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
-  <!-- Ship MSBuild assets -->
   <ItemGroup>
-    <None Include="build\JD.Efcpt.Build.props" Pack="true" PackagePath="build\" />
-    <None Include="build\JD.Efcpt.Build.targets" Pack="true" PackagePath="build\" />
-    <None Include="buildTransitive\JD.Efcpt.Build.props" Pack="true" PackagePath="buildTransitive\" />
-    <None Include="buildTransitive\JD.Efcpt.Build.targets" Pack="true" PackagePath="buildTransitive\" />
+    <Content Include="build\JD.Efcpt.Build.props" Pack="true" PackagePath="build\" />
+    <Content Include="build\JD.Efcpt.Build.targets" Pack="true" PackagePath="build\" />
+    <Content Include="buildTransitive\JD.Efcpt.Build.props" Pack="true" PackagePath="buildTransitive\" />
+    <Content Include="buildTransitive\JD.Efcpt.Build.targets" Pack="true" PackagePath="buildTransitive\" />
+
+    <Content Include="..\..\README.md" Pack="true" PackagePath="README.md" />
   </ItemGroup>
 
-  <!-- Ship task assembly into /tasks/net8.0/ -->
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\$(TargetFramework)\JD.Efcpt.Build.Tasks.dll"
-          Condition="Exists('$(MSBuildThisFileDirectory)..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\$(TargetFramework)\JD.Efcpt.Build.Tasks.dll')"
-          Pack="true"
-          PackagePath="tasks\$(TargetFramework)\" />
+    <Content Include="$(MSBuildThisFileDirectory)..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\$(TargetFramework)\JD.Efcpt.Build.Tasks.dll"
+             Condition="Exists('$(MSBuildThisFileDirectory)..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\$(TargetFramework)\JD.Efcpt.Build.Tasks.dll')"
+             Pack="true"
+             PackagePath="tasks\$(TargetFramework)\" />
   </ItemGroup>
 
-  <!-- Ship default content (optional, but helpful for non-resource fallback) -->
   <ItemGroup>
     <Content Include="defaults\**\*.*" Pack="true" PackagePath="contentFiles\any\any\Defaults\" />
   </ItemGroup>
