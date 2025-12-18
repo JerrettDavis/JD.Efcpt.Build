@@ -1,39 +1,32 @@
 <Project>
 
-  <!-- Resolve the tasks assembly -->
+  <!-- Determine the correct task assembly path based on MSBuild version -->
   <PropertyGroup>
-    <!-- Prefer the packed layout under /tasks/net8.0 when present (NuGet package scenario) -->
-    <_EfcptTasksDir>$(MSBuildThisFileDirectory)..\tasks\$(TargetFramework)\</_EfcptTasksDir>
-    <_EfcptTasksAssembly>$(_EfcptTasksDir)JD.Efcpt.Build.Tasks.dll</_EfcptTasksAssembly>
-
-    <!-- Dev/CI fallback: use the sibling Tasks project build output when the packed layout is not present -->
-    <_EfcptTasksDir Condition="!Exists('$(_EfcptTasksAssembly)')">$(MSBuildThisFileDirectory)..\..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\$(TargetFramework)\</_EfcptTasksDir>
-    <_EfcptTasksAssembly Condition="!Exists('$(_EfcptTasksAssembly)')">$(_EfcptTasksDir)JD.Efcpt.Build.Tasks.dll</_EfcptTasksAssembly>
+    <!-- Use the appropriate .NET version for the task assembly -->
+    <_EfcptTasksFolder Condition="'$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.12'))">net10.0</_EfcptTasksFolder>
+    <_EfcptTasksFolder Condition="'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.10'))">net9.0</_EfcptTasksFolder>
+    <_EfcptTasksFolder Condition="'$(_EfcptTasksFolder)' == ''">net8.0</_EfcptTasksFolder>
+    <_EfcptTaskAssembly>$(MSBuildThisFileDirectory)..\tasks\$(_EfcptTasksFolder)\JD.Efcpt.Build.Tasks.dll</_EfcptTaskAssembly>
   </PropertyGroup>
 
+  <!-- Register MSBuild tasks - use AssemblyFile to avoid NuGet copying/locking the DLL -->
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs"
-             AssemblyFile="$(_EfcptTasksAssembly)"
-             Condition="Exists('$(_EfcptTasksAssembly)')" />
+             AssemblyFile="$(_EfcptTaskAssembly)" />
 
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.EnsureDacpacBuilt"
-             AssemblyFile="$(_EfcptTasksAssembly)"
-             Condition="Exists('$(_EfcptTasksAssembly)')" />
+             AssemblyFile="$(_EfcptTaskAssembly)" />
 
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.StageEfcptInputs"
-             AssemblyFile="$(_EfcptTasksAssembly)"
-             Condition="Exists('$(_EfcptTasksAssembly)')" />
+             AssemblyFile="$(_EfcptTaskAssembly)" />
 
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.ComputeFingerprint"
-             AssemblyFile="$(_EfcptTasksAssembly)"
-             Condition="Exists('$(_EfcptTasksAssembly)')" />
+             AssemblyFile="$(_EfcptTaskAssembly)" />
 
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.RunEfcpt"
-             AssemblyFile="$(_EfcptTasksAssembly)"
-             Condition="Exists('$(_EfcptTasksAssembly)')" />
+             AssemblyFile="$(_EfcptTaskAssembly)" />
 
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.RenameGeneratedFiles"
-             AssemblyFile="$(_EfcptTasksAssembly)"
-             Condition="Exists('$(_EfcptTasksAssembly)')" />
+             AssemblyFile="$(_EfcptTaskAssembly)" />
 
   <!-- Main pipeline -->
   <Target Name="EfcptResolveInputs"
@@ -80,6 +73,7 @@
         ConfigPath="$(_EfcptResolvedConfig)"
         RenamingPath="$(_EfcptResolvedRenaming)"
         TemplateDir="$(_EfcptResolvedTemplateDir)"
+        TemplateOutputDir="$(EfcptGeneratedDir)"
         LogVerbosity="$(EfcptLogVerbosity)">
       <Output TaskParameter="StagedConfigPath" PropertyName="_EfcptStagedConfig" />
       <Output TaskParameter="StagedRenamingPath" PropertyName="_EfcptStagedRenaming" />
@@ -105,7 +99,9 @@
   <Target Name="EfcptGenerateModels"
           DependsOnTargets="EfcptComputeFingerprint"
           BeforeTargets="CoreCompile"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptFingerprintChanged)' == 'true'">
+          Inputs="$(_EfcptDacpacPath);$(_EfcptStagedConfig);$(_EfcptStagedRenaming)"
+          Outputs="$(EfcptStampFile)"
+          Condition="'$(EfcptEnabled)' == 'true' and ('$(_EfcptFingerprintChanged)' == 'true' or !Exists('$(EfcptStampFile)'))">
     <MakeDir Directories="$(EfcptGeneratedDir)" />
     <RunEfcpt
         ToolMode="$(EfcptToolMode)"
@@ -115,7 +111,7 @@
         ToolCommand="$(EfcptToolCommand)"
         ToolPath="$(EfcptToolPath)"
         DotNetExe="$(EfcptDotNetExe)"
-        WorkingDirectory="$(ProjectDir)"
+        WorkingDirectory="$(EfcptOutput)"
         DacpacPath="$(_EfcptDacpacPath)"
         ConfigPath="$(_EfcptStagedConfig)"
         RenamingPath="$(_EfcptStagedRenaming)"
@@ -131,13 +127,12 @@
   <!-- Always include generated files if present; compilation depends on them implicitly -->
   <Target Name="EfcptAddToCompile"
           BeforeTargets="CoreCompile"
-          DependsOnTargets="EfcptGenerateModels"
-          Condition="'$(EfcptEnabled)' == 'true' and Exists('$(EfcptGeneratedDir)')">
+          DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpac;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels"
+          Condition="'$(EfcptEnabled)' == 'true'">
     <ItemGroup>
-      <!-- Include any .g.cs either directly under the root or a Models subfolder (efcpt default) -->
-      <Compile Include="$(EfcptGeneratedDir)**\*.g.cs" Visible="false" />
-      <Compile Include="$(EfcptGeneratedDir)Models\**\*.g.cs" Visible="false" />
-      <Compile Include="$(EfcptGeneratedDir)Models\**\*.cs" Visible="false" Condition="!Exists('$(EfcptGeneratedDir)**\*.g.cs')" />
+      <!-- Include root-level .g.cs files (DbContext) and all .g.cs files in Models subdirectory -->
+      <Compile Include="$(EfcptGeneratedDir)*.g.cs" Visible="false" />
+      <Compile Include="$(EfcptGeneratedDir)\**\*.g.cs" Visible="false" />
     </ItemGroup>
   </Target>
 

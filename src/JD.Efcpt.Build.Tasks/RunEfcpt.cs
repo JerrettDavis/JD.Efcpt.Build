@@ -296,7 +296,45 @@ public sealed class RunEfcpt : Task
         => string.Equals(value, "true", StringComparison.OrdinalIgnoreCase) || value == "1" || string.Equals(value, "yes", StringComparison.OrdinalIgnoreCase);
 
     private string BuildArgs()
-        => $"\"{DacpacPath}\" {Provider} -i \"{ConfigPath}\" -r \"{RenamingPath}\"" + (WorkingDirectory.Equals(OutputDir) ? string.Empty : $" -o \"{OutputDir}\"");
+    {
+        var workingDir = Path.GetFullPath(WorkingDirectory);
+        
+        // Make paths relative to working directory to avoid duplication
+        var configPath = MakeRelativeIfPossible(ConfigPath, workingDir);
+        var renamingPath = MakeRelativeIfPossible(RenamingPath, workingDir);
+        var outputDir = MakeRelativeIfPossible(OutputDir, workingDir);
+        
+        // Ensure paths don't end with backslash to avoid escaping the closing quote
+        configPath = configPath.TrimEnd('\\', '/');
+        renamingPath = renamingPath.TrimEnd('\\', '/');
+        outputDir = outputDir.TrimEnd('\\', '/');
+        
+        // DacpacPath is typically outside the working directory, so keep it absolute
+        return $"\"{DacpacPath}\" {Provider} -i \"{configPath}\" -r \"{renamingPath}\"" + 
+               (workingDir.Equals(Path.GetFullPath(OutputDir), StringComparison.OrdinalIgnoreCase) ? string.Empty : $" -o \"{outputDir}\"");
+    }
+    
+    private static string MakeRelativeIfPossible(string path, string basePath)
+    {
+        try
+        {
+            var fullPath = Path.GetFullPath(path);
+            var fullBase = Path.GetFullPath(basePath);
+            
+            // If the path is under the base directory, make it relative
+            if (fullPath.StartsWith(fullBase, StringComparison.OrdinalIgnoreCase))
+            {
+                var relative = Path.GetRelativePath(fullBase, fullPath);
+                return relative;
+            }
+        }
+        catch
+        {
+            // Fall back to absolute path on any error
+        }
+        
+        return path;
+    }
 
     private static string? FindManifestDir(string start)
     {

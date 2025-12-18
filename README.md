@@ -1,19 +1,733 @@
 # JD.Efcpt.Build
 
-MSBuild integration for the EF Core Power Tools CLI (`efcpt`).
+[![NuGet](https://img.shields.io/nuget/v/JD.Efcpt.Build.svg)](https://www.nuget.org/packages/JD.Efcpt.Build/)
+[![License](https://img.shields.io/github/license/jerrettdavis/JD.Efcpt.Build.svg)](LICENSE)
 
-`JD.Efcpt.Build` turns EF Core Power Tools into a repeatable, CI-friendly build step: it compiles your SQL Server Database Project (`.sqlproj`) to a DACPAC, stages EF Core Power Tools configuration, runs `efcpt`, and adds the generated EF Core model code to your application project during `dotnet build`.
+**MSBuild integration for EF Core Power Tools CLI**
 
-This repository contains two projects:
+Automate database-first EF Core model generation as part of your build pipeline. Zero manual steps, full CI/CD support, reproducible builds.
 
-- `JD.Efcpt.Build.Tasks` – MSBuild tasks assembly with the implementation of the pipeline.
-- `JD.Efcpt.Build` – NuGet packaging project that ships `.props`/`.targets` files and default configuration assets.
+## 🚀 Quick Start
 
-The package is designed to be thin MSBuild XML on top of real, test-covered C# code.
+### Install (3 steps, 30 seconds)
+
+**Step 1:** Add the NuGet package to your application project:
+
+```xml
+<ItemGroup>
+  <PackageReference Include="JD.Efcpt.Build" Version="x.x.x" />
+</ItemGroup>
+```
+
+**Step 2:** Ensure EF Core Power Tools CLI is available:
+
+```bash
+dotnet tool install --global ErikEJ.EFCorePowerTools.Cli --version "10.*"
+```
+
+**Step 3:** Build your project:
+
+```bash
+dotnet build
+```
+
+**That's it!** Your EF Core DbContext and entities are now automatically generated from your database project during every build.
 
 ---
 
-## 1. When to use this package
+## 📋 Table of Contents
+
+- [Overview](#-overview)
+- [Quick Start](#-quick-start)
+- [Features](#-features)
+- [Installation](#-installation)
+- [Minimal Usage Example](#-minimal-usage-example)
+- [Configuration](#-configuration)
+- [Advanced Scenarios](#-advanced-scenarios)
+- [Troubleshooting](#-troubleshooting)
+- [CI/CD Integration](#-cicd-integration)
+- [API Reference](#-api-reference)
+
+---
+
+## 🎯 Overview
+
+`JD.Efcpt.Build` transforms EF Core Power Tools into a **fully automated build step**. Instead of manually regenerating your EF Core models in Visual Studio, this package:
+
+✅ **Automatically builds** your SQL Server Database Project (`.sqlproj`) to a DACPAC  
+✅ **Runs EF Core Power Tools** CLI during `dotnet build`  
+✅ **Generates DbContext and entities** from your database schema  
+✅ **Intelligently caches** - only regenerates when schema or config changes  
+✅ **Works everywhere** - local dev, CI/CD, Docker, anywhere .NET runs  
+✅ **Zero manual steps** - true database-first development automation  
+
+### Architecture
+
+The package orchestrates a MSBuild pipeline with these stages:
+
+1. **Resolve** - Locate database project and configuration files
+2. **Build** - Compile `.sqlproj` to DACPAC (if needed)
+3. **Stage** - Prepare configuration and templates
+4. **Fingerprint** - Detect if regeneration is needed
+5. **Generate** - Run `efcpt` to create EF Core models
+6. **Compile** - Add generated `.g.cs` files to build
+
+---
+
+## ✨ Features
+
+### Core Capabilities
+
+- **🔄 Incremental Builds** - Only regenerates when database schema or configuration changes
+- **🎨 T4 Template Support** - Customize code generation with your own templates
+- **📁 Smart File Organization** - Schema-based folders and namespaces
+- **🔧 Highly Configurable** - Override namespaces, output paths, and generation options
+- **🌐 Multi-Schema Support** - Generate models across multiple database schemas
+- **📦 NuGet Ready** - Enterprise-ready package for production use
+
+### Build Integration
+
+- **Automatic DACPAC compilation** from `.sqlproj` files
+- **Project discovery** - Automatically finds your database project
+- **Template staging** - Handles T4 templates correctly (no duplicate folders!)
+- **Generated file management** - Clean `.g.cs` file naming and compilation
+- **Rebuild detection** - Triggers regeneration when `obj/efcpt` is deleted
+
+---
+
+## 📦 Installation
+
+### Prerequisites
+
+- **.NET SDK 8.0+** (or compatible version)
+- **EF Core Power Tools CLI** (`ErikEJ.EFCorePowerTools.Cli`)
+- **SQL Server Database Project** (`.sqlproj`) that compiles to DACPAC
+
+### Step 1: Install the Package
+
+Add to your application project (`.csproj`):
+
+```xml
+<ItemGroup>
+  <PackageReference Include="JD.Efcpt.Build" Version="x.x.x" />
+  <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.*" />
+</ItemGroup>
+```
+
+Or install via .NET CLI:
+
+```bash
+dotnet add package JD.Efcpt.Build
+dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+```
+
+### Step 2: Install EF Core Power Tools CLI
+
+**Option A: Global Tool (Quick Start)**
+
+```bash
+dotnet tool install --global ErikEJ.EFCorePowerTools.Cli --version "10.*"
+```
+
+**Option B: Local Tool (Recommended for Teams/CI)**
+
+```bash
+# Create tool manifest (if not exists)
+dotnet new tool-manifest
+
+# Install as local tool
+dotnet tool install ErikEJ.EFCorePowerTools.Cli --version "10.*"
+```
+
+Local tools ensure everyone on the team uses the same version.
+
+---
+
+## 💡 Minimal Usage Example
+
+### Solution Structure
+
+```
+YourSolution/
+├── src/
+│   └── YourApp/
+│       ├── YourApp.csproj          # Add JD.Efcpt.Build here
+│       ├── efcpt-config.json       # Optional: customize generation
+│       └── Template/               # Optional: custom T4 templates
+│           └── CodeTemplates/
+│               └── EFCore/
+│                   ├── DbContext.t4
+│                   └── EntityType.t4
+└── database/
+    └── YourDatabase/
+        └── YourDatabase.sqlproj    # Your database project
+```
+
+### Minimal Configuration (YourApp.csproj)
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JD.Efcpt.Build" Version="x.x.x" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.1" />
+  </ItemGroup>
+
+  <!-- Optional: Point to specific database project -->
+  <PropertyGroup>
+    <EfcptSqlProj>..\..\database\YourDatabase\YourDatabase.sqlproj</EfcptSqlProj>
+  </PropertyGroup>
+</Project>
+```
+
+### Build and Run
+
+```bash
+dotnet build
+```
+
+**Generated files** appear in `obj/efcpt/Generated/`:
+
+```
+obj/efcpt/Generated/
+├── YourDbContext.g.cs       # DbContext
+└── Models/                  # Entity classes
+    ├── dbo/
+    │   ├── User.g.cs
+    │   └── Order.g.cs
+    └── sales/
+        └── Customer.g.cs
+```
+
+These files are **automatically compiled** into your project!
+
+---
+
+## ⚙️ Configuration
+
+### Option 1: Use Defaults (Zero Config)
+
+Just add the package. Sensible defaults are applied:
+
+- Auto-discovers `.sqlproj` in solution
+- Uses `efcpt-config.json` if present, otherwise uses defaults
+- Generates to `obj/efcpt/Generated/`
+- Enables nullable reference types
+- Uses schema-based namespaces
+
+### Option 2: Customize with efcpt-config.json
+
+Create `efcpt-config.json` in your project:
+
+```json
+{
+  "names": {
+    "root-namespace": "YourApp.Data",
+    "dbcontext-name": "ApplicationDbContext",
+    "dbcontext-namespace": "YourApp.Data",
+    "entity-namespace": "YourApp.Data.Entities"
+  },
+  "code-generation": {
+    "use-t4": true,
+    "t4-template-path": "Template/CodeTemplates/EFCore",
+    "use-nullable-reference-types": true,
+    "use-date-only-time-only": true,
+    "enable-on-configuring": false
+  },
+  "file-layout": {
+    "output-path": "Models",
+    "output-dbcontext-path": ".",
+    "use-schema-folders-preview": true,
+    "use-schema-namespaces-preview": true
+  },
+  "table-selection": [
+    {
+      "schema": "dbo",
+      "include": true
+    }
+  ]
+}
+```
+
+### Option 3: MSBuild Properties (Advanced)
+
+Override in your `.csproj` or `Directory.Build.props`:
+
+```xml
+<PropertyGroup>
+  <!-- Core Settings -->
+  <EfcptEnabled>true</EfcptEnabled>
+  <EfcptSqlProj>..\Database\Database.sqlproj</EfcptSqlProj>
+  
+  <!-- Paths -->
+  <EfcptConfig>custom-efcpt-config.json</EfcptConfig>
+  <EfcptRenaming>custom-renaming.json</EfcptRenaming>
+  <EfcptTemplateDir>CustomTemplates</EfcptTemplateDir>
+  
+  <!-- Output -->
+  <EfcptOutput>$(MSBuildProjectDirectory)\obj\efcpt\</EfcptOutput>
+  <EfcptGeneratedDir>$(EfcptOutput)Generated\</EfcptGeneratedDir>
+  
+  <!-- Tool Configuration -->
+  <EfcptToolMode>tool-manifest</EfcptToolMode>
+  <EfcptToolVersion>10.*</EfcptToolVersion>
+  
+  <!-- Diagnostics -->
+  <EfcptLogVerbosity>detailed</EfcptLogVerbosity>
+</PropertyGroup>
+```
+
+---
+
+## 🔧 Advanced Scenarios
+
+### Multi-Project Solutions (Directory.Build.props)
+
+Share configuration across multiple projects:
+
+```xml
+<!-- Directory.Build.props at solution root -->
+<Project>
+  <PropertyGroup>
+    <EfcptEnabled>true</EfcptEnabled>
+    <EfcptToolMode>tool-manifest</EfcptToolMode>
+    <EfcptToolVersion>10.*</EfcptToolVersion>
+    <EfcptLogVerbosity>minimal</EfcptLogVerbosity>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JD.Efcpt.Build" Version="x.x.x" />
+  </ItemGroup>
+</Project>
+```
+
+Individual projects can override specific settings:
+
+```xml
+<!-- src/MyApp/MyApp.csproj -->
+<PropertyGroup>
+  <EfcptSqlProj>..\..\database\MyDatabase\MyDatabase.sqlproj</EfcptSqlProj>
+  <EfcptConfig>my-specific-config.json</EfcptConfig>
+</PropertyGroup>
+```
+
+### Custom T4 Templates
+
+1. **Copy default templates** from the package or create your own
+2. **Place in your project** under `Template/CodeTemplates/EFCore/`
+3. **Configure** in `efcpt-config.json`:
+
+```json
+{
+  "code-generation": {
+    "use-t4": true,
+    "t4-template-path": "Template/CodeTemplates/EFCore"
+  }
+}
+```
+
+Templates are automatically staged to `obj/efcpt/Generated/CodeTemplates/` during build.
+
+### Renaming Rules (efcpt.renaming.json)
+
+Customize table and column naming:
+
+```json
+{
+  "tables": [
+    {
+      "name": "tblUsers",
+      "newName": "User"
+    }
+  ],
+  "columns": [
+    {
+      "table": "User",
+      "name": "usr_id",
+      "newName": "Id"
+    }
+  ]
+}
+```
+
+### Disable for Specific Build Configurations
+
+```xml
+<PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+  <EfcptEnabled>false</EfcptEnabled>
+</PropertyGroup>
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### Generated Files Don't Appear
+
+**Check:**
+
+1. **Verify package is referenced:**
+   ```bash
+   dotnet list package | findstr JD.Efcpt.Build
+   ```
+
+2. **Check if generation ran:**
+   ```bash
+   # Look for obj/efcpt/Generated/ folder
+   dir obj\efcpt\Generated /s
+   ```
+
+3. **Enable detailed logging:**
+   ```xml
+   <PropertyGroup>
+     <EfcptLogVerbosity>detailed</EfcptLogVerbosity>
+     <EfcptDumpResolvedInputs>true</EfcptDumpResolvedInputs>
+   </PropertyGroup>
+   ```
+
+4. **Rebuild from scratch:**
+   ```bash
+   dotnet clean
+   dotnet build
+   ```
+
+### DACPAC Build Fails
+
+**Symptoms:** Error building `.sqlproj`
+
+**Solutions:**
+
+- Install **SQL Server Data Tools** build components
+- Verify `.sqlproj` builds independently:
+  ```bash
+  dotnet build path\to\Database.sqlproj
+  ```
+- Check for SQL syntax errors in your database project
+
+### efcpt CLI Not Found
+
+**Symptoms:** "efcpt command not found" or similar
+
+**Solutions:**
+
+1. **Verify installation:**
+   ```bash
+   dotnet tool list --global
+   # or
+   dotnet tool list
+   ```
+
+2. **Reinstall:**
+   ```bash
+   dotnet tool uninstall -g ErikEJ.EFCorePowerTools.Cli
+   dotnet tool install -g ErikEJ.EFCorePowerTools.Cli --version "10.*"
+   ```
+
+3. **Force tool manifest mode:**
+   ```xml
+   <PropertyGroup>
+     <EfcptToolMode>tool-manifest</EfcptToolMode>
+   </PropertyGroup>
+   ```
+
+### Build Doesn't Detect Schema Changes
+
+**Cause:** Fingerprint not updating
+
+**Solution:** Delete intermediate folder to force regeneration:
+
+```bash
+rmdir /s /q obj\efcpt
+dotnet build
+```
+
+---
+
+## 🚢 CI/CD Integration
+
+### GitHub Actions
+
+```yaml
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Restore tools
+      run: dotnet tool restore
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+    
+    - name: Test
+      run: dotnet test --configuration Release --no-build
+```
+
+### Azure DevOps
+
+```yaml
+trigger:
+  - main
+
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+- task: UseDotNet@2
+  inputs:
+    version: '8.0.x'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Restore tools'
+  inputs:
+    command: 'custom'
+    custom: 'tool'
+    arguments: 'restore'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Restore'
+  inputs:
+    command: 'restore'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Build'
+  inputs:
+    command: 'build'
+    arguments: '--configuration Release --no-restore'
+```
+
+### Docker
+
+```dockerfile
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy and restore
+COPY *.sln .
+COPY **/*.csproj ./
+RUN for file in $(ls *.csproj); do mkdir -p ${file%.*}/ && mv $file ${file%.*}/; done
+RUN dotnet restore
+
+# Restore tools
+COPY .config/dotnet-tools.json .config/
+RUN dotnet tool restore
+
+# Copy everything and build
+COPY . .
+RUN dotnet build --configuration Release --no-restore
+```
+
+### Key CI/CD Considerations
+
+1. **Use local tool manifest** - Ensures consistent `efcpt` version across environments
+2. **Cache tool restoration** - Speed up builds by caching `.dotnet/tools`
+3. **Windows agents for DACPAC** - Database projects typically require Windows build agents
+4. **Deterministic builds** - Generated code should be identical across builds with same inputs
+
+---
+
+## 📚 API Reference
+
+### MSBuild Targets
+
+| Target | Purpose | When It Runs |
+|--------|---------|--------------|
+| `EfcptResolveInputs` | Discovers database project and config files | Before build |
+| `EfcptEnsureDacpac` | Builds `.sqlproj` to DACPAC if needed | After resolve |
+| `EfcptStageInputs` | Stages config and templates | After DACPAC |
+| `EfcptComputeFingerprint` | Detects if regeneration needed | After staging |
+| `EfcptGenerateModels` | Runs `efcpt` CLI | When fingerprint changes |
+| `EfcptAddToCompile` | Adds `.g.cs` files to compilation | Before C# compile |
+
+### MSBuild Properties
+
+#### Core Properties
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `EfcptEnabled` | `true` | Master switch for the entire pipeline |
+| `EfcptSqlProj` | *(auto-discovered)* | Path to `.sqlproj` file |
+| `EfcptConfig` | `efcpt-config.json` | EF Core Power Tools configuration |
+| `EfcptRenaming` | `efcpt.renaming.json` | Renaming rules file |
+| `EfcptTemplateDir` | `Template` or `CodeTemplates` | T4 template directory |
+| `EfcptOutput` | `$(BaseIntermediateOutputPath)efcpt\` | Intermediate staging directory |
+| `EfcptGeneratedDir` | `$(EfcptOutput)Generated\` | Generated code output directory |
+
+#### Tool Configuration
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `EfcptToolMode` | `auto` | Tool resolution mode: `auto`, `tool-manifest`, `global` |
+| `EfcptToolPackageId` | `ErikEJ.EFCorePowerTools.Cli` | NuGet package ID for efcpt |
+| `EfcptToolVersion` | `10.*` | Version constraint |
+| `EfcptToolCommand` | `efcpt` | Command name |
+| `EfcptToolPath` | *(empty)* | Explicit path to efcpt executable |
+| `EfcptDotNetExe` | `dotnet` | Path to dotnet host |
+| `EfcptToolRestore` | `true` | Whether to restore/update tool |
+
+#### Advanced Properties
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `EfcptLogVerbosity` | `minimal` | Logging level: `minimal` or `detailed` |
+| `EfcptDumpResolvedInputs` | `false` | Log all resolved input paths |
+| `EfcptSolutionDir` | `$(SolutionDir)` | Solution root for project discovery |
+| `EfcptProbeSolutionDir` | `true` | Whether to probe solution directory |
+| `EfcptFingerprintFile` | `$(EfcptOutput)fingerprint.txt` | Fingerprint cache location |
+| `EfcptStampFile` | `$(EfcptOutput).efcpt.stamp` | Generation stamp file |
+
+### MSBuild Tasks
+
+#### StageEfcptInputs
+
+Stages configuration files and templates into the intermediate directory.
+
+**Parameters:**
+- `OutputDir` (required) - Base staging directory
+- `ConfigPath` (required) - Path to `efcpt-config.json`
+- `RenamingPath` (required) - Path to `efcpt.renaming.json`
+- `TemplateDir` (required) - Path to template directory
+- `TemplateOutputDir` - Subdirectory within OutputDir for templates (e.g., "Generated")
+- `LogVerbosity` - Logging level
+
+**Outputs:**
+- `StagedConfigPath` - Full path to staged config
+- `StagedRenamingPath` - Full path to staged renaming file
+- `StagedTemplateDir` - Full path to staged templates
+
+#### ComputeFingerprint
+
+Computes SHA256 fingerprint of all inputs to detect when regeneration is needed.
+
+**Parameters:**
+- `DacpacPath` (required) - Path to DACPAC file
+- `ConfigPath` (required) - Path to efcpt config
+- `RenamingPath` (required) - Path to renaming file
+- `TemplateDir` (required) - Path to templates
+- `OutputPath` (required) - Where to write fingerprint
+- `PreviousFingerprintPath` - Path to previous fingerprint for comparison
+- `LogVerbosity` - Logging level
+
+**Outputs:**
+- `Fingerprint` - Computed SHA256 hash
+- `FingerprintChanged` - Boolean indicating if fingerprint changed
+
+#### RunEfcpt
+
+Executes EF Core Power Tools CLI to generate EF Core models.
+
+**Parameters:**
+- `ToolMode` - How to find efcpt: `auto`, `tool-manifest`, `global`
+- `ToolPackageId` - NuGet package ID
+- `ToolVersion` - Version constraint
+- `ToolRestore` - Whether to restore tool
+- `ToolCommand` - Command name
+- `ToolPath` - Explicit path to executable
+- `DotNetExe` - Path to dotnet host
+- `WorkingDirectory` - Working directory for efcpt
+- `DacpacPath` (required) - Input DACPAC
+- `ConfigPath` (required) - efcpt configuration
+- `RenamingPath` - Renaming rules
+- `TemplateDir` - Template directory
+- `OutputDir` (required) - Output directory
+- `LogVerbosity` - Logging level
+
+#### RenameGeneratedFiles
+
+Renames generated `.cs` files to `.g.cs` for better identification.
+
+**Parameters:**
+- `GeneratedDir` (required) - Directory containing generated files
+- `LogVerbosity` - Logging level
+
+#### ResolveSqlProjAndInputs
+
+Discovers database project and configuration files.
+
+**Parameters:**
+- `SqlProjOverride` - Explicit `.sqlproj` path
+- `ConfigOverride` - Explicit config path
+- `RenamingOverride` - Explicit renaming path
+- `TemplateDirOverride` - Explicit template directory
+- `ProjectDir` (required) - Current project directory
+- `SolutionDir` - Solution directory
+- `ProbeSolutionDir` - Whether to probe solution
+- `ProjectReferences` - List of project references
+- `DumpResolvedInputs` - Whether to log results
+- `LogVerbosity` - Logging level
+
+**Outputs:**
+- `ResolvedSqlProj` - Discovered `.sqlproj` path
+- `ResolvedConfig` - Discovered config path
+- `ResolvedRenaming` - Discovered renaming path
+- `ResolvedTemplateDir` - Discovered template directory
+
+#### EnsureDacpacBuilt
+
+Builds a `.sqlproj` to DACPAC if it's out of date.
+
+**Parameters:**
+- `SqlProjPath` (required) - Path to `.sqlproj`
+- `DotNetExe` - Path to dotnet host
+- `LogVerbosity` - Logging level
+
+**Outputs:**
+- `DacpacPath` - Path to built DACPAC file
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please:
+
+1. **Open an issue** first to discuss changes
+2. **Follow existing code style** and patterns
+3. **Add tests** for new features
+4. **Update documentation** as needed
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See LICENSE file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- **EF Core Power Tools** by Erik Ejlskov Jensen - The amazing tool this package automates
+- **Microsoft** - For EF Core and MSBuild
+- **Community contributors** - Thank you for your feedback and contributions!
+
+---
+
+## 📞 Support
+
+- **Issues:** [GitHub Issues](https://github.com/jerrettdavis/JD.Efcpt.Build/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/jerrettdavis/JD.Efcpt.Build/discussions)
+- **Documentation:** [README](https://github.com/jerrettdavis/JD.Efcpt.Build/blob/main/README.md)
+
+---
+
+**Made with ❤️ for the .NET community**
 
 Use `JD.Efcpt.Build` when:
 

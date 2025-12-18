@@ -54,6 +54,16 @@ public sealed class StageEfcptInputs : Task
     [Required] public string TemplateDir { get; set; } = "";
 
     /// <summary>
+    /// Subdirectory within OutputDir where templates should be staged.
+    /// </summary>
+    /// <value>
+    /// If empty or null, templates are staged directly under OutputDir/CodeTemplates.
+    /// If a relative path like "Generated", templates are staged under OutputDir/Generated/CodeTemplates.
+    /// If an absolute path, it is used directly.
+    /// </value>
+    public string TemplateOutputDir { get; set; } = "";
+
+    /// <summary>
     /// Controls how much diagnostic information the task writes to the MSBuild log.
     /// </summary>
     /// <value>
@@ -93,13 +103,57 @@ public sealed class StageEfcptInputs : Task
             StagedRenamingPath = Path.Combine(OutputDir, string.IsNullOrWhiteSpace(renamingName) ? "efcpt.renaming.json" : renamingName);
             File.Copy(RenamingPath, StagedRenamingPath, overwrite: true);
 
-            var templateName = new DirectoryInfo(TemplateDir).Name;
-            StagedTemplateDir = Path.Combine(OutputDir, string.IsNullOrWhiteSpace(templateName) ? "Template" : templateName);
-            var sourceTemplate = Path.GetFullPath(TemplateDir);
-            var destTemplate = Path.GetFullPath(StagedTemplateDir);
-            if (!string.Equals(sourceTemplate, destTemplate, StringComparison.OrdinalIgnoreCase))
+            // Determine the base directory for template staging
+            // If TemplateOutputDir is provided and relative, combine with OutputDir
+            // If TemplateOutputDir is absolute, use it directly
+            // If TemplateOutputDir is empty, use OutputDir directly
+            string templateBaseDir;
+            if (string.IsNullOrWhiteSpace(TemplateOutputDir))
             {
-                CopyDirectory(sourceTemplate, destTemplate);
+                templateBaseDir = OutputDir;
+            }
+            else if (Path.IsPathRooted(TemplateOutputDir))
+            {
+                templateBaseDir = TemplateOutputDir;
+            }
+            else
+            {
+                templateBaseDir = Path.Combine(OutputDir, TemplateOutputDir);
+            }
+
+            // Stage templates as 'CodeTemplates' directory - efcpt expects this name
+            // Always stage to CodeTemplates/EFCore structure that efcpt expects
+            var finalStagedDir = Path.Combine(templateBaseDir, "CodeTemplates");
+            
+            // Delete any existing CodeTemplates to ensure clean state
+            if (Directory.Exists(finalStagedDir))
+                Directory.Delete(finalStagedDir, recursive: true);
+            
+            Directory.CreateDirectory(finalStagedDir);
+            
+            var sourceTemplate = Path.GetFullPath(TemplateDir);
+            var codeTemplatesSubdir = Path.Combine(sourceTemplate, "CodeTemplates");
+            
+            // Check if source has Template/CodeTemplates/EFCore structure
+            var efcoreSubdir = Path.Combine(codeTemplatesSubdir, "EFCore");
+            if (Directory.Exists(efcoreSubdir))
+            {
+                // Copy EFCore contents to CodeTemplates/EFCore
+                var destEFCore = Path.Combine(finalStagedDir, "EFCore");
+                CopyDirectory(efcoreSubdir, destEFCore);
+                StagedTemplateDir = finalStagedDir;
+            }
+            else if (Directory.Exists(codeTemplatesSubdir))
+            {
+                // Copy entire CodeTemplates subdirectory
+                CopyDirectory(codeTemplatesSubdir, finalStagedDir);
+                StagedTemplateDir = finalStagedDir;
+            }
+            else
+            {
+                // No CodeTemplates subdirectory - copy and rename entire template dir
+                CopyDirectory(sourceTemplate, finalStagedDir);
+                StagedTemplateDir = finalStagedDir;
             }
 
             log.Detail($"Staged config: {StagedConfigPath}");

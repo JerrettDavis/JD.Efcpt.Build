@@ -3,21 +3,35 @@
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <IsPackable>true</IsPackable>
+    
+    <!-- Package Identity -->
     <PackageId>JD.Efcpt.Build</PackageId>
-    <Version>0.1.0</Version>
-    <Authors>Internal</Authors>
-    <Description>MSBuild targets + tasks to generate EF Core models from a sqlproj DACPAC using efcpt.</Description>
+    <Authors>Jerrett Davis</Authors>
+    <Company>JDH Productions</Company>
+    
+    <!-- Package Description -->
+    <Title>MSBuild Integration for EF Core Power Tools</Title>
+    <Description>Enterprise-grade MSBuild integration for EF Core Power Tools CLI. Automate database-first EF Core model generation as part of your build pipeline. Zero manual steps, full CI/CD support, reproducible builds. Automatically builds your SQL Server Database Project (.sqlproj) to a DACPAC, runs efcpt, and generates DbContext and entity classes during dotnet build.</Description>
+    <PackageTags>efcore;entity-framework;ef-core-power-tools;efcpt;msbuild;database-first;code-generation;dacpac;sqlproj;ci-cd</PackageTags>
+    <PackageProjectUrl>https://github.com/jerrettdavis/JD.Efcpt.Build</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jerrettdavis/JD.Efcpt.Build</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-
+    
+    <!-- Build Configuration -->
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
-    <NoWarn>$(NoWarn);NU5128</NoWarn>
-
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <NoWarn>$(NoWarn);NU5128;NU5100</NoWarn>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\JD.Efcpt.Build.Tasks\JD.Efcpt.Build.Tasks.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\JD.Efcpt.Build.Tasks\JD.Efcpt.Build.Tasks.csproj" 
+                      ReferenceOutputAssembly="false" 
+                      PrivateAssets="All"
+                      IncludeAssets="None" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,15 +40,28 @@
     <Content Include="buildTransitive\JD.Efcpt.Build.props" Pack="true" PackagePath="buildTransitive\" />
     <Content Include="buildTransitive\JD.Efcpt.Build.targets" Pack="true" PackagePath="buildTransitive\" />
 
-    <Content Include="..\..\README.md" Pack="true" PackagePath="README.md" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\QUICKSTART.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="$(MSBuildThisFileDirectory)..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\$(TargetFramework)\JD.Efcpt.Build.Tasks.dll"
-             Condition="Exists('$(MSBuildThisFileDirectory)..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\$(TargetFramework)\JD.Efcpt.Build.Tasks.dll')"
-             Pack="true"
-             PackagePath="tasks\$(TargetFramework)\" />
-  </ItemGroup>
+  <!-- Collect task assemblies from the referenced project after build -->
+  <Target Name="IncludeTaskAssembliesInPack" BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <!-- Include task assemblies in tasks folder to avoid file locking during restore -->
+      <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net8.0\JD.Efcpt.Build.Tasks.dll" 
+            Pack="true" 
+            PackagePath="tasks\net8.0\" 
+            Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net8.0\JD.Efcpt.Build.Tasks.dll')" />
+      <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net9.0\JD.Efcpt.Build.Tasks.dll" 
+            Pack="true" 
+            PackagePath="tasks\net9.0\" 
+            Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net9.0\JD.Efcpt.Build.Tasks.dll')" />
+      <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net10.0\JD.Efcpt.Build.Tasks.dll" 
+            Pack="true" 
+            PackagePath="tasks\net10.0\" 
+            Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net10.0\JD.Efcpt.Build.Tasks.dll')" />
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <Content Include="defaults\**\*.*" Pack="true" PackagePath="contentFiles\any\any\Defaults\" />

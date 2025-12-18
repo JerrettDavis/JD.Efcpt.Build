@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <!-- Enable Efcpt generation -->
+        <EfcptEnabled>true</EfcptEnabled>
+        <EfcptLogVerbosity>detailed</EfcptLogVerbosity>
+        <EfcptDumpResolvedInputs>true</EfcptDumpResolvedInputs>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- Reference the Database Project -->
+        <ProjectReference Include="..\DatabaseProject\DatabaseProject\DatabaseProject.sqlproj">
+            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+            <OutputItemType>None</OutputItemType>
+        </ProjectReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- NuGet package reference - demonstrates real-world consumption -->
+        <PackageReference Include="JD.Efcpt.Build" Version="*" />
+        
+        <!-- EF Core dependencies -->
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.1">
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.1" />
+    </ItemGroup>
+</Project>

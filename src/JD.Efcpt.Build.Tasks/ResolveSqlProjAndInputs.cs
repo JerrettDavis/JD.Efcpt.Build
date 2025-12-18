@@ -156,7 +156,7 @@ public sealed class ResolveSqlProjAndInputs : Task
             SqlProjPath = ResolveSqlProj(log);
             ResolvedConfigPath = ResolveFile(log, ConfigOverride, "efcpt-config.json");
             ResolvedRenamingPath = ResolveFile(log, RenamingOverride, "efcpt.renaming.json", "efcpt-renaming.json", "efpt.renaming.json");
-            ResolvedTemplateDir = ResolveDir(log, TemplateDirOverride, "Template", "Templates");
+            ResolvedTemplateDir = ResolveDir(log, TemplateDirOverride, "Template", "CodeTemplates", "Templates");
 
             if (IsTrue(DumpResolvedInputs))
             {

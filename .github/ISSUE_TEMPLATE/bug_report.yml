@@ -1,0 +1,85 @@
+name: Bug Report
+description: File a bug report to help us improve
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+        
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is
+      placeholder: Tell us what went wrong
+    validations:
+      required: true
+      
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Create a project with...
+        2. Add configuration...
+        3. Run dotnet build...
+        4. See error...
+    validations:
+      required: true
+      
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen
+      placeholder: Describe the expected outcome
+    validations:
+      required: true
+      
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened
+      placeholder: Describe what actually happened
+    validations:
+      required: true
+      
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Please provide environment details
+      value: |
+        - OS: [e.g., Windows 11, Ubuntu 22.04]
+        - .NET SDK Version: [output of `dotnet --info`]
+        - JD.Efcpt.Build Version: [e.g., 0.2.4]
+        - EF Core Power Tools CLI Version: [output of `dotnet tool list -g | findstr efcpt`]
+      render: markdown
+    validations:
+      required: true
+      
+  - type: textarea
+    id: logs
+    attributes:
+      label: Build Logs
+      description: Please paste relevant build logs (with EfcptLogVerbosity set to detailed if possible)
+      render: shell
+      
+  - type: textarea
+    id: config
+    attributes:
+      label: Configuration Files
+      description: Please share relevant configuration (efcpt-config.json, .csproj settings, etc.)
+      render: json
+      
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here
+      placeholder: Screenshots, sample projects, or any other relevant information
+
