@@ -233,7 +233,7 @@ Create `efcpt-config.json` in your project:
   },
   "code-generation": {
     "use-t4": true,
-    "t4-template-path": "Template/CodeTemplates/EFCore",
+    "t4-template-path": "Template",
     "use-nullable-reference-types": true,
     "use-date-only-time-only": true,
     "enable-on-configuring": false

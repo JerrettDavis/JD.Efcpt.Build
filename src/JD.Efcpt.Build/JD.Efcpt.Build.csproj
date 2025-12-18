@@ -64,7 +64,9 @@
   </Target>
 
   <ItemGroup>
-    <Content Include="defaults\**\*.*" Pack="true" PackagePath="contentFiles\any\any\Defaults\" />
+    <None Include="defaults\**\*.*"
+          Pack="true"
+          PackagePath="buildTransitive\Defaults\" />
   </ItemGroup>
 
 </Project>
