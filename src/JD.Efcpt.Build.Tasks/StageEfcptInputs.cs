@@ -103,22 +103,26 @@ public sealed class StageEfcptInputs : Task
             StagedRenamingPath = Path.Combine(OutputDir, string.IsNullOrWhiteSpace(renamingName) ? "efcpt.renaming.json" : renamingName);
             File.Copy(RenamingPath, StagedRenamingPath, overwrite: true);
 
-            // Determine the base directory for template staging
-            // If TemplateOutputDir is provided and relative, combine with OutputDir
-            // If TemplateOutputDir is absolute, use it directly
-            // If TemplateOutputDir is empty, use OutputDir directly
+            var outputDirFull = Full(OutputDir);
+
             string templateBaseDir;
             if (string.IsNullOrWhiteSpace(TemplateOutputDir))
             {
-                templateBaseDir = OutputDir;
-            }
-            else if (Path.IsPathRooted(TemplateOutputDir))
-            {
-                templateBaseDir = TemplateOutputDir;
+                templateBaseDir = outputDirFull;
             }
             else
             {
-                templateBaseDir = Path.Combine(OutputDir, TemplateOutputDir);
+                // Try to interpret TemplateOutputDir as-is first
+                var candidate = TemplateOutputDir.Trim();
+
+                // If it's relative, interpret it relative to OutputDir 
+                var resolved = Path.IsPathRooted(candidate)
+                    ? Full(candidate)
+                    : Full(Path.Combine(outputDirFull, candidate));
+
+                // If the user already passed something that resolves under OutputDir,
+                // use it directly (prevents obj/efcpt/obj/efcpt/...)
+                templateBaseDir = resolved;
             }
 
             // Stage templates as 'CodeTemplates' directory - efcpt expects this name
@@ -188,5 +192,17 @@ public sealed class StageEfcptInputs : Task
             Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
             File.Copy(file, dest, overwrite: true);
         }
+    }
+
+    private static string Full(string p) => Path.GetFullPath(p.Trim());
+
+    private static bool IsUnder(string parent, string child)
+    {
+        parent = Full(parent).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                 + Path.DirectorySeparatorChar;
+        child  = Full(child).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                 + Path.DirectorySeparatorChar;
+
+        return child.StartsWith(parent, StringComparison.OrdinalIgnoreCase);
     }
 }
