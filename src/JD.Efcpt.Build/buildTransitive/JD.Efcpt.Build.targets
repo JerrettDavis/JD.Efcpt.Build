@@ -111,6 +111,7 @@
           Condition="'$(EfcptEnabled)' == 'true'">
     <StageEfcptInputs
         OutputDir="$(EfcptOutput)"
+        ProjectDirectory="$(MSBuildProjectDirectory)"
         ConfigPath="$(_EfcptResolvedConfig)"
         RenamingPath="$(_EfcptResolvedRenaming)"
         TemplateDir="$(_EfcptResolvedTemplateDir)"

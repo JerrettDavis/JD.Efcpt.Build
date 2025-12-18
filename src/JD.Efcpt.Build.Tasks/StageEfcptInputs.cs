@@ -35,6 +35,11 @@ public sealed class StageEfcptInputs : Task
     [Required] public string OutputDir { get; set; } = "";
 
     /// <summary>
+    /// Path to the project that models are being generated into.
+    /// </summary>
+    [Required] public string ProjectDirectory { get; set; } = "";
+
+    /// <summary>
     /// Path to the efcpt configuration JSON file to copy.
     /// </summary>
     [Required] public string ConfigPath { get; set; } = "";
@@ -104,29 +109,7 @@ public sealed class StageEfcptInputs : Task
             File.Copy(RenamingPath, StagedRenamingPath, overwrite: true);
 
             var outputDirFull = Full(OutputDir);
-
-            string templateBaseDir;
-            if (string.IsNullOrWhiteSpace(TemplateOutputDir))
-            {
-                templateBaseDir = outputDirFull;
-            }
-            else
-            {
-                // Try to interpret TemplateOutputDir as-is first
-                var candidate = TemplateOutputDir.Trim();
-
-                // If it's relative, interpret it relative to OutputDir 
-                var resolved = Path.IsPathRooted(candidate)
-                    ? Full(candidate)
-                    : Full(Path.Combine(outputDirFull, candidate));
-
-                // If the user already passed something that resolves under OutputDir,
-                // use it directly (prevents obj/efcpt/obj/efcpt/...)
-                templateBaseDir = resolved;
-            }
-
-            // Stage templates as 'CodeTemplates' directory - efcpt expects this name
-            // Always stage to CodeTemplates/EFCore structure that efcpt expects
+            var templateBaseDir = ResolveTemplateBaseDir(outputDirFull, TemplateOutputDir);
             var finalStagedDir = Path.Combine(templateBaseDir, "CodeTemplates");
             
             // Delete any existing CodeTemplates to ensure clean state
@@ -205,4 +188,38 @@ public sealed class StageEfcptInputs : Task
 
         return child.StartsWith(parent, StringComparison.OrdinalIgnoreCase);
     }
+
+    private string ResolveTemplateBaseDir(string outputDirFull, string templateOutputDirRaw)
+    {
+        if (string.IsNullOrWhiteSpace(templateOutputDirRaw))
+            return outputDirFull;
+
+        var candidate = templateOutputDirRaw.Trim();
+
+        // Absolute? Use it.
+        if (Path.IsPathRooted(candidate))
+            return Full(candidate);
+
+        // Resolve relative to OutputDir (your original intent)
+        var asOutputRelative = Full(Path.Combine(outputDirFull, candidate));
+
+        // ALSO resolve relative to ProjectDirectory (handles "obj\efcpt\Generated\")
+        var projDirFull = Full(ProjectDirectory);
+        var asProjectRelative = Full(Path.Combine(projDirFull, candidate));
+
+        // If candidate starts with "obj\" or ".\obj\" etc, it is almost certainly project-relative.
+        // Prefer project-relative if it lands under the project's obj folder.
+        var projObj = Full(Path.Combine(projDirFull, "obj")) + Path.DirectorySeparatorChar;
+        if (asProjectRelative.StartsWith(projObj, StringComparison.OrdinalIgnoreCase))
+            return asProjectRelative;
+
+        // Otherwise, if the output-relative resolution would cause nested output/output, avoid it.
+        // (obj\efcpt + obj\efcpt\Generated)
+        if (IsUnder(outputDirFull, asOutputRelative) && candidate.StartsWith("obj" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            return asProjectRelative;
+
+        // Default: original behavior
+        return asOutputRelative;
+    }
+
 }
