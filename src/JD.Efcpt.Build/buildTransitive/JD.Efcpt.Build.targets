@@ -62,7 +62,7 @@
         SolutionDir="$(EfcptSolutionDir)"
         ProbeSolutionDir="$(EfcptProbeSolutionDir)"
         OutputDir="$(EfcptOutput)"
-        DefaultsRoot="$(MSBuildThisFileDirectory)..\contentFiles\any\any\Defaults"
+        DefaultsRoot="$(MSBuildThisFileDirectory)Defaults"
         DumpResolvedInputs="$(EfcptDumpResolvedInputs)">
       <Output TaskParameter="SqlProjPath" PropertyName="_EfcptSqlProj" />
       <Output TaskParameter="ResolvedConfigPath" PropertyName="_EfcptResolvedConfig" />
@@ -191,7 +191,7 @@
     <ItemGroup>
       <!-- Include root-level .g.cs files (DbContext) and all .g.cs files in Models subdirectory -->
       <Compile Include="$(EfcptGeneratedDir)*.g.cs" Visible="false" />
-      <Compile Include="$(EfcptGeneratedDir)Models\**\*.g.cs" Visible="false" />
+      <Compile Include="$(EfcptGeneratedDir)**\*.g.cs" Visible="false" />
     </ItemGroup>
   </Target>
 
