@@ -5,6 +5,12 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch: 
+    inputs: 
+      reason: 
+        description: 'Reason'     
+        required: false
+        default: 'Manual run'
 
 env:
   DOTNET_NOLOGO: true
