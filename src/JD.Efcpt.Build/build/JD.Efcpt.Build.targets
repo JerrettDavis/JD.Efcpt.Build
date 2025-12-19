@@ -6,7 +6,13 @@
     <_EfcptTasksFolder Condition="'$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.12'))">net10.0</_EfcptTasksFolder>
     <_EfcptTasksFolder Condition="'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.10'))">net9.0</_EfcptTasksFolder>
     <_EfcptTasksFolder Condition="'$(_EfcptTasksFolder)' == ''">net8.0</_EfcptTasksFolder>
+
+    <!-- Primary path: NuGet package location -->
     <_EfcptTaskAssembly>$(MSBuildThisFileDirectory)..\tasks\$(_EfcptTasksFolder)\JD.Efcpt.Build.Tasks.dll</_EfcptTaskAssembly>
+
+    <!-- Fallback path: Local development (when building from source) -->
+    <_EfcptTaskAssembly Condition="!Exists('$(_EfcptTaskAssembly)')">$(MSBuildThisFileDirectory)..\..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\$(_EfcptTasksFolder)\JD.Efcpt.Build.Tasks.dll</_EfcptTaskAssembly>
+    <_EfcptTaskAssembly Condition="!Exists('$(_EfcptTaskAssembly)') and '$(Configuration)' == ''">$(MSBuildThisFileDirectory)..\..\JD.Efcpt.Build.Tasks\bin\Debug\$(_EfcptTasksFolder)\JD.Efcpt.Build.Tasks.dll</_EfcptTaskAssembly>
   </PropertyGroup>
 
   <!-- Register MSBuild tasks - use AssemblyFile to avoid NuGet copying/locking the DLL -->

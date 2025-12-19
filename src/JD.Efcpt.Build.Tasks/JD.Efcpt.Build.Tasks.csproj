@@ -5,6 +5,7 @@
     <AssemblyName>JD.Efcpt.Build.Tasks</AssemblyName>
     <RootNamespace>JD.Efcpt.Build.Tasks</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
