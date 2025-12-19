@@ -21,6 +21,12 @@
           "System.Security.Cryptography.ProtectedData": "9.0.6"
         }
       },
+      "PatternKit.Core": {
+        "type": "Direct",
+        "requested": "[0.17.3, )",
+        "resolved": "0.17.3",
+        "contentHash": "tnzK650Bnb5VcggnJEKnYbF2gZ/dajS8E3mfU/iuGOHK2s2LJsKI9+K3t+znd2SVgwxV2axsBHcMCj9dbndndw=="
+      },
       "Microsoft.NET.StringTools": {
         "type": "Transitive",
         "resolved": "18.0.2",
@@ -61,6 +67,12 @@
         "dependencies": {
           "Microsoft.Build.Framework": "18.0.2"
         }
+      },
+      "PatternKit.Core": {
+        "type": "Direct",
+        "requested": "[0.17.3, )",
+        "resolved": "0.17.3",
+        "contentHash": "tnzK650Bnb5VcggnJEKnYbF2gZ/dajS8E3mfU/iuGOHK2s2LJsKI9+K3t+znd2SVgwxV2axsBHcMCj9dbndndw=="
       }
     },
     "net9.0": {
@@ -78,6 +90,12 @@
         "dependencies": {
           "Microsoft.Build.Framework": "18.0.2"
         }
+      },
+      "PatternKit.Core": {
+        "type": "Direct",
+        "requested": "[0.17.3, )",
+        "resolved": "0.17.3",
+        "contentHash": "tnzK650Bnb5VcggnJEKnYbF2gZ/dajS8E3mfU/iuGOHK2s2LJsKI9+K3t+znd2SVgwxV2axsBHcMCj9dbndndw=="
       }
     }
   }

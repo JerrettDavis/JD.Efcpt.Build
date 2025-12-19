@@ -1,16 +1,30 @@
 using JD.Efcpt.Build.Tasks;
 using JD.Efcpt.Build.Tests.Infrastructure;
+using TinyBDD;
+using TinyBDD.Xunit;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace JD.Efcpt.Build.Tests;
 
+[Feature("EnsureDacpacBuilt task: builds or reuses DACPAC based on timestamps")]
 [Collection(nameof(AssemblySetup))]
-public class EnsureDacpacBuiltTests
+public sealed class EnsureDacpacBuiltTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
-    [Fact]
-    public void Uses_existing_dacpac_when_current()
+    private sealed record SetupState(
+        TestFolder Folder,
+        string SqlProj,
+        string DacpacPath,
+        TestBuildEngine Engine);
+
+    private sealed record TaskResult(
+        SetupState Setup,
+        EnsureDacpacBuilt Task,
+        bool Success);
+
+    private static SetupState SetupCurrentDacpac()
     {
-        using var folder = new TestFolder();
+        var folder = new TestFolder();
         var sqlproj = folder.WriteFile("db/Db.sqlproj", "<Project />");
         var dacpac = Path.Combine(folder.Root, "db", "bin", "Debug", "Db.dacpac");
         Directory.CreateDirectory(Path.GetDirectoryName(dacpac)!);
@@ -20,26 +34,12 @@ public class EnsureDacpacBuiltTests
         File.SetLastWriteTimeUtc(dacpac, DateTime.UtcNow);
 
         var engine = new TestBuildEngine();
-        var task = new EnsureDacpacBuilt
-        {
-            BuildEngine = engine,
-            SqlProjPath = sqlproj,
-            Configuration = "Debug",
-            DotNetExe = "dotnet", // should not be invoked because dacpac is current
-            LogVerbosity = "detailed"
-        };
-
-        var ok = task.Execute();
-
-        Assert.True(ok);
-        Assert.Equal(Path.GetFullPath(dacpac), task.DacpacPath);
-        Assert.Empty(engine.Errors);
+        return new SetupState(folder, sqlproj, dacpac, engine);
     }
 
-    [Fact]
-    public void Rebuilds_when_dacpac_is_stale()
+    private static SetupState SetupStaleDacpac()
     {
-        using var folder = new TestFolder();
+        var folder = new TestFolder();
         var sqlproj = folder.WriteFile("db/Db.sqlproj", "<Project />");
         var dacpac = Path.Combine(folder.Root, "db", "bin", "Debug", "Db.dacpac");
         Directory.CreateDirectory(Path.GetDirectoryName(dacpac)!);
@@ -47,28 +47,60 @@ public class EnsureDacpacBuiltTests
 
         File.SetLastWriteTimeUtc(sqlproj, DateTime.UtcNow);
         File.SetLastWriteTimeUtc(dacpac, DateTime.UtcNow.AddMinutes(-5));
-        
-        var initialFakes = Environment.GetEnvironmentVariable("EFCPT_FAKE_BUILD");
-
-        Environment.SetEnvironmentVariable("EFCPT_FAKE_BUILD", "1");
 
         var engine = new TestBuildEngine();
+        return new SetupState(folder, sqlproj, dacpac, engine);
+    }
+
+    private static TaskResult ExecuteTask(SetupState setup, bool useFakeBuild = false)
+    {
+        var initialFakes = Environment.GetEnvironmentVariable("EFCPT_FAKE_BUILD");
+        if (useFakeBuild)
+            Environment.SetEnvironmentVariable("EFCPT_FAKE_BUILD", "1");
+
         var task = new EnsureDacpacBuilt
         {
-            BuildEngine = engine,
-            SqlProjPath = sqlproj,
+            BuildEngine = setup.Engine,
+            SqlProjPath = setup.SqlProj,
             Configuration = "Debug",
             DotNetExe = "dotnet",
-            LogVerbosity = "minimal"
+            LogVerbosity = "detailed"
         };
 
-        var ok = task.Execute();
+        var success = task.Execute();
 
-        Assert.True(ok, TestOutput.DescribeErrors(engine));
-        Assert.Equal(Path.GetFullPath(dacpac), task.DacpacPath);
-        var content = File.ReadAllText(dacpac);
-        Assert.Contains("fake dacpac", content);
-        
         Environment.SetEnvironmentVariable("EFCPT_FAKE_BUILD", initialFakes);
+
+        return new TaskResult(setup, task, success);
+    }
+
+    [Scenario("Uses existing DACPAC when it is newer than sqlproj")]
+    [Fact]
+    public async Task Uses_existing_dacpac_when_current()
+    {
+        await Given("sqlproj and current dacpac", SetupCurrentDacpac)
+            .When("execute task", s => ExecuteTask(s, useFakeBuild: false))
+            .Then("task succeeds", r => r.Success)
+            .And("dacpac path is correct", r => r.Task.DacpacPath == Path.GetFullPath(r.Setup.DacpacPath))
+            .And("no errors logged", r => r.Setup.Engine.Errors.Count == 0)
+            .And(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Rebuilds DACPAC when it is older than sqlproj")]
+    [Fact]
+    public async Task Rebuilds_when_dacpac_is_stale()
+    {
+        await Given("sqlproj newer than dacpac", SetupStaleDacpac)
+            .When("execute task with fake build", s => ExecuteTask(s, useFakeBuild: true))
+            .Then("task succeeds", r => r.Success)
+            .And("dacpac path is correct", r => r.Task.DacpacPath == Path.GetFullPath(r.Setup.DacpacPath))
+            .And("dacpac contains fake content", r =>
+            {
+                var content = File.ReadAllText(r.Setup.DacpacPath);
+                return content.Contains("fake dacpac");
+            })
+            .And(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
     }
 }

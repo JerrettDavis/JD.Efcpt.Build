@@ -49,6 +49,17 @@
           "Microsoft.TestPlatform.TestHost": "18.0.1"
         }
       },
+      "TinyBDD.Xunit": {
+        "type": "Direct",
+        "requested": "[0.12.1, )",
+        "resolved": "0.12.1",
+        "contentHash": "1V1RAF1OGY7m9kGzhhFpe4NzZO2bd8vSEoL9AlFhEWQ0GIeCCJ/a5Bq4Eqw00n9op/ZHUtb9Retk9XfQSkvKFw==",
+        "dependencies": {
+          "TinyBDD": "0.12.1",
+          "xunit.abstractions": "2.0.3",
+          "xunit.extensibility.core": "2.9.3"
+        }
+      },
       "xunit": {
         "type": "Direct",
         "requested": "[2.9.3, )",
@@ -90,6 +101,11 @@
         "resolved": "13.0.3",
         "contentHash": "HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ=="
       },
+      "PatternKit.Core": {
+        "type": "Transitive",
+        "resolved": "0.17.3",
+        "contentHash": "tnzK650Bnb5VcggnJEKnYbF2gZ/dajS8E3mfU/iuGOHK2s2LJsKI9+K3t+znd2SVgwxV2axsBHcMCj9dbndndw=="
+      },
       "System.Configuration.ConfigurationManager": {
         "type": "Transitive",
         "resolved": "9.0.0",
@@ -108,6 +124,11 @@
         "type": "Transitive",
         "resolved": "9.0.6",
         "contentHash": "yErfw/3pZkJE/VKza/Cm5idTpIKOy/vsmVi59Ta5SruPVtubzxb8CtnE8tyUpzs5pr0Y28GUFfSVzAhCLN3F/Q=="
+      },
+      "TinyBDD": {
+        "type": "Transitive",
+        "resolved": "0.12.1",
+        "contentHash": "pf5G0SU/Gl65OAQoPbZC8tlAOvLM6/WowdmhTVJv8eov8ywgGaQbM7Z3mpF64P+u4x/0HGKYuqcNlimGqoQbTw=="
       },
       "xunit.abstractions": {
         "type": "Transitive",
@@ -153,7 +174,8 @@
         "type": "Project",
         "dependencies": {
           "Microsoft.Build.Framework": "[18.0.2, )",
-          "Microsoft.Build.Utilities.Core": "[18.0.2, )"
+          "Microsoft.Build.Utilities.Core": "[18.0.2, )",
+          "PatternKit.Core": "[0.17.3, )"
         }
       }
     }
