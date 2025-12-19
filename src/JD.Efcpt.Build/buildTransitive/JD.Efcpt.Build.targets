@@ -44,6 +44,7 @@
       - EfcptRenaming          : optional override path to efcpt.renaming.json
       - EfcptTemplateDir       : optional override path to the template directory
       - EfcptSolutionDir       : optional solution root to probe for inputs
+      - EfcptSolutionPath      : optional solution file path for SQL project fallback scanning
       - EfcptProbeSolutionDir  : boolean-like flag controlling whether SolutionDir is probed (default: true)
       - EfcptOutput            : output directory used by later stages
       - EfcptDumpResolvedInputs: when 'true', write resolved-inputs.json for debugging
@@ -60,6 +61,7 @@
         RenamingOverride="$(EfcptRenaming)"
         TemplateDirOverride="$(EfcptTemplateDir)"
         SolutionDir="$(EfcptSolutionDir)"
+        SolutionPath="$(EfcptSolutionPath)"
         ProbeSolutionDir="$(EfcptProbeSolutionDir)"
         OutputDir="$(EfcptOutput)"
         DefaultsRoot="$(MSBuildThisFileDirectory)Defaults"

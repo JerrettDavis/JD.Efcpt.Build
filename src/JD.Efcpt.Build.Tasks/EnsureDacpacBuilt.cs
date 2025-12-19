@@ -13,7 +13,7 @@ namespace JD.Efcpt.Build.Tasks;
 /// <remarks>
 /// <para>
 /// This task is typically invoked by the <c>EfcptEnsureDacpac</c> target in the JD.Efcpt.Build
-/// pipeline. It locates the SQL project (<c>.sqlproj</c>), determines whether an existing DACPAC is
+/// pipeline. It locates the SQL project, determines whether an existing DACPAC is
 /// up to date, and, if necessary, triggers a build using either <c>msbuild.exe</c> or
 /// <c>dotnet msbuild</c>.
 /// </para>
@@ -34,7 +34,7 @@ namespace JD.Efcpt.Build.Tasks;
 public sealed class EnsureDacpacBuilt : Task
 {
     /// <summary>
-    /// Path to the SQL project (<c>.sqlproj</c>) that produces the DACPAC.
+    /// Path to the SQL project that produces the DACPAC.
     /// </summary>
     [Required]
     public string SqlProjPath { get; set; } = "";
@@ -152,7 +152,7 @@ public sealed class EnsureDacpacBuilt : Task
                     Exe: string.Empty,
                     Args: string.Empty,
                     IsFake: true))
-            // Branch 2: Modern dotnet build (for Microsoft.Build.Sql SDK projects)
+            // Branch 2: Modern dotnet build (for supported SQL SDK projects)
             .When(static (in ctx) => ctx.UsesModernSdk)
             .Then((in ctx) =>
                 new BuildToolSelection(
@@ -191,7 +191,7 @@ public sealed class EnsureDacpacBuilt : Task
 
         var sqlproj = Path.GetFullPath(SqlProjPath);
         if (!File.Exists(sqlproj))
-            throw new FileNotFoundException("sqlproj not found", sqlproj);
+            throw new FileNotFoundException("SQL project not found", sqlproj);
 
         var binDir = Path.Combine(Path.GetDirectoryName(sqlproj)!, "bin", Configuration);
         Directory.CreateDirectory(binDir);
@@ -232,7 +232,7 @@ public sealed class EnsureDacpacBuilt : Task
             MsBuildExe: MsBuildExe,
             DotNetExe: DotNetExe,
             IsFakeBuild: !string.IsNullOrWhiteSpace(fake),
-            UsesModernSdk: UsesModernSqlSdk(sqlproj));
+            UsesModernSdk: SqlProjectDetector.UsesModernSqlSdk(sqlproj));
 
         var selection = BuildToolStrategy.Value.Execute(in toolCtx);
 
@@ -267,7 +267,7 @@ public sealed class EnsureDacpacBuilt : Task
         {
             log.Error(stdout);
             log.Error(stderr);
-            throw new InvalidOperationException($"sqlproj build failed with exit code {p.ExitCode}");
+            throw new InvalidOperationException($"SQL project build failed with exit code {p.ExitCode}");
         }
 
         if (!string.IsNullOrWhiteSpace(stdout)) log.Detail(stdout);
@@ -288,20 +288,6 @@ public sealed class EnsureDacpacBuilt : Task
     private static readonly IReadOnlySet<string> ExcludedDirs = new HashSet<string>(
         ["bin", "obj"],
         StringComparer.OrdinalIgnoreCase);
-
-    private static bool UsesModernSqlSdk(string sqlProjPath)
-    {
-        try
-        {
-            var content = File.ReadAllText(sqlProjPath);
-            return content.Contains("Microsoft.Build.Sql", StringComparison.OrdinalIgnoreCase);
-        }
-        catch
-        {
-            // If we can't read the file, assume legacy format
-            return false;
-        }
-    }
 
     private static string? FindDacpacInDir(string dir) =>
         !Directory.Exists(dir)
