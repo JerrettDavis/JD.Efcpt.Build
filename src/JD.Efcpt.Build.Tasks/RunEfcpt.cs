@@ -1,5 +1,8 @@
-using Microsoft.Build.Framework;
 using System.Diagnostics;
+using JD.Efcpt.Build.Tasks.Extensions;
+using JD.Efcpt.Build.Tasks.Strategies;
+using Microsoft.Build.Framework;
+using PatternKit.Behavioral.Strategy;
 using Task = Microsoft.Build.Utilities.Task;
 
 namespace JD.Efcpt.Build.Tasks;
@@ -19,6 +22,12 @@ namespace JD.Efcpt.Build.Tasks;
 ///   <item>
 ///     <description>
 ///       If <see cref="ToolPath"/> is a non-empty explicit path, that executable is run directly.
+///     </description>
+///   </item>
+///   <item>
+///     <description>
+///       On .NET 10.0 or later, if dnx is available, the task runs <c>dnx &lt;ToolPackageId&gt;</c>
+///       to execute the tool without requiring installation.
 ///     </description>
 ///   </item>
 ///   <item>
@@ -76,7 +85,8 @@ public sealed class RunEfcpt : Task
     ///   <item><description>Any other non-empty value behaves like the global tool mode but is reserved for future extension.</description></item>
     /// </list>
     /// </value>
-    [Required] public string ToolMode { get; set; } = "auto";
+    [Required]
+    public string ToolMode { get; set; } = "auto";
 
     /// <summary>
     /// Package identifier of the efcpt dotnet tool used when restoring or updating the global tool.
@@ -85,7 +95,8 @@ public sealed class RunEfcpt : Task
     /// Defaults to <c>ErikEJ.EFCorePowerTools.Cli</c>. Only used when <see cref="ToolMode"/> selects the
     /// global tool path and <see cref="ToolRestore"/> evaluates to <c>true</c>.
     /// </value>
-    [Required] public string ToolPackageId { get; set; } = "ErikEJ.EFCorePowerTools.Cli";
+    [Required]
+    public string ToolPackageId { get; set; } = "ErikEJ.EFCorePowerTools.Cli";
 
     /// <summary>
     /// Optional version constraint for the efcpt tool package.
@@ -139,27 +150,32 @@ public sealed class RunEfcpt : Task
     /// Typically points at the intermediate output directory created by earlier pipeline stages.
     /// The directory is created if it does not already exist.
     /// </value>
-    [Required] public string WorkingDirectory { get; set; } = "";
+    [Required]
+    public string WorkingDirectory { get; set; } = "";
 
     /// <summary>
     /// Full path to the DACPAC file that efcpt will inspect.
     /// </summary>
-    [Required] public string DacpacPath { get; set; } = "";
+    [Required]
+    public string DacpacPath { get; set; } = "";
 
     /// <summary>
     /// Full path to the efcpt configuration JSON file.
     /// </summary>
-    [Required] public string ConfigPath { get; set; } = "";
+    [Required]
+    public string ConfigPath { get; set; } = "";
 
     /// <summary>
     /// Full path to the efcpt renaming JSON file.
     /// </summary>
-    [Required] public string RenamingPath { get; set; } = "";
+    [Required]
+    public string RenamingPath { get; set; } = "";
 
     /// <summary>
     /// Path to the template directory that contains the C# template files used by efcpt.
     /// </summary>
-    [Required] public string TemplateDir { get; set; } = "";
+    [Required]
+    public string TemplateDir { get; set; } = "";
 
     /// <summary>
     /// Directory where generated C# model files will be written.
@@ -168,7 +184,8 @@ public sealed class RunEfcpt : Task
     /// The directory is created if it does not exist. Generated files are later renamed to
     /// <c>.g.cs</c> and added to compilation by the <c>EfcptAddToCompile</c> target.
     /// </value>
-    [Required] public string OutputDir { get; set; } = "";
+    [Required]
+    public string OutputDir { get; set; } = "";
 
     /// <summary>
     /// Controls how much diagnostic information the task writes to the MSBuild log.
@@ -187,6 +204,103 @@ public sealed class RunEfcpt : Task
     /// CLI version in use.
     /// </value>
     public string Provider { get; set; } = "mssql";
+
+    private readonly record struct ToolResolutionContext(
+        string ToolPath,
+        string ToolMode,
+        string? ManifestDir,
+        bool ForceManifestOnNonWindows,
+        string DotNetExe,
+        string ToolCommand,
+        string ToolPackageId,
+        string WorkingDir,
+        string Args,
+        BuildLog Log
+    );
+
+    private readonly record struct ToolInvocation(
+        string Exe,
+        string Args,
+        string Cwd,
+        bool UseManifest
+    );
+
+    private readonly record struct ToolRestoreContext(
+        bool UseManifest,
+        bool ShouldRestore,
+        bool HasExplicitPath,
+        bool HasPackageId,
+        string? ManifestDir,
+        string WorkingDir,
+        string DotNetExe,
+        string ToolPath,
+        string ToolPackageId,
+        string ToolVersion,
+        BuildLog Log
+    );
+
+    private static readonly Lazy<Strategy<ToolResolutionContext, ToolInvocation>> ToolResolutionStrategy = new(() =>
+        Strategy<ToolResolutionContext, ToolInvocation>.Create()
+            .When(static (in ctx) => PathUtils.HasExplicitPath(ctx.ToolPath))
+            .Then(static (in ctx)
+                => new ToolInvocation(
+                    Exe: PathUtils.FullPath(ctx.ToolPath, ctx.WorkingDir),
+                    Args: ctx.Args,
+                    Cwd: ctx.WorkingDir,
+                    UseManifest: false))
+            .When((in ctx) => IsDotNet10OrLater() && IsDnxAvailable(ctx.DotNetExe))
+            .Then((in ctx)
+                => new ToolInvocation(
+                    Exe: ctx.DotNetExe,
+                    Args: $"dnx {ctx.ToolPackageId} --yes -- {ctx.Args}",
+                    Cwd: ctx.WorkingDir,
+                    UseManifest: false))
+            .When((in ctx) => ToolIsAutoOrManifest(ctx))
+            .Then(static (in ctx)
+                => new ToolInvocation(
+                    Exe: ctx.DotNetExe,
+                    Args: $"tool run {ctx.ToolCommand} -- {ctx.Args}",
+                    Cwd: ctx.WorkingDir,
+                    UseManifest: true))
+            .Default(static (in ctx)
+                => new ToolInvocation(
+                    Exe: ctx.ToolCommand,
+                    Args: ctx.Args,
+                    Cwd: ctx.WorkingDir,
+                    UseManifest: false))
+            .Build());
+
+    private static bool ToolIsAutoOrManifest(ToolResolutionContext ctx) =>
+        ctx.ToolMode.EqualsIgnoreCase("tool-manifest") ||
+        (ctx.ToolMode.EqualsIgnoreCase("auto") &&
+        (ctx.ManifestDir is not null || ctx.ForceManifestOnNonWindows));
+
+    private static readonly Lazy<ActionStrategy<ToolRestoreContext>> ToolRestoreStrategy = new(() =>
+        ActionStrategy<ToolRestoreContext>.Create()
+            // Manifest restore: restore tools from local manifest
+            .When(static (in ctx) => ctx is { UseManifest: true, ShouldRestore: true })
+            .Then((in ctx) =>
+            {
+                var restoreCwd = ctx.ManifestDir ?? ctx.WorkingDir;
+                RunProcess(ctx.Log, ctx.DotNetExe, "tool restore", restoreCwd);
+            })
+            // Global restore: update global tool package
+            .When(static (in ctx) 
+                => ctx is
+                {
+                    UseManifest: false, 
+                    ShouldRestore: true, 
+                    HasExplicitPath: false, 
+                    HasPackageId: true
+                })
+            .Then((in ctx) =>
+            {
+                var versionArg = string.IsNullOrWhiteSpace(ctx.ToolVersion) ? "" : $" --version \"{ctx.ToolVersion}\"";
+                RunProcess(ctx.Log, ctx.DotNetExe, $"tool update --global {ctx.ToolPackageId}{versionArg}", ctx.WorkingDir);
+            })
+            // Default: no restoration needed
+            .Default(static (in _) => { })
+            .Build());
 
     /// <summary>
     /// Invokes the efcpt CLI against the specified DACPAC and configuration files.
@@ -217,7 +331,7 @@ public sealed class RunEfcpt : Task
 
             // Determine whether we will use a local tool manifest or fall back to the global tool.
             var manifestDir = FindManifestDir(workingDir);
-            var mode = ToolMode ?? "auto";
+            var mode = ToolMode;
 
             // On non-Windows, a bare efcpt executable is unlikely to exist unless explicitly provided
             // via ToolPath. To avoid fragile PATH assumptions on CI agents, treat "auto" as
@@ -225,63 +339,41 @@ public sealed class RunEfcpt : Task
             // no explicit ToolPath was supplied.
             var forceManifestOnNonWindows = !OperatingSystem.IsWindows() && !PathUtils.HasExplicitPath(ToolPath);
 
-            var useManifest = string.Equals(mode, "tool-manifest", StringComparison.OrdinalIgnoreCase)
-                              || (string.Equals(mode, "auto", StringComparison.OrdinalIgnoreCase)
-                                  && (manifestDir is not null || forceManifestOnNonWindows));
+            // Use the Strategy pattern to resolve tool invocation
+            var context = new ToolResolutionContext(
+                ToolPath, mode, manifestDir, forceManifestOnNonWindows,
+                DotNetExe, ToolCommand, ToolPackageId, workingDir, args, log);
 
-            string invokeExe;
-            string invokeArgs;
-            string invokeCwd;
+            var invocation = ToolResolutionStrategy.Value.Execute(in context);
 
-            if (PathUtils.HasExplicitPath(ToolPath))
-            {
-                // Explicit executable path always wins and bypasses dotnet tool resolution.
-                invokeExe = PathUtils.FullPath(ToolPath, workingDir);
-                invokeArgs = args;
-                invokeCwd = workingDir;
-            }
-            else if (useManifest)
-            {
-                // In manifest mode we always invoke via "dotnet tool run <ToolCommand> -- <args>".
-                invokeExe = DotNetExe;
-                invokeArgs = $"tool run {ToolCommand} -- {args}";
-                invokeCwd = workingDir;
-            }
-            else
-            {
-                // Global mode: rely on a globally installed efcpt on PATH.
-                invokeExe = ToolCommand;
-                invokeArgs = args;
-                invokeCwd = workingDir;
-            }
+            var invokeExe = invocation.Exe;
+            var invokeArgs = invocation.Args;
+            var invokeCwd = invocation.Cwd;
+            var useManifest = invocation.UseManifest;
 
             log.Info($"Running in working directory {invokeCwd}: {invokeExe} {invokeArgs}");
             log.Info($"Output will be written to {OutputDir}");
             Directory.CreateDirectory(workingDir);
             Directory.CreateDirectory(OutputDir);
 
-            if (useManifest)
-            {
-                // Prefer running tool restore in the manifest directory when we have one; if we are
-                // forcing manifest mode on non-Windows without a discovered manifest directory, fall
-                // back to the working directory so that dotnet will use the nearest manifest or the
-                // default global location.
-                var restoreCwd = manifestDir ?? workingDir;
-                if (IsTrue(ToolRestore))
-                    RunProcess(log, DotNetExe, "tool restore", restoreCwd);
+            // Restore tools if needed using the ActionStrategy pattern
+            var restoreContext = new ToolRestoreContext(
+                UseManifest: useManifest,
+                ShouldRestore: ToolRestore.IsTrue(),
+                HasExplicitPath: PathUtils.HasExplicitPath(ToolPath),
+                HasPackageId: PathUtils.HasValue(ToolPackageId),
+                ManifestDir: manifestDir,
+                WorkingDir: workingDir,
+                DotNetExe: DotNetExe,
+                ToolPath: ToolPath,
+                ToolPackageId: ToolPackageId,
+                ToolVersion: ToolVersion,
+                Log: log
+            );
 
-                RunProcess(log, invokeExe, invokeArgs, invokeCwd);
-            }
-            else
-            {
-                if (!PathUtils.HasExplicitPath(ToolPath) && IsTrue(ToolRestore) && PathUtils.HasValue(ToolPackageId))
-                {
-                    var versionArg = string.IsNullOrWhiteSpace(ToolVersion) ? "" : $" --version \"{ToolVersion}\"";
-                    RunProcess(log, DotNetExe, $"tool update --global {ToolPackageId}{versionArg}", workingDir);
-                }
+            ToolRestoreStrategy.Value.Execute(in restoreContext);
 
-                RunProcess(log, invokeExe, invokeArgs, invokeCwd);
-            }
+            RunProcess(log, invokeExe, invokeArgs, invokeCwd);
 
             return true;
         }
@@ -292,35 +384,72 @@ public sealed class RunEfcpt : Task
         }
     }
 
-    private static bool IsTrue(string? value)
-        => string.Equals(value, "true", StringComparison.OrdinalIgnoreCase) || value == "1" || string.Equals(value, "yes", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsDotNet10OrLater()
+    {
+        try
+        {
+            var version = Environment.Version;
+            return version.Major >= 10;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool IsDnxAvailable(string dotnetExe)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = dotnetExe,
+                Arguments = "dnx --help",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var p = Process.Start(psi);
+            if (p is null) return false;
+
+            p.WaitForExit(5000); // 5 second timeout
+            return p.ExitCode == 0;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 
     private string BuildArgs()
     {
         var workingDir = Path.GetFullPath(WorkingDirectory);
-        
+
         // Make paths relative to working directory to avoid duplication
         var configPath = MakeRelativeIfPossible(ConfigPath, workingDir);
         var renamingPath = MakeRelativeIfPossible(RenamingPath, workingDir);
         var outputDir = MakeRelativeIfPossible(OutputDir, workingDir);
-        
+
         // Ensure paths don't end with backslash to avoid escaping the closing quote
         configPath = configPath.TrimEnd('\\', '/');
         renamingPath = renamingPath.TrimEnd('\\', '/');
         outputDir = outputDir.TrimEnd('\\', '/');
-        
+
         // DacpacPath is typically outside the working directory, so keep it absolute
-        return $"\"{DacpacPath}\" {Provider} -i \"{configPath}\" -r \"{renamingPath}\"" + 
+        return $"\"{DacpacPath}\" {Provider} -i \"{configPath}\" -r \"{renamingPath}\"" +
                (workingDir.Equals(Path.GetFullPath(OutputDir), StringComparison.OrdinalIgnoreCase) ? string.Empty : $" -o \"{outputDir}\"");
     }
-    
+
     private static string MakeRelativeIfPossible(string path, string basePath)
     {
         try
         {
             var fullPath = Path.GetFullPath(path);
             var fullBase = Path.GetFullPath(basePath);
-            
+
             // If the path is under the base directory, make it relative
             if (fullPath.StartsWith(fullBase, StringComparison.OrdinalIgnoreCase))
             {
@@ -332,7 +461,7 @@ public sealed class RunEfcpt : Task
         {
             // Fall back to absolute path on any error
         }
-        
+
         return path;
     }
 
@@ -351,13 +480,13 @@ public sealed class RunEfcpt : Task
 
     private static void RunProcess(BuildLog log, string fileName, string args, string workingDir)
     {
-        var (exe, finalArgs) = NormalizeCommand(fileName, args);
-        log.Info($"> {exe} {finalArgs}");
+        var normalized = CommandNormalizationStrategy.Normalize(fileName, args);
+        log.Info($"> {normalized.FileName} {normalized.Args}");
 
         var psi = new ProcessStartInfo
         {
-            FileName = exe,
-            Arguments = finalArgs,
+            FileName = normalized.FileName,
+            Arguments = normalized.Args,
             WorkingDirectory = workingDir,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -368,7 +497,7 @@ public sealed class RunEfcpt : Task
         if (!string.IsNullOrWhiteSpace(testDac))
             psi.Environment["EFCPT_TEST_DACPAC"] = testDac;
 
-        using var p = Process.Start(psi) ?? throw new InvalidOperationException($"Failed to start: {exe}");
+        using var p = Process.Start(psi) ?? throw new InvalidOperationException($"Failed to start: {normalized.FileName}");
         var stdout = p.StandardOutput.ReadToEnd();
         var stderr = p.StandardError.ReadToEnd();
         p.WaitForExit();
@@ -377,16 +506,6 @@ public sealed class RunEfcpt : Task
         if (!string.IsNullOrWhiteSpace(stderr)) log.Error(stderr);
 
         if (p.ExitCode != 0)
-            throw new InvalidOperationException($"Process failed ({p.ExitCode}): {exe} {finalArgs}");
-    }
-
-    private static (string fileName, string args) NormalizeCommand(string command, string args)
-    {
-        if (OperatingSystem.IsWindows() && (command.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase) || command.EndsWith(".bat", StringComparison.OrdinalIgnoreCase)))
-        {
-            return ("cmd.exe", $"/c \"{command}\" {args}");
-        }
-
-        return (command, args);
+            throw new InvalidOperationException($"Process failed ({p.ExitCode}): {normalized.FileName} {normalized.Args}");
     }
 }

@@ -1,274 +1,287 @@
 using Microsoft.Build.Utilities;
 using JD.Efcpt.Build.Tasks;
 using JD.Efcpt.Build.Tests.Infrastructure;
+using TinyBDD;
+using TinyBDD.Xunit;
 using Xunit;
 using Xunit.Abstractions;
+using Task = System.Threading.Tasks.Task;
 
 namespace JD.Efcpt.Build.Tests;
 
+[Feature("Full pipeline: resolve, dacpac, stage, fingerprint, generate, rename")]
 [Collection(nameof(AssemblySetup))]
-public class PipelineTests(ITestOutputHelper outputHelper) : IDisposable
+public sealed class PipelineTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
-    
-    
-    [Fact]
-    public void Generates_and_renames_when_fingerprint_changes()
-    {
-        using var folder = new TestFolder();
+    private sealed record PipelineState(
+        TestFolder Folder,
+        string AppDir,
+        string DbDir,
+        string OutputDir,
+        string GeneratedDir,
+        TestBuildEngine Engine);
 
+    private sealed record ResolveResult(
+        PipelineState State,
+        ResolveSqlProjAndInputs Task);
+
+    private sealed record EnsureResult(
+        ResolveResult Resolve,
+        EnsureDacpacBuilt Task);
+
+    private sealed record StageResult(
+        EnsureResult Ensure,
+        StageEfcptInputs Task);
+
+    private sealed record FingerprintResult(
+        StageResult Stage,
+        ComputeFingerprint Task);
+
+    private sealed record RunResult(
+        FingerprintResult Fingerprint,
+        RunEfcpt Task);
+
+    private sealed record RenameResult(
+        RunResult Run,
+        RenameGeneratedFiles Task,
+        string[] GeneratedFiles);
+
+    private static PipelineState SetupFolders()
+    {
+        var folder = new TestFolder();
         var appDir = folder.CreateDir("SampleApp");
         var dbDir = folder.CreateDir("SampleDatabase");
         TestFileSystem.CopyDirectory(TestPaths.Asset("SampleApp"), appDir);
         TestFileSystem.CopyDirectory(TestPaths.Asset("SampleDatabase"), dbDir);
 
-        var sqlproj = Path.Combine(dbDir, "Sample.Database.sqlproj");
-        var csproj = Path.Combine(appDir, "Sample.App.csproj");
-        var dacpac = Path.Combine(dbDir, "bin", "Debug", "Sample.Database.dacpac");
+        var outputDir = Path.Combine(appDir, "obj", "efcpt");
+        var generatedDir = Path.Combine(outputDir, "Generated");
+        var engine = new TestBuildEngine();
+
+        return new PipelineState(folder, appDir, dbDir, outputDir, generatedDir, engine);
+    }
+
+    private static PipelineState SetupWithExistingDacpac(PipelineState state)
+    {
+        var sqlproj = Path.Combine(state.DbDir, "Sample.Database.sqlproj");
+        var dacpac = Path.Combine(state.DbDir, "bin", "Debug", "Sample.Database.dacpac");
         Directory.CreateDirectory(Path.GetDirectoryName(dacpac)!);
         File.WriteAllText(dacpac, "dacpac");
         File.SetLastWriteTimeUtc(sqlproj, DateTime.UtcNow.AddMinutes(-5));
         File.SetLastWriteTimeUtc(dacpac, DateTime.UtcNow);
+        return state;
+    }
 
-        var outputDir = Path.Combine(appDir, "obj", "efcpt");
-        var generatedDir = Path.Combine(outputDir, "Generated");
-        var engine = new TestBuildEngine();
-
+    private static ResolveResult ResolveInputs(PipelineState state)
+    {
+        var csproj = Path.Combine(state.AppDir, "Sample.App.csproj");
         var resolve = new ResolveSqlProjAndInputs
         {
-            BuildEngine = engine,
+            BuildEngine = state.Engine,
             ProjectFullPath = csproj,
-            ProjectDirectory = appDir,
+            ProjectDirectory = state.AppDir,
             Configuration = "Debug",
             ProjectReferences = [new TaskItem(Path.Combine("..", "SampleDatabase", "Sample.Database.sqlproj"))],
-            OutputDir = outputDir,
-            SolutionDir = folder.Root,
+            OutputDir = state.OutputDir,
+            SolutionDir = state.Folder.Root,
             ProbeSolutionDir = "true",
             DefaultsRoot = TestPaths.DefaultsRoot
         };
-        Assert.True(resolve.Execute());
+
+        var success = resolve.Execute();
+        return success
+            ? new ResolveResult(state, resolve)
+            : throw new InvalidOperationException($"Resolve failed: {TestOutput.DescribeErrors(state.Engine)}");
+    }
+
+    private static EnsureResult EnsureDacpac(ResolveResult resolve, bool useFakeBuild = true)
+    {
+        var initialFakeBuild = Environment.GetEnvironmentVariable("EFCPT_FAKE_BUILD");
+        if (useFakeBuild)
+            Environment.SetEnvironmentVariable("EFCPT_FAKE_BUILD", "1");
 
         var ensure = new EnsureDacpacBuilt
         {
-            BuildEngine = engine,
-            SqlProjPath = resolve.SqlProjPath,
+            BuildEngine = resolve.State.Engine,
+            SqlProjPath = resolve.Task.SqlProjPath,
             Configuration = "Debug",
-            DotNetExe = "/bin/false"
+            DotNetExe = useFakeBuild ? "/bin/false" : TestPaths.DotNetExe
         };
-        Assert.True(ensure.Execute());
 
+        Environment.SetEnvironmentVariable("EFCPT_FAKE_BUILD", initialFakeBuild);
+
+        var success = ensure.Execute();
+        return success
+            ? new EnsureResult(resolve, ensure)
+            : throw new InvalidOperationException($"Ensure dacpac failed: {TestOutput.DescribeErrors(resolve.State.Engine)}");
+    }
+
+    private static StageResult StageInputs(EnsureResult ensure)
+    {
         var stage = new StageEfcptInputs
         {
-            BuildEngine = engine,
-            OutputDir = outputDir,
-            ConfigPath = resolve.ResolvedConfigPath,
-            RenamingPath = resolve.ResolvedRenamingPath,
-            TemplateDir = resolve.ResolvedTemplateDir
+            BuildEngine = ensure.Resolve.State.Engine,
+            OutputDir = ensure.Resolve.State.OutputDir,
+            ConfigPath = ensure.Resolve.Task.ResolvedConfigPath,
+            RenamingPath = ensure.Resolve.Task.ResolvedRenamingPath,
+            TemplateDir = ensure.Resolve.Task.ResolvedTemplateDir
         };
-        Assert.True(stage.Execute());
 
-        var fingerprintFile = Path.Combine(outputDir, "fingerprint.txt");
+        var success = stage.Execute();
+        return success
+            ? new StageResult(ensure, stage)
+            : throw new InvalidOperationException($"Stage failed: {TestOutput.DescribeErrors(ensure.Resolve.State.Engine)}");
+    }
+
+    private static FingerprintResult ComputeFingerprintHash(StageResult stage)
+    {
+        var fingerprintFile = Path.Combine(stage.Ensure.Resolve.State.OutputDir, "fingerprint.txt");
         var fingerprint = new ComputeFingerprint
         {
-            BuildEngine = engine,
-            DacpacPath = ensure.DacpacPath,
-            ConfigPath = stage.StagedConfigPath,
-            RenamingPath = stage.StagedRenamingPath,
-            TemplateDir = stage.StagedTemplateDir,
+            BuildEngine = stage.Ensure.Resolve.State.Engine,
+            DacpacPath = stage.Ensure.Task.DacpacPath,
+            ConfigPath = stage.Task.StagedConfigPath,
+            RenamingPath = stage.Task.StagedRenamingPath,
+            TemplateDir = stage.Task.StagedTemplateDir,
             FingerprintFile = fingerprintFile
         };
-        Assert.True(fingerprint.Execute());
-        Assert.Equal("true", fingerprint.HasChanged);
 
-        TestScripts.CreateFakeEfcpt(folder);
+        var success = fingerprint.Execute();
+        return success
+            ? new FingerprintResult(stage, fingerprint)
+            : throw new InvalidOperationException($"Fingerprint failed: {TestOutput.DescribeErrors(stage.Ensure.Resolve.State.Engine)}");
+    }
 
-        Environment.SetEnvironmentVariable("EFCPT_FAKE_EFCPT", "1");
+    private static RunResult RunEfcptTool(FingerprintResult fingerprint, bool useFake = true)
+    {
+        var initialFakeEfcpt = Environment.GetEnvironmentVariable("EFCPT_FAKE_EFCPT");
+        if (useFake)
+            Environment.SetEnvironmentVariable("EFCPT_FAKE_EFCPT", "1");
 
         var run = new RunEfcpt
         {
-            BuildEngine = engine,
-            ToolMode = "custom",
+            BuildEngine = fingerprint.Stage.Ensure.Resolve.State.Engine,
+            ToolMode = useFake ? "custom" : "dotnet",
             ToolRestore = "false",
-            WorkingDirectory = appDir,
-            DacpacPath = ensure.DacpacPath,
-            ConfigPath = stage.StagedConfigPath,
-            RenamingPath = stage.StagedRenamingPath,
-            TemplateDir = stage.StagedTemplateDir,
-            OutputDir = generatedDir
+            WorkingDirectory = fingerprint.Stage.Ensure.Resolve.State.AppDir,
+            DacpacPath = fingerprint.Stage.Ensure.Task.DacpacPath,
+            ConfigPath = fingerprint.Stage.Task.StagedConfigPath,
+            RenamingPath = fingerprint.Stage.Task.StagedRenamingPath,
+            TemplateDir = fingerprint.Stage.Task.StagedTemplateDir,
+            OutputDir = fingerprint.Stage.Ensure.Resolve.State.GeneratedDir
         };
-        Assert.True(run.Execute(), TestOutput.DescribeErrors(engine));
 
+        var success = run.Execute();
+        Environment.SetEnvironmentVariable("EFCPT_FAKE_EFCPT", initialFakeEfcpt);
+
+        return success
+            ? new RunResult(fingerprint, run)
+            : throw new InvalidOperationException($"Run efcpt failed: {TestOutput.DescribeErrors(fingerprint.Stage.Ensure.Resolve.State.Engine)}");
+    }
+
+    private static RenameResult RenameFiles(RunResult run)
+    {
         var rename = new RenameGeneratedFiles
         {
-            BuildEngine = engine,
-            GeneratedDir = generatedDir
+            BuildEngine = run.Fingerprint.Stage.Ensure.Resolve.State.Engine,
+            GeneratedDir = run.Fingerprint.Stage.Ensure.Resolve.State.GeneratedDir
         };
-        Assert.True(rename.Execute());
 
-        var generated = Directory.GetFiles(generatedDir, "*.g.cs", SearchOption.AllDirectories);
-        Assert.NotEmpty(generated);
+        var success = rename.Execute();
+        if (!success)
+            throw new InvalidOperationException($"Rename failed: {TestOutput.DescribeErrors(run.Fingerprint.Stage.Ensure.Resolve.State.Engine)}");
 
-        var combined = string.Join(Environment.NewLine, generated.Select(File.ReadAllText));
-        Assert.Contains("generated from", combined);
+        var generatedFiles = Directory.GetFiles(
+            run.Fingerprint.Stage.Ensure.Resolve.State.GeneratedDir,
+            "*.g.cs",
+            SearchOption.AllDirectories);
 
-        var fingerprint2 = new ComputeFingerprint
-        {
-            BuildEngine = engine,
-            DacpacPath = ensure.DacpacPath,
-            ConfigPath = stage.StagedConfigPath,
-            RenamingPath = stage.StagedRenamingPath,
-            TemplateDir = stage.StagedTemplateDir,
-            FingerprintFile = fingerprintFile
-        };
-        Assert.True(fingerprint2.Execute());
-        Assert.Equal("false", fingerprint2.HasChanged);
+        return new RenameResult(run, rename, generatedFiles);
     }
-
+    
+    [Scenario("Pipeline generates files when fingerprint changes and marks fingerprint unchanged on second run")]
     [Fact]
-    public void End_to_end_generates_dacpac_and_runs_real_efcpt()
+    public async Task Generates_and_renames_when_fingerprint_changes()
     {
-        using var folder = new TestFolder();
-
-        var appDir = folder.CreateDir("SampleApp");
-        var dbDir = folder.CreateDir("SampleDatabase");
-        TestFileSystem.CopyDirectory(TestPaths.Asset("SampleApp"), appDir);
-        TestFileSystem.CopyDirectory(TestPaths.Asset("SampleDatabase"), dbDir);
-        
-        
-        var initialFakes = Environment.GetEnvironmentVariable("EFCPT_FAKE_BUILD");
-
-        Environment.SetEnvironmentVariable("EFCPT_FAKE_BUILD", "1");
-        
-        Assert.True(Directory.Exists(appDir));
-
-        Path.Combine(dbDir, "Sample.Database.sqlproj");
-        var csproj = Path.Combine(appDir, "Sample.App.csproj");
-
-        var outputDir = Path.Combine(appDir, "obj", "efcpt");
-        var generatedDir = Path.Combine(outputDir, "Generated");
-        var engine = new TestBuildEngine();
-
-        var resolve = new ResolveSqlProjAndInputs
-        {
-            BuildEngine = engine,
-            ProjectFullPath = csproj,
-            ProjectDirectory = appDir,
-            Configuration = "Debug",
-            ProjectReferences = [new TaskItem(Path.Combine("..", "SampleDatabase", "Sample.Database.sqlproj"))],
-            OutputDir = outputDir,
-            SolutionDir = folder.Root,
-            ProbeSolutionDir = "true",
-            DefaultsRoot = TestPaths.DefaultsRoot
-        };
-        Assert.True(resolve.Execute(), TestOutput.DescribeErrors(engine));
-
-        Environment.SetEnvironmentVariable("EFCPT_FAKE_BUILD", null);
-        var ensure = new EnsureDacpacBuilt
-        {
-            BuildEngine = engine,
-            SqlProjPath = resolve.SqlProjPath,
-            Configuration = "Debug",
-            DotNetExe = TestPaths.DotNetExe
-        };
-        Assert.True(ensure.Execute(), TestOutput.DescribeErrors(engine));
-
-        var stage = new StageEfcptInputs
-        {
-            BuildEngine = engine,
-            OutputDir = outputDir,
-            ConfigPath = resolve.ResolvedConfigPath,
-            RenamingPath = resolve.ResolvedRenamingPath,
-            TemplateDir = resolve.ResolvedTemplateDir
-        };
-        Assert.True(stage.Execute(), TestOutput.DescribeErrors(engine));
-        
-        Assert.True(File.Exists(stage.StagedConfigPath));
-        Assert.True(File.Exists(stage.StagedRenamingPath));
-        Assert.True(File.Exists(ensure.DacpacPath));
-        Assert.True(Directory.Exists(stage.StagedTemplateDir));
-
-        outputHelper.WriteLine("Dacpac Last Write Time: " + File.GetLastWriteTimeUtc(ensure.DacpacPath).ToString("o"));
-        outputHelper.WriteLine("Dacpac Size: " + File.ReadAllBytes(ensure.DacpacPath).Length.ToString());
-
-        var fingerprintFile = Path.Combine(outputDir, "fingerprint.txt");
-        var fingerprint = new ComputeFingerprint
-        {
-            BuildEngine = engine,
-            DacpacPath = ensure.DacpacPath,
-            ConfigPath = stage.StagedConfigPath,
-            RenamingPath = stage.StagedRenamingPath,
-            TemplateDir = stage.StagedTemplateDir,
-            FingerprintFile = fingerprintFile
-        };
-        Assert.True(fingerprint.Execute(), TestOutput.DescribeErrors(engine));
-        
-        Assert.True(File.Exists(fingerprintFile));
-        Assert.True(Directory.Exists(appDir));
-
-        var run = new RunEfcpt
-        {
-            BuildEngine = engine,
-            ToolMode = "dotnet",
-            ToolRestore = "false",
-            WorkingDirectory = appDir,
-            DacpacPath = ensure.DacpacPath,
-            ConfigPath = stage.StagedConfigPath,
-            RenamingPath = stage.StagedRenamingPath,
-            TemplateDir = stage.StagedTemplateDir,
-            OutputDir = generatedDir
-        };
-
-        var result = run.Execute();
-        
-        outputHelper.WriteLine(string.Join(Environment.NewLine, engine.Messages.Select(e => e.Message)));
-        
-        Assert.True(result, TestOutput.DescribeErrors(engine));
-
-        // Locate generated model files; efcpt writes into a Models subfolder by default
-        var generatedRoot = Path.Combine(appDir, "obj", "efcpt", "Generated", "Models");
-        if (!Directory.Exists(generatedRoot))
-        {
-            // fall back to the root Generated folder if Models does not exist
-            generatedRoot = Path.Combine(appDir, "obj", "efcpt", "Generated");
-        }
-
-        Assert.True(Directory.Exists(generatedRoot), $"Expected generated output directory to exist: {generatedRoot}");
-
-        var generatedFiles = Directory.GetFiles(generatedRoot, "*.cs", SearchOption.AllDirectories);
-        if (generatedFiles.Length == 0)
-        {
-            var allFiles = Directory.GetFiles(Path.Combine(appDir, "obj", "efcpt"), "*.*", SearchOption.AllDirectories);
-            var message = $"No generated .cs files found under '{generatedRoot}'. Files present under obj/efcpt: {string.Join(", ", allFiles)}";
-            Assert.Fail(message);
-        }
-
-        var combined = string.Join(Environment.NewLine, generatedFiles.Select(File.ReadAllText));
-
-        // Verify expected DbSets / entities from our sample schemas/tables
-        Assert.Contains("DbSet<Blog>", combined);
-        Assert.Contains("DbSet<Post>", combined);
-        Assert.Contains("DbSet<Account>", combined);
-        Assert.Contains("DbSet<Upload>", combined);
-        
-        Environment.SetEnvironmentVariable("EFCPT_FAKE_BUILD", initialFakes);
+        await Given("folders with existing dacpac", () => SetupWithExistingDacpac(SetupFolders()))
+            .When("resolve inputs", ResolveInputs)
+            .Then("resolve succeeds", r => r?.Task.SqlProjPath != null)
+            .When("ensure dacpac", r => EnsureDacpac(r))
+            .Then("dacpac exists", r => File.Exists(r.Task.DacpacPath))
+            .When("stage inputs", StageInputs)
+            .Then("staged files exist", r =>
+                File.Exists(r.Task.StagedConfigPath) &&
+                File.Exists(r.Task.StagedRenamingPath) &&
+                Directory.Exists(r.Task.StagedTemplateDir))
+            .When("compute fingerprint", ComputeFingerprintHash)
+            .Then("fingerprint changed is true", r => r.Task.HasChanged == "true")
+            .When("run efcpt (fake)", r => RunEfcptTool(r, useFake: true))
+            .When("rename generated files", RenameFiles)
+            .Then("generated files exist", r => r.GeneratedFiles.Length > 0)
+            .And("files contain expected content", r =>
+            {
+                var combined = string.Join(Environment.NewLine, r.GeneratedFiles.Select(File.ReadAllText));
+                return combined.Contains("generated from");
+            })
+            .When("compute fingerprint again", r =>
+            {
+                var fingerprintFile = Path.Combine(r.Run.Fingerprint.Stage.Ensure.Resolve.State.OutputDir, "fingerprint.txt");
+                var fingerprint2 = new ComputeFingerprint
+                {
+                    BuildEngine = r.Run.Fingerprint.Stage.Ensure.Resolve.State.Engine,
+                    DacpacPath = r.Run.Fingerprint.Stage.Ensure.Task.DacpacPath,
+                    ConfigPath = r.Run.Fingerprint.Stage.Task.StagedConfigPath,
+                    RenamingPath = r.Run.Fingerprint.Stage.Task.StagedRenamingPath,
+                    TemplateDir = r.Run.Fingerprint.Stage.Task.StagedTemplateDir,
+                    FingerprintFile = fingerprintFile
+                };
+                fingerprint2.Execute();
+                return (r, fingerprint2);
+            })
+            .Then("fingerprint changed is false", t => t.Item2.HasChanged == "false")
+            .And(t => t.r.Run.Fingerprint.Stage.Ensure.Resolve.State.Folder.Dispose())
+            .AssertPassed();
     }
 
-    public void Dispose()
-    {
-        using var folder = new TestFolder();
+    [Scenario("End-to-end builds real dacpac and runs real efcpt CLI")]
+    [Fact]
+    public Task End_to_end_generates_dacpac_and_runs_real_efcpt()
+        => Given("folders setup", SetupFolders)
+            .When("resolve inputs", ResolveInputs)
+            .Then("resolve succeeds", r => r.Task.SqlProjPath != null)
+            .When("ensure dacpac (real build)", r => EnsureDacpac(r, useFakeBuild: false))
+            .Then("dacpac file exists", r => File.Exists(r.Task.DacpacPath))
+            .When("stage inputs", StageInputs)
+            .Then("staged files exist", r =>
+                File.Exists(r.Task.StagedConfigPath) &&
+                File.Exists(r.Task.StagedRenamingPath) &&
+                Directory.Exists(r.Task.StagedTemplateDir))
+            .When("compute fingerprint", ComputeFingerprintHash)
+            .Then("fingerprint file exists", r => File.Exists(Path.Combine(r.Stage.Ensure.Resolve.State.OutputDir, "fingerprint.txt")))
+            .When("run efcpt (real)", r => RunEfcptTool(r, useFake: false))
+            .Then("output directory exists", r =>
+            {
+                var generatedDir = r.Fingerprint.Stage.Ensure.Resolve.State.GeneratedDir;
+                var modelsDir = Path.Combine(generatedDir, "Models");
+                return Directory.Exists(modelsDir) || Directory.Exists(generatedDir);
+            })
+            .And("generated files contain expected DbSets", r =>
+            {
+                var generatedDir = r.Fingerprint.Stage.Ensure.Resolve.State.GeneratedDir;
+                var generatedRoot = Path.Combine(generatedDir, "Models");
+                if (!Directory.Exists(generatedRoot))
+                    generatedRoot = generatedDir;
 
-        var dbDir = folder.CreateDir("SampleDatabase");
-        var dacpac = Path.Combine(dbDir, "bin", "Debug", "Sample.Database.dacpac");
+                var generatedFiles = Directory.GetFiles(generatedRoot, "*.cs", SearchOption.AllDirectories);
+                if (generatedFiles.Length == 0)
+                    return false;
 
-        try
-        {
-            File.Delete(dacpac);
-
-        }
-        catch (Exception)
-        {
-            // ignore
-        }
-        
-        Environment.SetEnvironmentVariable("EFCPT_FAKE_BUILD", null);
-    }
+                var combined = string.Join(Environment.NewLine, generatedFiles.Select(File.ReadAllText));
+                return combined.Contains("DbSet<Blog>") &&
+                       combined.Contains("DbSet<Post>") &&
+                       combined.Contains("DbSet<Account>") &&
+                       combined.Contains("DbSet<Upload>");
+            })
+            .And(r => r.Fingerprint.Stage.Ensure.Resolve.State.Folder.Dispose())
+            .AssertPassed();
 }

@@ -15,8 +15,7 @@ internal static class FileHash
 
     public static string Sha256Bytes(byte[] bytes)
     {
-        using var sha = SHA256.Create();
-        var hash = sha.ComputeHash(bytes);
+        var hash = SHA256.HashData(bytes);
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
 

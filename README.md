@@ -9,7 +9,7 @@ Automate database-first EF Core model generation as part of your build pipeline.
 
 ## 🚀 Quick Start
 
-### Install (3 steps, 30 seconds)
+### Install (2-3 steps, 30 seconds)
 
 **Step 1:** Add the NuGet package to your application project:
 
@@ -19,10 +19,14 @@ Automate database-first EF Core model generation as part of your build pipeline.
 </ItemGroup>
 ```
 
-**Step 2:** Ensure EF Core Power Tools CLI is available:
+**Step 2:** *(Optional for .NET 10+)* Ensure EF Core Power Tools CLI is available:
+
+> **✨ .NET 10+ Users:** The tool is automatically executed via `dnx` and does **not** need to be installed. Skip this step if you're using .NET 10.0 or later!
 
 ```bash
-dotnet tool install --global ErikEJ.EFCorePowerTools.Cli --version "10.*"
+# Only required for .NET 8.0 and 9.0
+dotnet tool install --global ErikEJ.EFCorePowerTools.Cli --version "8.*"
+dotnet tool install --global ErikEJ.EFCorePowerTools.Cli --version "9.*"
 ```
 
 **Step 3:** Build your project:
@@ -100,7 +104,7 @@ The package orchestrates a MSBuild pipeline with these stages:
 ### Prerequisites
 
 - **.NET SDK 8.0+** (or compatible version)
-- **EF Core Power Tools CLI** (`ErikEJ.EFCorePowerTools.Cli`)
+- **EF Core Power Tools CLI** (`ErikEJ.EFCorePowerTools.Cli`) - **Not required for .NET 10.0+** (uses `dnx` instead)
 - **SQL Server Database Project** (`.sqlproj`) that compiles to DACPAC
 
 ### Step 1: Install the Package
@@ -414,6 +418,12 @@ Customize table and column naming:
 
 **Solutions:**
 
+**.NET 10+ Users:**
+- This issue should not occur on .NET 10+ as the tool is executed via `dnx` without installation
+- If you see this error, verify you're running .NET 10.0 or later: `dotnet --version`
+
+**.NET 8-9 Users:**
+
 1. **Verify installation:**
    ```bash
    dotnet tool list --global
@@ -451,6 +461,8 @@ dotnet build
 
 ### GitHub Actions
 
+**.NET 10+ (Recommended - No tool installation required!)**
+
 ```yaml
 name: Build
 
@@ -459,24 +471,53 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: windows-latest
-    
+
     steps:
     - uses: actions/checkout@v3
-    
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Test
+      run: dotnet test --configuration Release --no-build
+```
+
+**.NET 8-9 (Requires tool installation)**
+
+```yaml
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: '8.0.x'
-    
+
     - name: Restore tools
       run: dotnet tool restore
-    
+
     - name: Restore dependencies
       run: dotnet restore
-    
+
     - name: Build
       run: dotnet build --configuration Release --no-restore
-    
+
     - name: Test
       run: dotnet test --configuration Release --no-build
 ```
@@ -537,10 +578,11 @@ RUN dotnet build --configuration Release --no-restore
 
 ### Key CI/CD Considerations
 
-1. **Use local tool manifest** - Ensures consistent `efcpt` version across environments
-2. **Cache tool restoration** - Speed up builds by caching `.dotnet/tools`
-3. **Windows agents for DACPAC** - Database projects typically require Windows build agents
-4. **Deterministic builds** - Generated code should be identical across builds with same inputs
+1. **Use .NET 10+** - Eliminates the need for tool manifests and installation steps via `dnx`
+2. **Use local tool manifest (.NET 8-9)** - Ensures consistent `efcpt` version across environments
+3. **Cache tool restoration (.NET 8-9)** - Speed up builds by caching `.dotnet/tools`
+4. **Windows agents for DACPAC** - Database projects typically require Windows build agents
+5. **Deterministic builds** - Generated code should be identical across builds with same inputs
 
 ---
 
