@@ -1,5 +1,8 @@
-using Microsoft.Build.Framework;
 using System.Diagnostics;
+using JD.Efcpt.Build.Tasks.Decorators;
+using JD.Efcpt.Build.Tasks.Strategies;
+using Microsoft.Build.Framework;
+using PatternKit.Behavioral.Strategy;
 using Task = Microsoft.Build.Utilities.Task;
 
 namespace JD.Efcpt.Build.Tasks;
@@ -33,13 +36,15 @@ public sealed class EnsureDacpacBuilt : Task
     /// <summary>
     /// Path to the SQL project (<c>.sqlproj</c>) that produces the DACPAC.
     /// </summary>
-    [Required] public string SqlProjPath { get; set; } = "";
+    [Required]
+    public string SqlProjPath { get; set; } = "";
 
     /// <summary>
     /// Build configuration to use when compiling the SQL project.
     /// </summary>
     /// <value>Typically <c>Debug</c> or <c>Release</c>, but any valid configuration is accepted.</value>
-    [Required] public string Configuration { get; set; } = "";
+    [Required]
+    public string Configuration { get; set; } = "";
 
     /// <summary>Path to <c>msbuild.exe</c> when available (Windows/Visual Studio scenarios).</summary>
     /// <value>
@@ -67,112 +72,182 @@ public sealed class EnsureDacpacBuilt : Task
     /// When an up-to-date DACPAC already exists, this is set to that file. Otherwise it points to the
     /// DACPAC produced by the build.
     /// </value>
-    [Output] public string DacpacPath { get; set; } = "";
+    [Output]
+    public string DacpacPath { get; set; } = "";
+
+    #region Context Records
+
+    private readonly record struct DacpacStalenessContext(
+        string SqlProjPath,
+        string BinDir,
+        DateTime LatestSourceWrite
+    );
+
+    private readonly record struct BuildToolContext(
+        string SqlProjPath,
+        string Configuration,
+        string MsBuildExe,
+        string DotNetExe,
+        bool IsFakeBuild,
+        bool UsesModernSdk
+    );
+
+    private readonly record struct StalenessCheckResult(
+        bool ShouldRebuild,
+        string? ExistingDacpac,
+        string Reason
+    );
+
+    private readonly record struct BuildToolSelection(
+        string Exe,
+        string Args,
+        bool IsFake
+    );
+
+    #endregion
+
+    #region Strategies
+
+    private static readonly Lazy<Strategy<DacpacStalenessContext, StalenessCheckResult>> StalenessStrategy = new(() =>
+        Strategy<DacpacStalenessContext, StalenessCheckResult>.Create()
+            // Branch 1: No existing DACPAC found
+            .When(static (in ctx) =>
+                FindDacpacInDir(ctx.BinDir) == null)
+            .Then(static (in _) =>
+                new StalenessCheckResult(
+                    ShouldRebuild: true,
+                    ExistingDacpac: null,
+                    Reason: "DACPAC not found. Building sqlproj..."))
+            // Branch 2: DACPAC exists but is stale
+            .When((in ctx) =>
+            {
+                var existing = FindDacpacInDir(ctx.BinDir);
+                return existing != null && File.GetLastWriteTimeUtc(existing) < ctx.LatestSourceWrite;
+            })
+            .Then((in ctx) =>
+            {
+                var existing = FindDacpacInDir(ctx.BinDir);
+                return new StalenessCheckResult(
+                    ShouldRebuild: true,
+                    ExistingDacpac: existing,
+                    Reason: "DACPAC exists but appears stale. Rebuilding sqlproj...");
+            })
+            // Branch 3: DACPAC is current
+            .Default((in ctx) =>
+            {
+                var existing = FindDacpacInDir(ctx.BinDir);
+                return new StalenessCheckResult(
+                    ShouldRebuild: false,
+                    ExistingDacpac: existing,
+                    Reason: $"Using existing DACPAC: {existing}");
+            })
+            .Build());
+
+    private static readonly Lazy<Strategy<BuildToolContext, BuildToolSelection>> BuildToolStrategy = new(() =>
+        Strategy<BuildToolContext, BuildToolSelection>.Create()
+            // Branch 1: Fake build mode (testing)
+            .When(static (in ctx) => ctx.IsFakeBuild)
+            .Then(static (in _) =>
+                new BuildToolSelection(
+                    Exe: string.Empty,
+                    Args: string.Empty,
+                    IsFake: true))
+            // Branch 2: Modern dotnet build (for Microsoft.Build.Sql SDK projects)
+            .When(static (in ctx) => ctx.UsesModernSdk)
+            .Then((in ctx) =>
+                new BuildToolSelection(
+                    Exe: ctx.DotNetExe,
+                    Args: $"build \"{ctx.SqlProjPath}\" -c {ctx.Configuration} --nologo",
+                    IsFake: false))
+            // Branch 3: Use MSBuild.exe (Windows/Visual Studio for legacy projects)
+            .When(static (in ctx) =>
+                !string.IsNullOrWhiteSpace(ctx.MsBuildExe) && File.Exists(ctx.MsBuildExe))
+            .Then((in ctx) =>
+                new BuildToolSelection(
+                    Exe: ctx.MsBuildExe,
+                    Args: $"\"{ctx.SqlProjPath}\" /t:Restore /t:Build /p:Configuration=\"{ctx.Configuration}\" /nologo",
+                    IsFake: false))
+            // Branch 4: Use dotnet msbuild (cross-platform fallback for legacy projects)
+            .Default((in ctx) =>
+                new BuildToolSelection(
+                    Exe: ctx.DotNetExe,
+                    Args: $"msbuild \"{ctx.SqlProjPath}\" /t:Restore /t:Build /p:Configuration=\"{ctx.Configuration}\" /nologo",
+                    IsFake: false))
+            .Build());
+
+    #endregion
 
     /// <inheritdoc />
     public override bool Execute()
     {
-        var log = new BuildLog(Log, LogVerbosity);
-        try
+        var decorator = TaskExecutionDecorator.Create(ExecuteCore);
+        var ctx = new TaskExecutionContext(Log, nameof(EnsureDacpacBuilt));
+        return decorator.Execute(in ctx);
+    }
+
+    private bool ExecuteCore(TaskExecutionContext ctx)
+    {
+        var log = new BuildLog(ctx.Logger, LogVerbosity);
+
+        var sqlproj = Path.GetFullPath(SqlProjPath);
+        if (!File.Exists(sqlproj))
+            throw new FileNotFoundException("sqlproj not found", sqlproj);
+
+        var binDir = Path.Combine(Path.GetDirectoryName(sqlproj)!, "bin", Configuration);
+        Directory.CreateDirectory(binDir);
+
+        // Use Strategy to check staleness
+        var stalenessCtx = new DacpacStalenessContext(
+            SqlProjPath: sqlproj,
+            BinDir: binDir,
+            LatestSourceWrite: LatestSourceWrite(sqlproj));
+
+        var check = StalenessStrategy.Value.Execute(in stalenessCtx);
+
+        if (!check.ShouldRebuild)
         {
-            var sqlproj = Path.GetFullPath(SqlProjPath);
-            if (!File.Exists(sqlproj))
-                throw new FileNotFoundException("sqlproj not found", sqlproj);
-
-            var binDir = Path.Combine(Path.GetDirectoryName(sqlproj)!, "bin", Configuration);
-            Directory.CreateDirectory(binDir);
-
-            var latestSourceWrite = LatestSourceWrite(sqlproj);
-            // Heuristic: first dacpac under bin/<Configuration>
-            var existing = FindDacpac(binDir);
-            if (existing is not null)
-            {
-                // Staleness check: rebuild if any source is newer than dacpac
-                var dacTime = File.GetLastWriteTimeUtc(existing);
-                if (dacTime >= latestSourceWrite)
-                {
-                    DacpacPath = existing;
-                    log.Detail($"Using existing DACPAC: {DacpacPath}");
-                    return true;
-                }
-                log.Detail("DACPAC exists but appears stale. Rebuilding sqlproj...");
-            }
-            else
-            {
-                log.Detail("DACPAC not found. Building sqlproj...");
-            }
-
-            BuildSqlProj(log, sqlproj);
-
-            var built = FindDacpac(binDir) ?? FindDacpac(Path.Combine(Path.GetDirectoryName(sqlproj)!, "bin")) 
-                        ?? throw new FileNotFoundException($"DACPAC not found after build. Looked under: {binDir}");
-
-            DacpacPath = built;
-            log.Info($"DACPAC: {DacpacPath}");
+            DacpacPath = check.ExistingDacpac!;
+            log.Detail(check.Reason);
             return true;
         }
-        catch (Exception ex)
-        {
-            Log.LogErrorFromException(ex, true);
-            return false;
-        }
-    }
 
-    private static string? FindDacpac(string dir)
-    {
-        if (!Directory.Exists(dir)) return null;
-        return Directory.EnumerateFiles(dir, "*.dacpac", SearchOption.AllDirectories)
-                        .OrderByDescending(File.GetLastWriteTimeUtc)
-                        .FirstOrDefault();
-    }
+        log.Detail(check.Reason);
+        BuildSqlProj(log, sqlproj);
 
-    private static DateTime LatestSourceWrite(string sqlproj)
-    {
-        var root = Path.GetDirectoryName(sqlproj)!;
-        var latest = File.GetLastWriteTimeUtc(sqlproj);
+        var built = FindDacpacInDir(binDir) ??
+                    FindDacpacInDir(Path.Combine(Path.GetDirectoryName(sqlproj)!, "bin")) ??
+                    throw new FileNotFoundException($"DACPAC not found after build. Looked under: {binDir}");
 
-        foreach (var file in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories))
-        {
-            if (IsUnder(file, Path.Combine(root, "bin")) || IsUnder(file, Path.Combine(root, "obj")))
-                continue;
-
-            var t = File.GetLastWriteTimeUtc(file);
-            if (t > latest) latest = t;
-        }
-
-        return latest;
-    }
-
-    private static bool IsUnder(string path, string root)
-    {
-        var rel = Path.GetRelativePath(root, path);
-        return !rel.StartsWith("..", StringComparison.Ordinal);
+        DacpacPath = built;
+        log.Info($"DACPAC: {DacpacPath}");
+        return true;
     }
 
     private void BuildSqlProj(BuildLog log, string sqlproj)
     {
         var fake = Environment.GetEnvironmentVariable("EFCPT_FAKE_BUILD");
-        if (!string.IsNullOrWhiteSpace(fake))
+        var toolCtx = new BuildToolContext(
+            SqlProjPath: sqlproj,
+            Configuration: Configuration,
+            MsBuildExe: MsBuildExe,
+            DotNetExe: DotNetExe,
+            IsFakeBuild: !string.IsNullOrWhiteSpace(fake),
+            UsesModernSdk: UsesModernSqlSdk(sqlproj));
+
+        var selection = BuildToolStrategy.Value.Execute(in toolCtx);
+
+        if (selection.IsFake)
         {
-            var projectName = Path.GetFileNameWithoutExtension(sqlproj);
-            var dest = Path.Combine(Path.GetDirectoryName(sqlproj)!, "bin", Configuration, projectName + ".dacpac");
-            Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
-            File.WriteAllText(dest, "fake dacpac");
-            log.Info($"EFCPT_FAKE_BUILD set to {fake}; wrote {dest}");
+            WriteFakeDacpac(log, sqlproj);
             return;
         }
 
-        var useMsbuildExe = !string.IsNullOrWhiteSpace(MsBuildExe) && File.Exists(MsBuildExe);
-        var requestedFileName = useMsbuildExe ? MsBuildExe : DotNetExe;
-        var requestedArgs = useMsbuildExe
-            ? $"\"{sqlproj}\" /t:Restore /t:Build /p:Configuration=\"{Configuration}\" /nologo"
-            : $"msbuild \"{sqlproj}\" /t:Restore /t:Build /p:Configuration=\"{Configuration}\" /nologo";
-        var (fileName, args) = NormalizeCommand(requestedFileName, requestedArgs);
+        var normalized = CommandNormalizationStrategy.Normalize(selection.Exe, selection.Args);
 
         var psi = new ProcessStartInfo
         {
-            FileName = fileName,
-            Arguments = args,
+            FileName = normalized.FileName,
+            Arguments = normalized.Args,
             WorkingDirectory = Path.GetDirectoryName(sqlproj) ?? "",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -183,7 +258,7 @@ public sealed class EnsureDacpacBuilt : Task
         if (!string.IsNullOrWhiteSpace(testDac))
             psi.Environment["EFCPT_TEST_DACPAC"] = testDac;
 
-        var p = Process.Start(psi) ?? throw new InvalidOperationException($"Failed to start: {fileName}");
+        var p = Process.Start(psi) ?? throw new InvalidOperationException($"Failed to start: {normalized.FileName}");
         var stdout = p.StandardOutput.ReadToEnd();
         var stderr = p.StandardError.ReadToEnd();
         p.WaitForExit();
@@ -199,13 +274,62 @@ public sealed class EnsureDacpacBuilt : Task
         if (!string.IsNullOrWhiteSpace(stderr)) log.Detail(stderr);
     }
 
-    private static (string fileName, string args) NormalizeCommand(string command, string args)
+    private void WriteFakeDacpac(BuildLog log, string sqlproj)
     {
-        if (OperatingSystem.IsWindows() && (command.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase) || command.EndsWith(".bat", StringComparison.OrdinalIgnoreCase)))
-        {
-            return ("cmd.exe", $"/c \"{command}\" {args}");
-        }
-
-        return (command, args);
+        var projectName = Path.GetFileNameWithoutExtension(sqlproj);
+        var dest = Path.Combine(Path.GetDirectoryName(sqlproj)!, "bin", Configuration, projectName + ".dacpac");
+        Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
+        File.WriteAllText(dest, "fake dacpac");
+        log.Info($"EFCPT_FAKE_BUILD set; wrote {dest}");
     }
+
+    #region Helper Methods
+
+    private static readonly IReadOnlySet<string> ExcludedDirs = new HashSet<string>(
+        ["bin", "obj"],
+        StringComparer.OrdinalIgnoreCase);
+
+    private static bool UsesModernSqlSdk(string sqlProjPath)
+    {
+        try
+        {
+            var content = File.ReadAllText(sqlProjPath);
+            return content.Contains("Microsoft.Build.Sql", StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            // If we can't read the file, assume legacy format
+            return false;
+        }
+    }
+
+    private static string? FindDacpacInDir(string dir) =>
+        !Directory.Exists(dir)
+            ? null
+            : Directory
+                .EnumerateFiles(dir, "*.dacpac", SearchOption.AllDirectories)
+                .OrderByDescending(File.GetLastWriteTimeUtc)
+                .FirstOrDefault();
+
+    private static DateTime LatestSourceWrite(string sqlproj)
+    {
+        var root = Path.GetDirectoryName(sqlproj)!;
+
+        return Directory
+            .EnumerateFiles(root, "*", SearchOption.AllDirectories)
+            .Where(file => !IsUnderExcludedDir(file, root))
+            .Select(File.GetLastWriteTimeUtc)
+            .Prepend(File.GetLastWriteTimeUtc(sqlproj))
+            .Max();
+    }
+
+    private static bool IsUnderExcludedDir(string filePath, string root)
+    {
+        var relativePath = Path.GetRelativePath(root, filePath);
+        var segments = relativePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+        return segments.Any(segment => ExcludedDirs.Contains(segment));
+    }
+
+    #endregion
 }

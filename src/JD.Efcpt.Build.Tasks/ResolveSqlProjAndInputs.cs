@@ -1,4 +1,9 @@
+using JD.Efcpt.Build.Tasks.Chains;
+using JD.Efcpt.Build.Tasks.Decorators;
+using JD.Efcpt.Build.Tasks.Extensions;
 using Microsoft.Build.Framework;
+using PatternKit.Behavioral.Strategy;
+using PatternKit.Creational.Builder;
 using Task = Microsoft.Build.Utilities.Task;
 
 namespace JD.Efcpt.Build.Tasks;
@@ -34,17 +39,20 @@ public sealed class ResolveSqlProjAndInputs : Task
     /// <summary>
     /// Full path to the consuming project file.
     /// </summary>
-    [Required] public string ProjectFullPath { get; set; } = "";
+    [Required]
+    public string ProjectFullPath { get; set; } = "";
 
     /// <summary>
     /// Directory that contains the consuming project file.
     /// </summary>
-    [Required] public string ProjectDirectory { get; set; } = "";
+    [Required]
+    public string ProjectDirectory { get; set; } = "";
 
     /// <summary>
     /// Active build configuration (for example <c>Debug</c> or <c>Release</c>).
     /// </summary>
-    [Required] public string Configuration { get; set; } = "";
+    [Required]
+    public string Configuration { get; set; } = "";
 
     /// <summary>
     /// Project references of the consuming project.
@@ -105,7 +113,8 @@ public sealed class ResolveSqlProjAndInputs : Task
     /// This task ensures the directory exists and uses it as the location for
     /// <c>resolved-inputs.json</c> when <see cref="DumpResolvedInputs"/> is enabled.
     /// </remarks>
-    [Required] public string OutputDir { get; set; } = "";
+    [Required]
+    public string OutputDir { get; set; } = "";
 
     /// <summary>
     /// Root directory that contains packaged default configuration and templates.
@@ -128,178 +137,229 @@ public sealed class ResolveSqlProjAndInputs : Task
     /// <summary>
     /// Resolved full path to the SQL project to use.
     /// </summary>
-    [Output] public string SqlProjPath { get; set; } = "";
+    [Output]
+    public string SqlProjPath { get; set; } = "";
 
     /// <summary>
     /// Resolved full path to the configuration JSON file.
     /// </summary>
-    [Output] public string ResolvedConfigPath { get; set; } = "";
+    [Output]
+    public string ResolvedConfigPath { get; set; } = "";
 
     /// <summary>
     /// Resolved full path to the renaming JSON file.
     /// </summary>
-    [Output] public string ResolvedRenamingPath { get; set; } = "";
+    [Output]
+    public string ResolvedRenamingPath { get; set; } = "";
 
     /// <summary>
     /// Resolved full path to the template directory.
     /// </summary>
-    [Output] public string ResolvedTemplateDir { get; set; } = "";
+    [Output]
+    public string ResolvedTemplateDir { get; set; } = "";
+
+    #region Context Records
+
+    private readonly record struct SqlProjResolutionContext(
+        string SqlProjOverride,
+        string ProjectDirectory,
+        IReadOnlyList<string> SqlProjReferences
+    );
+
+    private readonly record struct SqlProjValidationResult(
+        bool IsValid,
+        string? SqlProjPath,
+        string? ErrorMessage
+    );
+
+    private readonly record struct ResolutionState(
+        string SqlProjPath,
+        string ConfigPath,
+        string RenamingPath,
+        string TemplateDir
+    );
+
+    #endregion
+
+    #region Strategies
+
+    private static readonly Lazy<Strategy<SqlProjResolutionContext, SqlProjValidationResult>> SqlProjValidationStrategy = new(()
+        => Strategy<SqlProjResolutionContext, SqlProjValidationResult>.Create()
+            // Branch 1: Explicit override provided
+            .When(static (in ctx) =>
+                !string.IsNullOrWhiteSpace(ctx.SqlProjOverride))
+            .Then((in ctx) =>
+            {
+                var path = PathUtils.FullPath(ctx.SqlProjOverride, ctx.ProjectDirectory);
+                return new SqlProjValidationResult(
+                    IsValid: true,
+                    SqlProjPath: path,
+                    ErrorMessage: null);
+            })
+            // Branch 2: No sqlproj references found
+            .When(static (in ctx) =>
+                ctx.SqlProjReferences.Count == 0)
+            .Then(static (in _) =>
+                new SqlProjValidationResult(
+                    IsValid: false,
+                    SqlProjPath: null,
+                    ErrorMessage: "No .sqlproj ProjectReference found. Add a single .sqlproj reference or set EfcptSqlProj."))
+            // Branch 3: Multiple sqlproj references (ambiguous)
+            .When(static (in ctx) =>
+                ctx.SqlProjReferences.Count > 1)
+            .Then((in ctx) =>
+                new SqlProjValidationResult(
+                    IsValid: false,
+                    SqlProjPath: null,
+                    ErrorMessage:
+                    $"Multiple .sqlproj references detected ({string.Join(", ", ctx.SqlProjReferences)}). Exactly one is allowed; use EfcptSqlProj to disambiguate."))
+            // Branch 4: Exactly one reference (success path)
+            .Default((in ctx) =>
+            {
+                var resolved = ctx.SqlProjReferences[0];
+                return File.Exists(resolved)
+                    ? new SqlProjValidationResult(IsValid: true, SqlProjPath: resolved, ErrorMessage: null)
+                    : new SqlProjValidationResult(
+                        IsValid: false,
+                        SqlProjPath: null,
+                        ErrorMessage: $".sqlproj ProjectReference not found on disk: {resolved}");
+            })
+            .Build());
+
+    #endregion
 
     /// <inheritdoc />
     public override bool Execute()
     {
-        var log = new BuildLog(Log, "");
-        try
-        {
-            Directory.CreateDirectory(OutputDir);
-
-            SqlProjPath = ResolveSqlProj(log);
-            ResolvedConfigPath = ResolveFile(log, ConfigOverride, "efcpt-config.json");
-            ResolvedRenamingPath = ResolveFile(log, RenamingOverride, "efcpt.renaming.json", "efcpt-renaming.json", "efpt.renaming.json");
-            ResolvedTemplateDir = ResolveDir(log, TemplateDirOverride, "Template", "CodeTemplates", "Templates");
-
-            if (IsTrue(DumpResolvedInputs))
-            {
-                var dump = $"""
-                             "project": "{ProjectFullPath}",
-                             "sqlproj": "{SqlProjPath}",
-                             "config": "{ResolvedConfigPath}",
-                             "renaming": "{ResolvedRenamingPath}",
-                             "template": "{ResolvedTemplateDir}",
-                             "output": "{OutputDir}"
-                             """;
-
-                File.WriteAllText(Path.Combine(OutputDir, "resolved-inputs.json"), dump);
-            }
-
-            log.Detail($"Resolved sqlproj: {SqlProjPath}");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Log.LogErrorFromException(ex, true);
-            return false;
-        }
+        var decorator = TaskExecutionDecorator.Create(ExecuteCore);
+        var ctx = new TaskExecutionContext(Log, nameof(ResolveSqlProjAndInputs));
+        return decorator.Execute(in ctx);
     }
 
-    private string ResolveSqlProj(BuildLog log)
+    private bool ExecuteCore(TaskExecutionContext ctx)
     {
-        if (!string.IsNullOrWhiteSpace(SqlProjOverride))
-            return PathUtils.FullPath(SqlProjOverride, ProjectDirectory);
+        var log = new BuildLog(ctx.Logger, "");
 
+        Directory.CreateDirectory(OutputDir);
+
+        var resolutionState = BuildResolutionState();
+
+        // Set output properties
+        SqlProjPath = resolutionState.SqlProjPath;
+        ResolvedConfigPath = resolutionState.ConfigPath;
+        ResolvedRenamingPath = resolutionState.RenamingPath;
+        ResolvedTemplateDir = resolutionState.TemplateDir;
+
+        if (DumpResolvedInputs.IsTrue())
+        {
+            WriteDumpFile(resolutionState);
+        }
+
+        log.Detail($"Resolved sqlproj: {SqlProjPath}");
+        return true;
+    }
+
+    private ResolutionState BuildResolutionState()
+        => Composer<ResolutionState, ResolutionState>
+            .New(() => default)
+            .With(state => state with
+            {
+                SqlProjPath = ResolveSqlProjWithValidation()
+            })
+            .With(state => state with
+            {
+                ConfigPath = ResolveFile(ConfigOverride, "efcpt-config.json")
+            })
+            .With(state => state with
+            {
+                RenamingPath = ResolveFile(
+                    RenamingOverride,
+                    "efcpt.renaming.json",
+                    "efcpt-renaming.json",
+                    "efpt.renaming.json")
+            })
+            .With(state => state with
+            {
+                TemplateDir = ResolveDir(
+                    TemplateDirOverride,
+                    "Template",
+                    "CodeTemplates",
+                    "Templates")
+            })
+            .Require(state =>
+                string.IsNullOrWhiteSpace(state.SqlProjPath)
+                    ? "SqlProj resolution failed"
+                    : null)
+            .Build(state => state);
+
+    private string ResolveSqlProjWithValidation()
+    {
         var sqlRefs = ProjectReferences
-            .Where(x => Path.HasExtension(x.ItemSpec) && string.Equals(Path.GetExtension(x.ItemSpec), ".sqlproj", StringComparison.OrdinalIgnoreCase))
+            .Where(x => Path.HasExtension(x.ItemSpec) &&
+                        Path.GetExtension(x.ItemSpec).EqualsIgnoreCase(".sqlproj"))
             .Select(x => PathUtils.FullPath(x.ItemSpec, ProjectDirectory))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        switch (sqlRefs.Count)
-        {
-            case 0:
-                throw new InvalidOperationException("No .sqlproj ProjectReference found. Add a single .sqlproj reference or set EfcptSqlProj.");
-            case > 1:
-                throw new InvalidOperationException($"Multiple .sqlproj references detected ({string.Join(", ", sqlRefs)}). Exactly one is allowed; use EfcptSqlProj to disambiguate.");
-        }
+        var ctx = new SqlProjResolutionContext(
+            SqlProjOverride: SqlProjOverride,
+            ProjectDirectory: ProjectDirectory,
+            SqlProjReferences: sqlRefs);
 
-        var resolved = sqlRefs[0];
-        return File.Exists(resolved) 
-            ? resolved 
-            : throw new FileNotFoundException(".sqlproj ProjectReference not found on disk", resolved);
+        var result = SqlProjValidationStrategy.Value.Execute(in ctx);
+
+        return result.IsValid
+            ? result.SqlProjPath!
+            : throw new InvalidOperationException(result.ErrorMessage);
     }
 
-    private string ResolveFile(BuildLog log, string overridePath, params string[] fileNames)
+    private string ResolveFile(string overridePath, params string[] fileNames)
     {
-        // Prefer explicit override (rooted or includes a directory)
-        if (PathUtils.HasExplicitPath(overridePath))
-        {
-            var p = PathUtils.FullPath(overridePath, ProjectDirectory);
-            if (!File.Exists(p)) throw new FileNotFoundException($"Override not found", p);
-            return p;
-        }
+        var chain = FileResolutionChain.Build();
+        var candidates = EnumerableExtensions.BuildCandidateNames(overridePath, fileNames);
 
-        var candidates = BuildNames(overridePath, fileNames);
-        foreach (var name in candidates)
-        {
-            var candidate1 = Path.Combine(ProjectDirectory, name);
-            if (File.Exists(candidate1)) return candidate1;
-        }
+        var context = new FileResolutionContext(
+            OverridePath: overridePath,
+            ProjectDirectory: ProjectDirectory,
+            SolutionDir: SolutionDir,
+            ProbeSolutionDir: ProbeSolutionDir.IsTrue(),
+            DefaultsRoot: DefaultsRoot,
+            FileNames: candidates);
 
-        if (IsTrue(ProbeSolutionDir) && !string.IsNullOrWhiteSpace(SolutionDir))
-        {
-            var sol = PathUtils.FullPath(SolutionDir, ProjectDirectory);
-            foreach (var name in candidates)
-            {
-                var candidate2 = Path.Combine(sol, name);
-                if (File.Exists(candidate2)) return candidate2;
-            }
-        }
-
-        // Fall back to packaged defaults root if present
-        if (!string.IsNullOrWhiteSpace(DefaultsRoot))
-        {
-            foreach (var name in candidates)
-            {
-                var candidate3 = Path.Combine(DefaultsRoot, name);
-                if (File.Exists(candidate3)) return candidate3;
-            }
-        }
-
-        throw new FileNotFoundException($"Unable to locate {string.Join(" or ", candidates)}. Provide EfcptConfig/EfcptRenaming, place next to project, in solution dir, or ensure defaults are present.");
+        return chain.Execute(in context, out var result)
+            ? result!
+            : throw new InvalidOperationException("Chain should always produce result or throw");
     }
 
-    private string ResolveDir(BuildLog log, string overridePath, params string[] dirNames)
+    private string ResolveDir(string overridePath, params string[] dirNames)
     {
-        if (PathUtils.HasExplicitPath(overridePath))
-        {
-            var p = PathUtils.FullPath(overridePath, ProjectDirectory);
-            if (!Directory.Exists(p)) throw new DirectoryNotFoundException($"Template override not found: {p}");
-            return p;
-        }
+        var chain = DirectoryResolutionChain.Build();
+        var candidates = EnumerableExtensions.BuildCandidateNames(overridePath, dirNames);
 
-        var candidates = BuildNames(overridePath, dirNames);
-        foreach (var name in candidates)
-        {
-            var candidate1 = Path.Combine(ProjectDirectory, name);
-            if (Directory.Exists(candidate1)) return candidate1;
-        }
+        var context = new DirectoryResolutionContext(
+            OverridePath: overridePath,
+            ProjectDirectory: ProjectDirectory,
+            SolutionDir: SolutionDir,
+            ProbeSolutionDir: ProbeSolutionDir.IsTrue(),
+            DefaultsRoot: DefaultsRoot,
+            DirNames: candidates);
 
-        if (IsTrue(ProbeSolutionDir) && !string.IsNullOrWhiteSpace(SolutionDir))
-        {
-            var sol = PathUtils.FullPath(SolutionDir, ProjectDirectory);
-            foreach (var name in candidates)
-            {
-                var candidate2 = Path.Combine(sol, name);
-                if (Directory.Exists(candidate2)) return candidate2;
-            }
-        }
-
-        if (!string.IsNullOrWhiteSpace(DefaultsRoot))
-        {
-            foreach (var name in candidates)
-            {
-                var candidate3 = Path.Combine(DefaultsRoot, name);
-                if (Directory.Exists(candidate3)) return candidate3;
-            }
-        }
-
-        throw new DirectoryNotFoundException($"Unable to locate template directory ({string.Join(" or ", candidates)}). Provide EfcptTemplateDir, place Template next to project, in solution dir, or ensure defaults are present.");
+        return chain.Execute(in context, out var result)
+            ? result!
+            : throw new InvalidOperationException("Chain should always produce result or throw");
     }
 
-    private static bool IsTrue(string? value)
-        => string.Equals(value, "true", StringComparison.OrdinalIgnoreCase) || value == "1" || string.Equals(value, "yes", StringComparison.OrdinalIgnoreCase);
-
-    private static IReadOnlyList<string> BuildNames(string candidate, string[] fileNames)
+    private void WriteDumpFile(ResolutionState state)
     {
-        var names = new List<string>();
-        if (PathUtils.HasValue(candidate))
-            names.Add(Path.GetFileName(candidate));
+        var dump = $"""
+                    "project": "{ProjectFullPath}",
+                    "sqlproj": "{state.SqlProjPath}",
+                    "config": "{state.ConfigPath}",
+                    "renaming": "{state.RenamingPath}",
+                    "template": "{state.TemplateDir}",
+                    "output": "{OutputDir}"
+                    """;
 
-        foreach (var n in fileNames)
-        {
-            if (!string.IsNullOrWhiteSpace(n))
-                names.Add(Path.GetFileName(n));
-        }
-
-        return names.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        File.WriteAllText(Path.Combine(OutputDir, "resolved-inputs.json"), dump);
     }
 }
