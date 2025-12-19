@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using JD.Efcpt.Build.Tasks.Chains;
 using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Extensions;
@@ -9,11 +11,12 @@ using Task = Microsoft.Build.Utilities.Task;
 namespace JD.Efcpt.Build.Tasks;
 
 /// <summary>
-/// MSBuild task that resolves the sqlproj to use and locates efcpt configuration, renaming, and template inputs.
+/// MSBuild task that resolves the SQL project to use and locates efcpt configuration, renaming, and template inputs.
 /// </summary>
 /// <remarks>
 /// <para>
-/// This task is the first stage of the efcpt MSBuild pipeline. It selects a single <c>.sqlproj</c> file
+/// This task is the first stage of the efcpt MSBuild pipeline. It selects a single SQL project file
+/// (<c>.sqlproj</c> or <c>.csproj</c>/<c>.fsproj</c> using a supported SQL SDK)
 /// associated with the current project and probes for configuration artifacts in the following order:
 /// <list type="number">
 ///   <item><description>Explicit override properties (<see cref="SqlProjOverride"/>, <see cref="ConfigOverride"/>, <see cref="RenamingOverride"/>, <see cref="TemplateDirOverride"/>) when they contain an explicit path.</description></item>
@@ -24,8 +27,8 @@ namespace JD.Efcpt.Build.Tasks;
 /// If resolution fails for any of the inputs, the task throws an exception and the build fails.
 /// </para>
 /// <para>
-/// For the sqlproj reference, the task inspects <see cref="ProjectReferences"/> and enforces that exactly
-/// one <c>.sqlproj</c> reference is present unless <see cref="SqlProjOverride"/> is supplied. The resolved
+/// For the SQL project reference, the task inspects <see cref="ProjectReferences"/> and enforces that exactly
+/// one SQL project reference is present unless <see cref="SqlProjOverride"/> is supplied. The resolved
 /// path is validated on disk.
 /// </para>
 /// <para>
@@ -58,7 +61,7 @@ public sealed class ResolveSqlProjAndInputs : Task
     /// Project references of the consuming project.
     /// </summary>
     /// <remarks>
-    /// The task inspects this item group to locate a single <c>.sqlproj</c> reference when
+    /// The task inspects this item group to locate a single SQL project reference when
     /// <see cref="SqlProjOverride"/> is not provided.
     /// </remarks>
     public ITaskItem[] ProjectReferences { get; set; } = [];
@@ -96,6 +99,15 @@ public sealed class ResolveSqlProjAndInputs : Task
     /// <see cref="ProjectDirectory"/> when not rooted.
     /// </remarks>
     public string SolutionDir { get; set; } = "";
+
+    /// <summary>
+    /// Solution file path, when building inside a solution.
+    /// </summary>
+    /// <remarks>
+    /// Typically bound to the <c>SolutionPath</c> MSBuild property. Resolved relative to
+    /// <see cref="ProjectDirectory"/> when not rooted.
+    /// </remarks>
+    public string SolutionPath { get; set; } = "";
 
     /// <summary>
     /// Controls whether the solution directory should be probed when locating configuration assets.
@@ -196,15 +208,15 @@ public sealed class ResolveSqlProjAndInputs : Task
                     SqlProjPath: path,
                     ErrorMessage: null);
             })
-            // Branch 2: No sqlproj references found
+            // Branch 2: No SQL project references found
             .When(static (in ctx) =>
                 ctx.SqlProjReferences.Count == 0)
             .Then(static (in _) =>
                 new SqlProjValidationResult(
                     IsValid: false,
                     SqlProjPath: null,
-                    ErrorMessage: "No .sqlproj ProjectReference found. Add a single .sqlproj reference or set EfcptSqlProj."))
-            // Branch 3: Multiple sqlproj references (ambiguous)
+                    ErrorMessage: "No SQL project ProjectReference found. Add a single .sqlproj or MSBuild.Sdk.SqlProj reference, or set EfcptSqlProj."))
+            // Branch 3: Multiple SQL project references (ambiguous)
             .When(static (in ctx) =>
                 ctx.SqlProjReferences.Count > 1)
             .Then((in ctx) =>
@@ -212,7 +224,7 @@ public sealed class ResolveSqlProjAndInputs : Task
                     IsValid: false,
                     SqlProjPath: null,
                     ErrorMessage:
-                    $"Multiple .sqlproj references detected ({string.Join(", ", ctx.SqlProjReferences)}). Exactly one is allowed; use EfcptSqlProj to disambiguate."))
+                    $"Multiple SQL project references detected ({string.Join(", ", ctx.SqlProjReferences)}). Exactly one is allowed; use EfcptSqlProj to disambiguate."))
             // Branch 4: Exactly one reference (success path)
             .Default((in ctx) =>
             {
@@ -222,7 +234,7 @@ public sealed class ResolveSqlProjAndInputs : Task
                     : new SqlProjValidationResult(
                         IsValid: false,
                         SqlProjPath: null,
-                        ErrorMessage: $".sqlproj ProjectReference not found on disk: {resolved}");
+                        ErrorMessage: $"SQL project ProjectReference not found on disk: {resolved}");
             })
             .Build());
 
@@ -242,7 +254,7 @@ public sealed class ResolveSqlProjAndInputs : Task
 
         Directory.CreateDirectory(OutputDir);
 
-        var resolutionState = BuildResolutionState();
+        var resolutionState = BuildResolutionState(log);
 
         // Set output properties
         SqlProjPath = resolutionState.SqlProjPath;
@@ -255,16 +267,16 @@ public sealed class ResolveSqlProjAndInputs : Task
             WriteDumpFile(resolutionState);
         }
 
-        log.Detail($"Resolved sqlproj: {SqlProjPath}");
+        log.Detail($"Resolved SQL project: {SqlProjPath}");
         return true;
     }
 
-    private ResolutionState BuildResolutionState()
+    private ResolutionState BuildResolutionState(BuildLog log)
         => Composer<ResolutionState, ResolutionState>
             .New(() => default)
             .With(state => state with
             {
-                SqlProjPath = ResolveSqlProjWithValidation()
+                SqlProjPath = ResolveSqlProjWithValidation(log)
             })
             .With(state => state with
             {
@@ -292,14 +304,23 @@ public sealed class ResolveSqlProjAndInputs : Task
                     : null)
             .Build(state => state);
 
-    private string ResolveSqlProjWithValidation()
+    private string ResolveSqlProjWithValidation(BuildLog log)
     {
         var sqlRefs = ProjectReferences
-            .Where(x => Path.HasExtension(x.ItemSpec) &&
-                        Path.GetExtension(x.ItemSpec).EqualsIgnoreCase(".sqlproj"))
             .Select(x => PathUtils.FullPath(x.ItemSpec, ProjectDirectory))
+            .Where(SqlProjectDetector.IsSqlProjectReference)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
+
+        if (!PathUtils.HasValue(SqlProjOverride) && sqlRefs.Count == 0)
+        {
+            var fallback = TryResolveFromSolution(log);
+            if (!string.IsNullOrWhiteSpace(fallback))
+            {
+                log.Warn("No SQL project references found in project; using SQL project detected from solution: " + fallback);
+                sqlRefs.Add(fallback);
+            }
+        }
 
         var ctx = new SqlProjResolutionContext(
             SqlProjOverride: SqlProjOverride,
@@ -312,6 +333,122 @@ public sealed class ResolveSqlProjAndInputs : Task
             ? result.SqlProjPath!
             : throw new InvalidOperationException(result.ErrorMessage);
     }
+
+    private string? TryResolveFromSolution(BuildLog log)
+    {
+        if (!PathUtils.HasValue(SolutionPath))
+            return null;
+
+        var solutionPath = PathUtils.FullPath(SolutionPath, ProjectDirectory);
+        if (!File.Exists(solutionPath))
+            return null;
+
+        var matches = ScanSolutionForSqlProjects(solutionPath).ToList();
+        return matches.Count switch
+        {
+            < 1 =>throw new InvalidOperationException("No SQL project references found and none detected in solution."),
+            1 => matches[0].Path,
+            > 1 => throw new InvalidOperationException(
+                $"Multiple SQL projects detected while scanning solution '{solutionPath}' ({string.Join(", ", matches.Select(m => m.Path))}). Reference one directly or set EfcptSqlProj."),
+        };
+    }
+
+    private static IEnumerable<(string Name, string Path)> ScanSolutionForSqlProjects(string solutionPath)
+    {
+        var ext = Path.GetExtension(solutionPath);
+        if (ext.Equals(".slnx", StringComparison.OrdinalIgnoreCase))
+        {
+            foreach (var match in ScanSlnxForSqlProjects(solutionPath))
+                yield return match;
+
+            yield break;
+        }
+
+        foreach (var match in ScanSlnForSqlProjects(solutionPath))
+            yield return match;
+    }
+
+    private static IEnumerable<(string Name, string Path)> ScanSlnForSqlProjects(string solutionPath)
+    {
+        var solutionDir = Path.GetDirectoryName(solutionPath) ?? "";
+        List<string> lines;
+        try
+        {
+            lines = File.ReadLines(solutionPath).ToList();
+        }
+        catch
+        {
+            yield break;
+        }
+
+        foreach (var line in lines)
+        {
+            var match = SolutionProjectLine.Match(line);
+            if (!match.Success)
+                continue;
+
+            var name = match.Groups["name"].Value;
+            var relativePath = match.Groups["path"].Value;
+            if (!IsProjectFile(Path.GetExtension(relativePath)))
+                continue;
+
+            var fullPath = Path.GetFullPath(Path.Combine(solutionDir, relativePath));
+            if (!File.Exists(fullPath))
+                continue;
+
+            if (SqlProjectDetector.IsSqlProjectReference(fullPath))
+                yield return (name, fullPath);
+        }
+    }
+
+    private static IEnumerable<(string Name, string Path)> ScanSlnxForSqlProjects(string solutionPath)
+    {
+        var solutionDir = Path.GetDirectoryName(solutionPath) ?? "";
+        XDocument doc;
+        try
+        {
+            doc = XDocument.Load(solutionPath);
+        }
+        catch
+        {
+            yield break;
+        }
+
+        foreach (var project in doc.Descendants().Where(e => e.Name.LocalName == "Project"))
+        {
+            var pathAttr = project.Attributes().FirstOrDefault(a => a.Name.LocalName == "Path");
+            if (pathAttr == null || string.IsNullOrWhiteSpace(pathAttr.Value))
+                continue;
+
+            var relativePath = pathAttr.Value.Trim()
+                .Replace('\\', Path.DirectorySeparatorChar)
+                .Replace('/', Path.DirectorySeparatorChar);
+
+            if (!IsProjectFile(Path.GetExtension(relativePath)))
+                continue;
+
+            var fullPath = Path.GetFullPath(Path.Combine(solutionDir, relativePath));
+            if (!File.Exists(fullPath))
+                continue;
+
+            var nameAttr = project.Attributes().FirstOrDefault(a => a.Name.LocalName == "Name");
+            var name = string.IsNullOrWhiteSpace(nameAttr?.Value)
+                ? Path.GetFileNameWithoutExtension(fullPath)
+                : nameAttr.Value;
+
+            if (SqlProjectDetector.IsSqlProjectReference(fullPath))
+                yield return (name, fullPath);
+        }
+    }
+
+    private static bool IsProjectFile(string? extension)
+        => string.Equals(extension, ".sqlproj", StringComparison.OrdinalIgnoreCase) ||
+           string.Equals(extension, ".csproj", StringComparison.OrdinalIgnoreCase) ||
+           string.Equals(extension, ".fsproj", StringComparison.OrdinalIgnoreCase);
+
+    private static readonly Regex SolutionProjectLine = new(
+        "^\\s*Project\\(\"(?<typeGuid>[^\"]+)\"\\)\\s*=\\s*\"(?<name>[^\"]+)\",\\s*\"(?<path>[^\"]+)\",\\s*\"(?<guid>[^\"]+)\"",
+        RegexOptions.Compiled);
 
     private string ResolveFile(string overridePath, params string[] fileNames)
     {

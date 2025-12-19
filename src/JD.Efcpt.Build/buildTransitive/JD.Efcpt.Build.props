@@ -15,6 +15,7 @@
 
     <!-- Solution probing -->
     <EfcptSolutionDir Condition="'$(EfcptSolutionDir)'==''">$(SolutionDir)</EfcptSolutionDir>
+    <EfcptSolutionPath Condition="'$(EfcptSolutionPath)'==''">$(SolutionPath)</EfcptSolutionPath>
     <EfcptProbeSolutionDir Condition="'$(EfcptProbeSolutionDir)'==''">true</EfcptProbeSolutionDir>
 
     <!-- Tooling -->
