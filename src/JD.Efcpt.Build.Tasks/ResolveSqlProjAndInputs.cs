@@ -388,7 +388,9 @@ public sealed class ResolveSqlProjAndInputs : Task
                 continue;
 
             var name = match.Groups["name"].Value;
-            var relativePath = match.Groups["path"].Value;
+            var relativePath = match.Groups["path"].Value
+                .Replace('\\', Path.DirectorySeparatorChar)
+                .Replace('/', Path.DirectorySeparatorChar);
             if (!IsProjectFile(Path.GetExtension(relativePath)))
                 continue;
 
