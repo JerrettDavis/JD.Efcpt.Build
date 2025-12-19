@@ -24,6 +24,18 @@ public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : Tin
         ResolveSqlProjAndInputs Task,
         bool Success);
 
+    private sealed record SolutionScanSetup(
+        TestFolder Folder,
+        string ProjectDir,
+        string SqlProj,
+        string SolutionPath,
+        TestBuildEngine Engine);
+
+    private sealed record SolutionScanResult(
+        SolutionScanSetup Setup,
+        ResolveSqlProjAndInputs Task,
+        bool Success);
+
     private static SetupState SetupProjectLevelInputs()
     {
         var folder = new TestFolder();
@@ -38,6 +50,66 @@ public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : Tin
 
         var engine = new TestBuildEngine();
         return new SetupState(folder, projectDir, sqlproj, engine);
+    }
+
+    private static SetupState SetupSdkProjectLevelInputs()
+    {
+        var folder = new TestFolder();
+        folder.CreateDir("db");
+        var sqlproj = folder.WriteFile("db/Db.csproj", "<Project Sdk=\"MSBuild.Sdk.SqlProj/3.0.0\" />");
+
+        var projectDir = folder.CreateDir("src");
+        folder.WriteFile("src/App.csproj", "<Project />");
+        folder.WriteFile("src/efcpt-config.json", "{}");
+        folder.WriteFile("src/efcpt.renaming.json", "[]");
+        folder.WriteFile("src/Template/readme.txt", "template");
+
+        var engine = new TestBuildEngine();
+        return new SetupState(folder, projectDir, sqlproj, engine);
+    }
+
+    private static SolutionScanSetup SetupSolutionScanInputs()
+    {
+        var folder = new TestFolder();
+        var projectDir = folder.CreateDir("src");
+        folder.WriteFile("src/App.csproj", "<Project />");
+
+        var sqlproj = folder.WriteFile("db/Db.csproj", "<Project Sdk=\"MSBuild.Sdk.SqlProj/3.0.0\" />");
+        var solutionPath = folder.WriteFile("Sample.sln",
+            """
+            Microsoft Visual Studio Solution File, Format Version 12.00
+            # Visual Studio Version 17
+            Project("{11111111-1111-1111-1111-111111111111}") = "App", "src\App.csproj", "{22222222-2222-2222-2222-222222222222}"
+            EndProject
+            Project("{11111111-1111-1111-1111-111111111111}") = "Db", "db\Db.csproj", "{33333333-3333-3333-3333-333333333333}"
+            EndProject
+            """);
+
+        var engine = new TestBuildEngine();
+        return new SolutionScanSetup(folder, projectDir, sqlproj, solutionPath, engine);
+    }
+
+    private static SolutionScanSetup SetupSlnxScanInputs()
+    {
+        var folder = new TestFolder();
+        var projectDir = folder.CreateDir("src");
+        folder.WriteFile("src/App.csproj", "<Project />");
+
+        var sqlproj = folder.WriteFile("db/Db.csproj", "<Project Sdk=\"MSBuild.Sdk.SqlProj/3.0.0\" />");
+        var solutionPath = folder.WriteFile("Sample.slnx",
+            """
+            <Solution>
+              <Folder Name="/src/">
+                <Project Path="src/App.csproj" />
+              </Folder>
+              <Folder Name="/db/">
+                <Project Path="db/Db.csproj" />
+              </Folder>
+            </Solution>
+            """);
+
+        var engine = new TestBuildEngine();
+        return new SolutionScanSetup(folder, projectDir, sqlproj, solutionPath, engine);
     }
 
     private static SetupState SetupSolutionLevelInputs()
@@ -83,6 +155,45 @@ public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : Tin
 
         var success = task.Execute();
         return new TaskResult(setup, task, success);
+    }
+
+    private static TaskResult ExecuteTaskProjectLevelSdk(SetupState setup)
+    {
+        var task = new ResolveSqlProjAndInputs
+        {
+            BuildEngine = setup.Engine,
+            ProjectFullPath = Path.Combine(setup.ProjectDir, "App.csproj"),
+            ProjectDirectory = setup.ProjectDir,
+            Configuration = "Debug",
+            ProjectReferences = [new TaskItem(Path.Combine("..", "db", "Db.csproj"))],
+            OutputDir = Path.Combine(setup.ProjectDir, "obj", "efcpt"),
+            SolutionDir = setup.Folder.Root,
+            ProbeSolutionDir = "true",
+            DefaultsRoot = TestPaths.DefaultsRoot
+        };
+
+        var success = task.Execute();
+        return new TaskResult(setup, task, success);
+    }
+
+    private static SolutionScanResult ExecuteTaskSolutionScan(SolutionScanSetup setup)
+    {
+        var task = new ResolveSqlProjAndInputs
+        {
+            BuildEngine = setup.Engine,
+            ProjectFullPath = Path.Combine(setup.ProjectDir, "App.csproj"),
+            ProjectDirectory = setup.ProjectDir,
+            Configuration = "Debug",
+            ProjectReferences = [],
+            OutputDir = Path.Combine(setup.ProjectDir, "obj", "efcpt"),
+            SolutionDir = setup.Folder.Root,
+            SolutionPath = setup.SolutionPath,
+            ProbeSolutionDir = "true",
+            DefaultsRoot = TestPaths.DefaultsRoot
+        };
+
+        var success = task.Execute();
+        return new SolutionScanResult(setup, task, success);
     }
 
     private static TaskResult ExecuteTaskSolutionLevel(SetupState setup)
@@ -137,6 +248,44 @@ public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : Tin
             .And("config path resolved", r => r.Task.ResolvedConfigPath == Path.GetFullPath(Path.Combine(r.Setup.ProjectDir, "efcpt-config.json")))
             .And("renaming path resolved", r => r.Task.ResolvedRenamingPath == Path.GetFullPath(Path.Combine(r.Setup.ProjectDir, "efcpt.renaming.json")))
             .And("template dir resolved", r => r.Task.ResolvedTemplateDir == Path.GetFullPath(Path.Combine(r.Setup.ProjectDir, "Template")))
+            .And(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Discovers MSBuild.Sdk.SqlProj project references")]
+    [Fact]
+    public async Task Discovers_sdk_sqlproj_reference()
+    {
+        await Given("project with SDK sql project", SetupSdkProjectLevelInputs)
+            .When("execute task", ExecuteTaskProjectLevelSdk)
+            .Then("task succeeds", r => r.Success)
+            .And("sql project path resolved", r => r.Task.SqlProjPath == Path.GetFullPath(r.Setup.SqlProj))
+            .And(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Scans solution for SQL project when no references exist")]
+    [Fact]
+    public async Task Scans_solution_for_sql_project()
+    {
+        await Given("project with solution-level SQL project", SetupSolutionScanInputs)
+            .When("execute task with solution scan", ExecuteTaskSolutionScan)
+            .Then("task succeeds", r => r.Success)
+            .And("sql project path resolved", r => r.Task.SqlProjPath == Path.GetFullPath(r.Setup.SqlProj))
+            .And("warning logged", r => r.Setup.Engine.Warnings.Count == 1)
+            .And(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Scans slnx solution for SQL project when no references exist")]
+    [Fact]
+    public async Task Scans_slnx_solution_for_sql_project()
+    {
+        await Given("project with slnx SQL project", SetupSlnxScanInputs)
+            .When("execute task with solution scan", ExecuteTaskSolutionScan)
+            .Then("task succeeds", r => r.Success)
+            .And("sql project path resolved", r => r.Task.SqlProjPath == Path.GetFullPath(r.Setup.SqlProj))
+            .And("warning logged", r => r.Setup.Engine.Warnings.Count == 1)
             .And(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }

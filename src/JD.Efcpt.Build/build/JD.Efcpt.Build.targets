@@ -47,6 +47,7 @@
         RenamingOverride="$(EfcptRenaming)"
         TemplateDirOverride="$(EfcptTemplateDir)"
         SolutionDir="$(EfcptSolutionDir)"
+        SolutionPath="$(EfcptSolutionPath)"
         ProbeSolutionDir="$(EfcptProbeSolutionDir)"
         OutputDir="$(EfcptOutput)"
         DefaultsRoot="$(MSBuildThisFileDirectory)Defaults"

@@ -1,0 +1,20 @@
+{
+  "names": {
+    "root-namespace": "EntityFrameworkCoreProject",
+    "dbcontext-name": "SampleDbContext",
+    "dbcontext-namespace": null,
+    "entity-namespace": "EntityFrameworkCoreProject.Models"
+  },
+  "code-generation": {
+    "use-t4": true,
+    "t4-template-path": ".",
+    "enable-on-configuring": false
+    
+  },
+  "file-layout": {
+    "output-path": "Models",
+    "output-dbcontext-path": ".",
+    "use-schema-folders-preview": true,
+    "use-schema-namespaces-preview": false
+  }
+}
