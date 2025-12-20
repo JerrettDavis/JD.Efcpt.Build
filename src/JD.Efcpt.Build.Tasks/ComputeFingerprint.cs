@@ -1,3 +1,4 @@
+using JD.Efcpt.Build.Tasks.Extensions;
 using Microsoft.Build.Framework;
 using System.Text;
 using Task = Microsoft.Build.Utilities.Task;
@@ -25,9 +26,19 @@ namespace JD.Efcpt.Build.Tasks;
 public sealed class ComputeFingerprint : Task
 {
     /// <summary>
-    /// Path to the DACPAC file to include in the fingerprint.
+    /// Path to the DACPAC file to include in the fingerprint (used in .sqlproj mode).
     /// </summary>
-    [Required] public string DacpacPath { get; set; } = "";
+    public string DacpacPath { get; set; } = "";
+
+    /// <summary>
+    /// Schema fingerprint from QuerySchemaMetadata (used in connection string mode).
+    /// </summary>
+    public string SchemaFingerprint { get; set; } = "";
+
+    /// <summary>
+    /// Indicates whether we're in connection string mode.
+    /// </summary>
+    public string UseConnectionStringMode { get; set; } = "false";
 
     /// <summary>
     /// Path to the efcpt configuration JSON file to include in the fingerprint.
@@ -76,7 +87,24 @@ public sealed class ComputeFingerprint : Task
         {
             var manifest = new StringBuilder();
 
-            Append(manifest, DacpacPath, "dacpac");
+            // Source fingerprint (DACPAC OR schema fingerprint)
+            if (UseConnectionStringMode.IsTrue())
+            {
+                if (!string.IsNullOrWhiteSpace(SchemaFingerprint))
+                {
+                    manifest.Append("schema\0").Append(SchemaFingerprint).Append('\n');
+                    log.Detail($"Using schema fingerprint: {SchemaFingerprint}");
+                }
+            }
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(DacpacPath) && File.Exists(DacpacPath))
+                {
+                    Append(manifest, DacpacPath, "dacpac");
+                    log.Detail($"Using DACPAC: {DacpacPath}");
+                }
+            }
+
             Append(manifest, ConfigPath, "config");
             Append(manifest, RenamingPath, "renaming");
 

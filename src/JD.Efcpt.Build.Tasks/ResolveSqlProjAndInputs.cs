@@ -92,6 +92,26 @@ public sealed class ResolveSqlProjAndInputs : Task
     public string TemplateDirOverride { get; set; } = "";
 
     /// <summary>
+    /// Optional explicit connection string override. When set, connection string mode is used instead of .sqlproj mode.
+    /// </summary>
+    public string EfcptConnectionString { get; set; } = "";
+
+    /// <summary>
+    /// Optional path to appsettings.json file containing connection strings.
+    /// </summary>
+    public string EfcptAppSettings { get; set; } = "";
+
+    /// <summary>
+    /// Optional path to app.config or web.config file containing connection strings.
+    /// </summary>
+    public string EfcptAppConfig { get; set; } = "";
+
+    /// <summary>
+    /// Connection string key name to use from configuration files. Defaults to "DefaultConnection".
+    /// </summary>
+    public string EfcptConnectionStringName { get; set; } = "DefaultConnection";
+
+    /// <summary>
     /// Solution directory to probe when searching for configuration, renaming, and template assets.
     /// </summary>
     /// <remarks>
@@ -170,6 +190,18 @@ public sealed class ResolveSqlProjAndInputs : Task
     [Output]
     public string ResolvedTemplateDir { get; set; } = "";
 
+    /// <summary>
+    /// Resolved connection string (if using connection string mode).
+    /// </summary>
+    [Output]
+    public string ResolvedConnectionString { get; set; } = "";
+
+    /// <summary>
+    /// Indicates whether the build will use connection string mode (true) or .sqlproj mode (false).
+    /// </summary>
+    [Output]
+    public string UseConnectionString { get; set; } = "false";
+
     #region Context Records
 
     private readonly record struct SqlProjResolutionContext(
@@ -188,7 +220,9 @@ public sealed class ResolveSqlProjAndInputs : Task
         string SqlProjPath,
         string ConfigPath,
         string RenamingPath,
-        string TemplateDir
+        string TemplateDir,
+        string ConnectionString,
+        bool UseConnectionStringMode
     );
 
     #endregion
@@ -261,22 +295,38 @@ public sealed class ResolveSqlProjAndInputs : Task
         ResolvedConfigPath = resolutionState.ConfigPath;
         ResolvedRenamingPath = resolutionState.RenamingPath;
         ResolvedTemplateDir = resolutionState.TemplateDir;
+        ResolvedConnectionString = resolutionState.ConnectionString;
+        UseConnectionString = resolutionState.UseConnectionStringMode ? "true" : "false";
 
         if (DumpResolvedInputs.IsTrue())
         {
             WriteDumpFile(resolutionState);
         }
 
-        log.Detail($"Resolved SQL project: {SqlProjPath}");
+        if (resolutionState.UseConnectionStringMode)
+        {
+            log.Detail($"Resolved connection string from: {resolutionState.ConnectionString}");
+        }
+        else
+        {
+            log.Detail($"Resolved SQL project: {SqlProjPath}");
+        }
         return true;
     }
 
     private ResolutionState BuildResolutionState(BuildLog log)
-        => Composer<ResolutionState, ResolutionState>
+    {
+        var connectionString = TryResolveConnectionString(log);
+        return Composer<ResolutionState, ResolutionState>
             .New(() => default)
             .With(state => state with
             {
-                SqlProjPath = ResolveSqlProjWithValidation(log)
+                ConnectionString = connectionString ?? "",
+                UseConnectionStringMode = !string.IsNullOrWhiteSpace(connectionString)
+            })
+            .With(state => state with
+            {
+                SqlProjPath = state.UseConnectionStringMode ? "" : ResolveSqlProjWithValidation(log)
             })
             .With(state => state with
             {
@@ -299,10 +349,23 @@ public sealed class ResolveSqlProjAndInputs : Task
                     "Templates")
             })
             .Require(state =>
-                string.IsNullOrWhiteSpace(state.SqlProjPath)
-                    ? "SqlProj resolution failed"
-                    : null)
+            {
+                // Either connection string or SQL project must be resolved
+                if (state.UseConnectionStringMode)
+                {
+                    return string.IsNullOrWhiteSpace(state.ConnectionString)
+                        ? "Connection string resolution failed"
+                        : null;
+                }
+                else
+                {
+                    return string.IsNullOrWhiteSpace(state.SqlProjPath)
+                        ? "SqlProj resolution failed"
+                        : null;
+                }
+            })
             .Build(state => state);
+    }
 
     private string ResolveSqlProjWithValidation(BuildLog log)
     {
@@ -488,6 +551,23 @@ public sealed class ResolveSqlProjAndInputs : Task
             : throw new InvalidOperationException("Chain should always produce result or throw");
     }
 
+    private string? TryResolveConnectionString(BuildLog log)
+    {
+        var chain = ConnectionStringResolutionChain.Build();
+
+        var context = new ConnectionStringResolutionContext(
+            ExplicitConnectionString: EfcptConnectionString,
+            EfcptAppSettings: EfcptAppSettings,
+            EfcptAppConfig: EfcptAppConfig,
+            ConnectionStringName: EfcptConnectionStringName,
+            ProjectDirectory: ProjectDirectory,
+            Log: log);
+
+        return chain.Execute(in context, out var result)
+            ? result
+            : null; // Fallback to .sqlproj mode
+    }
+
     private void WriteDumpFile(ResolutionState state)
     {
         var dump = $"""
@@ -496,6 +576,8 @@ public sealed class ResolveSqlProjAndInputs : Task
                     "config": "{state.ConfigPath}",
                     "renaming": "{state.RenamingPath}",
                     "template": "{state.TemplateDir}",
+                    "connectionString": "{state.ConnectionString}",
+                    "useConnectionStringMode": "{state.UseConnectionStringMode}",
                     "output": "{OutputDir}"
                     """;
 

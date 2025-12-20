@@ -154,10 +154,19 @@ public sealed class RunEfcpt : Task
     public string WorkingDirectory { get; set; } = "";
 
     /// <summary>
-    /// Full path to the DACPAC file that efcpt will inspect.
+    /// Full path to the DACPAC file that efcpt will inspect (used in .sqlproj mode).
     /// </summary>
-    [Required]
     public string DacpacPath { get; set; } = "";
+
+    /// <summary>
+    /// Connection string for database connection (used in connection string mode).
+    /// </summary>
+    public string ConnectionString { get; set; } = "";
+
+    /// <summary>
+    /// Indicates whether to use connection string mode (true) or DACPAC mode (false).
+    /// </summary>
+    public string UseConnectionStringMode { get; set; } = "false";
 
     /// <summary>
     /// Full path to the efcpt configuration JSON file.
@@ -438,8 +447,23 @@ public sealed class RunEfcpt : Task
         renamingPath = renamingPath.TrimEnd('\\', '/');
         outputDir = outputDir.TrimEnd('\\', '/');
 
-        // DacpacPath is typically outside the working directory, so keep it absolute
-        return $"\"{DacpacPath}\" {Provider} -i \"{configPath}\" -r \"{renamingPath}\"" +
+        // First positional argument: connection string OR DACPAC path
+        // The efcpt CLI auto-detects which one it is
+        string firstArg;
+        if (UseConnectionStringMode.IsTrue())
+        {
+            if (string.IsNullOrWhiteSpace(ConnectionString))
+                throw new InvalidOperationException("ConnectionString is required when UseConnectionStringMode is true");
+            firstArg = $"\"{ConnectionString}\"";
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(DacpacPath) || !File.Exists(DacpacPath))
+                throw new InvalidOperationException($"DacpacPath '{DacpacPath}' does not exist");
+            firstArg = $"\"{DacpacPath}\"";
+        }
+
+        return $"{firstArg} {Provider} -i \"{configPath}\" -r \"{renamingPath}\"" +
                (workingDir.Equals(Path.GetFullPath(OutputDir), StringComparison.OrdinalIgnoreCase) ? string.Empty : $" -o \"{outputDir}\"");
     }
 

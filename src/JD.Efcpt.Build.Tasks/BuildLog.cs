@@ -17,5 +17,15 @@ internal sealed class BuildLog(TaskLoggingHelper log, string verbosity)
 
     public void Warn(string message) => log.LogWarning(message);
 
+    public void Warn(string code, string message)
+        => log.LogWarning(subcategory: null, code, helpKeyword: null,
+                          file: null, lineNumber: 0, columnNumber: 0,
+                          endLineNumber: 0, endColumnNumber: 0, message);
+
     public void Error(string message) => log.LogError(message);
+
+    public void Error(string code, string message)
+        => log.LogError(subcategory: null, code, helpKeyword: null,
+                        file: null, lineNumber: 0, columnNumber: 0,
+                        endLineNumber: 0, endColumnNumber: 0, message);
 }

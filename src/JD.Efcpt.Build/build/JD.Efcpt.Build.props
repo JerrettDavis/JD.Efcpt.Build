@@ -13,6 +13,12 @@
     <EfcptRenaming Condition="'$(EfcptRenaming)'==''">efcpt.renaming.json</EfcptRenaming>
     <EfcptTemplateDir Condition="'$(EfcptTemplateDir)'==''">Template</EfcptTemplateDir>
 
+    <!-- Connection String Configuration -->
+    <EfcptConnectionString Condition="'$(EfcptConnectionString)'==''"></EfcptConnectionString>
+    <EfcptAppSettings Condition="'$(EfcptAppSettings)'==''"></EfcptAppSettings>
+    <EfcptAppConfig Condition="'$(EfcptAppConfig)'==''"></EfcptAppConfig>
+    <EfcptConnectionStringName Condition="'$(EfcptConnectionStringName)'==''">DefaultConnection</EfcptConnectionStringName>
+
     <!-- Solution probing -->
     <EfcptSolutionDir Condition="'$(EfcptSolutionDir)'==''">$(SolutionDir)</EfcptSolutionDir>
     <EfcptSolutionPath Condition="'$(EfcptSolutionPath)'==''">$(SolutionPath)</EfcptSolutionPath>
