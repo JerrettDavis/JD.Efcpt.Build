@@ -59,7 +59,7 @@ dotnet build
 `JD.Efcpt.Build` transforms EF Core Power Tools into a **fully automated build step**. Instead of manually regenerating your EF Core models in Visual Studio, this package:
 
 ✅ **Automatically builds** your SQL Server Database Project (`.sqlproj`) to a DACPAC
-✅ **OR connects directly** to your database via connection string (**NEW in v2.0**)
+✅ **OR connects directly** to your database via connection string (**NEW in v0.2.0**)
 ✅ **Runs EF Core Power Tools** CLI during `dotnet build`
 ✅ **Generates DbContext and entities** from your database schema
 ✅ **Intelligently caches** - only regenerates when schema or config changes
@@ -369,11 +369,11 @@ Customize table and column naming:
 
 ---
 
-## 🔌 Connection String Mode (NEW in v2.0)
+## 🔌 Connection String Mode (NEW in v0.2.0)
 
 ### Overview
 
-Starting with version 2.0, `JD.Efcpt.Build` supports **direct database connection** as an alternative to DACPAC-based workflows. This "**connection string mode**" allows you to reverse-engineer your EF Core models directly from a live database without requiring a `.sqlproj` file.
+Starting with version 0.2.0, `JD.Efcpt.Build` supports **direct database connection** as an alternative to DACPAC-based workflows. This "**connection string mode**" allows you to reverse-engineer your EF Core models directly from a live database without requiring a `.sqlproj` file.
 
 **Key Benefits:**
 
