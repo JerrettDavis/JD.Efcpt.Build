@@ -39,7 +39,7 @@ public sealed class SqlProjectDetectorTests(ITestOutputHelper output) : TinyBddX
         await Given("missing project path", SetupMissingProject)
             .When("detect", ExecuteDetect)
             .Then("returns false", r => !r.IsSqlProject)
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -50,7 +50,7 @@ public sealed class SqlProjectDetectorTests(ITestOutputHelper output) : TinyBddX
         await Given("project with supported SDK attribute", () => SetupProject("<Project Sdk=\"MSBuild.Sdk.SqlProj/3.0.0\" />"))
             .When("detect", ExecuteDetect)
             .Then("returns true", r => r.IsSqlProject)
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -61,7 +61,7 @@ public sealed class SqlProjectDetectorTests(ITestOutputHelper output) : TinyBddX
         await Given("project with multiple SDKs", () => SetupProject("<Project Sdk=\"Microsoft.NET.Sdk;MSBuild.Sdk.SqlProj/3.0.0\" />"))
             .When("detect", ExecuteDetect)
             .Then("returns true", r => r.IsSqlProject)
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -73,7 +73,7 @@ public sealed class SqlProjectDetectorTests(ITestOutputHelper output) : TinyBddX
                 SetupProject("<Project><Sdk Name=\"Microsoft.Build.Sql\" Version=\"1.0.0\" /></Project>"))
             .When("detect", ExecuteDetect)
             .Then("returns true", r => r.IsSqlProject)
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -85,7 +85,7 @@ public sealed class SqlProjectDetectorTests(ITestOutputHelper output) : TinyBddX
                 SetupProject("<Root><Project Sdk=\"MSBuild.Sdk.SqlProj/3.0.0\" /></Root>"))
             .When("detect", ExecuteDetect)
             .Then("returns true", r => r.IsSqlProject)
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -96,7 +96,7 @@ public sealed class SqlProjectDetectorTests(ITestOutputHelper output) : TinyBddX
         await Given("project with unknown SDK", () => SetupProject("<Project Sdk=\"Microsoft.NET.Sdk\" />"))
             .When("detect", ExecuteDetect)
             .Then("returns false", r => !r.IsSqlProject)
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -107,7 +107,7 @@ public sealed class SqlProjectDetectorTests(ITestOutputHelper output) : TinyBddX
         await Given("project with invalid XML", () => SetupProject("<Project"))
             .When("detect", ExecuteDetect)
             .Then("returns false", r => !r.IsSqlProject)
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 }

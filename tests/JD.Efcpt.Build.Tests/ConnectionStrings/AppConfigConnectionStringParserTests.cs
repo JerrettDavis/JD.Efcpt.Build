@@ -1,7 +1,6 @@
 using JD.Efcpt.Build.Tasks;
 using JD.Efcpt.Build.Tasks.ConnectionStrings;
 using JD.Efcpt.Build.Tests.Infrastructure;
-using Microsoft.Build.Utilities;
 using TinyBDD;
 using TinyBDD.Xunit;
 using Xunit;
@@ -55,7 +54,7 @@ public sealed class AppConfigConnectionStringParserTests(ITestOutputHelper outpu
             .And("connection string is correct", r => r.Result.ConnectionString == "Server=localhost;Database=TestDb;")
             .And("source is correct", r => r.Result.Source == r.Setup.FilePath)
             .And("key name is correct", r => r.Result.KeyName == "DefaultConnection")
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -80,7 +79,7 @@ public sealed class AppConfigConnectionStringParserTests(ITestOutputHelper outpu
             .When("parse", ExecuteParse)
             .Then("succeeds", r => r.Result.Success)
             .And("connection string is correct", r => r.Result.ConnectionString == "Data Source=.\\SQLEXPRESS;Initial Catalog=MyApp;Integrated Security=True")
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -106,7 +105,7 @@ public sealed class AppConfigConnectionStringParserTests(ITestOutputHelper outpu
             .Then("succeeds", r => r.Result.Success)
             .And("uses first available connection string", r => r.Result.ConnectionString == "Server=prod;Database=ProdDb;")
             .And("key name is first available", r => r.Result.KeyName == "ProductionDb")
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -130,7 +129,7 @@ public sealed class AppConfigConnectionStringParserTests(ITestOutputHelper outpu
             })
             .When("parse", ExecuteParse)
             .Then("fails", r => !r.Result.Success)
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -153,7 +152,7 @@ public sealed class AppConfigConnectionStringParserTests(ITestOutputHelper outpu
             })
             .When("parse", ExecuteParse)
             .Then("fails", r => !r.Result.Success)
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -169,7 +168,7 @@ public sealed class AppConfigConnectionStringParserTests(ITestOutputHelper outpu
             })
             .When("parse", ExecuteParse)
             .Then("fails", r => !r.Result.Success)
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -185,7 +184,7 @@ public sealed class AppConfigConnectionStringParserTests(ITestOutputHelper outpu
             })
             .When("parse", ExecuteParse)
             .Then("fails", r => !r.Result.Success)
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -209,7 +208,7 @@ public sealed class AppConfigConnectionStringParserTests(ITestOutputHelper outpu
             })
             .When("parse", ExecuteParse)
             .Then("fails", r => !r.Result.Success)
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -233,7 +232,7 @@ public sealed class AppConfigConnectionStringParserTests(ITestOutputHelper outpu
             })
             .When("parse", ExecuteParse)
             .Then("fails", r => !r.Result.Success)
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 

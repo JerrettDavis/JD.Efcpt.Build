@@ -40,15 +40,14 @@ public sealed class SchemaFingerprinterTests(ITestOutputHelper output) : TinyBdd
                 var table = TableModel.Create(
                     "dbo",
                     "Users",
-                    new[]
-                    {
+                    [
                         new ColumnModel("Id", "int", 0, 10, 0, false, 1, null),
                         new ColumnModel("Name", "nvarchar", 100, 0, 0, false, 2, null)
-                    },
-                    Array.Empty<IndexModel>(),
-                    Array.Empty<ConstraintModel>()
+                    ],
+                    [],
+                    []
                 );
-                return SchemaModel.Create(new[] { table });
+                return SchemaModel.Create([table]);
             })
             .When("compute fingerprint twice", schema =>
             {
@@ -70,20 +69,20 @@ public sealed class SchemaFingerprinterTests(ITestOutputHelper output) : TinyBdd
                 var table1 = TableModel.Create(
                     "dbo",
                     "Users",
-                    new[] { new ColumnModel("Id", "int", 0, 10, 0, false, 1, null) },
-                    Array.Empty<IndexModel>(),
-                    Array.Empty<ConstraintModel>()
+                    [new ColumnModel("Id", "int", 0, 10, 0, false, 1, null)],
+                    [],
+                    []
                 );
                 var table2 = TableModel.Create(
                     "dbo",
                     "Products",
-                    new[] { new ColumnModel("Id", "int", 0, 10, 0, false, 1, null) },
-                    Array.Empty<IndexModel>(),
-                    Array.Empty<ConstraintModel>()
+                    [new ColumnModel("Id", "int", 0, 10, 0, false, 1, null)],
+                    [],
+                    []
                 );
 
-                var schema1 = SchemaModel.Create(new[] { table1 });
-                var schema2 = SchemaModel.Create(new[] { table2 });
+                var schema1 = SchemaModel.Create([table1]);
+                var schema2 = SchemaModel.Create([table2]);
 
                 return (schema1, schema2);
             })
@@ -106,20 +105,20 @@ public sealed class SchemaFingerprinterTests(ITestOutputHelper output) : TinyBdd
                 var table1 = TableModel.Create(
                     "dbo",
                     "Users",
-                    new[] { new ColumnModel("Name", "nvarchar", 100, 0, 0, false, 1, null) },
-                    Array.Empty<IndexModel>(),
-                    Array.Empty<ConstraintModel>()
+                    [new ColumnModel("Name", "nvarchar", 100, 0, 0, false, 1, null)],
+                    [],
+                    []
                 );
                 var table2 = TableModel.Create(
                     "dbo",
                     "Users",
-                    new[] { new ColumnModel("Name", "varchar", 100, 0, 0, false, 1, null) },
-                    Array.Empty<IndexModel>(),
-                    Array.Empty<ConstraintModel>()
+                    [new ColumnModel("Name", "varchar", 100, 0, 0, false, 1, null)],
+                    [],
+                    []
                 );
 
-                var schema1 = SchemaModel.Create(new[] { table1 });
-                var schema2 = SchemaModel.Create(new[] { table2 });
+                var schema1 = SchemaModel.Create([table1]);
+                var schema2 = SchemaModel.Create([table2]);
 
                 return (schema1, schema2);
             })
@@ -142,24 +141,23 @@ public sealed class SchemaFingerprinterTests(ITestOutputHelper output) : TinyBdd
                 var table1 = TableModel.Create(
                     "dbo",
                     "Users",
-                    new[] { new ColumnModel("Id", "int", 0, 10, 0, false, 1, null) },
-                    Array.Empty<IndexModel>(),
-                    Array.Empty<ConstraintModel>()
+                    [new ColumnModel("Id", "int", 0, 10, 0, false, 1, null)],
+                    [],
+                    []
                 );
                 var table2 = TableModel.Create(
                     "dbo",
                     "Users",
-                    new[]
-                    {
+                    [
                         new ColumnModel("Id", "int", 0, 10, 0, false, 1, null),
                         new ColumnModel("Name", "nvarchar", 100, 0, 0, false, 2, null)
-                    },
-                    Array.Empty<IndexModel>(),
-                    Array.Empty<ConstraintModel>()
+                    ],
+                    [],
+                    []
                 );
 
-                var schema1 = SchemaModel.Create(new[] { table1 });
-                var schema2 = SchemaModel.Create(new[] { table2 });
+                var schema1 = SchemaModel.Create([table1]);
+                var schema2 = SchemaModel.Create([table2]);
 
                 return (schema1, schema2);
             })
@@ -185,8 +183,8 @@ public sealed class SchemaFingerprinterTests(ITestOutputHelper output) : TinyBdd
                     "dbo",
                     "Users",
                     columns,
-                    Array.Empty<IndexModel>(),
-                    Array.Empty<ConstraintModel>()
+                    [],
+                    []
                 );
 
                 var index = IndexModel.Create(
@@ -194,19 +192,19 @@ public sealed class SchemaFingerprinterTests(ITestOutputHelper output) : TinyBdd
                     isUnique: true,
                     isPrimaryKey: true,
                     isClustered: true,
-                    new[] { new IndexColumnModel("Id", 1, false) }
+                    [new IndexColumnModel("Id", 1, false)]
                 );
 
                 var table2 = TableModel.Create(
                     "dbo",
                     "Users",
                     columns,
-                    new[] { index },
-                    Array.Empty<ConstraintModel>()
+                    [index],
+                    []
                 );
 
-                var schema1 = SchemaModel.Create(new[] { table1 });
-                var schema2 = SchemaModel.Create(new[] { table2 });
+                var schema1 = SchemaModel.Create([table1]);
+                var schema2 = SchemaModel.Create([table2]);
 
                 return (schema1, schema2);
             })
@@ -232,14 +230,14 @@ public sealed class SchemaFingerprinterTests(ITestOutputHelper output) : TinyBdd
                     "dbo",
                     "Orders",
                     columns,
-                    Array.Empty<IndexModel>(),
-                    Array.Empty<ConstraintModel>()
+                    [],
+                    []
                 );
 
                 var fk = ForeignKeyModel.Create(
                     "dbo",
                     "Users",
-                    new[] { new ForeignKeyColumnModel("UserId", "Id", 1) }
+                    [new ForeignKeyColumnModel("UserId", "Id", 1)]
                 );
 
                 var constraint = new ConstraintModel(
@@ -253,12 +251,12 @@ public sealed class SchemaFingerprinterTests(ITestOutputHelper output) : TinyBdd
                     "dbo",
                     "Orders",
                     columns,
-                    Array.Empty<IndexModel>(),
-                    new[] { constraint }
+                    [],
+                    [constraint]
                 );
 
-                var schema1 = SchemaModel.Create(new[] { table1 });
-                var schema2 = SchemaModel.Create(new[] { table2 });
+                var schema1 = SchemaModel.Create([table1]);
+                var schema2 = SchemaModel.Create([table2]);
 
                 return (schema1, schema2);
             })
@@ -284,8 +282,8 @@ public sealed class SchemaFingerprinterTests(ITestOutputHelper output) : TinyBdd
                     "dbo",
                     "Users",
                     columns,
-                    Array.Empty<IndexModel>(),
-                    Array.Empty<ConstraintModel>()
+                    [],
+                    []
                 );
 
                 var checkConstraint = new ConstraintModel(
@@ -299,12 +297,12 @@ public sealed class SchemaFingerprinterTests(ITestOutputHelper output) : TinyBdd
                     "dbo",
                     "Users",
                     columns,
-                    Array.Empty<IndexModel>(),
-                    new[] { checkConstraint }
+                    [],
+                    [checkConstraint]
                 );
 
-                var schema1 = SchemaModel.Create(new[] { table1 });
-                var schema2 = SchemaModel.Create(new[] { table2 });
+                var schema1 = SchemaModel.Create([table1]);
+                var schema2 = SchemaModel.Create([table2]);
 
                 return (schema1, schema2);
             })
@@ -327,21 +325,21 @@ public sealed class SchemaFingerprinterTests(ITestOutputHelper output) : TinyBdd
                 var table1 = TableModel.Create(
                     "dbo",
                     "Users",
-                    new[] { new ColumnModel("Id", "int", 0, 10, 0, false, 1, null) },
-                    Array.Empty<IndexModel>(),
-                    Array.Empty<ConstraintModel>()
+                    [new ColumnModel("Id", "int", 0, 10, 0, false, 1, null)],
+                    [],
+                    []
                 );
 
                 var table2 = TableModel.Create(
                     "dbo",
                     "Products",
-                    new[] { new ColumnModel("Id", "int", 0, 10, 0, false, 1, null) },
-                    Array.Empty<IndexModel>(),
-                    Array.Empty<ConstraintModel>()
+                    [new ColumnModel("Id", "int", 0, 10, 0, false, 1, null)],
+                    [],
+                    []
                 );
 
                 // SchemaModel.Create normalizes (sorts) the tables
-                return SchemaModel.Create(new[] { table2, table1 }); // Intentionally out of order
+                return SchemaModel.Create([table2, table1]); // Intentionally out of order
             })
             .When("compute fingerprint twice", schema =>
             {
@@ -362,21 +360,21 @@ public sealed class SchemaFingerprinterTests(ITestOutputHelper output) : TinyBdd
                 var table1 = TableModel.Create(
                     "dbo",
                     "Users",
-                    new[] { new ColumnModel("Email", "nvarchar", 100, 0, 0, false, 1, null) }, // NOT NULL
-                    Array.Empty<IndexModel>(),
-                    Array.Empty<ConstraintModel>()
+                    [new ColumnModel("Email", "nvarchar", 100, 0, 0, false, 1, null)], // NOT NULL
+                    [],
+                    []
                 );
 
                 var table2 = TableModel.Create(
                     "dbo",
                     "Users",
-                    new[] { new ColumnModel("Email", "nvarchar", 100, 0, 0, true, 1, null) }, // NULL
-                    Array.Empty<IndexModel>(),
-                    Array.Empty<ConstraintModel>()
+                    [new ColumnModel("Email", "nvarchar", 100, 0, 0, true, 1, null)], // NULL
+                    [],
+                    []
                 );
 
-                var schema1 = SchemaModel.Create(new[] { table1 });
-                var schema2 = SchemaModel.Create(new[] { table2 });
+                var schema1 = SchemaModel.Create([table1]);
+                var schema2 = SchemaModel.Create([table2]);
 
                 return (schema1, schema2);
             })

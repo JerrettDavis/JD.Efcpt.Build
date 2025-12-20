@@ -1,228 +1,143 @@
 using JD.Efcpt.Build.Tasks.Schema;
 using Microsoft.Data.SqlClient;
 using Testcontainers.MsSql;
+using TinyBDD;
+using TinyBDD.Xunit;
 using Xunit;
+using Xunit.Abstractions;
+using Task = System.Threading.Tasks.Task;
 
 namespace JD.Efcpt.Build.Tests.Integration;
 
-/// <summary>
-/// Integration tests for SQL Server schema reading and fingerprinting using Testcontainers.
-/// </summary>
+[Feature("SqlServerSchemaReader: reads and fingerprints SQL Server schema using Testcontainers")]
 [Collection(nameof(AssemblySetup))]
-public sealed class SqlServerSchemaIntegrationTests : IAsyncLifetime
+public sealed class SqlServerSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
-    private MsSqlContainer? _container;
-    private string? _connectionString;
-
-    public async Task InitializeAsync()
+    private sealed record TestContext(
+        MsSqlContainer Container,
+        string ConnectionString) : IDisposable
     {
-        // Start SQL Server 2022 container
-        _container = new MsSqlBuilder()
-            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
-            .WithPassword("P@ssw0rd123!")
-            .Build();
-
-        await _container.StartAsync();
-        _connectionString = _container.GetConnectionString();
-    }
-
-    public async Task DisposeAsync()
-    {
-        if (_container != null)
+        public void Dispose()
         {
-            await _container.DisposeAsync();
+            Container.DisposeAsync().AsTask().Wait();
         }
     }
 
-    [Fact]
-    public void ReadEmptyDatabaseSchema()
-    {
-        // Act
-        var reader = new SqlServerSchemaReader();
-        var schema = reader.ReadSchema(_connectionString!);
+    private sealed record SchemaResult(
+        TestContext Context,
+        SchemaModel Schema);
 
-        // Assert
-        Assert.NotNull(schema);
-        Assert.Empty(schema.Tables); // Fresh database should have no user tables
+    // ========== Setup Methods ==========
+
+    private static async Task<TestContext> SetupEmptyDatabase()
+    {
+        var container = new MsSqlBuilder()
+            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+            .Build();
+
+        await container.StartAsync();
+        var connectionString = container.GetConnectionString();
+
+        return new TestContext(container, connectionString);
     }
 
-    [Fact]
-    public async Task ReadSingleTableSchema()
+    private static async Task<TestContext> SetupSingleTableDatabase()
     {
-        // Arrange
-        await CreateTable(_connectionString!, "Users",
+        var context = await SetupEmptyDatabase();
+        await CreateTable(context.ConnectionString, "Users",
             "Id INT PRIMARY KEY",
             "Name NVARCHAR(100) NOT NULL",
             "Email NVARCHAR(255) NULL");
 
-        // Act
-        var reader = new SqlServerSchemaReader();
-        var schema = reader.ReadSchema(_connectionString!);
-
-        // Assert
-        Assert.Single(schema.Tables);
-        var table = schema.Tables[0];
-        Assert.Equal("dbo", table.Schema);
-        Assert.Equal("Users", table.Name);
-        Assert.Equal(3, table.Columns.Count);
-
-        // Verify columns
-        var idColumn = table.Columns.First(c => c.Name == "Id");
-        Assert.Equal("int", idColumn.DataType);
-        Assert.False(idColumn.IsNullable);
-
-        var nameColumn = table.Columns.First(c => c.Name == "Name");
-        Assert.Equal("nvarchar", nameColumn.DataType);
-        Assert.False(nameColumn.IsNullable);
-
-        var emailColumn = table.Columns.First(c => c.Name == "Email");
-        Assert.Equal("nvarchar", emailColumn.DataType);
-        Assert.True(emailColumn.IsNullable);
+        return context;
     }
 
-    [Fact]
-    public async Task ReadSchemaWithIndexes()
+    private static async Task<TestContext> SetupDatabaseWithIndexes()
     {
-        // Arrange
-        await CreateTable(_connectionString!, "Products",
+        var context = await SetupEmptyDatabase();
+        await CreateTable(context.ConnectionString, "Products",
             "Id INT PRIMARY KEY",
             "Name NVARCHAR(100) NOT NULL");
 
-        await ExecuteSql(_connectionString!,
+        await ExecuteSql(context.ConnectionString,
             "CREATE INDEX IX_Products_Name ON dbo.Products (Name)");
 
-        // Act
-        var reader = new SqlServerSchemaReader();
-        var schema = reader.ReadSchema(_connectionString!);
-
-        // Assert
-        var table = schema.Tables[0];
-        Assert.True(table.Indexes.Count >= 1); // At least the index we created (PK creates clustered index)
-
-        var nameIndex = table.Indexes.FirstOrDefault(i => i.Name == "IX_Products_Name");
-        Assert.NotNull(nameIndex);
-        Assert.False(nameIndex!.IsUnique);
-        Assert.False(nameIndex.IsPrimaryKey);
+        return context;
     }
 
-    [Fact]
-    public async Task ReadSchemaWithForeignKeys()
+    private static async Task<TestContext> SetupDatabaseWithForeignKeys()
     {
-        // Arrange
-        await CreateTable(_connectionString!, "Customers",
+        var context = await SetupEmptyDatabase();
+        await CreateTable(context.ConnectionString, "Customers",
             "Id INT PRIMARY KEY",
             "Name NVARCHAR(100) NOT NULL");
 
-        await CreateTable(_connectionString!, "Orders",
+        await CreateTable(context.ConnectionString, "Orders",
             "Id INT PRIMARY KEY",
             "CustomerId INT NOT NULL",
             "OrderDate DATETIME NOT NULL");
 
-        await ExecuteSql(_connectionString!,
+        await ExecuteSql(context.ConnectionString,
             "ALTER TABLE dbo.Orders ADD CONSTRAINT FK_Orders_Customers FOREIGN KEY (CustomerId) REFERENCES dbo.Customers(Id)");
 
-        // Act
-        var reader = new SqlServerSchemaReader();
-        var schema = reader.ReadSchema(_connectionString!);
-
-        // Assert
-        var ordersTable = schema.Tables.First(t => t.Name == "Orders");
-        var fkConstraint = ordersTable.Constraints.FirstOrDefault(c => c.Type == ConstraintType.ForeignKey);
-        Assert.NotNull(fkConstraint);
-        Assert.Equal("FK_Orders_Customers", fkConstraint!.Name);
-        Assert.NotNull(fkConstraint.ForeignKey);
-        Assert.Equal("dbo", fkConstraint.ForeignKey!.ReferencedSchema);
-        Assert.Equal("Customers", fkConstraint.ForeignKey.ReferencedTable);
+        return context;
     }
 
-    [Fact]
-    public async Task ReadSchemaWithCheckConstraints()
+    private static async Task<TestContext> SetupDatabaseWithCheckConstraints()
     {
-        // Arrange
-        await CreateTable(_connectionString!, "Employees",
+        var context = await SetupEmptyDatabase();
+        await CreateTable(context.ConnectionString, "Employees",
             "Id INT PRIMARY KEY",
             "Name NVARCHAR(100) NOT NULL",
             "Age INT NOT NULL");
 
-        await ExecuteSql(_connectionString!,
+        await ExecuteSql(context.ConnectionString,
             "ALTER TABLE dbo.Employees ADD CONSTRAINT CK_Employees_Age CHECK (Age >= 18 AND Age <= 120)");
 
-        // Act
-        var reader = new SqlServerSchemaReader();
-        var schema = reader.ReadSchema(_connectionString!);
-
-        // Assert
-        var table = schema.Tables.First(t => t.Name == "Employees");
-        var checkConstraint = table.Constraints.FirstOrDefault(c => c.Type == ConstraintType.Check);
-        Assert.NotNull(checkConstraint);
-        Assert.Equal("CK_Employees_Age", checkConstraint!.Name);
-        Assert.NotNull(checkConstraint.CheckExpression);
-        Assert.Contains("Age", checkConstraint.CheckExpression);
+        return context;
     }
 
-    [Fact]
-    public async Task SchemaFingerprintIsConsistent()
+    private static async Task<TestContext> SetupDatabaseForFingerprinting()
     {
-        // Arrange
-        await CreateTable(_connectionString!, "TestTable",
+        var context = await SetupEmptyDatabase();
+        await CreateTable(context.ConnectionString, "TestTable",
             "Id INT PRIMARY KEY",
             "Name NVARCHAR(100) NOT NULL");
 
-        var reader = new SqlServerSchemaReader();
-        var schema = reader.ReadSchema(_connectionString!);
-
-        // Act
-        var fingerprint1 = SchemaFingerprinter.ComputeFingerprint(schema);
-        var fingerprint2 = SchemaFingerprinter.ComputeFingerprint(schema);
-
-        // Assert
-        Assert.Equal(fingerprint1, fingerprint2);
-        Assert.NotEmpty(fingerprint1);
+        return context;
     }
 
-    [Fact]
-    public async Task SchemaChangesProduceDifferentFingerprints()
+    private static async Task<TestContext> SetupDatabaseForChanges()
     {
-        // Arrange - Initial schema
-        await CreateTable(_connectionString!, "VersionedTable",
+        var context = await SetupEmptyDatabase();
+        await CreateTable(context.ConnectionString, "VersionedTable",
             "Id INT PRIMARY KEY",
             "Name NVARCHAR(100) NOT NULL");
 
-        var reader = new SqlServerSchemaReader();
-        var schema1 = reader.ReadSchema(_connectionString!);
-        var fingerprint1 = SchemaFingerprinter.ComputeFingerprint(schema1);
-
-        // Act - Add a column
-        await ExecuteSql(_connectionString!,
-            "ALTER TABLE dbo.VersionedTable ADD Description NVARCHAR(500) NULL");
-
-        var schema2 = reader.ReadSchema(_connectionString!);
-        var fingerprint2 = SchemaFingerprinter.ComputeFingerprint(schema2);
-
-        // Assert
-        Assert.NotEqual(fingerprint1, fingerprint2);
+        return context;
     }
 
-    [Fact]
-    public async Task ReadMultipleTablesInDeterministicOrder()
+    private static async Task<TestContext> SetupDatabaseWithMultipleTables()
     {
-        // Arrange - Create tables in non-alphabetical order
-        await CreateTable(_connectionString!, "Zebras", "Id INT PRIMARY KEY");
-        await CreateTable(_connectionString!, "Apples", "Id INT PRIMARY KEY");
-        await CreateTable(_connectionString!, "Monkeys", "Id INT PRIMARY KEY");
+        var context = await SetupEmptyDatabase();
+        // Create tables in non-alphabetical order
+        await CreateTable(context.ConnectionString, "Zebras", "Id INT PRIMARY KEY");
+        await CreateTable(context.ConnectionString, "Apples", "Id INT PRIMARY KEY");
+        await CreateTable(context.ConnectionString, "Monkeys", "Id INT PRIMARY KEY");
 
-        // Act
-        var reader = new SqlServerSchemaReader();
-        var schema = reader.ReadSchema(_connectionString!);
-
-        // Assert - SchemaModel.Create should sort tables
-        Assert.Equal(3, schema.Tables.Count);
-        Assert.Equal("Apples", schema.Tables[0].Name);
-        Assert.Equal("Monkeys", schema.Tables[1].Name);
-        Assert.Equal("Zebras", schema.Tables[2].Name);
+        return context;
     }
 
-    // Helper methods
+    // ========== Execute Methods ==========
+
+    private static SchemaResult ExecuteReadSchema(TestContext context)
+    {
+        var reader = new SqlServerSchemaReader();
+        var schema = reader.ReadSchema(context.ConnectionString);
+        return new SchemaResult(context, schema);
+    }
+
+    // ========== Helper Methods ==========
 
     private static async Task CreateTable(string connectionString, string tableName, params string[] columns)
     {
@@ -238,5 +153,187 @@ public sealed class SqlServerSchemaIntegrationTests : IAsyncLifetime
 
         await using var command = new SqlCommand(sql, connection);
         await command.ExecuteNonQueryAsync();
+    }
+
+    // ========== Tests ==========
+
+    [Scenario("Read empty database schema")]
+    [Fact]
+    public async Task Read_empty_database_schema()
+    {
+        await Given("SQL Server with empty database", SetupEmptyDatabase)
+            .When("read schema", ExecuteReadSchema)
+            .Then("schema is not null", r => r.Schema != null)
+            .And("no user tables exist", r => r.Schema.Tables.Count == 0)
+            .Finally(r => r.Context.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Read single table schema")]
+    [Fact]
+    public async Task Read_single_table_schema()
+    {
+        await Given("SQL Server with Users table", SetupSingleTableDatabase)
+            .When("read schema", ExecuteReadSchema)
+            .Then("exactly one table exists", r => r.Schema.Tables.Count == 1)
+            .And("table schema is dbo", r => r.Schema.Tables[0].Schema == "dbo")
+            .And("table name is Users", r => r.Schema.Tables[0].Name == "Users")
+            .And("has 3 columns", r => r.Schema.Tables[0].Columns.Count == 3)
+            .And("Id column is int and not nullable", r =>
+            {
+                var idColumn = r.Schema.Tables[0].Columns.First(c => c.Name == "Id");
+                return idColumn.DataType == "int" && !idColumn.IsNullable;
+            })
+            .And("Name column is nvarchar and not nullable", r =>
+            {
+                var nameColumn = r.Schema.Tables[0].Columns.First(c => c.Name == "Name");
+                return nameColumn.DataType == "nvarchar" && !nameColumn.IsNullable;
+            })
+            .And("Email column is nvarchar and nullable", r =>
+            {
+                var emailColumn = r.Schema.Tables[0].Columns.First(c => c.Name == "Email");
+                return emailColumn.DataType == "nvarchar" && emailColumn.IsNullable;
+            })
+            .Finally(r => r.Context.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Read schema with indexes")]
+    [Fact]
+    public async Task Read_schema_with_indexes()
+    {
+        await Given("SQL Server with Products table and index", SetupDatabaseWithIndexes)
+            .When("read schema", ExecuteReadSchema)
+            .Then("table has at least one index", r => r.Schema.Tables[0].Indexes.Count >= 1)
+            .And("name index exists and is not unique", r =>
+            {
+                var nameIndex = r.Schema.Tables[0].Indexes.FirstOrDefault(i => i.Name == "IX_Products_Name");
+                return nameIndex != null && !nameIndex.IsUnique && !nameIndex.IsPrimaryKey;
+            })
+            .Finally(r => r.Context.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Read schema with foreign keys")]
+    [Fact]
+    public async Task Read_schema_with_foreign_keys()
+    {
+        await Given("SQL Server with Customers and Orders tables with FK", SetupDatabaseWithForeignKeys)
+            .When("read schema", ExecuteReadSchema)
+            .Then("Orders table has foreign key constraint", r =>
+            {
+                var ordersTable = r.Schema.Tables.First(t => t.Name == "Orders");
+                var fkConstraint = ordersTable.Constraints.FirstOrDefault(c => c.Type == ConstraintType.ForeignKey);
+                return fkConstraint != null;
+            })
+            .And("FK constraint has correct name", r =>
+            {
+                var ordersTable = r.Schema.Tables.First(t => t.Name == "Orders");
+                var fkConstraint = ordersTable.Constraints.First(c => c.Type == ConstraintType.ForeignKey);
+                return fkConstraint.Name == "FK_Orders_Customers";
+            })
+            .And("FK references Customers table", r =>
+            {
+                var ordersTable = r.Schema.Tables.First(t => t.Name == "Orders");
+                var fkConstraint = ordersTable.Constraints.First(c => c.Type == ConstraintType.ForeignKey);
+                return fkConstraint.ForeignKey != null &&
+                       fkConstraint.ForeignKey.ReferencedSchema == "dbo" &&
+                       fkConstraint.ForeignKey.ReferencedTable == "Customers";
+            })
+            .Finally(r => r.Context.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Read schema with check constraints")]
+    [Fact]
+    public async Task Read_schema_with_check_constraints()
+    {
+        await Given("SQL Server with Employees table with check constraint", SetupDatabaseWithCheckConstraints)
+            .When("read schema", ExecuteReadSchema)
+            .Then("table has check constraint", r =>
+            {
+                var table = r.Schema.Tables.First(t => t.Name == "Employees");
+                var checkConstraint = table.Constraints.FirstOrDefault(c => c.Type == ConstraintType.Check);
+                return checkConstraint != null;
+            })
+            .And("check constraint has correct name", r =>
+            {
+                var table = r.Schema.Tables.First(t => t.Name == "Employees");
+                var checkConstraint = table.Constraints.First(c => c.Type == ConstraintType.Check);
+                return checkConstraint.Name == "CK_Employees_Age";
+            })
+            .And("check expression contains Age", r =>
+            {
+                var table = r.Schema.Tables.First(t => t.Name == "Employees");
+                var checkConstraint = table.Constraints.First(c => c.Type == ConstraintType.Check);
+                return checkConstraint.CheckExpression != null && checkConstraint.CheckExpression.Contains("Age");
+            })
+            .Finally(r => r.Context.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Schema fingerprint is consistent")]
+    [Fact]
+    public async Task Schema_fingerprint_is_consistent()
+    {
+        await Given("SQL Server with TestTable", SetupDatabaseForFingerprinting)
+            .When("read schema and compute fingerprints twice", ExecuteComputeFingerprintTwice)
+            .Then("fingerprints are identical", r => r.Fingerprint1 == r.Fingerprint2)
+            .And("fingerprint is not empty", r => !string.IsNullOrEmpty(r.Fingerprint1))
+            .Finally(r => r.Context.Dispose())
+            .AssertPassed();
+    }
+
+    private static (TestContext Context, string Fingerprint1, string Fingerprint2) ExecuteComputeFingerprintTwice(TestContext context)
+    {
+        var reader = new SqlServerSchemaReader();
+        var schema = reader.ReadSchema(context.ConnectionString);
+
+        var fingerprint1 = SchemaFingerprinter.ComputeFingerprint(schema);
+        var fingerprint2 = SchemaFingerprinter.ComputeFingerprint(schema);
+
+        return (context, fingerprint1, fingerprint2);
+    }
+
+    [Scenario("Schema changes produce different fingerprints")]
+    [Fact]
+    public async Task Schema_changes_produce_different_fingerprints()
+    {
+        await Given("SQL Server with VersionedTable", SetupDatabaseForChanges)
+            .When("read schema, add column, read schema again", ExecuteChangeAndCompare)
+            .Then("fingerprints are different", r => r.Fingerprint1 != r.Fingerprint2)
+            .Finally(r => r.Context.Dispose())
+            .AssertPassed();
+    }
+
+    private static async Task<(TestContext Context, string Fingerprint1, string Fingerprint2)> ExecuteChangeAndCompare(TestContext context)
+    {
+        var reader = new SqlServerSchemaReader();
+        var schema1 = reader.ReadSchema(context.ConnectionString);
+        var fingerprint1 = SchemaFingerprinter.ComputeFingerprint(schema1);
+
+        // Add a column
+        await ExecuteSql(context.ConnectionString,
+            "ALTER TABLE dbo.VersionedTable ADD Description NVARCHAR(500) NULL");
+
+        var schema2 = reader.ReadSchema(context.ConnectionString);
+        var fingerprint2 = SchemaFingerprinter.ComputeFingerprint(schema2);
+
+        return (context, fingerprint1, fingerprint2);
+    }
+
+    [Scenario("Read multiple tables in deterministic order")]
+    [Fact]
+    public async Task Read_multiple_tables_in_deterministic_order()
+    {
+        await Given("SQL Server with Zebras, Apples, Monkeys tables", SetupDatabaseWithMultipleTables)
+            .When("read schema", ExecuteReadSchema)
+            .Then("exactly 3 tables exist", r => r.Schema.Tables.Count == 3)
+            .And("tables are sorted alphabetically", r =>
+                r.Schema.Tables[0].Name == "Apples" &&
+                r.Schema.Tables[1].Name == "Monkeys" &&
+                r.Schema.Tables[2].Name == "Zebras")
+            .Finally(r => r.Context.Dispose())
+            .AssertPassed();
     }
 }

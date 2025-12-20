@@ -1,10 +1,16 @@
 using JD.Efcpt.Build.Tasks;
 using JD.Efcpt.Build.Tests.Infrastructure;
+using TinyBDD;
+using TinyBDD.Xunit;
 using Xunit;
+using Xunit.Abstractions;
+using Task = System.Threading.Tasks.Task;
 
 namespace JD.Efcpt.Build.Tests;
 
-public sealed class StageEfcptInputsTests
+[Feature("StageEfcptInputs task: stages configuration and templates to output directory")]
+[Collection(nameof(AssemblySetup))]
+public sealed class StageEfcptInputsTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private enum TemplateShape
     {
@@ -20,6 +26,11 @@ public sealed class StageEfcptInputsTests
         string ConfigPath,
         string RenamingPath,
         string TemplateDir);
+
+    private sealed record StageResult(
+        StageSetup Setup,
+        StageEfcptInputs Task,
+        bool Success);
 
     private static StageSetup CreateSetup(TemplateShape shape)
     {
@@ -53,7 +64,7 @@ public sealed class StageEfcptInputsTests
         return Path.Combine(folder.Root, root);
     }
 
-    private static StageEfcptInputs ExecuteStage(StageSetup setup, string templateOutputDir)
+    private static StageResult ExecuteStage(StageSetup setup, string templateOutputDir)
     {
         var task = new StageEfcptInputs
         {
@@ -66,63 +77,105 @@ public sealed class StageEfcptInputsTests
             TemplateOutputDir = templateOutputDir
         };
 
-        Assert.True(task.Execute());
-        return task;
+        var success = task.Execute();
+        return new StageResult(setup, task, success);
     }
 
+    [Scenario("Stages under output dir when template output dir empty")]
     [Fact]
-    public void Stages_under_output_dir_when_template_output_dir_empty()
+    public async Task Stages_under_output_dir_when_template_output_dir_empty()
     {
-        var setup = CreateSetup(TemplateShape.EfCoreSubdir);
-        var task = ExecuteStage(setup, "");
-
-        var expectedRoot = Path.Combine(setup.OutputDir, "CodeTemplates");
-        Assert.Equal(Path.GetFullPath(expectedRoot), Path.GetFullPath(task.StagedTemplateDir));
-        Assert.True(File.Exists(Path.Combine(expectedRoot, "EFCore", "Entity.t4")));
-        Assert.False(Directory.Exists(Path.Combine(expectedRoot, "Other")));
-
-        setup.Folder.Dispose();
+        await Given("setup with EFCore subdirectory template", () => CreateSetup(TemplateShape.EfCoreSubdir))
+            .When("execute stage with empty template output dir", setup => ExecuteStage(setup, ""))
+            .Then("task succeeds", r => r.Success)
+            .And("staged template dir is under output dir", r =>
+            {
+                var expectedRoot = Path.Combine(r.Setup.OutputDir, "CodeTemplates");
+                return Path.GetFullPath(expectedRoot) == Path.GetFullPath(r.Task.StagedTemplateDir);
+            })
+            .And("EFCore template files are staged", r =>
+            {
+                var expectedRoot = Path.Combine(r.Setup.OutputDir, "CodeTemplates");
+                return File.Exists(Path.Combine(expectedRoot, "EFCore", "Entity.t4"));
+            })
+            .And("non-EFCore directories are excluded", r =>
+            {
+                var expectedRoot = Path.Combine(r.Setup.OutputDir, "CodeTemplates");
+                return !Directory.Exists(Path.Combine(expectedRoot, "Other"));
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
     }
 
+    [Scenario("Uses output-relative template output dir")]
     [Fact]
-    public void Uses_output_relative_template_output_dir()
+    public async Task Uses_output_relative_template_output_dir()
     {
-        var setup = CreateSetup(TemplateShape.CodeTemplatesOnly);
-        var task = ExecuteStage(setup, "Generated");
-
-        var expectedRoot = Path.Combine(setup.OutputDir, "Generated", "CodeTemplates");
-        Assert.Equal(Path.GetFullPath(expectedRoot), Path.GetFullPath(task.StagedTemplateDir));
-        Assert.True(File.Exists(Path.Combine(expectedRoot, "Custom", "Thing.t4")));
-
-        setup.Folder.Dispose();
+        await Given("setup with CodeTemplates only", () => CreateSetup(TemplateShape.CodeTemplatesOnly))
+            .When("execute stage with relative template output dir", setup => ExecuteStage(setup, "Generated"))
+            .Then("task succeeds", r => r.Success)
+            .And("staged template dir is under output/Generated", r =>
+            {
+                var expectedRoot = Path.Combine(r.Setup.OutputDir, "Generated", "CodeTemplates");
+                return Path.GetFullPath(expectedRoot) == Path.GetFullPath(r.Task.StagedTemplateDir);
+            })
+            .And("template files are staged", r =>
+            {
+                var expectedRoot = Path.Combine(r.Setup.OutputDir, "Generated", "CodeTemplates");
+                return File.Exists(Path.Combine(expectedRoot, "Custom", "Thing.t4"));
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
     }
 
+    [Scenario("Uses project-relative obj template output dir")]
     [Fact]
-    public void Uses_project_relative_obj_template_output_dir()
+    public async Task Uses_project_relative_obj_template_output_dir()
     {
-        var setup = CreateSetup(TemplateShape.NoCodeTemplates);
-        var task = ExecuteStage(setup, Path.Combine("obj", "efcpt", "Generated"));
-
-        var expectedRoot = Path.Combine(setup.ProjectDir, "obj", "efcpt", "Generated", "CodeTemplates");
-        Assert.Equal(Path.GetFullPath(expectedRoot), Path.GetFullPath(task.StagedTemplateDir));
-        Assert.True(File.Exists(Path.Combine(expectedRoot, "Readme.txt")));
-
-        setup.Folder.Dispose();
+        await Given("setup with no CodeTemplates", () => CreateSetup(TemplateShape.NoCodeTemplates))
+            .When("execute stage with project-relative path", setup =>
+                ExecuteStage(setup, Path.Combine("obj", "efcpt", "Generated")))
+            .Then("task succeeds", r => r.Success)
+            .And("staged template dir is under project/obj/efcpt/Generated", r =>
+            {
+                var expectedRoot = Path.Combine(r.Setup.ProjectDir, "obj", "efcpt", "Generated", "CodeTemplates");
+                return Path.GetFullPath(expectedRoot) == Path.GetFullPath(r.Task.StagedTemplateDir);
+            })
+            .And("template files are staged", r =>
+            {
+                var expectedRoot = Path.Combine(r.Setup.ProjectDir, "obj", "efcpt", "Generated", "CodeTemplates");
+                return File.Exists(Path.Combine(expectedRoot, "Readme.txt"));
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
     }
 
+    [Scenario("Uses absolute template output dir")]
     [Fact]
-    public void Uses_absolute_template_output_dir()
+    public async Task Uses_absolute_template_output_dir()
     {
-        var setup = CreateSetup(TemplateShape.CodeTemplatesOnly);
-        var absoluteOutput = Path.Combine(setup.Folder.Root, "absolute", "gen");
-        var task = ExecuteStage(setup, absoluteOutput);
-
-        var expectedRoot = Path.Combine(absoluteOutput, "CodeTemplates");
-        Assert.Equal(Path.GetFullPath(expectedRoot), Path.GetFullPath(task.StagedTemplateDir));
-        Assert.True(File.Exists(Path.Combine(expectedRoot, "Custom", "Thing.t4")));
-        Assert.True(File.Exists(task.StagedConfigPath));
-        Assert.True(File.Exists(task.StagedRenamingPath));
-
-        setup.Folder.Dispose();
+        await Given("setup with CodeTemplates only", () => CreateSetup(TemplateShape.CodeTemplatesOnly))
+            .When("execute stage with absolute path", setup =>
+            {
+                var absoluteOutput = Path.Combine(setup.Folder.Root, "absolute", "gen");
+                return ExecuteStage(setup, absoluteOutput);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("staged template dir is under absolute path", r =>
+            {
+                var absoluteOutput = Path.Combine(r.Setup.Folder.Root, "absolute", "gen");
+                var expectedRoot = Path.Combine(absoluteOutput, "CodeTemplates");
+                return Path.GetFullPath(expectedRoot) == Path.GetFullPath(r.Task.StagedTemplateDir);
+            })
+            .And("template files are staged", r =>
+            {
+                var absoluteOutput = Path.Combine(r.Setup.Folder.Root, "absolute", "gen");
+                var expectedRoot = Path.Combine(absoluteOutput, "CodeTemplates");
+                return File.Exists(Path.Combine(expectedRoot, "Custom", "Thing.t4"));
+            })
+            .And("config file is staged", r => File.Exists(r.Task.StagedConfigPath))
+            .And("renaming file is staged", r => File.Exists(r.Task.StagedRenamingPath))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
     }
 }

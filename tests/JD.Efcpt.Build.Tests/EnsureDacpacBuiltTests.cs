@@ -83,7 +83,7 @@ public sealed class EnsureDacpacBuiltTests(ITestOutputHelper output) : TinyBddXu
             .Then("task succeeds", r => r.Success)
             .And("dacpac path is correct", r => r.Task.DacpacPath == Path.GetFullPath(r.Setup.DacpacPath))
             .And("no errors logged", r => r.Setup.Engine.Errors.Count == 0)
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -100,7 +100,7 @@ public sealed class EnsureDacpacBuiltTests(ITestOutputHelper output) : TinyBddXu
                 var content = File.ReadAllText(r.Setup.DacpacPath);
                 return content.Contains("fake dacpac");
             })
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 }

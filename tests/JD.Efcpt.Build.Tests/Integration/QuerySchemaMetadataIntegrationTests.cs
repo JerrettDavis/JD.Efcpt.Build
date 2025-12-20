@@ -42,7 +42,7 @@ public sealed class QuerySchemaMetadataIntegrationTests(ITestOutputHelper output
             .Then("task succeeds", r => r.Success)
             .And("fingerprint is generated", r => !string.IsNullOrEmpty(r.Task.SchemaFingerprint))
             .And("schema model file exists", r => File.Exists(Path.Combine(r.Context.OutputDir, "schema-model.json")))
-            .And(r => r.Context.Dispose())
+            .Finally(r => r.Context.Dispose())
             .AssertPassed();
     }
 
@@ -54,7 +54,7 @@ public sealed class QuerySchemaMetadataIntegrationTests(ITestOutputHelper output
             .When("execute task twice", ExecuteTaskTwice)
             .Then("both tasks succeed", r => r.Item1.Success && r.Item2.Success)
             .And("fingerprints are identical", r => r.Item1.Task.SchemaFingerprint == r.Item2.Task.SchemaFingerprint)
-            .And(r => r.Item1.Context.Dispose())
+            .Finally(r => r.Item1.Context.Dispose())
             .AssertPassed();
     }
 
@@ -66,7 +66,7 @@ public sealed class QuerySchemaMetadataIntegrationTests(ITestOutputHelper output
             .When("execute task, modify schema, execute again", ExecuteTaskModifySchemaExecuteAgain)
             .Then("both tasks succeed", r => r.Item1.Success && r.Item2.Success)
             .And("fingerprints are different", r => r.Item1.Task.SchemaFingerprint != r.Item2.Task.SchemaFingerprint)
-            .And(r => r.Item1.Context.Dispose())
+            .Finally(r => r.Item1.Context.Dispose())
             .AssertPassed();
     }
 
@@ -78,7 +78,7 @@ public sealed class QuerySchemaMetadataIntegrationTests(ITestOutputHelper output
             .When("execute QuerySchemaMetadata task", ExecuteQuerySchemaMetadata)
             .Then("task succeeds", r => r.Success)
             .And("schema model contains expected tables", r => VerifySchemaModelContainsTables(r))
-            .And(r => r.Context.Dispose())
+            .Finally(r => r.Context.Dispose())
             .AssertPassed();
     }
 
@@ -90,7 +90,7 @@ public sealed class QuerySchemaMetadataIntegrationTests(ITestOutputHelper output
             .When("execute QuerySchemaMetadata task", ExecuteQuerySchemaMetadata)
             .Then("task succeeds", r => r.Success)
             .And("fingerprint is generated for empty schema", r => !string.IsNullOrEmpty(r.Task.SchemaFingerprint))
-            .And(r => r.Context.Dispose())
+            .Finally(r => r.Context.Dispose())
             .AssertPassed();
     }
 
@@ -102,7 +102,7 @@ public sealed class QuerySchemaMetadataIntegrationTests(ITestOutputHelper output
             .When("execute QuerySchemaMetadata task", ExecuteQuerySchemaMetadata)
             .Then("task fails", r => !r.Success)
             .And("error is logged", r => r.Context.Engine.Errors.Count > 0)
-            .And(r => r.Context.Dispose())
+            .Finally(r => r.Context.Dispose())
             .AssertPassed();
     }
 
