@@ -121,8 +121,7 @@ public sealed class QuerySchemaMetadata : Task
         try
         {
             using var connection = new SqlConnection(connectionString);
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-            connection.OpenAsync(cts.Token).GetAwaiter().GetResult();
+            connection.Open(SqlConnectionOverrides.OpenWithoutRetry);
             log.Detail("Database connection validated successfully.");
         }
         catch (Exception ex)
