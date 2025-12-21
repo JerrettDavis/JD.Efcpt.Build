@@ -1,5 +1,6 @@
 using System.Xml;
 using System.Xml.Linq;
+using JD.Efcpt.Build.Tasks.Extensions;
 
 namespace JD.Efcpt.Build.Tasks.ConnectionStrings;
 
@@ -33,7 +34,7 @@ internal sealed class AppConfigConnectionStringParser
 
             // Try requested key
             var match = connectionStrings.FirstOrDefault(
-                x => x.Name!.Equals(connectionStringName, StringComparison.OrdinalIgnoreCase));
+                x => x.Name!.EqualsIgnoreCase(connectionStringName));
 
             if (match != null)
                 return ConnectionStringResult.WithSuccess(match.ConnectionString!, filePath, match.Name!);

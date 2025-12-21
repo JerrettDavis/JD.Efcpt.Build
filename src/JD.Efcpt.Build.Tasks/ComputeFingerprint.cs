@@ -122,7 +122,7 @@ public sealed class ComputeFingerprint : Task
             Fingerprint = FileHash.Sha256String(manifest.ToString());
 
             var prior = File.Exists(FingerprintFile) ? File.ReadAllText(FingerprintFile).Trim() : "";
-            HasChanged = string.Equals(prior, Fingerprint, StringComparison.OrdinalIgnoreCase) ? "false" : "true";
+            HasChanged = prior.EqualsIgnoreCase(Fingerprint) ? "false" : "true";
 
             if (HasChanged == "true")
             {

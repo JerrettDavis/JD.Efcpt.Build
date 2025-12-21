@@ -120,7 +120,7 @@ MyApp/
 {
   "code-generation": {
     "use-t4": true,
-    "t4-template-path": "Template/CodeTemplates/EFCore"
+    "t4-template-path": "."
   }
 }
 ```

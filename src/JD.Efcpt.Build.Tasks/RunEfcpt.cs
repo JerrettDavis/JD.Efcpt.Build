@@ -464,7 +464,7 @@ public sealed class RunEfcpt : Task
         }
 
         return $"{firstArg} {Provider} -i \"{configPath}\" -r \"{renamingPath}\"" +
-               (workingDir.Equals(Path.GetFullPath(OutputDir), StringComparison.OrdinalIgnoreCase) ? string.Empty : $" -o \"{outputDir}\"");
+               (workingDir.EqualsIgnoreCase(Path.GetFullPath(OutputDir)) ? string.Empty : $" -o \"{outputDir}\"");
     }
 
     private static string MakeRelativeIfPossible(string path, string basePath)

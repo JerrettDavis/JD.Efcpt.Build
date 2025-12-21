@@ -59,7 +59,7 @@ dotnet build
 `JD.Efcpt.Build` transforms EF Core Power Tools into a **fully automated build step**. Instead of manually regenerating your EF Core models in Visual Studio, this package:
 
 ✅ **Automatically builds** your SQL Server Database Project (`.sqlproj`) to a DACPAC
-✅ **OR connects directly** to your database via connection string (**NEW in v0.2.0**)
+✅ **OR connects directly** to your database via connection string
 ✅ **Runs EF Core Power Tools** CLI during `dotnet build`
 ✅ **Generates DbContext and entities** from your database schema
 ✅ **Intelligently caches** - only regenerates when schema or config changes
@@ -323,19 +323,26 @@ Individual projects can override specific settings:
 ### Custom T4 Templates
 
 1. **Copy default templates** from the package or create your own
-2. **Place in your project** under `Template/CodeTemplates/EFCore/`
+2. **Place in your project** under `Template/CodeTemplates/EFCore/` (recommended)
 3. **Configure** in `efcpt-config.json`:
 
 ```json
 {
   "code-generation": {
     "use-t4": true,
-    "t4-template-path": "Template/CodeTemplates/EFCore"
+    "t4-template-path": "."
   }
 }
 ```
 
 Templates are automatically staged to `obj/efcpt/Generated/CodeTemplates/` during build.
+
+Notes:
+
+- `StageEfcptInputs` understands the common `Template/CodeTemplates/EFCore` layout, but it also supports:
+  - `Template/CodeTemplates/*` (copies the full `CodeTemplates` tree)
+  - A template folder without a `CodeTemplates` subdirectory (the entire folder is staged as `CodeTemplates`)
+- The staging destination is `$(EfcptGeneratedDir)\CodeTemplates\` by default.
 
 ### Renaming Rules (efcpt.renaming.json)
 
@@ -369,19 +376,11 @@ Customize table and column naming:
 
 ---
 
-## 🔌 Connection String Mode (NEW in v0.2.0)
+## 🔌 Connection String Mode 
 
 ### Overview
 
-Starting with version 0.2.0, `JD.Efcpt.Build` supports **direct database connection** as an alternative to DACPAC-based workflows. This "**connection string mode**" allows you to reverse-engineer your EF Core models directly from a live database without requiring a `.sqlproj` file.
-
-**Key Benefits:**
-
-✅ **No DACPAC required** - Connect directly to your database
-✅ **Faster iteration** - Skip the `.sqlproj` build step
-✅ **Flexible configuration** - Use appsettings.json, app.config, or explicit properties
-✅ **Auto-discovery** - Automatically finds connection strings in your project
-✅ **100% backward compatible** - Existing DACPAC workflows continue to work unchanged
+`JD.Efcpt.Build` supports direct database connection as an alternative to DACPAC-based workflows. Connection string mode allows you to reverse-engineer your EF Core models directly from a live database without requiring a `.sqlproj` file.
 
 ### When to Use Connection String Mode vs DACPAC Mode
 
@@ -586,7 +585,7 @@ When multiple connection string sources are present, this priority order is used
 ### Database Provider Support
 
 **Currently Supported:**
-- ✅ **SQL Server** (`mssql`) - Fully supported
+- **SQL Server** (`mssql`) - Fully supported
 
 **Planned for Future Versions:**
 - ⏳ PostgreSQL (`postgresql`)
@@ -719,17 +718,6 @@ Generated models appear in `obj/efcpt/Generated/` automatically!
    ```
 
 ### DACPAC Build Fails
-
-**Symptoms:** Error building `.sqlproj`
-
-**Solutions:**
-
-- Install **SQL Server Data Tools** build components
-- Verify `.sqlproj` builds independently:
-  ```bash
-  dotnet build path\to\Database.sqlproj
-  ```
-- Check for SQL syntax errors in your database project
 
 ### efcpt CLI Not Found
 
@@ -928,15 +916,30 @@ RUN dotnet build --configuration Release --no-restore
 | `EfcptSqlProj` | *(auto-discovered)* | Path to `.sqlproj` file |
 | `EfcptConfig` | `efcpt-config.json` | EF Core Power Tools configuration |
 | `EfcptRenaming` | `efcpt.renaming.json` | Renaming rules file |
-| `EfcptTemplateDir` | `Template` or `CodeTemplates` | T4 template directory |
+| `EfcptTemplateDir` | `Template` | T4 template directory |
 | `EfcptOutput` | `$(BaseIntermediateOutputPath)efcpt\` | Intermediate staging directory |
 | `EfcptGeneratedDir` | `$(EfcptOutput)Generated\` | Generated code output directory |
+
+#### Connection String Properties
+
+When `EfcptConnectionString` is set (or when a connection string can be resolved from configuration files), the pipeline switches to **connection string mode**:
+
+- `EfcptEnsureDacpac` is skipped.
+- `EfcptQuerySchemaMetadata` runs to fingerprint the database schema.
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `EfcptConnectionString` | *(empty)* | Explicit connection string override (enables connection string mode) |
+| `EfcptAppSettings` | *(empty)* | Optional `appsettings.json` path used to resolve connection strings |
+| `EfcptAppConfig` | *(empty)* | Optional `app.config`/`web.config` path used to resolve connection strings |
+| `EfcptConnectionStringName` | `DefaultConnection` | Connection string name/key to read from configuration files |
+| `EfcptProvider` | `mssql` | Provider identifier for schema querying and efcpt (Phase 1 supports SQL Server only) |
 
 #### Tool Configuration
 
 | Property | Default | Description |
 |----------|---------|-------------|
-| `EfcptToolMode` | `auto` | Tool resolution mode: `auto`, `tool-manifest`, `global` |
+| `EfcptToolMode` | `auto` | Tool resolution mode: `auto` or `tool-manifest` (any other value forces the global tool path) |
 | `EfcptToolPackageId` | `ErikEJ.EFCorePowerTools.Cli` | NuGet package ID for efcpt |
 | `EfcptToolVersion` | `10.*` | Version constraint |
 | `EfcptToolCommand` | `efcpt` | Command name |
@@ -951,6 +954,7 @@ RUN dotnet build --configuration Release --no-restore
 | `EfcptLogVerbosity` | `minimal` | Logging level: `minimal` or `detailed` |
 | `EfcptDumpResolvedInputs` | `false` | Log all resolved input paths |
 | `EfcptSolutionDir` | `$(SolutionDir)` | Solution root for project discovery |
+| `EfcptSolutionPath` | `$(SolutionPath)` | Solution file path (fallback SQL project discovery) |
 | `EfcptProbeSolutionDir` | `true` | Whether to probe solution directory |
 | `EfcptFingerprintFile` | `$(EfcptOutput)fingerprint.txt` | Fingerprint cache location |
 | `EfcptStampFile` | `$(EfcptOutput).efcpt.stamp` | Generation stamp file |
@@ -963,6 +967,7 @@ Stages configuration files and templates into the intermediate directory.
 
 **Parameters:**
 - `OutputDir` (required) - Base staging directory
+- `ProjectDirectory` (required) - Consuming project directory (used to keep staging paths stable)
 - `ConfigPath` (required) - Path to `efcpt-config.json`
 - `RenamingPath` (required) - Path to `efcpt.renaming.json`
 - `TemplateDir` (required) - Path to template directory
@@ -979,24 +984,25 @@ Stages configuration files and templates into the intermediate directory.
 Computes SHA256 fingerprint of all inputs to detect when regeneration is needed.
 
 **Parameters:**
-- `DacpacPath` (required) - Path to DACPAC file
+- `DacpacPath` - Path to DACPAC file (used in `.sqlproj` mode)
+- `SchemaFingerprint` - Schema fingerprint produced by `QuerySchemaMetadata` (used in connection string mode)
+- `UseConnectionStringMode` - Boolean-like flag indicating connection string mode
 - `ConfigPath` (required) - Path to efcpt config
 - `RenamingPath` (required) - Path to renaming file
 - `TemplateDir` (required) - Path to templates
-- `OutputPath` (required) - Where to write fingerprint
-- `PreviousFingerprintPath` - Path to previous fingerprint for comparison
+- `FingerprintFile` (required) - Path to the fingerprint cache file that is read/written
 - `LogVerbosity` - Logging level
 
 **Outputs:**
 - `Fingerprint` - Computed SHA256 hash
-- `FingerprintChanged` - Boolean indicating if fingerprint changed
+- `HasChanged` - Boolean-like flag indicating if the fingerprint changed
 
 #### RunEfcpt
 
 Executes EF Core Power Tools CLI to generate EF Core models.
 
 **Parameters:**
-- `ToolMode` - How to find efcpt: `auto`, `tool-manifest`, `global`
+- `ToolMode` - How to find efcpt: `auto` or `tool-manifest` (any other value uses the global tool path)
 - `ToolPackageId` - NuGet package ID
 - `ToolVersion` - Version constraint
 - `ToolRestore` - Whether to restore tool
@@ -1004,12 +1010,28 @@ Executes EF Core Power Tools CLI to generate EF Core models.
 - `ToolPath` - Explicit path to executable
 - `DotNetExe` - Path to dotnet host
 - `WorkingDirectory` - Working directory for efcpt
-- `DacpacPath` (required) - Input DACPAC
+- `DacpacPath` - Input DACPAC (used in `.sqlproj` mode)
+- `ConnectionString` - Database connection string (used in connection string mode)
+- `UseConnectionStringMode` - Boolean-like flag indicating connection string mode
+- `Provider` - Provider identifier passed to efcpt (default: `mssql`)
 - `ConfigPath` (required) - efcpt configuration
-- `RenamingPath` - Renaming rules
-- `TemplateDir` - Template directory
+- `RenamingPath` (required) - Renaming rules
+- `TemplateDir` (required) - Template directory
 - `OutputDir` (required) - Output directory
 - `LogVerbosity` - Logging level
+
+#### QuerySchemaMetadata
+
+Queries database schema metadata and computes a deterministic schema fingerprint (used in connection string mode).
+
+**Parameters:**
+- `ConnectionString` (required) - Database connection string
+- `OutputDir` (required) - Output directory (writes `schema-model.json` for diagnostics)
+- `Provider` - Provider identifier (default: `mssql`; Phase 1 supports SQL Server only)
+- `LogVerbosity` - Logging level
+
+**Outputs:**
+- `SchemaFingerprint` - Computed schema fingerprint
 
 #### RenameGeneratedFiles
 
@@ -1024,22 +1046,32 @@ Renames generated `.cs` files to `.g.cs` for better identification.
 Discovers database project and configuration files.
 
 **Parameters:**
-- `SqlProjOverride` - Explicit `.sqlproj` path
-- `ConfigOverride` - Explicit config path
-- `RenamingOverride` - Explicit renaming path
-- `TemplateDirOverride` - Explicit template directory
-- `ProjectDir` (required) - Current project directory
-- `SolutionDir` - Solution directory
-- `ProbeSolutionDir` - Whether to probe solution
-- `ProjectReferences` - List of project references
-- `DumpResolvedInputs` - Whether to log results
-- `LogVerbosity` - Logging level
+- `ProjectFullPath` (required) - Full path to the consuming project
+- `ProjectDirectory` (required) - Directory containing the consuming project
+- `Configuration` (required) - Active build configuration (e.g. `Debug` or `Release`)
+- `ProjectReferences` - Project references of the consuming project
+- `SqlProjOverride` - Optional override path for the SQL project
+- `ConfigOverride` - Optional override path for efcpt config
+- `RenamingOverride` - Optional override path for renaming rules
+- `TemplateDirOverride` - Optional override path for templates
+- `SolutionDir` - Optional solution root to probe for inputs
+- `SolutionPath` - Optional solution file path (used as a fallback when discovering the SQL project)
+- `ProbeSolutionDir` - Boolean-like flag controlling whether `SolutionDir` is probed (default: `true`)
+- `OutputDir` (required) - Output directory used by later stages (and for `resolved-inputs.json`)
+- `DefaultsRoot` - Root directory containing packaged default inputs (typically the NuGet `Defaults` folder)
+- `DumpResolvedInputs` - When `true`, writes `resolved-inputs.json` to `OutputDir`
+- `EfcptConnectionString` - Optional explicit connection string (enables connection string mode)
+- `EfcptAppSettings` - Optional `appsettings.json` path used to resolve connection strings
+- `EfcptAppConfig` - Optional `app.config`/`web.config` path used to resolve connection strings
+- `EfcptConnectionStringName` - Connection string name/key (default: `DefaultConnection`)
 
 **Outputs:**
-- `ResolvedSqlProj` - Discovered `.sqlproj` path
-- `ResolvedConfig` - Discovered config path
-- `ResolvedRenaming` - Discovered renaming path
+- `SqlProjPath` - Discovered SQL project path
+- `ResolvedConfigPath` - Discovered config path
+- `ResolvedRenamingPath` - Discovered renaming path
 - `ResolvedTemplateDir` - Discovered template directory
+- `ResolvedConnectionString` - Resolved connection string (connection string mode)
+- `UseConnectionString` - Boolean-like flag indicating whether connection string mode is active
 
 #### EnsureDacpacBuilt
 
@@ -1047,7 +1079,9 @@ Builds a `.sqlproj` to DACPAC if it's out of date.
 
 **Parameters:**
 - `SqlProjPath` (required) - Path to `.sqlproj`
-- `DotNetExe` - Path to dotnet host
+- `Configuration` (required) - Build configuration (e.g. `Debug` / `Release`)
+- `MsBuildExe` - Path to `msbuild.exe` (preferred on Windows when present)
+- `DotNetExe` - Path to dotnet host (used for `dotnet msbuild` when `msbuild.exe` is unavailable)
 - `LogVerbosity` - Logging level
 
 **Outputs:**
@@ -1156,11 +1190,12 @@ By default the build uses `dotnet tool run efcpt` when a local tool manifest is 
 `JD.Efcpt.Build` wires a set of MSBuild targets into your project. When `EfcptEnabled` is `true` (the default), the following pipeline runs as part of `dotnet build`:
 
 1. **EfcptResolveInputs** – locates the `.sqlproj` and resolves configuration inputs.
-2. **EfcptEnsureDacpac** – builds the database project to a DACPAC if needed.
-3. **EfcptStageInputs** – stages the EF Core Power Tools configuration, renaming rules, and templates into an intermediate directory.
-4. **EfcptComputeFingerprint** – computes a fingerprint across the DACPAC and staged inputs.
-5. **EfcptGenerateModels** – runs `efcpt` and renames generated files to `.g.cs` when the fingerprint changes.
-6. **EfcptAddToCompile** – adds the generated `.g.cs` files to the `Compile` item group so they are part of your build.
+2. **EfcptQuerySchemaMetadata** *(connection string mode only)* – fingerprints the live database schema.
+3. **EfcptEnsureDacpac** *(.sqlproj mode only)* – builds the database project to a DACPAC if needed.
+4. **EfcptStageInputs** – stages the EF Core Power Tools configuration, renaming rules, and templates into an intermediate directory.
+5. **EfcptComputeFingerprint** – computes a fingerprint across the DACPAC (or schema fingerprint) and staged inputs.
+6. **EfcptGenerateModels** – runs `efcpt` and renames generated files to `.g.cs` when the fingerprint changes.
+7. **EfcptAddToCompile** – adds the generated `.g.cs` files to the `Compile` item group so they are part of your build.
 
 The underlying targets and tasks live in `build/JD.Efcpt.Build.targets` and `JD.Efcpt.Build.Tasks.dll`.
 
@@ -1219,6 +1254,25 @@ The behavior of the pipeline is controlled by a set of MSBuild properties. You c
   - Optional override for the path to the Database Project (`.sqlproj`).
   - When not set, `ResolveSqlProjAndInputs` attempts to discover the project based on project references and solution layout.
 
+- `EfcptConnectionString`
+  - Optional explicit connection string override.
+  - When set (or when a connection string is resolved from configuration files), the pipeline runs in **connection string mode**:
+    - `EfcptEnsureDacpac` is skipped.
+    - `EfcptQuerySchemaMetadata` runs and its schema fingerprint is used in incremental builds instead of the DACPAC content.
+
+- `EfcptAppSettings`
+  - Optional `appsettings.json` path used to resolve connection strings.
+
+- `EfcptAppConfig`
+  - Optional `app.config` / `web.config` path used to resolve connection strings.
+
+- `EfcptConnectionStringName` (default: `DefaultConnection`)
+  - Connection string name/key to read from configuration files.
+
+- `EfcptProvider` (default: `mssql`)
+  - Provider identifier passed to schema querying and efcpt.
+  - Phase 1 supports SQL Server only.
+
 - `EfcptConfig`
   - Optional override for the EF Core Power Tools configuration file (defaults to `efcpt-config.json` in the project directory when present).
 
@@ -1234,6 +1288,9 @@ The behavior of the pipeline is controlled by a set of MSBuild properties. You c
 - `EfcptProbeSolutionDir`
   - Controls whether solution probing is performed. Use this if your layout is non-standard.
 
+- `EfcptSolutionPath`
+  - Optional solution file path used as a fallback when discovering the SQL project.
+
 - `EfcptLogVerbosity`
   - Controls task logging (`minimal` or `detailed`).
 
@@ -1245,6 +1302,7 @@ These properties control how the `RunEfcpt` task finds and invokes the EF Core P
   - Controls the strategy used to locate the tool. Common values:
     - `auto` – use a local tool if a manifest is present, otherwise fall back to a global tool.
     - `tool-manifest` – require a local tool manifest and fail if one is not present.
+  - Any other non-empty value forces the global tool path.
 
 - `EfcptToolPackageId`
   - NuGet package ID for the CLI. Defaults to `ErikEJ.EFCorePowerTools.Cli`.

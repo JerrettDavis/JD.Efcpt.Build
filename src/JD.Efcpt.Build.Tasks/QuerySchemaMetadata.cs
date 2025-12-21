@@ -62,6 +62,11 @@ public sealed class QuerySchemaMetadata : Task
         return decorator.Execute(in ctx);
     }
 
+    private readonly JsonSerializerOptions _jsonSerializerOptions = new()
+    {
+        WriteIndented = true
+    };
+
     private bool ExecuteCore(TaskExecutionContext ctx)
     {
         var log = new BuildLog(ctx.Logger, LogVerbosity);
@@ -72,11 +77,10 @@ public sealed class QuerySchemaMetadata : Task
             ValidateConnection(ConnectionString, log);
 
             // Select schema reader based on provider
-            ISchemaReader reader = Provider.ToLowerInvariant() switch
+            var reader = Provider.ToLowerInvariant() switch
             {
                 "mssql" or "sqlserver" => new SqlServerSchemaReader(),
-                _ => throw new NotSupportedException(
-                    $"Database provider '{Provider}' is not supported. Phase 1 supports 'mssql' only.")
+                _ => throw new NotSupportedException($"Database provider '{Provider}' is not supported. Phase 1 supports 'mssql' only.")
             };
 
             log.Detail($"Reading schema metadata from {Provider} database...");
@@ -88,18 +92,15 @@ public sealed class QuerySchemaMetadata : Task
             SchemaFingerprint = SchemaFingerprinter.ComputeFingerprint(schema);
             log.Detail($"Schema fingerprint: {SchemaFingerprint}");
 
+            if (ctx.Logger.HasLoggedErrors)
+                return true;
+            
             // Write schema model to disk for diagnostics
-            if (ctx.Logger.HasLoggedErrors == false)
-            {
-                Directory.CreateDirectory(OutputDir);
-                var schemaPath = Path.Combine(OutputDir, "schema-model.json");
-                var json = JsonSerializer.Serialize(schema, new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
-                File.WriteAllText(schemaPath, json);
-                log.Detail($"Schema model written to: {schemaPath}");
-            }
+            Directory.CreateDirectory(OutputDir);
+            var schemaPath = Path.Combine(OutputDir, "schema-model.json");
+            var json = JsonSerializer.Serialize(schema, _jsonSerializerOptions);
+            File.WriteAllText(schemaPath, json);
+            log.Detail($"Schema model written to: {schemaPath}");
 
             return true;
         }
@@ -120,7 +121,8 @@ public sealed class QuerySchemaMetadata : Task
         try
         {
             using var connection = new SqlConnection(connectionString);
-            connection.Open();
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            connection.OpenAsync(cts.Token).GetAwaiter().GetResult();
             log.Detail("Database connection validated successfully.");
         }
         catch (Exception ex)

@@ -1,3 +1,4 @@
+using JD.Efcpt.Build.Tasks.Extensions;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
@@ -11,7 +12,7 @@ internal sealed class BuildLog(TaskLoggingHelper log, string verbosity)
 
     public void Detail(string message)
     {
-        if (string.Equals(_verbosity, "detailed", StringComparison.OrdinalIgnoreCase))
+        if (_verbosity.EqualsIgnoreCase("detailed"))
             log.LogMessage(MessageImportance.Normal, message);
     }
 

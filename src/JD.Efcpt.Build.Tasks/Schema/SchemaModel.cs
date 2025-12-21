@@ -11,7 +11,7 @@ public sealed record SchemaModel(
     /// <summary>
     /// Gets an empty schema model with no tables.
     /// </summary>
-    public static SchemaModel Empty => new(Array.Empty<TableModel>());
+    public static SchemaModel Empty => new([]);
 
     /// <summary>
     /// Creates a sorted, normalized schema model.
