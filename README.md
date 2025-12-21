@@ -527,7 +527,7 @@ When multiple connection string sources are present, this priority order is used
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <PackageReference Include="JD.Efcpt.Build" Version="2.x.x" />
+    <PackageReference Include="JD.Efcpt.Build" Version="0.2.x" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -541,7 +541,7 @@ When multiple connection string sources are present, this priority order is used
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <PackageReference Include="JD.Efcpt.Build" Version="2.x.x" />
+    <PackageReference Include="JD.Efcpt.Build" Version="0.2.x" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -555,7 +555,7 @@ When multiple connection string sources are present, this priority order is used
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <PackageReference Include="JD.Efcpt.Build" Version="2.x.x" />
+    <PackageReference Include="JD.Efcpt.Build" Version="0.2.x" />
   </ItemGroup>
 
   <!-- No connection string config needed! -->
@@ -650,7 +650,7 @@ This means your builds are still **incremental** - models are only regenerated w
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="JD.Efcpt.Build" Version="2.x.x" />
+    <PackageReference Include="JD.Efcpt.Build" Version="0.2.x" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.x" />
   </ItemGroup>
 
