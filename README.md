@@ -2,6 +2,10 @@
 
 [![NuGet](https://img.shields.io/nuget/v/JD.Efcpt.Build.svg)](https://www.nuget.org/packages/JD.Efcpt.Build/)
 [![License](https://img.shields.io/github/license/jerrettdavis/JD.Efcpt.Build.svg)](LICENSE)
+[![CI](https://github.com/JerrettDavis/JD.Efcpt.Build/actions/workflows/ci.yml/badge.svg)](https://github.com/JerrettDavis/JD.Efcpt.Build/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/JerrettDavis/JD.Efcpt.Build/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/JerrettDavis/JD.Efcpt.Build/security/code-scanning)
+[![codecov](https://codecov.io/gh/JerrettDavis/JD.Efcpt.Build/branch/main/graph/badge.svg)](https://codecov.io/gh/JerrettDavis/JD.Efcpt.Build)
+![.NET Versions](https://img.shields.io/badge/.NET%208.0%20%7C%209.0%20%7c%2010.0-blue)
 
 **MSBuild integration for EF Core Power Tools CLI**
 
