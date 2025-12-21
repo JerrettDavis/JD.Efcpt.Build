@@ -19,4 +19,4 @@ jobs:
       - name: Component Detection
         uses: advanced-security/component-detection-dependency-submission-action@v0.1.0
         with:
-          directoryExclusionList: 'samples/**/*, tests/**/*'
+          directoryExclusionList: 'samples/**/*;tests/**/*'
