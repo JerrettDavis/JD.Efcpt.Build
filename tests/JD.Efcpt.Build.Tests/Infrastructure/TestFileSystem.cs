@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-
 namespace JD.Efcpt.Build.Tests.Infrastructure;
 
 internal sealed class TestFolder : IDisposable

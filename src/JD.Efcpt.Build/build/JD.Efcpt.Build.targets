@@ -34,6 +34,9 @@
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.RenameGeneratedFiles"
              AssemblyFile="$(_EfcptTaskAssembly)" />
 
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.QuerySchemaMetadata"
+             AssemblyFile="$(_EfcptTaskAssembly)" />
+
   <!-- Main pipeline -->
   <Target Name="EfcptResolveInputs"
           Condition="'$(EfcptEnabled)' == 'true'">
@@ -51,17 +54,36 @@
         ProbeSolutionDir="$(EfcptProbeSolutionDir)"
         OutputDir="$(EfcptOutput)"
         DefaultsRoot="$(MSBuildThisFileDirectory)Defaults"
-        DumpResolvedInputs="$(EfcptDumpResolvedInputs)">
+        DumpResolvedInputs="$(EfcptDumpResolvedInputs)"
+        EfcptConnectionString="$(EfcptConnectionString)"
+        EfcptAppSettings="$(EfcptAppSettings)"
+        EfcptAppConfig="$(EfcptAppConfig)"
+        EfcptConnectionStringName="$(EfcptConnectionStringName)">
       <Output TaskParameter="SqlProjPath" PropertyName="_EfcptSqlProj" />
       <Output TaskParameter="ResolvedConfigPath" PropertyName="_EfcptResolvedConfig" />
       <Output TaskParameter="ResolvedRenamingPath" PropertyName="_EfcptResolvedRenaming" />
       <Output TaskParameter="ResolvedTemplateDir" PropertyName="_EfcptResolvedTemplateDir" />
+      <Output TaskParameter="ResolvedConnectionString" PropertyName="_EfcptResolvedConnectionString" />
+      <Output TaskParameter="UseConnectionString" PropertyName="_EfcptUseConnectionString" />
     </ResolveSqlProjAndInputs>
+  </Target>
+
+  <Target Name="EfcptQuerySchemaMetadata"
+          AfterTargets="EfcptResolveInputs"
+          BeforeTargets="EfcptStageInputs"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' == 'true'">
+    <QuerySchemaMetadata
+        ConnectionString="$(_EfcptResolvedConnectionString)"
+        OutputDir="$(EfcptOutput)"
+        Provider="$(EfcptProvider)"
+        LogVerbosity="$(EfcptLogVerbosity)">
+      <Output TaskParameter="SchemaFingerprint" PropertyName="_EfcptSchemaFingerprint" />
+    </QuerySchemaMetadata>
   </Target>
 
   <Target Name="EfcptEnsureDacpac"
           DependsOnTargets="EfcptResolveInputs"
-          Condition="'$(EfcptEnabled)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true'">
     <EnsureDacpacBuilt
         SqlProjPath="$(_EfcptSqlProj)"
         Configuration="$(Configuration)"
@@ -94,6 +116,8 @@
           Condition="'$(EfcptEnabled)' == 'true'">
     <ComputeFingerprint
         DacpacPath="$(_EfcptDacpacPath)"
+        SchemaFingerprint="$(_EfcptSchemaFingerprint)"
+        UseConnectionStringMode="$(_EfcptUseConnectionString)"
         ConfigPath="$(_EfcptStagedConfig)"
         RenamingPath="$(_EfcptStagedRenaming)"
         TemplateDir="$(_EfcptStagedTemplateDir)"
@@ -121,6 +145,8 @@
         DotNetExe="$(EfcptDotNetExe)"
         WorkingDirectory="$(EfcptOutput)"
         DacpacPath="$(_EfcptDacpacPath)"
+        ConnectionString="$(_EfcptResolvedConnectionString)"
+        UseConnectionStringMode="$(_EfcptUseConnectionString)"
         ConfigPath="$(_EfcptStagedConfig)"
         RenamingPath="$(_EfcptStagedRenaming)"
         TemplateDir="$(_EfcptStagedTemplateDir)"

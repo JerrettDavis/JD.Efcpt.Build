@@ -1,5 +1,4 @@
 using System.Text;
-using Microsoft.Build.Framework;
 
 namespace JD.Efcpt.Build.Tests.Infrastructure;
 

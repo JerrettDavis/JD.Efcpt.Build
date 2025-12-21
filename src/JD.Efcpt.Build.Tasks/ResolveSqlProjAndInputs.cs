@@ -37,7 +37,7 @@ namespace JD.Efcpt.Build.Tasks;
 /// debugging and diagnostics.
 /// </para>
 /// </remarks>
-public sealed class ResolveSqlProjAndInputs : Task
+public sealed partial class ResolveSqlProjAndInputs : Task
 {
     /// <summary>
     /// Full path to the consuming project file.
@@ -90,6 +90,26 @@ public sealed class ResolveSqlProjAndInputs : Task
     /// Optional override path for the efcpt template directory.
     /// </summary>
     public string TemplateDirOverride { get; set; } = "";
+
+    /// <summary>
+    /// Optional explicit connection string override. When set, connection string mode is used instead of .sqlproj mode.
+    /// </summary>
+    public string EfcptConnectionString { get; set; } = "";
+
+    /// <summary>
+    /// Optional path to appsettings.json file containing connection strings.
+    /// </summary>
+    public string EfcptAppSettings { get; set; } = "";
+
+    /// <summary>
+    /// Optional path to app.config or web.config file containing connection strings.
+    /// </summary>
+    public string EfcptAppConfig { get; set; } = "";
+
+    /// <summary>
+    /// Connection string key name to use from configuration files. Defaults to "DefaultConnection".
+    /// </summary>
+    public string EfcptConnectionStringName { get; set; } = "DefaultConnection";
 
     /// <summary>
     /// Solution directory to probe when searching for configuration, renaming, and template assets.
@@ -170,6 +190,18 @@ public sealed class ResolveSqlProjAndInputs : Task
     [Output]
     public string ResolvedTemplateDir { get; set; } = "";
 
+    /// <summary>
+    /// Resolved connection string (if using connection string mode).
+    /// </summary>
+    [Output]
+    public string ResolvedConnectionString { get; set; } = "";
+
+    /// <summary>
+    /// Indicates whether the build will use connection string mode (true) or .sqlproj mode (false).
+    /// </summary>
+    [Output]
+    public string UseConnectionString { get; set; } = "false";
+
     #region Context Records
 
     private readonly record struct SqlProjResolutionContext(
@@ -188,7 +220,9 @@ public sealed class ResolveSqlProjAndInputs : Task
         string SqlProjPath,
         string ConfigPath,
         string RenamingPath,
-        string TemplateDir
+        string TemplateDir,
+        string ConnectionString,
+        bool UseConnectionStringMode
     );
 
     #endregion
@@ -261,22 +295,98 @@ public sealed class ResolveSqlProjAndInputs : Task
         ResolvedConfigPath = resolutionState.ConfigPath;
         ResolvedRenamingPath = resolutionState.RenamingPath;
         ResolvedTemplateDir = resolutionState.TemplateDir;
+        ResolvedConnectionString = resolutionState.ConnectionString;
+        UseConnectionString = resolutionState.UseConnectionStringMode ? "true" : "false";
 
         if (DumpResolvedInputs.IsTrue())
-        {
             WriteDumpFile(resolutionState);
-        }
 
-        log.Detail($"Resolved SQL project: {SqlProjPath}");
+        log.Detail(resolutionState.UseConnectionStringMode
+            ? $"Resolved connection string from: {resolutionState.ConnectionString}"
+            : $"Resolved SQL project: {SqlProjPath}");
+
         return true;
     }
 
+    private TargetContext DetermineMode(BuildLog log)
+        => TryExplicitConnectionString(log)
+           ?? TrySqlProjDetection(log)
+           ?? TryAutoDiscoveredConnectionString(log)
+           ?? new(false, "", ""); // Neither found - validation will fail later
+
+    private TargetContext? TryExplicitConnectionString(BuildLog log)
+    {
+        if (!HasExplicitConnectionConfig())
+            return null;
+
+        var connectionString = TryResolveConnectionString(log);
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            log.Warn("JD0016", "Explicit connection string configuration provided but failed to resolve. Falling back to .sqlproj detection.");
+            return null;
+        }
+
+        log.Detail("Using connection string mode due to explicit configuration property");
+        return new(true, connectionString, "");
+    }
+
+    private TargetContext? TrySqlProjDetection(BuildLog log)
+    {
+        try
+        {
+            var sqlProjPath = ResolveSqlProjWithValidation(log);
+            if (string.IsNullOrWhiteSpace(sqlProjPath))
+                return null;
+
+            WarnIfAutoDiscoveredConnectionStringExists(log);
+            return new(false, "", sqlProjPath);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private TargetContext? TryAutoDiscoveredConnectionString(BuildLog log)
+    {
+        var connectionString = TryResolveAutoDiscoveredConnectionString(log);
+        if (string.IsNullOrWhiteSpace(connectionString))
+            return null;
+
+        log.Info("No .sqlproj found. Using auto-discovered connection string.");
+        return new(true, connectionString, "");
+    }
+
+    private bool HasExplicitConnectionConfig()
+        => PathUtils.HasValue(EfcptConnectionString)
+           || PathUtils.HasValue(EfcptAppSettings)
+           || PathUtils.HasValue(EfcptAppConfig);
+
+    private void WarnIfAutoDiscoveredConnectionStringExists(BuildLog log)
+    {
+        var autoDiscoveredConnectionString = TryResolveAutoDiscoveredConnectionString(log);
+        if (!string.IsNullOrWhiteSpace(autoDiscoveredConnectionString))
+        {
+            log.Warn("JD0015",
+                "Both .sqlproj and auto-discovered connection strings detected. Using .sqlproj mode (default behavior). " +
+                "Set EfcptConnectionString explicitly to use connection string mode.");
+        }
+    }
+
+    private record TargetContext(bool UseConnectionStringMode, string ConnectionString, string SqlProjPath);
+
     private ResolutionState BuildResolutionState(BuildLog log)
-        => Composer<ResolutionState, ResolutionState>
+    {
+        // Determine mode using priority-based resolution
+        var (useConnectionStringMode, connectionString, sqlProjPath) = DetermineMode(log);
+
+        return Composer<ResolutionState, ResolutionState>
             .New(() => default)
             .With(state => state with
             {
-                SqlProjPath = ResolveSqlProjWithValidation(log)
+                ConnectionString = connectionString,
+                UseConnectionStringMode = useConnectionStringMode,
+                SqlProjPath = sqlProjPath
             })
             .With(state => state with
             {
@@ -298,11 +408,17 @@ public sealed class ResolveSqlProjAndInputs : Task
                     "CodeTemplates",
                     "Templates")
             })
-            .Require(state =>
-                string.IsNullOrWhiteSpace(state.SqlProjPath)
-                    ? "SqlProj resolution failed"
-                    : null)
+            // Either connection string or SQL project must be resolved
+            .Require(state
+                => state.UseConnectionStringMode
+                    ? string.IsNullOrWhiteSpace(state.ConnectionString)
+                        ? "Connection string resolution failed"
+                        : null
+                    : string.IsNullOrWhiteSpace(state.SqlProjPath)
+                        ? "SqlProj resolution failed"
+                        : null)
             .Build(state => state);
+    }
 
     private string ResolveSqlProjWithValidation(BuildLog log)
     {
@@ -314,7 +430,7 @@ public sealed class ResolveSqlProjAndInputs : Task
 
         if (!PathUtils.HasValue(SqlProjOverride) && sqlRefs.Count == 0)
         {
-            var fallback = TryResolveFromSolution(log);
+            var fallback = TryResolveFromSolution();
             if (!string.IsNullOrWhiteSpace(fallback))
             {
                 log.Warn("No SQL project references found in project; using SQL project detected from solution: " + fallback);
@@ -334,7 +450,7 @@ public sealed class ResolveSqlProjAndInputs : Task
             : throw new InvalidOperationException(result.ErrorMessage);
     }
 
-    private string? TryResolveFromSolution(BuildLog log)
+    private string? TryResolveFromSolution()
     {
         if (!PathUtils.HasValue(SolutionPath))
             return null;
@@ -346,7 +462,7 @@ public sealed class ResolveSqlProjAndInputs : Task
         var matches = ScanSolutionForSqlProjects(solutionPath).ToList();
         return matches.Count switch
         {
-            < 1 =>throw new InvalidOperationException("No SQL project references found and none detected in solution."),
+            < 1 => throw new InvalidOperationException("No SQL project references found and none detected in solution."),
             1 => matches[0].Path,
             > 1 => throw new InvalidOperationException(
                 $"Multiple SQL projects detected while scanning solution '{solutionPath}' ({string.Join(", ", matches.Select(m => m.Path))}). Reference one directly or set EfcptSqlProj."),
@@ -356,7 +472,7 @@ public sealed class ResolveSqlProjAndInputs : Task
     private static IEnumerable<(string Name, string Path)> ScanSolutionForSqlProjects(string solutionPath)
     {
         var ext = Path.GetExtension(solutionPath);
-        if (ext.Equals(".slnx", StringComparison.OrdinalIgnoreCase))
+        if (ext.EqualsIgnoreCase(".slnx"))
         {
             foreach (var match in ScanSlnxForSqlProjects(solutionPath))
                 yield return match;
@@ -444,13 +560,11 @@ public sealed class ResolveSqlProjAndInputs : Task
     }
 
     private static bool IsProjectFile(string? extension)
-        => string.Equals(extension, ".sqlproj", StringComparison.OrdinalIgnoreCase) ||
-           string.Equals(extension, ".csproj", StringComparison.OrdinalIgnoreCase) ||
-           string.Equals(extension, ".fsproj", StringComparison.OrdinalIgnoreCase);
+        => extension.EqualsIgnoreCase(".sqlproj") ||
+           extension.EqualsIgnoreCase(".csproj") ||
+           extension.EqualsIgnoreCase(".fsproj");
 
-    private static readonly Regex SolutionProjectLine = new(
-        "^\\s*Project\\(\"(?<typeGuid>[^\"]+)\"\\)\\s*=\\s*\"(?<name>[^\"]+)\",\\s*\"(?<path>[^\"]+)\",\\s*\"(?<guid>[^\"]+)\"",
-        RegexOptions.Compiled);
+    private static readonly Regex SolutionProjectLine = SolutionProjectLineRegex();
 
     private string ResolveFile(string overridePath, params string[] fileNames)
     {
@@ -488,17 +602,59 @@ public sealed class ResolveSqlProjAndInputs : Task
             : throw new InvalidOperationException("Chain should always produce result or throw");
     }
 
+    private string? TryResolveConnectionString(BuildLog log)
+    {
+        var chain = ConnectionStringResolutionChain.Build();
+
+        var context = new ConnectionStringResolutionContext(
+            ExplicitConnectionString: EfcptConnectionString,
+            EfcptAppSettings: EfcptAppSettings,
+            EfcptAppConfig: EfcptAppConfig,
+            ConnectionStringName: EfcptConnectionStringName,
+            ProjectDirectory: ProjectDirectory,
+            Log: log);
+
+        return chain.Execute(in context, out var result)
+            ? result
+            : null; // Fallback to .sqlproj mode
+    }
+
+    private string? TryResolveAutoDiscoveredConnectionString(BuildLog log)
+    {
+        // Only try auto-discovery (not explicit properties like EfcptConnectionString, EfcptAppSettings, EfcptAppConfig)
+        var chain = ConnectionStringResolutionChain.Build();
+
+        var context = new ConnectionStringResolutionContext(
+            ExplicitConnectionString: "", // Ignore explicit connection string
+            EfcptAppSettings: "",         // Ignore explicit app settings path
+            EfcptAppConfig: "",           // Ignore explicit app config path
+            ConnectionStringName: EfcptConnectionStringName,
+            ProjectDirectory: ProjectDirectory,
+            Log: log);
+
+        return chain.Execute(in context, out var result)
+            ? result
+            : null;
+    }
+
     private void WriteDumpFile(ResolutionState state)
     {
-        var dump = $"""
-                    "project": "{ProjectFullPath}",
-                    "sqlproj": "{state.SqlProjPath}",
-                    "config": "{state.ConfigPath}",
-                    "renaming": "{state.RenamingPath}",
-                    "template": "{state.TemplateDir}",
-                    "output": "{OutputDir}"
-                    """;
+        var dump =
+            $"""
+             "project": "{ProjectFullPath}",
+             "sqlproj": "{state.SqlProjPath}",
+             "config": "{state.ConfigPath}",
+             "renaming": "{state.RenamingPath}",
+             "template": "{state.TemplateDir}",
+             "connectionString": "{state.ConnectionString}",
+             "useConnectionStringMode": "{state.UseConnectionStringMode}",
+             "output": "{OutputDir}"
+             """;
 
         File.WriteAllText(Path.Combine(OutputDir, "resolved-inputs.json"), dump);
     }
+
+    [GeneratedRegex("^\\s*Project\\(\"(?<typeGuid>[^\"]+)\"\\)\\s*=\\s*\"(?<name>[^\"]+)\",\\s*\"(?<path>[^\"]+)\",\\s*\"(?<guid>[^\"]+)\"",
+        RegexOptions.Compiled)]
+    private static partial Regex SolutionProjectLineRegex();
 }

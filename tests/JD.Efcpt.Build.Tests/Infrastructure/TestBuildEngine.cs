@@ -5,9 +5,9 @@ namespace JD.Efcpt.Build.Tests.Infrastructure;
 
 internal sealed class TestBuildEngine : IBuildEngine
 {
-    public List<BuildErrorEventArgs> Errors { get; } = new();
-    public List<BuildWarningEventArgs> Warnings { get; } = new();
-    public List<BuildMessageEventArgs> Messages { get; } = new();
+    public List<BuildErrorEventArgs> Errors { get; } = [];
+    public List<BuildWarningEventArgs> Warnings { get; } = [];
+    public List<BuildMessageEventArgs> Messages { get; } = [];
 
     public bool ContinueOnError => false;
     public int LineNumberOfTaskNode => 0;

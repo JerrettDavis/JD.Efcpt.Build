@@ -239,7 +239,7 @@ public sealed class PipelineTests(ITestOutputHelper output) : TinyBddXunitBase(o
                 return (r, fingerprint2);
             })
             .Then("fingerprint changed is false", t => t.Item2.HasChanged == "false")
-            .And(t => t.r.Run.Fingerprint.Stage.Ensure.Resolve.State.Folder.Dispose())
+            .Finally(t => t.r.Run.Fingerprint.Stage.Ensure.Resolve.State.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -282,6 +282,6 @@ public sealed class PipelineTests(ITestOutputHelper output) : TinyBddXunitBase(o
                        combined.Contains("DbSet<Account>") &&
                        combined.Contains("DbSet<Upload>");
             })
-            .And(r => r.Fingerprint.Stage.Ensure.Resolve.State.Folder.Dispose())
+            .Finally(r => r.Fingerprint.Stage.Ensure.Resolve.State.Folder.Dispose())
             .AssertPassed();
 }
