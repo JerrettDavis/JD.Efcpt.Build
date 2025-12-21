@@ -1,3 +1,4 @@
+using JD.Efcpt.Build.Tasks.Extensions;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
@@ -11,11 +12,21 @@ internal sealed class BuildLog(TaskLoggingHelper log, string verbosity)
 
     public void Detail(string message)
     {
-        if (string.Equals(_verbosity, "detailed", StringComparison.OrdinalIgnoreCase))
+        if (_verbosity.EqualsIgnoreCase("detailed"))
             log.LogMessage(MessageImportance.Normal, message);
     }
 
     public void Warn(string message) => log.LogWarning(message);
 
+    public void Warn(string code, string message)
+        => log.LogWarning(subcategory: null, code, helpKeyword: null,
+                          file: null, lineNumber: 0, columnNumber: 0,
+                          endLineNumber: 0, endColumnNumber: 0, message);
+
     public void Error(string message) => log.LogError(message);
+
+    public void Error(string code, string message)
+        => log.LogError(subcategory: null, code, helpKeyword: null,
+                        file: null, lineNumber: 0, columnNumber: 0,
+                        endLineNumber: 0, endColumnNumber: 0, message);
 }

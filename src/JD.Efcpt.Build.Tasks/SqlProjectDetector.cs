@@ -1,4 +1,5 @@
 using System.Xml.Linq;
+using JD.Efcpt.Build.Tasks.Extensions;
 
 namespace JD.Efcpt.Build.Tasks;
 
@@ -14,11 +15,11 @@ internal static class SqlProjectDetector
             return false;
 
         var ext = Path.GetExtension(projectPath);
-        if (ext.Equals(".sqlproj", StringComparison.OrdinalIgnoreCase))
+        if (ext.EqualsIgnoreCase(".sqlproj"))
             return true;
 
-        if (!ext.Equals(".csproj", StringComparison.OrdinalIgnoreCase) &&
-            !ext.Equals(".fsproj", StringComparison.OrdinalIgnoreCase))
+        if (!ext.EqualsIgnoreCase(".csproj") &&
+            !ext.EqualsIgnoreCase(".fsproj"))
             return false;
 
         return UsesModernSqlSdk(projectPath);
@@ -36,7 +37,7 @@ internal static class SqlProjectDetector
 
             var doc = XDocument.Load(projectPath);
             var project = doc.Root;
-            if (project == null || !string.Equals(project.Name.LocalName, "Project", StringComparison.OrdinalIgnoreCase))
+            if (project == null || !project.Name.LocalName.EqualsIgnoreCase("Project"))
                 project = doc.Descendants().FirstOrDefault(e => e.Name.LocalName == "Project");
             if (project == null)
                 return false;

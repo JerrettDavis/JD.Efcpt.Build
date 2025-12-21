@@ -1,0 +1,7 @@
+mode: MainLine
+tag-prefix: 'v'
+commit-message-incrementing: Enabled
+
+major-version-bump-message: '(?m)^[a-z]+(?:\([\w\s\-,/\\]+\))?!:|(?m)^\s*BREAKING CHANGE:'
+minor-version-bump-message: '(?m)^feat(?:\([\w\s\-,/\\]+\))?:'
+patch-version-bump-message: '(?m)^(?:fix|perf)(?:\([\w\s\-,/\\]+\))?:'

@@ -2,6 +2,10 @@
 
 [![NuGet](https://img.shields.io/nuget/v/JD.Efcpt.Build.svg)](https://www.nuget.org/packages/JD.Efcpt.Build/)
 [![License](https://img.shields.io/github/license/jerrettdavis/JD.Efcpt.Build.svg)](LICENSE)
+[![CI](https://github.com/JerrettDavis/JD.Efcpt.Build/actions/workflows/ci.yml/badge.svg)](https://github.com/JerrettDavis/JD.Efcpt.Build/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/JerrettDavis/JD.Efcpt.Build/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/JerrettDavis/JD.Efcpt.Build/security/code-scanning)
+[![codecov](https://codecov.io/gh/JerrettDavis/JD.Efcpt.Build/branch/main/graph/badge.svg)](https://codecov.io/gh/JerrettDavis/JD.Efcpt.Build)
+![.NET Versions](https://img.shields.io/badge/.NET%208.0%20%7C%209.0%20%7c%2010.0-blue)
 
 **MSBuild integration for EF Core Power Tools CLI**
 
@@ -58,11 +62,12 @@ dotnet build
 
 `JD.Efcpt.Build` transforms EF Core Power Tools into a **fully automated build step**. Instead of manually regenerating your EF Core models in Visual Studio, this package:
 
-✅ **Automatically builds** your SQL Server Database Project (`.sqlproj`) to a DACPAC  
-✅ **Runs EF Core Power Tools** CLI during `dotnet build`  
-✅ **Generates DbContext and entities** from your database schema  
-✅ **Intelligently caches** - only regenerates when schema or config changes  
-✅ **Works everywhere** - local dev, CI/CD, Docker, anywhere .NET runs  
+✅ **Automatically builds** your SQL Server Database Project (`.sqlproj`) to a DACPAC
+✅ **OR connects directly** to your database via connection string
+✅ **Runs EF Core Power Tools** CLI during `dotnet build`
+✅ **Generates DbContext and entities** from your database schema
+✅ **Intelligently caches** - only regenerates when schema or config changes
+✅ **Works everywhere** - local dev, CI/CD, Docker, anywhere .NET runs
 ✅ **Zero manual steps** - true database-first development automation  
 
 ### Architecture
@@ -322,19 +327,26 @@ Individual projects can override specific settings:
 ### Custom T4 Templates
 
 1. **Copy default templates** from the package or create your own
-2. **Place in your project** under `Template/CodeTemplates/EFCore/`
+2. **Place in your project** under `Template/CodeTemplates/EFCore/` (recommended)
 3. **Configure** in `efcpt-config.json`:
 
 ```json
 {
   "code-generation": {
     "use-t4": true,
-    "t4-template-path": "Template/CodeTemplates/EFCore"
+    "t4-template-path": "."
   }
 }
 ```
 
 Templates are automatically staged to `obj/efcpt/Generated/CodeTemplates/` during build.
+
+Notes:
+
+- `StageEfcptInputs` understands the common `Template/CodeTemplates/EFCore` layout, but it also supports:
+  - `Template/CodeTemplates/*` (copies the full `CodeTemplates` tree)
+  - A template folder without a `CodeTemplates` subdirectory (the entire folder is staged as `CodeTemplates`)
+- The staging destination is `$(EfcptGeneratedDir)\CodeTemplates\` by default.
 
 ### Renaming Rules (efcpt.renaming.json)
 
@@ -365,6 +377,316 @@ Customize table and column naming:
   <EfcptEnabled>false</EfcptEnabled>
 </PropertyGroup>
 ```
+
+---
+
+## 🔌 Connection String Mode 
+
+### Overview
+
+`JD.Efcpt.Build` supports direct database connection as an alternative to DACPAC-based workflows. Connection string mode allows you to reverse-engineer your EF Core models directly from a live database without requiring a `.sqlproj` file.
+
+### When to Use Connection String Mode vs DACPAC Mode
+
+**Use Connection String Mode When:**
+
+- You don't have a SQL Server Database Project (`.sqlproj`)
+- You want faster builds (no DACPAC compilation step)
+- You're working with a cloud database or managed database instance
+- You prefer to scaffold from a live database environment
+
+**Use DACPAC Mode When:**
+
+- You have an existing `.sqlproj` that defines your schema
+- You want schema versioning through database projects
+- You prefer design-time schema validation
+- Your CI/CD already builds DACPACs
+
+### Configuration Methods
+
+#### Method 1: Explicit Connection String (Highest Priority)
+
+Set the connection string directly in your `.csproj`:
+
+```xml
+<PropertyGroup>
+  <EfcptConnectionString>Server=localhost;Database=MyDb;Integrated Security=True;</EfcptConnectionString>
+</PropertyGroup>
+```
+
+Or use environment variables for security:
+
+```xml
+<PropertyGroup>
+  <EfcptConnectionString>$(DB_CONNECTION_STRING)</EfcptConnectionString>
+</PropertyGroup>
+```
+
+#### Method 2: appsettings.json (ASP.NET Core)
+
+**Recommended for ASP.NET Core projects.** Place your connection string in `appsettings.json`:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost;Database=MyDb;Integrated Security=True;"
+  }
+}
+```
+
+Then configure in your `.csproj`:
+
+```xml
+<PropertyGroup>
+  <!-- Points to the appsettings.json file -->
+  <EfcptAppSettings>appsettings.json</EfcptAppSettings>
+
+  <!-- Optional: specify which key to use (defaults to "DefaultConnection") -->
+  <EfcptConnectionStringName>DefaultConnection</EfcptConnectionStringName>
+</PropertyGroup>
+```
+
+You can also reference environment-specific files:
+
+```xml
+<PropertyGroup Condition="'$(Configuration)' == 'Development'">
+  <EfcptAppSettings>appsettings.Development.json</EfcptAppSettings>
+</PropertyGroup>
+```
+
+#### Method 3: app.config or web.config (.NET Framework)
+
+**Recommended for .NET Framework projects.** Add your connection string to `app.config` or `web.config`:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <connectionStrings>
+    <add name="DefaultConnection"
+         connectionString="Server=localhost;Database=MyDb;Integrated Security=True;"
+         providerName="System.Data.SqlClient" />
+  </connectionStrings>
+</configuration>
+```
+
+Configure in your `.csproj`:
+
+```xml
+<PropertyGroup>
+  <EfcptAppConfig>app.config</EfcptAppConfig>
+  <EfcptConnectionStringName>DefaultConnection</EfcptConnectionStringName>
+</PropertyGroup>
+```
+
+#### Method 4: Auto-Discovery (Zero Configuration)
+
+If you don't specify any connection string properties, `JD.Efcpt.Build` will **automatically search** for connection strings in this order:
+
+1. **appsettings.json** in your project directory
+2. **appsettings.Development.json** in your project directory
+3. **app.config** in your project directory
+4. **web.config** in your project directory
+
+If a connection string named `DefaultConnection` exists, it will be used. If not, the **first available connection string** will be used (with a warning logged).
+
+**Example - Zero configuration:**
+
+```
+MyApp/
+├── MyApp.csproj
+└── appsettings.json  ← Connection string auto-discovered here
+```
+
+No properties needed! Just run `dotnet build`.
+
+### Discovery Priority Chain
+
+When multiple connection string sources are present, this priority order is used:
+
+1. **`EfcptConnectionString`** property (highest priority)
+2. **`EfcptAppSettings`** or **`EfcptAppConfig`** explicit paths
+3. **Auto-discovered** configuration files
+4. **Fallback to `.sqlproj`** (DACPAC mode) if no connection string found
+
+### Migration Guide: From DACPAC Mode to Connection String Mode
+
+#### Before (DACPAC Mode)
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="JD.Efcpt.Build" Version="1.x.x" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <EfcptSqlProj>..\Database\Database.sqlproj</EfcptSqlProj>
+  </PropertyGroup>
+</Project>
+```
+
+#### After (Connection String Mode)
+
+**Option A: Explicit connection string**
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="JD.Efcpt.Build" Version="0.2.x" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <EfcptConnectionString>Server=localhost;Database=MyDb;Integrated Security=True;</EfcptConnectionString>
+  </PropertyGroup>
+</Project>
+```
+
+**Option B: Use existing appsettings.json (Recommended)**
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="JD.Efcpt.Build" Version="0.2.x" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <EfcptAppSettings>appsettings.json</EfcptAppSettings>
+  </PropertyGroup>
+</Project>
+```
+
+**Option C: Auto-discovery (Simplest)**
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="JD.Efcpt.Build" Version="0.2.x" />
+  </ItemGroup>
+
+  <!-- No connection string config needed! -->
+  <!-- Will auto-discover from appsettings.json -->
+</Project>
+```
+
+### Connection String Mode Properties Reference
+
+#### Input Properties
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `EfcptConnectionString` | *(empty)* | Explicit connection string override. **Takes highest priority.** |
+| `EfcptAppSettings` | *(empty)* | Path to `appsettings.json` file containing connection strings. |
+| `EfcptAppConfig` | *(empty)* | Path to `app.config` or `web.config` file containing connection strings. |
+| `EfcptConnectionStringName` | `DefaultConnection` | Name of the connection string key to use from configuration files. |
+| `EfcptProvider` | `mssql` | Database provider (currently only `mssql` is supported). |
+
+#### Output Properties
+
+| Property | Description |
+|----------|-------------|
+| `ResolvedConnectionString` | The resolved connection string that will be used. |
+| `UseConnectionString` | `true` when using connection string mode, `false` for DACPAC mode. |
+
+### Database Provider Support
+
+**Currently Supported:**
+- **SQL Server** (`mssql`) - Fully supported
+
+**Planned for Future Versions:**
+- ⏳ PostgreSQL (`postgresql`)
+- ⏳ MySQL (`mysql`)
+- ⏳ MariaDB (`mariadb`)
+- ⏳ Oracle (`oracle`)
+- ⏳ SQLite (`sqlite`)
+
+### Security Best Practices
+
+**❌ DON'T** commit connection strings with passwords to source control:
+
+```xml
+<!-- BAD: Password in plain text -->
+<EfcptConnectionString>Server=prod;Database=MyDb;User=sa;Password=Secret123;</EfcptConnectionString>
+```
+
+**✅ DO** use environment variables or user secrets:
+
+```xml
+<!-- GOOD: Reference environment variable -->
+<EfcptConnectionString>$(ProductionDbConnectionString)</EfcptConnectionString>
+```
+
+**✅ DO** use Windows/Integrated Authentication when possible:
+
+```xml
+<EfcptConnectionString>Server=localhost;Database=MyDb;Integrated Security=True;</EfcptConnectionString>
+```
+
+**✅ DO** use different connection strings for different environments:
+
+```xml
+<PropertyGroup Condition="'$(Configuration)' == 'Development'">
+  <EfcptConnectionString>Server=localhost;Database=MyDb_Dev;Integrated Security=True;</EfcptConnectionString>
+</PropertyGroup>
+
+<PropertyGroup Condition="'$(Configuration)' == 'Production'">
+  <EfcptConnectionString>$(PRODUCTION_DB_CONNECTION_STRING)</EfcptConnectionString>
+</PropertyGroup>
+```
+
+### How Schema Fingerprinting Works
+
+In connection string mode, instead of hashing the DACPAC file, `JD.Efcpt.Build`:
+
+1. **Queries the database** system tables (`sys.tables`, `sys.columns`, `sys.indexes`, etc.)
+2. **Builds a canonical schema model** with all tables, columns, indexes, foreign keys, and constraints
+3. **Computes an XxHash64 fingerprint** of the schema structure
+4. **Caches the fingerprint** to skip regeneration when the schema hasn't changed
+
+This means your builds are still **incremental** - models are only regenerated when the database schema actually changes!
+
+### Example: ASP.NET Core with Connection String Mode
+
+```xml
+<!-- MyApp.csproj -->
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JD.Efcpt.Build" Version="0.2.x" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.x" />
+  </ItemGroup>
+
+  <!-- Connection string mode: Use appsettings.json -->
+  <PropertyGroup>
+    <EfcptAppSettings>appsettings.json</EfcptAppSettings>
+    <EfcptConnectionStringName>DefaultConnection</EfcptConnectionStringName>
+  </PropertyGroup>
+</Project>
+```
+
+```json
+// appsettings.json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost;Database=MyApp;Integrated Security=True;"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information"
+    }
+  }
+}
+```
+
+Build your project:
+
+```bash
+dotnet build
+```
+
+Generated models appear in `obj/efcpt/Generated/` automatically!
 
 ---
 
@@ -400,17 +722,6 @@ Customize table and column naming:
    ```
 
 ### DACPAC Build Fails
-
-**Symptoms:** Error building `.sqlproj`
-
-**Solutions:**
-
-- Install **SQL Server Data Tools** build components
-- Verify `.sqlproj` builds independently:
-  ```bash
-  dotnet build path\to\Database.sqlproj
-  ```
-- Check for SQL syntax errors in your database project
 
 ### efcpt CLI Not Found
 
@@ -609,15 +920,30 @@ RUN dotnet build --configuration Release --no-restore
 | `EfcptSqlProj` | *(auto-discovered)* | Path to `.sqlproj` file |
 | `EfcptConfig` | `efcpt-config.json` | EF Core Power Tools configuration |
 | `EfcptRenaming` | `efcpt.renaming.json` | Renaming rules file |
-| `EfcptTemplateDir` | `Template` or `CodeTemplates` | T4 template directory |
+| `EfcptTemplateDir` | `Template` | T4 template directory |
 | `EfcptOutput` | `$(BaseIntermediateOutputPath)efcpt\` | Intermediate staging directory |
 | `EfcptGeneratedDir` | `$(EfcptOutput)Generated\` | Generated code output directory |
+
+#### Connection String Properties
+
+When `EfcptConnectionString` is set (or when a connection string can be resolved from configuration files), the pipeline switches to **connection string mode**:
+
+- `EfcptEnsureDacpac` is skipped.
+- `EfcptQuerySchemaMetadata` runs to fingerprint the database schema.
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `EfcptConnectionString` | *(empty)* | Explicit connection string override (enables connection string mode) |
+| `EfcptAppSettings` | *(empty)* | Optional `appsettings.json` path used to resolve connection strings |
+| `EfcptAppConfig` | *(empty)* | Optional `app.config`/`web.config` path used to resolve connection strings |
+| `EfcptConnectionStringName` | `DefaultConnection` | Connection string name/key to read from configuration files |
+| `EfcptProvider` | `mssql` | Provider identifier for schema querying and efcpt (Phase 1 supports SQL Server only) |
 
 #### Tool Configuration
 
 | Property | Default | Description |
 |----------|---------|-------------|
-| `EfcptToolMode` | `auto` | Tool resolution mode: `auto`, `tool-manifest`, `global` |
+| `EfcptToolMode` | `auto` | Tool resolution mode: `auto` or `tool-manifest` (any other value forces the global tool path) |
 | `EfcptToolPackageId` | `ErikEJ.EFCorePowerTools.Cli` | NuGet package ID for efcpt |
 | `EfcptToolVersion` | `10.*` | Version constraint |
 | `EfcptToolCommand` | `efcpt` | Command name |
@@ -632,6 +958,7 @@ RUN dotnet build --configuration Release --no-restore
 | `EfcptLogVerbosity` | `minimal` | Logging level: `minimal` or `detailed` |
 | `EfcptDumpResolvedInputs` | `false` | Log all resolved input paths |
 | `EfcptSolutionDir` | `$(SolutionDir)` | Solution root for project discovery |
+| `EfcptSolutionPath` | `$(SolutionPath)` | Solution file path (fallback SQL project discovery) |
 | `EfcptProbeSolutionDir` | `true` | Whether to probe solution directory |
 | `EfcptFingerprintFile` | `$(EfcptOutput)fingerprint.txt` | Fingerprint cache location |
 | `EfcptStampFile` | `$(EfcptOutput).efcpt.stamp` | Generation stamp file |
@@ -644,6 +971,7 @@ Stages configuration files and templates into the intermediate directory.
 
 **Parameters:**
 - `OutputDir` (required) - Base staging directory
+- `ProjectDirectory` (required) - Consuming project directory (used to keep staging paths stable)
 - `ConfigPath` (required) - Path to `efcpt-config.json`
 - `RenamingPath` (required) - Path to `efcpt.renaming.json`
 - `TemplateDir` (required) - Path to template directory
@@ -660,24 +988,25 @@ Stages configuration files and templates into the intermediate directory.
 Computes SHA256 fingerprint of all inputs to detect when regeneration is needed.
 
 **Parameters:**
-- `DacpacPath` (required) - Path to DACPAC file
+- `DacpacPath` - Path to DACPAC file (used in `.sqlproj` mode)
+- `SchemaFingerprint` - Schema fingerprint produced by `QuerySchemaMetadata` (used in connection string mode)
+- `UseConnectionStringMode` - Boolean-like flag indicating connection string mode
 - `ConfigPath` (required) - Path to efcpt config
 - `RenamingPath` (required) - Path to renaming file
 - `TemplateDir` (required) - Path to templates
-- `OutputPath` (required) - Where to write fingerprint
-- `PreviousFingerprintPath` - Path to previous fingerprint for comparison
+- `FingerprintFile` (required) - Path to the fingerprint cache file that is read/written
 - `LogVerbosity` - Logging level
 
 **Outputs:**
 - `Fingerprint` - Computed SHA256 hash
-- `FingerprintChanged` - Boolean indicating if fingerprint changed
+- `HasChanged` - Boolean-like flag indicating if the fingerprint changed
 
 #### RunEfcpt
 
 Executes EF Core Power Tools CLI to generate EF Core models.
 
 **Parameters:**
-- `ToolMode` - How to find efcpt: `auto`, `tool-manifest`, `global`
+- `ToolMode` - How to find efcpt: `auto` or `tool-manifest` (any other value uses the global tool path)
 - `ToolPackageId` - NuGet package ID
 - `ToolVersion` - Version constraint
 - `ToolRestore` - Whether to restore tool
@@ -685,12 +1014,28 @@ Executes EF Core Power Tools CLI to generate EF Core models.
 - `ToolPath` - Explicit path to executable
 - `DotNetExe` - Path to dotnet host
 - `WorkingDirectory` - Working directory for efcpt
-- `DacpacPath` (required) - Input DACPAC
+- `DacpacPath` - Input DACPAC (used in `.sqlproj` mode)
+- `ConnectionString` - Database connection string (used in connection string mode)
+- `UseConnectionStringMode` - Boolean-like flag indicating connection string mode
+- `Provider` - Provider identifier passed to efcpt (default: `mssql`)
 - `ConfigPath` (required) - efcpt configuration
-- `RenamingPath` - Renaming rules
-- `TemplateDir` - Template directory
+- `RenamingPath` (required) - Renaming rules
+- `TemplateDir` (required) - Template directory
 - `OutputDir` (required) - Output directory
 - `LogVerbosity` - Logging level
+
+#### QuerySchemaMetadata
+
+Queries database schema metadata and computes a deterministic schema fingerprint (used in connection string mode).
+
+**Parameters:**
+- `ConnectionString` (required) - Database connection string
+- `OutputDir` (required) - Output directory (writes `schema-model.json` for diagnostics)
+- `Provider` - Provider identifier (default: `mssql`; Phase 1 supports SQL Server only)
+- `LogVerbosity` - Logging level
+
+**Outputs:**
+- `SchemaFingerprint` - Computed schema fingerprint
 
 #### RenameGeneratedFiles
 
@@ -705,22 +1050,32 @@ Renames generated `.cs` files to `.g.cs` for better identification.
 Discovers database project and configuration files.
 
 **Parameters:**
-- `SqlProjOverride` - Explicit `.sqlproj` path
-- `ConfigOverride` - Explicit config path
-- `RenamingOverride` - Explicit renaming path
-- `TemplateDirOverride` - Explicit template directory
-- `ProjectDir` (required) - Current project directory
-- `SolutionDir` - Solution directory
-- `ProbeSolutionDir` - Whether to probe solution
-- `ProjectReferences` - List of project references
-- `DumpResolvedInputs` - Whether to log results
-- `LogVerbosity` - Logging level
+- `ProjectFullPath` (required) - Full path to the consuming project
+- `ProjectDirectory` (required) - Directory containing the consuming project
+- `Configuration` (required) - Active build configuration (e.g. `Debug` or `Release`)
+- `ProjectReferences` - Project references of the consuming project
+- `SqlProjOverride` - Optional override path for the SQL project
+- `ConfigOverride` - Optional override path for efcpt config
+- `RenamingOverride` - Optional override path for renaming rules
+- `TemplateDirOverride` - Optional override path for templates
+- `SolutionDir` - Optional solution root to probe for inputs
+- `SolutionPath` - Optional solution file path (used as a fallback when discovering the SQL project)
+- `ProbeSolutionDir` - Boolean-like flag controlling whether `SolutionDir` is probed (default: `true`)
+- `OutputDir` (required) - Output directory used by later stages (and for `resolved-inputs.json`)
+- `DefaultsRoot` - Root directory containing packaged default inputs (typically the NuGet `Defaults` folder)
+- `DumpResolvedInputs` - When `true`, writes `resolved-inputs.json` to `OutputDir`
+- `EfcptConnectionString` - Optional explicit connection string (enables connection string mode)
+- `EfcptAppSettings` - Optional `appsettings.json` path used to resolve connection strings
+- `EfcptAppConfig` - Optional `app.config`/`web.config` path used to resolve connection strings
+- `EfcptConnectionStringName` - Connection string name/key (default: `DefaultConnection`)
 
 **Outputs:**
-- `ResolvedSqlProj` - Discovered `.sqlproj` path
-- `ResolvedConfig` - Discovered config path
-- `ResolvedRenaming` - Discovered renaming path
+- `SqlProjPath` - Discovered SQL project path
+- `ResolvedConfigPath` - Discovered config path
+- `ResolvedRenamingPath` - Discovered renaming path
 - `ResolvedTemplateDir` - Discovered template directory
+- `ResolvedConnectionString` - Resolved connection string (connection string mode)
+- `UseConnectionString` - Boolean-like flag indicating whether connection string mode is active
 
 #### EnsureDacpacBuilt
 
@@ -728,7 +1083,9 @@ Builds a `.sqlproj` to DACPAC if it's out of date.
 
 **Parameters:**
 - `SqlProjPath` (required) - Path to `.sqlproj`
-- `DotNetExe` - Path to dotnet host
+- `Configuration` (required) - Build configuration (e.g. `Debug` / `Release`)
+- `MsBuildExe` - Path to `msbuild.exe` (preferred on Windows when present)
+- `DotNetExe` - Path to dotnet host (used for `dotnet msbuild` when `msbuild.exe` is unavailable)
 - `LogVerbosity` - Logging level
 
 **Outputs:**
@@ -837,11 +1194,12 @@ By default the build uses `dotnet tool run efcpt` when a local tool manifest is 
 `JD.Efcpt.Build` wires a set of MSBuild targets into your project. When `EfcptEnabled` is `true` (the default), the following pipeline runs as part of `dotnet build`:
 
 1. **EfcptResolveInputs** – locates the `.sqlproj` and resolves configuration inputs.
-2. **EfcptEnsureDacpac** – builds the database project to a DACPAC if needed.
-3. **EfcptStageInputs** – stages the EF Core Power Tools configuration, renaming rules, and templates into an intermediate directory.
-4. **EfcptComputeFingerprint** – computes a fingerprint across the DACPAC and staged inputs.
-5. **EfcptGenerateModels** – runs `efcpt` and renames generated files to `.g.cs` when the fingerprint changes.
-6. **EfcptAddToCompile** – adds the generated `.g.cs` files to the `Compile` item group so they are part of your build.
+2. **EfcptQuerySchemaMetadata** *(connection string mode only)* – fingerprints the live database schema.
+3. **EfcptEnsureDacpac** *(.sqlproj mode only)* – builds the database project to a DACPAC if needed.
+4. **EfcptStageInputs** – stages the EF Core Power Tools configuration, renaming rules, and templates into an intermediate directory.
+5. **EfcptComputeFingerprint** – computes a fingerprint across the DACPAC (or schema fingerprint) and staged inputs.
+6. **EfcptGenerateModels** – runs `efcpt` and renames generated files to `.g.cs` when the fingerprint changes.
+7. **EfcptAddToCompile** – adds the generated `.g.cs` files to the `Compile` item group so they are part of your build.
 
 The underlying targets and tasks live in `build/JD.Efcpt.Build.targets` and `JD.Efcpt.Build.Tasks.dll`.
 
@@ -900,6 +1258,25 @@ The behavior of the pipeline is controlled by a set of MSBuild properties. You c
   - Optional override for the path to the Database Project (`.sqlproj`).
   - When not set, `ResolveSqlProjAndInputs` attempts to discover the project based on project references and solution layout.
 
+- `EfcptConnectionString`
+  - Optional explicit connection string override.
+  - When set (or when a connection string is resolved from configuration files), the pipeline runs in **connection string mode**:
+    - `EfcptEnsureDacpac` is skipped.
+    - `EfcptQuerySchemaMetadata` runs and its schema fingerprint is used in incremental builds instead of the DACPAC content.
+
+- `EfcptAppSettings`
+  - Optional `appsettings.json` path used to resolve connection strings.
+
+- `EfcptAppConfig`
+  - Optional `app.config` / `web.config` path used to resolve connection strings.
+
+- `EfcptConnectionStringName` (default: `DefaultConnection`)
+  - Connection string name/key to read from configuration files.
+
+- `EfcptProvider` (default: `mssql`)
+  - Provider identifier passed to schema querying and efcpt.
+  - Phase 1 supports SQL Server only.
+
 - `EfcptConfig`
   - Optional override for the EF Core Power Tools configuration file (defaults to `efcpt-config.json` in the project directory when present).
 
@@ -915,6 +1292,9 @@ The behavior of the pipeline is controlled by a set of MSBuild properties. You c
 - `EfcptProbeSolutionDir`
   - Controls whether solution probing is performed. Use this if your layout is non-standard.
 
+- `EfcptSolutionPath`
+  - Optional solution file path used as a fallback when discovering the SQL project.
+
 - `EfcptLogVerbosity`
   - Controls task logging (`minimal` or `detailed`).
 
@@ -926,6 +1306,7 @@ These properties control how the `RunEfcpt` task finds and invokes the EF Core P
   - Controls the strategy used to locate the tool. Common values:
     - `auto` – use a local tool if a manifest is present, otherwise fall back to a global tool.
     - `tool-manifest` – require a local tool manifest and fail if one is not present.
+  - Any other non-empty value forces the global tool path.
 
 - `EfcptToolPackageId`
   - NuGet package ID for the CLI. Defaults to `ErikEJ.EFCorePowerTools.Cli`.

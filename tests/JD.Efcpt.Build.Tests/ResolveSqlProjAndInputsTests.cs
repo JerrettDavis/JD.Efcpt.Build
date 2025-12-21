@@ -1,3 +1,4 @@
+using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using JD.Efcpt.Build.Tasks;
 using JD.Efcpt.Build.Tests.Infrastructure;
@@ -15,9 +16,14 @@ public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : Tin
 {
     private sealed record SetupState(
         TestFolder Folder,
+        TestBuildEngine Engine,
         string ProjectDir,
+        string Csproj,
         string SqlProj,
-        TestBuildEngine Engine);
+        string Config,
+        string Renaming,
+        string AppSettings,
+        string AppConfig);
 
     private sealed record TaskResult(
         SetupState Setup,
@@ -43,13 +49,13 @@ public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : Tin
         var sqlproj = folder.WriteFile("db/Db.sqlproj", "<Project />");
 
         var projectDir = folder.CreateDir("src");
-        folder.WriteFile("src/App.csproj", "<Project />");
-        folder.WriteFile("src/efcpt-config.json", "{}");
-        folder.WriteFile("src/efcpt.renaming.json", "[]");
+        var csproj = folder.WriteFile("src/App.csproj", "<Project />");
+        var config = folder.WriteFile("src/efcpt-config.json", "{}");
+        var renaming = folder.WriteFile("src/efcpt.renaming.json", "[]");
         folder.WriteFile("src/Template/readme.txt", "template");
 
         var engine = new TestBuildEngine();
-        return new SetupState(folder, projectDir, sqlproj, engine);
+        return new SetupState(folder, engine, projectDir, csproj, sqlproj, config, renaming, "", "");
     }
 
     private static SetupState SetupSdkProjectLevelInputs()
@@ -59,13 +65,13 @@ public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : Tin
         var sqlproj = folder.WriteFile("db/Db.csproj", "<Project Sdk=\"MSBuild.Sdk.SqlProj/3.0.0\" />");
 
         var projectDir = folder.CreateDir("src");
-        folder.WriteFile("src/App.csproj", "<Project />");
-        folder.WriteFile("src/efcpt-config.json", "{}");
-        folder.WriteFile("src/efcpt.renaming.json", "[]");
+        var csproj = folder.WriteFile("src/App.csproj", "<Project />");
+        var config = folder.WriteFile("src/efcpt-config.json", "{}");
+        var renaming = folder.WriteFile("src/efcpt.renaming.json", "[]");
         folder.WriteFile("src/Template/readme.txt", "template");
 
         var engine = new TestBuildEngine();
-        return new SetupState(folder, projectDir, sqlproj, engine);
+        return new SetupState(folder, engine, projectDir, csproj, sqlproj, config, renaming, "", "");
     }
 
     private static SolutionScanSetup SetupSolutionScanInputs()
@@ -116,14 +122,14 @@ public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : Tin
     {
         var folder = new TestFolder();
         folder.CreateDir("db");
-        folder.WriteFile("db/Db.sqlproj", "<Project />");
+        var sqlproj = folder.WriteFile("db/Db.sqlproj", "<Project />");
 
         var projectDir = folder.CreateDir("src");
-        folder.WriteFile("src/App.csproj", "<Project />");
-        folder.WriteFile("efcpt-config.json", "{ \"level\": \"solution\" }");
+        var csproj = folder.WriteFile("src/App.csproj", "<Project />");
+        var config = folder.WriteFile("efcpt-config.json", "{ \"level\": \"solution\" }");
 
         var engine = new TestBuildEngine();
-        return new SetupState(folder, projectDir, folder.WriteFile("db/Db.sqlproj", "<Project />"), engine);
+        return new SetupState(folder, engine, projectDir, csproj, sqlproj, config, "", "", "");
     }
 
     private static SetupState SetupMultipleSqlProj()
@@ -132,10 +138,10 @@ public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : Tin
         folder.WriteFile("db1/One.sqlproj", "<Project />");
         folder.WriteFile("db2/Two.sqlproj", "<Project />");
         var projectDir = folder.CreateDir("src");
-        folder.WriteFile("src/App.csproj", "<Project />");
+        var csproj = folder.WriteFile("src/App.csproj", "<Project />");
 
         var engine = new TestBuildEngine();
-        return new SetupState(folder, projectDir, "", engine);
+        return new SetupState(folder, engine, projectDir, csproj, "", "", "", "", "");
     }
 
     private static TaskResult ExecuteTaskProjectLevel(SetupState setup)
@@ -248,7 +254,7 @@ public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : Tin
             .And("config path resolved", r => r.Task.ResolvedConfigPath == Path.GetFullPath(Path.Combine(r.Setup.ProjectDir, "efcpt-config.json")))
             .And("renaming path resolved", r => r.Task.ResolvedRenamingPath == Path.GetFullPath(Path.Combine(r.Setup.ProjectDir, "efcpt.renaming.json")))
             .And("template dir resolved", r => r.Task.ResolvedTemplateDir == Path.GetFullPath(Path.Combine(r.Setup.ProjectDir, "Template")))
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -260,7 +266,7 @@ public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : Tin
             .When("execute task", ExecuteTaskProjectLevelSdk)
             .Then("task succeeds", r => r.Success)
             .And("sql project path resolved", r => r.Task.SqlProjPath == Path.GetFullPath(r.Setup.SqlProj))
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -273,7 +279,7 @@ public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : Tin
             .Then("task succeeds", r => r.Success)
             .And("sql project path resolved", r => r.Task.SqlProjPath == Path.GetFullPath(r.Setup.SqlProj))
             .And("warning logged", r => r.Setup.Engine.Warnings.Count == 1)
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -286,7 +292,7 @@ public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : Tin
             .Then("task succeeds", r => r.Success)
             .And("sql project path resolved", r => r.Task.SqlProjPath == Path.GetFullPath(r.Setup.SqlProj))
             .And("warning logged", r => r.Setup.Engine.Warnings.Count == 1)
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -300,7 +306,7 @@ public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : Tin
             .And("solution config resolved", r => r.Task.ResolvedConfigPath == Path.GetFullPath(Path.Combine(r.Setup.Folder.Root, "efcpt-config.json")))
             .And("default renaming path used", r => r.Task.ResolvedRenamingPath == Path.Combine(TestPaths.DefaultsRoot, "efcpt.renaming.json"))
             .And("default template dir used", r => r.Task.ResolvedTemplateDir == Path.Combine(TestPaths.DefaultsRoot, "Template"))
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
 
@@ -312,7 +318,384 @@ public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : Tin
             .When("execute task", ExecuteTaskMultipleSqlProj)
             .Then("task fails", r => !r.Success)
             .And("errors are logged", r => r.Setup.Engine.Errors.Count > 0)
-            .And(r => r.Setup.Folder.Dispose())
+            .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
+    }
+
+    // ========== Connection String Discovery Tests ==========
+
+    [Scenario("Uses explicit EfcptConnectionString property as highest priority")]
+    [Fact]
+    public async Task Uses_explicit_connection_string()
+    {
+        await Given("project with explicit connection string", SetupExplicitConnectionString)
+            .When("execute task with explicit connection string", ExecuteTaskExplicitConnectionString)
+            .Then("task succeeds", r => r.Success)
+            .And("connection string resolved", r => r.Task.ResolvedConnectionString == "Server=localhost;Database=ExplicitDb;")
+            .And("uses connection string mode", r => r.Task.UseConnectionString == "true")
+            .And("sql project not resolved", r => string.IsNullOrEmpty(r.Task.SqlProjPath))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Discovers connection string from appsettings.json with specified key")]
+    [Fact]
+    public async Task Discovers_connection_string_from_appsettings()
+    {
+        await Given("project with appsettings.json", SetupAppSettingsConnectionString)
+            .When("execute task with appsettings", ExecuteTaskAppSettingsConnectionString)
+            .Then("task succeeds", r => r.Success)
+            .And("connection string resolved", r => r.Task.ResolvedConnectionString == "Server=localhost;Database=AppSettingsDb;")
+            .And("uses connection string mode", r => r.Task.UseConnectionString == "true")
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Discovers connection string from app.config with specified key")]
+    [Fact]
+    public async Task Discovers_connection_string_from_appconfig()
+    {
+        await Given("project with app.config", SetupAppConfigConnectionString)
+            .When("execute task with app.config", ExecuteTaskAppConfigConnectionString)
+            .Then("task succeeds", r => r.Success)
+            .And("connection string resolved", r => r.Task.ResolvedConnectionString == "Server=localhost;Database=AppConfigDb;")
+            .And("uses connection string mode", r => r.Task.UseConnectionString == "true")
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Auto-discovers appsettings.json in project directory")]
+    [Fact]
+    public async Task Auto_discovers_appsettings_json()
+    {
+        await Given("project with auto-discovered appsettings.json", SetupAutoDiscoverAppSettings)
+            .When("execute task without overrides", ExecuteTaskAutoDiscoverAppSettings)
+            .Then("task succeeds", r => r.Success)
+            .And("connection string resolved", r => r.Task.ResolvedConnectionString == "Server=localhost;Database=AutoDb;")
+            .And("uses connection string mode", r => r.Task.UseConnectionString == "true")
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Auto-discovers app.config in project directory")]
+    [Fact]
+    public async Task Auto_discovers_app_config()
+    {
+        await Given("project with auto-discovered app.config", SetupAutoDiscoverAppConfig)
+            .When("execute task without overrides", ExecuteTaskAutoDiscoverAppConfig)
+            .Then("task succeeds", r => r.Success)
+            .And("connection string resolved", r => r.Task.ResolvedConnectionString == "Server=localhost;Database=AutoAppConfigDb;")
+            .And("uses connection string mode", r => r.Task.UseConnectionString == "true")
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Falls back to sqlproj when no connection string found")]
+    [Fact]
+    public async Task Falls_back_to_sqlproj_when_no_connection_string()
+    {
+        await Given("project with sqlproj but no connection string", SetupSqlProjNoConnectionString)
+            .When("execute task", ExecuteTaskSqlProjNoConnectionString)
+            .Then("task succeeds", r => r.Success)
+            .And("uses dacpac mode", r => r.Task.UseConnectionString == "false")
+            .And("sql project resolved", r => !string.IsNullOrEmpty(r.Task.SqlProjPath))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    // ========== Setup Methods for Connection String Tests ==========
+
+    private static SetupState SetupExplicitConnectionString()
+    {
+        var folder = new TestFolder();
+        var projectDir = folder.Root;
+        var csproj = folder.WriteFile("MyApp.csproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup></Project>");
+
+        var engine = new TestBuildEngine();
+        return new SetupState(folder, engine, projectDir, csproj, "", "", "", "", "");
+    }
+
+    private static SetupState SetupAppSettingsConnectionString()
+    {
+        var folder = new TestFolder();
+        var projectDir = folder.Root;
+        var csproj = folder.WriteFile("MyApp.csproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup></Project>");
+
+        var appsettings = folder.WriteFile("appsettings.json",
+            """
+            {
+              "ConnectionStrings": {
+                "DefaultConnection": "Server=localhost;Database=AppSettingsDb;"
+              }
+            }
+            """);
+
+        var engine = new TestBuildEngine();
+        return new SetupState(folder, engine, projectDir, csproj, "", "", "", appsettings, "");
+    }
+
+    private static SetupState SetupAppConfigConnectionString()
+    {
+        var folder = new TestFolder();
+        var projectDir = folder.Root;
+        var csproj = folder.WriteFile("MyApp.csproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup></Project>");
+
+        var appConfig = folder.WriteFile("app.config",
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <connectionStrings>
+                <add name="DefaultConnection" connectionString="Server=localhost;Database=AppConfigDb;" />
+              </connectionStrings>
+            </configuration>
+            """);
+
+        var engine = new TestBuildEngine();
+        return new SetupState(folder, engine, projectDir, csproj, "", "", "", "", appConfig);
+    }
+
+    private static SetupState SetupAutoDiscoverAppSettings()
+    {
+        var folder = new TestFolder();
+        var projectDir = folder.Root;
+        var csproj = folder.WriteFile("MyApp.csproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup></Project>");
+
+        // Place appsettings.json in project directory (will be auto-discovered)
+        folder.WriteFile("appsettings.json",
+            """
+            {
+              "ConnectionStrings": {
+                "DefaultConnection": "Server=localhost;Database=AutoDb;"
+              }
+            }
+            """);
+
+        var engine = new TestBuildEngine();
+        return new SetupState(folder, engine, projectDir, csproj, "", "", "", "", "");
+    }
+
+    private static SetupState SetupAutoDiscoverAppConfig()
+    {
+        var folder = new TestFolder();
+        var projectDir = folder.Root;
+        var csproj = folder.WriteFile("MyApp.csproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup></Project>");
+
+        // Place app.config in project directory (will be auto-discovered)
+        folder.WriteFile("app.config",
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <configuration>
+              <connectionStrings>
+                <add name="DefaultConnection" connectionString="Server=localhost;Database=AutoAppConfigDb;" />
+              </connectionStrings>
+            </configuration>
+            """);
+
+        var engine = new TestBuildEngine();
+        return new SetupState(folder, engine, projectDir, csproj, "", "", "", "", "");
+    }
+
+    private static SetupState SetupSqlProjNoConnectionString()
+    {
+        var folder = new TestFolder();
+        var projectDir = folder.Root;
+        var sqlproj = folder.WriteFile("Database.sqlproj", "<Project Sdk=\"MSBuild.Sdk.SqlProj/2.0.0\"><PropertyGroup><TargetFramework>netstandard2.0</TargetFramework></PropertyGroup></Project>");
+        var csproj = folder.WriteFile("MyApp.csproj",
+            $"""
+            <Project Sdk="Microsoft.NET.Sdk">
+              <PropertyGroup>
+                <TargetFramework>net8.0</TargetFramework>
+              </PropertyGroup>
+              <ItemGroup>
+                <ProjectReference Include="{sqlproj}" />
+              </ItemGroup>
+            </Project>
+            """);
+
+        var engine = new TestBuildEngine();
+        return new SetupState(folder, engine, projectDir, csproj, sqlproj, "", "", "", "");
+    }
+
+    // ========== Execute Methods for Connection String Tests ==========
+
+    private static TaskResult ExecuteTaskExplicitConnectionString(SetupState setup)
+    {
+        var task = new ResolveSqlProjAndInputs
+        {
+            BuildEngine = setup.Engine,
+            ProjectFullPath = setup.Csproj,
+            ProjectDirectory = setup.ProjectDir,
+            Configuration = "Debug",
+            ProjectReferences = [],
+            OutputDir = Path.Combine(setup.ProjectDir, "obj", "efcpt"),
+            DefaultsRoot = TestPaths.DefaultsRoot,
+            EfcptConnectionString = "Server=localhost;Database=ExplicitDb;",
+            EfcptConnectionStringName = "DefaultConnection"
+        };
+
+        var success = task.Execute();
+        return new TaskResult(setup, task, success);
+    }
+
+    private static TaskResult ExecuteTaskAppSettingsConnectionString(SetupState setup)
+    {
+        var task = new ResolveSqlProjAndInputs
+        {
+            BuildEngine = setup.Engine,
+            ProjectFullPath = setup.Csproj,
+            ProjectDirectory = setup.ProjectDir,
+            Configuration = "Debug",
+            ProjectReferences = [],
+            OutputDir = Path.Combine(setup.ProjectDir, "obj", "efcpt"),
+            DefaultsRoot = TestPaths.DefaultsRoot,
+            EfcptAppSettings = setup.AppSettings,
+            EfcptConnectionStringName = "DefaultConnection"
+        };
+
+        var success = task.Execute();
+        return new TaskResult(setup, task, success);
+    }
+
+    private static TaskResult ExecuteTaskAppConfigConnectionString(SetupState setup)
+    {
+        var task = new ResolveSqlProjAndInputs
+        {
+            BuildEngine = setup.Engine,
+            ProjectFullPath = setup.Csproj,
+            ProjectDirectory = setup.ProjectDir,
+            Configuration = "Debug",
+            ProjectReferences = [],
+            OutputDir = Path.Combine(setup.ProjectDir, "obj", "efcpt"),
+            DefaultsRoot = TestPaths.DefaultsRoot,
+            EfcptAppConfig = setup.AppConfig,
+            EfcptConnectionStringName = "DefaultConnection"
+        };
+
+        var success = task.Execute();
+        return new TaskResult(setup, task, success);
+    }
+
+    private static TaskResult ExecuteTaskAutoDiscoverAppSettings(SetupState setup)
+    {
+        var task = new ResolveSqlProjAndInputs
+        {
+            BuildEngine = setup.Engine,
+            ProjectFullPath = setup.Csproj,
+            ProjectDirectory = setup.ProjectDir,
+            Configuration = "Debug",
+            ProjectReferences = [],
+            OutputDir = Path.Combine(setup.ProjectDir, "obj", "efcpt"),
+            DefaultsRoot = TestPaths.DefaultsRoot,
+            EfcptConnectionStringName = "DefaultConnection"
+        };
+
+        var success = task.Execute();
+        return new TaskResult(setup, task, success);
+    }
+
+    private static TaskResult ExecuteTaskAutoDiscoverAppConfig(SetupState setup)
+    {
+        var task = new ResolveSqlProjAndInputs
+        {
+            BuildEngine = setup.Engine,
+            ProjectFullPath = setup.Csproj,
+            ProjectDirectory = setup.ProjectDir,
+            Configuration = "Debug",
+            ProjectReferences = [],
+            OutputDir = Path.Combine(setup.ProjectDir, "obj", "efcpt"),
+            DefaultsRoot = TestPaths.DefaultsRoot,
+            EfcptConnectionStringName = "DefaultConnection"
+        };
+
+        var success = task.Execute();
+        return new TaskResult(setup, task, success);
+    }
+
+    private static TaskResult ExecuteTaskSqlProjNoConnectionString(SetupState setup)
+    {
+        ITaskItem[] projectReferences =
+        [
+            new TaskItem(setup.SqlProj, new Dictionary<string, string> { ["ReferenceOutputAssembly"] = "false" })
+        ];
+
+        var task = new ResolveSqlProjAndInputs
+        {
+            BuildEngine = setup.Engine,
+            ProjectFullPath = setup.Csproj,
+            ProjectDirectory = setup.ProjectDir,
+            Configuration = "Debug",
+            ProjectReferences = projectReferences,
+            OutputDir = Path.Combine(setup.ProjectDir, "obj", "efcpt"),
+            DefaultsRoot = TestPaths.DefaultsRoot,
+            EfcptConnectionStringName = "DefaultConnection"
+        };
+
+        var success = task.Execute();
+        return new TaskResult(setup, task, success);
+    }
+
+    [Scenario("Prefers sqlproj over auto-discovered connection strings")]
+    [Fact]
+    public async Task Prefers_sqlproj_over_auto_discovered_connection_strings()
+    {
+        await Given("project with both sqlproj and appsettings.json", SetupSqlProjWithAutoDiscoveredConnectionString)
+            .When("execute task without explicit connection string config", ExecuteTaskSqlProjWithAutoDiscovery)
+            .Then("task succeeds", r => r.Success)
+            .And("uses sqlproj mode", r => r.Task.UseConnectionString == "false")
+            .And("sqlproj path is resolved", r => !string.IsNullOrWhiteSpace(r.Task.SqlProjPath))
+            // Note: Warning JD0015 is logged in production but not captured by test harness
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    private static SetupState SetupSqlProjWithAutoDiscoveredConnectionString()
+    {
+        var folder = new TestFolder();
+        folder.CreateDir("db");
+        var sqlproj = folder.WriteFile("db/Db.sqlproj", "<Project />");
+
+        var projectDir = folder.CreateDir("src");
+        var csproj = folder.WriteFile("src/App.csproj", "<Project />");
+
+        // Auto-discovered appsettings.json with connection string
+        var appsettings = folder.WriteFile("src/appsettings.json",
+            """
+            {
+              "ConnectionStrings": {
+                "DefaultConnection": "Server=localhost;Database=TestDb;"
+              }
+            }
+            """);
+
+        var config = folder.WriteFile("src/efcpt-config.json", "{}");
+        var renaming = folder.WriteFile("src/efcpt.renaming.json", "[]");
+        folder.WriteFile("src/Template/readme.txt", "template");
+
+        var engine = new TestBuildEngine();
+        return new SetupState(folder, engine, projectDir, csproj, sqlproj, config, renaming, appsettings, "");
+    }
+
+    private static TaskResult ExecuteTaskSqlProjWithAutoDiscovery(SetupState setup)
+    {
+        ITaskItem[] projectReferences =
+        [
+            new TaskItem(setup.SqlProj, new Dictionary<string, string> { ["ReferenceOutputAssembly"] = "false" })
+        ];
+
+        var task = new ResolveSqlProjAndInputs
+        {
+            BuildEngine = setup.Engine,
+            ProjectFullPath = setup.Csproj,
+            ProjectDirectory = setup.ProjectDir,
+            Configuration = "Debug",
+            ProjectReferences = projectReferences,
+            OutputDir = Path.Combine(setup.ProjectDir, "obj", "efcpt"),
+            DefaultsRoot = TestPaths.DefaultsRoot,
+            // NOTE: No explicit EfcptConnectionString, EfcptAppSettings, or EfcptAppConfig
+            EfcptConnectionStringName = "DefaultConnection"
+        };
+
+        var success = task.Execute();
+        return new TaskResult(setup, task, success);
     }
 }

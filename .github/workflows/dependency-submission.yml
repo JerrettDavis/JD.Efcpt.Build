@@ -1,0 +1,27 @@
+name: Dependency Submission
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  dependency-submission:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x' 
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Component Detection
+        uses: advanced-security/component-detection-dependency-submission-action@v0.1.0
+        with:
+          directoryExclusionList: 'samples/**/*;tests/**/*'

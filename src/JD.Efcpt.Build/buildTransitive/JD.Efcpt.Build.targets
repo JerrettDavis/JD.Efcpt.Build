@@ -34,6 +34,9 @@
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.RenameGeneratedFiles"
              AssemblyFile="$(_EfcptTaskAssembly)" />
 
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.QuerySchemaMetadata"
+             AssemblyFile="$(_EfcptTaskAssembly)" />
+
   <!--
     Stage 1: resolve the SQL project and key efcpt inputs (config, renaming, template).
 
@@ -65,12 +68,43 @@
         ProbeSolutionDir="$(EfcptProbeSolutionDir)"
         OutputDir="$(EfcptOutput)"
         DefaultsRoot="$(MSBuildThisFileDirectory)Defaults"
-        DumpResolvedInputs="$(EfcptDumpResolvedInputs)">
+        DumpResolvedInputs="$(EfcptDumpResolvedInputs)"
+        EfcptConnectionString="$(EfcptConnectionString)"
+        EfcptAppSettings="$(EfcptAppSettings)"
+        EfcptAppConfig="$(EfcptAppConfig)"
+        EfcptConnectionStringName="$(EfcptConnectionStringName)">
       <Output TaskParameter="SqlProjPath" PropertyName="_EfcptSqlProj" />
       <Output TaskParameter="ResolvedConfigPath" PropertyName="_EfcptResolvedConfig" />
       <Output TaskParameter="ResolvedRenamingPath" PropertyName="_EfcptResolvedRenaming" />
       <Output TaskParameter="ResolvedTemplateDir" PropertyName="_EfcptResolvedTemplateDir" />
+      <Output TaskParameter="ResolvedConnectionString" PropertyName="_EfcptResolvedConnectionString" />
+      <Output TaskParameter="UseConnectionString" PropertyName="_EfcptUseConnectionString" />
     </ResolveSqlProjAndInputs>
+  </Target>
+
+  <!--
+    Stage 1.5: query database schema metadata when using connection string mode.
+
+    Inputs:
+      - _EfcptResolvedConnectionString : connection string resolved by EfcptResolveInputs
+      - EfcptOutput        : output directory for schema-model.json
+      - EfcptProvider      : database provider (mssql, postgresql, etc.)
+      - EfcptLogVerbosity  : controls logging verbosity
+
+    Outputs:
+      - _EfcptSchemaFingerprint : XxHash64 fingerprint of the database schema
+  -->
+  <Target Name="EfcptQuerySchemaMetadata"
+          AfterTargets="EfcptResolveInputs"
+          BeforeTargets="EfcptStageInputs"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' == 'true'">
+    <QuerySchemaMetadata
+        ConnectionString="$(_EfcptResolvedConnectionString)"
+        OutputDir="$(EfcptOutput)"
+        Provider="$(EfcptProvider)"
+        LogVerbosity="$(EfcptLogVerbosity)">
+      <Output TaskParameter="SchemaFingerprint" PropertyName="_EfcptSchemaFingerprint" />
+    </QuerySchemaMetadata>
   </Target>
 
   <!--
@@ -85,10 +119,12 @@
 
     Outputs:
       - _EfcptDacpacPath  : full path to the resulting DACPAC
+
+    Note: This stage is skipped when using connection string mode.
   -->
   <Target Name="EfcptEnsureDacpac"
           DependsOnTargets="EfcptResolveInputs"
-          Condition="'$(EfcptEnabled)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true'">
     <EnsureDacpacBuilt
         SqlProjPath="$(_EfcptSqlProj)"
         Configuration="$(Configuration)"
@@ -129,7 +165,9 @@
     Stage 4: compute a fingerprint over the DACPAC and staged inputs to detect changes.
 
     Inputs:
-      - _EfcptDacpacPath       : DACPAC produced or reused by EfcptEnsureDacpac
+      - _EfcptDacpacPath       : DACPAC produced or reused by EfcptEnsureDacpac (DACPAC mode)
+      - _EfcptSchemaFingerprint: schema fingerprint from EfcptQuerySchemaMetadata (connection string mode)
+      - _EfcptUseConnectionString: flag indicating whether connection string mode is active
       - _EfcptStagedConfig     : config file staged by EfcptStageInputs
       - _EfcptStagedRenaming   : renaming file staged by EfcptStageInputs
       - _EfcptStagedTemplateDir: template directory staged by EfcptStageInputs
@@ -140,6 +178,8 @@
           Condition="'$(EfcptEnabled)' == 'true'">
     <ComputeFingerprint
         DacpacPath="$(_EfcptDacpacPath)"
+        SchemaFingerprint="$(_EfcptSchemaFingerprint)"
+        UseConnectionStringMode="$(_EfcptUseConnectionString)"
         ConfigPath="$(_EfcptStagedConfig)"
         RenamingPath="$(_EfcptStagedRenaming)"
         TemplateDir="$(_EfcptStagedTemplateDir)"
@@ -170,6 +210,8 @@
         DotNetExe="$(EfcptDotNetExe)"
         WorkingDirectory="$(EfcptOutput)"
         DacpacPath="$(_EfcptDacpacPath)"
+        ConnectionString="$(_EfcptResolvedConnectionString)"
+        UseConnectionStringMode="$(_EfcptUseConnectionString)"
         ConfigPath="$(_EfcptStagedConfig)"
         RenamingPath="$(_EfcptStagedRenaming)"
         TemplateDir="$(_EfcptStagedTemplateDir)"
