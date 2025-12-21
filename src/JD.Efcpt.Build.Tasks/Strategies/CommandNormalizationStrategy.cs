@@ -23,7 +23,7 @@ internal static class CommandNormalizationStrategy
                    (cmd.FileName.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase) ||
                     cmd.FileName.EndsWith(".bat", StringComparison.OrdinalIgnoreCase)))
             .Then(static (in cmd)
-                => new ProcessCommand("cmd.exe", $"/c \"{cmd.FileName}\" {cmd.Args}"))
+                => new ProcessCommand("cmd.exe", $"/c {cmd.FileName} {cmd.Args}"))
             .Default(static (in cmd) => cmd)
             .Build());
 
