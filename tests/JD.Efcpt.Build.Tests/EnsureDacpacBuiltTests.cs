@@ -169,14 +169,13 @@ public sealed class EnsureDacpacBuiltTests(ITestOutputHelper output) : TinyBddXu
                 {
                     var errors = string.Join("; ", r.Setup.Engine.Errors.Select(e => e.Message));
                     var messages = string.Join("; ", r.Setup.Engine.Messages.Select(m => m.Message));
-                    var wrapperPath = Path.Combine(r.Setup.Folder.Root, "mock-dotnet.cmd");
-                    var psScriptPath = Path.Combine(r.Setup.Folder.Root, "build.ps1");
+                    var wrapperExtension = OperatingSystem.IsWindows() ? ".cmd" : ".sh";
+                    var wrapperPath = Path.Combine(r.Setup.Folder.Root, $"mock-dotnet{wrapperExtension}");
                     var wrapperExists = File.Exists(wrapperPath);
-                    var psExists = File.Exists(psScriptPath);
                     var dacpacPath = r.Setup.DacpacPath;
                     var dacpacExists = File.Exists(dacpacPath);
                     
-                    throw new Exception($"Task failed. Wrapper exists: {wrapperExists}, PS exists: {psExists}, DACPAC exists: {dacpacExists}, DACPAC path: {dacpacPath}, Errors: [{errors}], Messages: [{messages}]");
+                    throw new Exception($"Task failed. Wrapper exists: {wrapperExists}, DACPAC exists: {dacpacExists}, DACPAC path: {dacpacPath}, Errors: [{errors}], Messages: [{messages}]");
                 }
                 return r.Success;
             })
@@ -319,33 +318,101 @@ public sealed class EnsureDacpacBuiltTests(ITestOutputHelper output) : TinyBddXu
 
     // ========== Process Execution Test Helpers ==========
 
+    private static string CreateCrossPlatformWrapper(
+        string folderRoot, 
+        string dacpacDir, 
+        string dacpacPath,
+        string? markerFile = null,
+        bool outputToStdout = false,
+        bool outputToStderr = false,
+        bool checkEnvVar = false)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            // Windows: Create PowerShell script and .cmd wrapper
+            var psScriptPath = Path.Combine(folderRoot, "build.ps1");
+            var psContent = $$"""
+                            param()
+                            $dacpacDir = '{{dacpacDir}}'
+                            $dacpacPath = '{{dacpacPath}}'
+                            New-Item -ItemType Directory -Path $dacpacDir -Force | Out-Null
+                            Set-Content -Path $dacpacPath -Value 'fake dacpac content' -Encoding UTF8
+                            {{(outputToStdout ? "Write-Output 'Build completed successfully'" : "")}}
+                            {{(outputToStderr ? "Write-Error 'Warning message from build'" : "")}}
+                            {{(checkEnvVar && markerFile != null ? $"if ($env:EFCPT_TEST_DACPAC) {{ Set-Content -Path '{markerFile}' -Value 'env var passed' -Encoding UTF8 }}" : "")}}
+                            exit 0
+                            """;
+            File.WriteAllText(psScriptPath, psContent);
+
+            var wrapperPath = Path.Combine(folderRoot, "mock-dotnet.cmd");
+            var wrapperContent = $"""
+                                  @echo off
+                                  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{psScriptPath}"
+                                  exit /b %ERRORLEVEL%
+                                  """;
+            File.WriteAllText(wrapperPath, wrapperContent, new System.Text.UTF8Encoding(false));
+            return wrapperPath;
+        }
+        else
+        {
+            // Linux/macOS: Create native bash script (no PowerShell required)
+            var wrapperPath = Path.Combine(folderRoot, "mock-dotnet.sh");
+            
+            // Build script content with only non-empty lines
+            var scriptLines = new List<string>
+            {
+                "#!/bin/bash",
+                $"mkdir -p \"{dacpacDir}\"",
+                $"echo 'fake dacpac content' > \"{dacpacPath}\""
+            };
+            
+            if (outputToStdout)
+                scriptLines.Add("echo 'Build completed successfully'");
+            
+            if (outputToStderr)
+                scriptLines.Add("echo 'Warning message from build' >&2");
+            
+            if (checkEnvVar && markerFile != null)
+                scriptLines.Add($"if [ ! -z \"$EFCPT_TEST_DACPAC\" ]; then echo 'env var passed' > \"{markerFile}\"; fi");
+            
+            scriptLines.Add("exit 0");
+            
+            var wrapperContent = string.Join("\n", scriptLines);
+            File.WriteAllText(wrapperPath, wrapperContent, new System.Text.UTF8Encoding(false));
+            
+            // Make the script executable on Unix - use quoted path
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "chmod",
+                Arguments = $"+x \"{wrapperPath}\"",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false
+            };
+            var chmod = System.Diagnostics.Process.Start(psi);
+            if (chmod != null)
+            {
+                chmod.WaitForExit();
+                if (chmod.ExitCode != 0)
+                {
+                    var error = chmod.StandardError.ReadToEnd();
+                    throw new InvalidOperationException($"Failed to make script executable: {error}");
+                }
+            }
+            
+            return wrapperPath;
+        }
+    }
+
     private static SetupState SetupWithPowerShellScript()
     {
         var folder = new TestFolder();
         var sqlproj = folder.WriteFile("db/Db.sqlproj", "<Project Sdk=\"Microsoft.Build.Sql\" />");
         var dacpac = Path.Combine(folder.Root, "db", "bin", "Debug", "Db.dacpac");
-
-        // Create a PowerShell script
-        var psScriptPath = Path.Combine(folder.Root, "build.ps1");
         var dacpacDir = Path.GetDirectoryName(dacpac)!;
-        var psContent = """
-                        param()
-                        $dacpacDir = $args[0]
-                        $dacpacPath = $args[1]
-                        New-Item -ItemType Directory -Path $dacpacDir -Force | Out-Null
-                        Set-Content -Path $dacpacPath -Value 'fake dacpac content' -Encoding UTF8
-                        exit 0
-                        """;
-        File.WriteAllText(psScriptPath, psContent);
 
-        // Create a batch wrapper that calls PowerShell with arguments
-        var wrapperPath = Path.Combine(folder.Root, "mock-dotnet.cmd");
-        var wrapperContent = $"""
-                              @echo off
-                              powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{psScriptPath}" "{dacpacDir}" "{dacpac}"
-                              exit /b %ERRORLEVEL%
-                              """;
-        File.WriteAllText(wrapperPath, wrapperContent, new System.Text.UTF8Encoding(false));
+        // Create cross-platform wrapper (PowerShell on Windows, bash on Linux)
+        var wrapperPath = CreateCrossPlatformWrapper(folder.Root, dacpacDir, dacpac);
 
         var engine = new TestBuildEngine();
         return new SetupState(folder, sqlproj, dacpac, engine);
@@ -356,29 +423,10 @@ public sealed class EnsureDacpacBuiltTests(ITestOutputHelper output) : TinyBddXu
         var folder = new TestFolder();
         var sqlproj = folder.WriteFile("db/Db.sqlproj", "<Project Sdk=\"Microsoft.Build.Sql\" />");
         var dacpac = Path.Combine(folder.Root, "db", "bin", "Debug", "Db.dacpac");
-
-        // Create a PowerShell script
-        var psScriptPath = Path.Combine(folder.Root, "build.ps1");
         var dacpacDir = Path.GetDirectoryName(dacpac)!;
-        var psContent = """
-                        param()
-                        $dacpacDir = $args[0]
-                        $dacpacPath = $args[1]
-                        New-Item -ItemType Directory -Path $dacpacDir -Force | Out-Null
-                        Set-Content -Path $dacpacPath -Value 'fake dacpac content' -Encoding UTF8
-                        Write-Output 'Build completed successfully'
-                        exit 0
-                        """;
-        File.WriteAllText(psScriptPath, psContent);
 
-        // Create a batch wrapper that calls PowerShell with arguments
-        var wrapperPath = Path.Combine(folder.Root, "mock-dotnet.cmd");
-        var wrapperContent = $"""
-                              @echo off
-                              powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{psScriptPath}" "{dacpacDir}" "{dacpac}"
-                              exit /b %ERRORLEVEL%
-                              """;
-        File.WriteAllText(wrapperPath, wrapperContent, new System.Text.UTF8Encoding(false));
+        // Create cross-platform wrapper with stdout output
+        var wrapperPath = CreateCrossPlatformWrapper(folder.Root, dacpacDir, dacpac, outputToStdout: true);
 
         var engine = new TestBuildEngine();
         return new SetupState(folder, sqlproj, dacpac, engine);
@@ -389,29 +437,10 @@ public sealed class EnsureDacpacBuiltTests(ITestOutputHelper output) : TinyBddXu
         var folder = new TestFolder();
         var sqlproj = folder.WriteFile("db/Db.sqlproj", "<Project Sdk=\"Microsoft.Build.Sql\" />");
         var dacpac = Path.Combine(folder.Root, "db", "bin", "Debug", "Db.dacpac");
-
-        // Create a PowerShell script
-        var psScriptPath = Path.Combine(folder.Root, "build.ps1");
         var dacpacDir = Path.GetDirectoryName(dacpac)!;
-        var psContent = """
-                        param()
-                        $dacpacDir = $args[0]
-                        $dacpacPath = $args[1]
-                        New-Item -ItemType Directory -Path $dacpacDir -Force | Out-Null
-                        Set-Content -Path $dacpacPath -Value 'fake dacpac content' -Encoding UTF8
-                        Write-Error 'Warning message from build'
-                        exit 0
-                        """;
-        File.WriteAllText(psScriptPath, psContent);
 
-        // Create a batch wrapper that calls PowerShell with arguments
-        var wrapperPath = Path.Combine(folder.Root, "mock-dotnet.cmd");
-        var wrapperContent = $"""
-                              @echo off
-                              powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{psScriptPath}" "{dacpacDir}" "{dacpac}"
-                              exit /b %ERRORLEVEL%
-                              """;
-        File.WriteAllText(wrapperPath, wrapperContent, new System.Text.UTF8Encoding(false));
+        // Create cross-platform wrapper with stderr output
+        var wrapperPath = CreateCrossPlatformWrapper(folder.Root, dacpacDir, dacpac, outputToStderr: true);
 
         var engine = new TestBuildEngine();
         return new SetupState(folder, sqlproj, dacpac, engine);
@@ -422,33 +451,11 @@ public sealed class EnsureDacpacBuiltTests(ITestOutputHelper output) : TinyBddXu
         var folder = new TestFolder();
         var sqlproj = folder.WriteFile("db/Db.sqlproj", "<Project Sdk=\"Microsoft.Build.Sql\" />");
         var dacpac = Path.Combine(folder.Root, "db", "bin", "Debug", "Db.dacpac");
-
-        // Create a PowerShell script
-        var psScriptPath = Path.Combine(folder.Root, "build.ps1");
         var dacpacDir = Path.GetDirectoryName(dacpac)!;
         var markerFile = Path.Combine(folder.Root, "env-check.txt");
-        var psContent = """
-                        param()
-                        $dacpacDir = $args[0]
-                        $dacpacPath = $args[1]
-                        $markerFile = $args[2]
-                        New-Item -ItemType Directory -Path $dacpacDir -Force | Out-Null
-                        Set-Content -Path $dacpacPath -Value 'fake dacpac content' -Encoding UTF8
-                        if ($env:EFCPT_TEST_DACPAC) {
-                            Set-Content -Path $markerFile -Value 'env var passed' -Encoding UTF8
-                        }
-                        exit 0
-                        """;
-        File.WriteAllText(psScriptPath, psContent);
 
-        // Create a batch wrapper that calls PowerShell with arguments
-        var wrapperPath = Path.Combine(folder.Root, "mock-dotnet.cmd");
-        var wrapperContent = $"""
-                              @echo off
-                              powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{psScriptPath}" "{dacpacDir}" "{dacpac}" "{markerFile}"
-                              exit /b %ERRORLEVEL%
-                              """;
-        File.WriteAllText(wrapperPath, wrapperContent, new System.Text.UTF8Encoding(false));
+        // Create cross-platform wrapper with env var check
+        var wrapperPath = CreateCrossPlatformWrapper(folder.Root, dacpacDir, dacpac, markerFile, checkEnvVar: true);
 
         var engine = new TestBuildEngine();
         return new SetupState(folder, sqlproj, dacpac, engine);
@@ -460,21 +467,49 @@ public sealed class EnsureDacpacBuiltTests(ITestOutputHelper output) : TinyBddXu
         var sqlproj = folder.WriteFile("db/Db.sqlproj", "<Project />");
         var dacpac = Path.Combine(folder.Root, "db", "bin", "Debug", "Db.dacpac");
 
-        var psScriptPath = Path.Combine(folder.Root, "build.ps1");
-        var psContent = """
-                        Write-Output 'Build failed'
-                        Write-Error 'Error: compilation failed'
-                        exit 1
-                        """;
-        File.WriteAllText(psScriptPath, psContent);
+        if (OperatingSystem.IsWindows())
+        {
+            // Windows: Create failing PowerShell script
+            var psScriptPath = Path.Combine(folder.Root, "build.ps1");
+            var psContent = """
+                            Write-Output 'Build failed'
+                            Write-Error 'Error: compilation failed'
+                            exit 1
+                            """;
+            File.WriteAllText(psScriptPath, psContent);
 
-        var wrapperPath = Path.Combine(folder.Root, "mock-dotnet.cmd");
-        var wrapperContent = $"""
-                              @echo off
-                              powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{psScriptPath}"
-                              exit /b %ERRORLEVEL%
-                              """;
-        File.WriteAllText(wrapperPath, wrapperContent, new System.Text.UTF8Encoding(false));
+            var wrapperPath = Path.Combine(folder.Root, "mock-dotnet.cmd");
+            var wrapperContent = $"""
+                                  @echo off
+                                  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{psScriptPath}"
+                                  exit /b %ERRORLEVEL%
+                                  """;
+            File.WriteAllText(wrapperPath, wrapperContent, new System.Text.UTF8Encoding(false));
+        }
+        else
+        {
+            // Linux/macOS: Create failing bash script
+            var wrapperPath = Path.Combine(folder.Root, "mock-dotnet.sh");
+            var wrapperContent = """
+                                  #!/bin/bash
+                                  echo 'Build failed'
+                                  echo 'Error: compilation failed' >&2
+                                  exit 1
+                                  """;
+            File.WriteAllText(wrapperPath, wrapperContent, new System.Text.UTF8Encoding(false));
+            
+            // Make executable
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "chmod",
+                Arguments = $"+x {wrapperPath}",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false
+            };
+            var chmod = System.Diagnostics.Process.Start(psi);
+            chmod?.WaitForExit();
+        }
 
         var engine = new TestBuildEngine();
         return new SetupState(folder, sqlproj, dacpac, engine);
@@ -482,8 +517,9 @@ public sealed class EnsureDacpacBuiltTests(ITestOutputHelper output) : TinyBddXu
 
     private static TaskResult ExecuteTaskWithCustomTool(SetupState setup)
     {
-        // Find the wrapper batch file
-        var wrapperPath = Path.Combine(setup.Folder.Root, "mock-dotnet.cmd");
+        // Find the wrapper file (cross-platform)
+        var wrapperExtension = OperatingSystem.IsWindows() ? ".cmd" : ".sh";
+        var wrapperPath = Path.Combine(setup.Folder.Root, $"mock-dotnet{wrapperExtension}");
 
         var task = new EnsureDacpacBuilt
         {
@@ -503,7 +539,9 @@ public sealed class EnsureDacpacBuiltTests(ITestOutputHelper output) : TinyBddXu
     {
         Environment.SetEnvironmentVariable("EFCPT_TEST_DACPAC", "C:\\test\\sample.dacpac");
 
-        var wrapperPath = Path.Combine(setup.Folder.Root, "mock-dotnet.cmd");
+        // Find the wrapper file (cross-platform)
+        var wrapperExtension = OperatingSystem.IsWindows() ? ".cmd" : ".sh";
+        var wrapperPath = Path.Combine(setup.Folder.Root, $"mock-dotnet{wrapperExtension}");
 
         var task = new EnsureDacpacBuilt
         {
