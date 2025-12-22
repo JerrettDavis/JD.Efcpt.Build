@@ -8,6 +8,7 @@ public static class StringExtensions
     /// <summary>
     /// Compares two strings for equality, ignoring case.
     /// </summary>
+    /// <param name="str">The current string</param>
     /// <param name="other">The string to compare with the current string.</param>
     /// <returns>
     /// True if the strings are equal, ignoring case; otherwise, false.
@@ -18,6 +19,7 @@ public static class StringExtensions
     /// <summary>
     /// Determines whether the string represents a true value.
     /// </summary>
+    /// <param name="str">The current string</param>
     /// <returns>
     /// True if the string equals "true", "yes", or "1", ignoring case; otherwise, false.
     /// </returns>
