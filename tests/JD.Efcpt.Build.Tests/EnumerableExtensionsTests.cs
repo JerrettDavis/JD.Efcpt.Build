@@ -103,6 +103,13 @@ public sealed class EnumerableExtensionsTests(ITestOutputHelper output) : TinyBd
     [Fact]
     public async Task BuildCandidateNames_windows_path_override()
     {
+        // Windows-style paths with backslashes are only correctly parsed on Windows.
+        // On Linux/macOS, Path.GetFileName treats backslashes as literal characters.
+        if (!OperatingSystem.IsWindows())
+        {
+            return; // Skip on non-Windows platforms
+        }
+
         await Given("Windows-style path override", () => (@"C:\path\to\custom.json", new[] { "default.json" }))
             .When("BuildCandidateNames is called", t => EnumerableExtensions.BuildCandidateNames(t.Item1, t.Item2))
             .Then("extracted filename is first", r => r[0] == "custom.json")
