@@ -9,6 +9,7 @@
 
     <!-- Input overrides -->
     <EfcptSqlProj Condition="'$(EfcptSqlProj)'==''"></EfcptSqlProj>
+    <EfcptDacpac Condition="'$(EfcptDacpac)'==''"></EfcptDacpac>
     <EfcptConfig Condition="'$(EfcptConfig)'==''">efcpt-config.json</EfcptConfig>
     <EfcptRenaming Condition="'$(EfcptRenaming)'==''">efcpt.renaming.json</EfcptRenaming>
     <EfcptTemplateDir Condition="'$(EfcptTemplateDir)'==''">Template</EfcptTemplateDir>
