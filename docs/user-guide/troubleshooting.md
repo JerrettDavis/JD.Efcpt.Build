@@ -158,7 +158,7 @@ When `EfcptDumpResolvedInputs` is `true`, check `obj/efcpt/resolved-inputs.json`
 3. **Use pre-built DACPAC:**
    ```xml
    <PropertyGroup>
-     <EfcptSqlProj>path\to\MyDatabase.dacpac</EfcptSqlProj>
+     <EfcptDacpac>path\to\MyDatabase.dacpac</EfcptDacpac>
    </PropertyGroup>
    ```
 
