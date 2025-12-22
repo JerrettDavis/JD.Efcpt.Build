@@ -1,0 +1,20 @@
+- name: Introduction
+  href: index.md
+- name: Getting Started
+  href: getting-started.md
+- name: Core Concepts
+  href: core-concepts.md
+- name: Configuration
+  href: configuration.md
+- name: Connection String Mode
+  href: connection-string-mode.md
+- name: T4 Templates
+  href: t4-templates.md
+- name: CI/CD Integration
+  href: ci-cd.md
+- name: Advanced Topics
+  href: advanced.md
+- name: Troubleshooting
+  href: troubleshooting.md
+- name: API Reference
+  href: api-reference.md

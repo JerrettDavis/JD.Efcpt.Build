@@ -11,8 +11,8 @@ namespace JD.Efcpt.Build.Tasks;
 /// <remarks>
 /// <para>
 /// The fingerprint is derived from the contents of the DACPAC, configuration JSON, renaming JSON, and
-/// every file under the template directory. For each input, a SHA-256 hash is computed and written into
-/// an internal manifest string, which is itself hashed using SHA-256 to produce the final
+/// every file under the template directory. For each input, an XxHash64 hash is computed and written into
+/// an internal manifest string, which is itself hashed using XxHash64 to produce the final
 /// <see cref="Fingerprint"/>.
 /// </para>
 /// <para>
@@ -115,11 +115,11 @@ public sealed class ComputeFingerprint : Task
             foreach (var file in templateFiles)
             {
                 var rel = Path.GetRelativePath(TemplateDir, file).Replace('\u005C', '/');
-                var h = FileHash.Sha256File(file);
+                var h = FileHash.HashFile(file);
                 manifest.Append("template/").Append(rel).Append('\0').Append(h).Append('\n');
             }
 
-            Fingerprint = FileHash.Sha256String(manifest.ToString());
+            Fingerprint = FileHash.HashString(manifest.ToString());
 
             var prior = File.Exists(FingerprintFile) ? File.ReadAllText(FingerprintFile).Trim() : "";
             HasChanged = prior.EqualsIgnoreCase(Fingerprint) ? "false" : "true";
@@ -147,7 +147,7 @@ public sealed class ComputeFingerprint : Task
     private static void Append(StringBuilder manifest, string path, string label)
     {
         var full = Path.GetFullPath(path);
-        var h = FileHash.Sha256File(full);
+        var h = FileHash.HashFile(full);
         manifest.Append(label).Append('\0').Append(h).Append('\n');
     }
 }
