@@ -81,9 +81,21 @@
     </QuerySchemaMetadata>
   </Target>
 
-  <Target Name="EfcptEnsureDacpac"
+  <Target Name="EfcptUseDirectDacpac"
           DependsOnTargets="EfcptResolveInputs"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(EfcptDacpac)' != ''">
+    <PropertyGroup>
+      <_EfcptDacpacPath>$([System.IO.Path]::GetFullPath('$(EfcptDacpac)', '$(MSBuildProjectDirectory)'))</_EfcptDacpacPath>
+      <_EfcptUseDirectDacpac>true</_EfcptUseDirectDacpac>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(_EfcptDacpacPath)')"
+           Text="EfcptDacpac was specified but the file does not exist: $(_EfcptDacpacPath)" />
+    <Message Text="Using pre-built DACPAC: $(_EfcptDacpacPath)" Importance="high" />
+  </Target>
+
+  <Target Name="EfcptEnsureDacpac"
+          DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true'">
     <EnsureDacpacBuilt
         SqlProjPath="$(_EfcptSqlProj)"
         Configuration="$(Configuration)"
@@ -95,7 +107,7 @@
   </Target>
 
   <Target Name="EfcptStageInputs"
-          DependsOnTargets="EfcptEnsureDacpac"
+          DependsOnTargets="EfcptEnsureDacpac;EfcptUseDirectDacpac"
           Condition="'$(EfcptEnabled)' == 'true'">
     <StageEfcptInputs
         OutputDir="$(EfcptOutput)"
@@ -161,7 +173,7 @@
   <!-- Always include generated files if present; compilation depends on them implicitly -->
   <Target Name="EfcptAddToCompile"
           BeforeTargets="CoreCompile"
-          DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpac;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels"
+          DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpac;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels"
           Condition="'$(EfcptEnabled)' == 'true'">
     <ItemGroup>
       <Compile Include="$(EfcptGeneratedDir)**\*.g.cs" Visible="false" />

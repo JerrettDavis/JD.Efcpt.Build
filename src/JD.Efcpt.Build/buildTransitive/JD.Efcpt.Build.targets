@@ -108,7 +108,31 @@
   </Target>
 
   <!--
-    Stage 2: ensure a DACPAC exists and is up to date for the resolved SQL project.
+    Stage 2a: use a pre-built DACPAC directly when EfcptDacpac is specified.
+
+    Inputs:
+      - EfcptDacpac : explicit path to a pre-built DACPAC file
+
+    Outputs:
+      - _EfcptDacpacPath      : full path to the DACPAC
+      - _EfcptUseDirectDacpac : flag indicating direct DACPAC mode
+
+    Note: This stage is skipped when using connection string mode or when EfcptDacpac is not set.
+  -->
+  <Target Name="EfcptUseDirectDacpac"
+          DependsOnTargets="EfcptResolveInputs"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(EfcptDacpac)' != ''">
+    <PropertyGroup>
+      <_EfcptDacpacPath>$([System.IO.Path]::GetFullPath('$(EfcptDacpac)', '$(MSBuildProjectDirectory)'))</_EfcptDacpacPath>
+      <_EfcptUseDirectDacpac>true</_EfcptUseDirectDacpac>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(_EfcptDacpacPath)')"
+           Text="EfcptDacpac was specified but the file does not exist: $(_EfcptDacpacPath)" />
+    <Message Text="Using pre-built DACPAC: $(_EfcptDacpacPath)" Importance="high" />
+  </Target>
+
+  <!--
+    Stage 2b: ensure a DACPAC exists and is up to date for the resolved SQL project.
 
     Inputs:
       - _EfcptSqlProj     : sqlproj path resolved by EfcptResolveInputs
@@ -120,11 +144,11 @@
     Outputs:
       - _EfcptDacpacPath  : full path to the resulting DACPAC
 
-    Note: This stage is skipped when using connection string mode.
+    Note: This stage is skipped when using connection string mode or when EfcptDacpac is specified.
   -->
   <Target Name="EfcptEnsureDacpac"
-          DependsOnTargets="EfcptResolveInputs"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true'">
+          DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true'">
     <EnsureDacpacBuilt
         SqlProjPath="$(_EfcptSqlProj)"
         Configuration="$(Configuration)"
@@ -145,7 +169,7 @@
       - _EfcptResolvedTemplateDir : template directory resolved by EfcptResolveInputs
   -->
   <Target Name="EfcptStageInputs"
-          DependsOnTargets="EfcptEnsureDacpac"
+          DependsOnTargets="EfcptEnsureDacpac;EfcptUseDirectDacpac"
           Condition="'$(EfcptEnabled)' == 'true'">
     <StageEfcptInputs
         OutputDir="$(EfcptOutput)"
@@ -231,7 +255,7 @@
   -->
   <Target Name="EfcptAddToCompile"
           BeforeTargets="CoreCompile"
-          DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpac;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels"
+          DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpac;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels"
           Condition="'$(EfcptEnabled)' == 'true'">
     <ItemGroup>
       <!-- Include root-level .g.cs files (DbContext) and all .g.cs files in Models subdirectory -->
