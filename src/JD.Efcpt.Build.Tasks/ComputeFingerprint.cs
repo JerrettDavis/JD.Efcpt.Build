@@ -100,8 +100,12 @@ public sealed class ComputeFingerprint : Task
             {
                 if (!string.IsNullOrWhiteSpace(DacpacPath) && File.Exists(DacpacPath))
                 {
-                    Append(manifest, DacpacPath, "dacpac");
-                    log.Detail($"Using DACPAC: {DacpacPath}");
+                    // Use schema-based fingerprinting instead of raw file hash
+                    // This produces consistent hashes for identical schemas even when
+                    // build-time metadata (paths, timestamps) differs
+                    var dacpacHash = DacpacFingerprint.Compute(DacpacPath);
+                    manifest.Append("dacpac").Append('\0').Append(dacpacHash).Append('\n');
+                    log.Detail($"Using DACPAC (schema fingerprint): {DacpacPath}");
                 }
             }
 

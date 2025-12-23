@@ -1,3 +1,5 @@
+using System.IO.Compression;
+using System.Text;
 using Microsoft.Build.Utilities;
 using JD.Efcpt.Build.Tasks;
 using JD.Efcpt.Build.Tests.Infrastructure;
@@ -66,10 +68,40 @@ public sealed class PipelineTests(ITestOutputHelper output) : TinyBddXunitBase(o
         var sqlproj = Path.Combine(state.DbDir, "Sample.Database.sqlproj");
         var dacpac = Path.Combine(state.DbDir, "bin", "Debug", "Sample.Database.dacpac");
         Directory.CreateDirectory(Path.GetDirectoryName(dacpac)!);
-        File.WriteAllText(dacpac, "dacpac");
+        CreateMockDacpac(dacpac, "SampleTable");
         File.SetLastWriteTimeUtc(sqlproj, DateTime.UtcNow.AddMinutes(-5));
         File.SetLastWriteTimeUtc(dacpac, DateTime.UtcNow);
         return state;
+    }
+
+    /// <summary>
+    /// Creates a mock DACPAC file (ZIP archive with model.xml).
+    /// </summary>
+    private static void CreateMockDacpac(string dacpacPath, string schemaContent)
+    {
+        var modelXml = $"""
+            <?xml version="1.0" encoding="utf-8"?>
+            <DataSchemaModel>
+              <Header>
+                <Metadata Name="FileName" Value="C:\\builds\\{Path.GetFileName(dacpacPath)}" />
+              </Header>
+              <Model>
+                <Element Type="SqlTable" Name="[dbo].[{schemaContent}]">
+                  <Property Name="IsAnsiNullsOn" Value="True" />
+                </Element>
+              </Model>
+            </DataSchemaModel>
+            """;
+
+        // Delete existing file if it exists (ZipArchiveMode.Create throws if file exists)
+        if (File.Exists(dacpacPath))
+            File.Delete(dacpacPath);
+
+        using var archive = ZipFile.Open(dacpacPath, ZipArchiveMode.Create);
+        var modelEntry = archive.CreateEntry("model.xml");
+        using var stream = modelEntry.Open();
+        using var writer = new StreamWriter(stream, Encoding.UTF8);
+        writer.Write(modelXml);
     }
 
     private static ResolveResult ResolveInputs(PipelineState state)

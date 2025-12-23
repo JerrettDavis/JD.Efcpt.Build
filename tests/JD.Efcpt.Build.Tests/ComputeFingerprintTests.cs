@@ -1,3 +1,5 @@
+using System.IO.Compression;
+using System.Text;
 using JD.Efcpt.Build.Tasks;
 using JD.Efcpt.Build.Tests.Infrastructure;
 using TinyBDD;
@@ -28,10 +30,39 @@ public sealed class ComputeFingerprintTests(ITestOutputHelper output) : TinyBddX
         ComputeFingerprint Task,
         bool Success);
 
+    /// <summary>
+    /// Creates a mock DACPAC file (ZIP archive with model.xml).
+    /// </summary>
+    private static string CreateMockDacpac(TestFolder folder, string name, string schemaContent)
+    {
+        var modelXml = $"""
+            <?xml version="1.0" encoding="utf-8"?>
+            <DataSchemaModel>
+              <Header>
+                <Metadata Name="FileName" Value="C:\\builds\\{name}" />
+              </Header>
+              <Model>
+                <Element Type="SqlTable" Name="[dbo].[{schemaContent}]">
+                  <Property Name="IsAnsiNullsOn" Value="True" />
+                </Element>
+              </Model>
+            </DataSchemaModel>
+            """;
+
+        var dacpacPath = Path.Combine(folder.Root, name);
+        using var archive = ZipFile.Open(dacpacPath, ZipArchiveMode.Create);
+        var modelEntry = archive.CreateEntry("model.xml");
+        using var stream = modelEntry.Open();
+        using var writer = new StreamWriter(stream, Encoding.UTF8);
+        writer.Write(modelXml);
+
+        return dacpacPath;
+    }
+
     private static SetupState SetupWithAllInputs()
     {
         var folder = new TestFolder();
-        var dacpac = folder.WriteFile("db.dacpac", "DACPAC content v1");
+        var dacpac = CreateMockDacpac(folder, "db.dacpac", "Users");
         var config = folder.WriteFile("efcpt-config.json", "{}");
         var renaming = folder.WriteFile("efcpt.renaming.json", "[]");
         var templateDir = folder.CreateDir("Templates");
@@ -46,7 +77,7 @@ public sealed class ComputeFingerprintTests(ITestOutputHelper output) : TinyBddX
     private static SetupState SetupWithNoFingerprintFile()
     {
         var folder = new TestFolder();
-        var dacpac = folder.WriteFile("db.dacpac", "DACPAC content");
+        var dacpac = CreateMockDacpac(folder, "db.dacpac", "Users");
         var config = folder.WriteFile("efcpt-config.json", "{}");
         var renaming = folder.WriteFile("efcpt.renaming.json", "[]");
         var templateDir = folder.CreateDir("Templates");
@@ -139,7 +170,9 @@ public sealed class ComputeFingerprintTests(ITestOutputHelper output) : TinyBddX
         await Given("inputs with existing fingerprint", SetupWithExistingFingerprintFile)
             .When("DACPAC is modified and task executes", s =>
             {
-                File.WriteAllText(s.DacpacPath, "DACPAC content v2 - modified!");
+                // Delete and recreate with different schema content
+                File.Delete(s.DacpacPath);
+                CreateMockDacpac(s.Folder, "db.dacpac", "Orders");
                 return ExecuteTask(s);
             })
             .Then("task succeeds", r => r.Success)
@@ -301,7 +334,7 @@ public sealed class ComputeFingerprintTests(ITestOutputHelper output) : TinyBddX
         await Given("inputs with nested fingerprint path", () =>
             {
                 var folder = new TestFolder();
-                var dacpac = folder.WriteFile("db.dacpac", "content");
+                var dacpac = CreateMockDacpac(folder, "db.dacpac", "Users");
                 var config = folder.WriteFile("efcpt-config.json", "{}");
                 var renaming = folder.WriteFile("efcpt.renaming.json", "[]");
                 var templateDir = folder.CreateDir("Templates");
@@ -324,7 +357,7 @@ public sealed class ComputeFingerprintTests(ITestOutputHelper output) : TinyBddX
         await Given("templates with nested structure", () =>
             {
                 var folder = new TestFolder();
-                var dacpac = folder.WriteFile("db.dacpac", "content");
+                var dacpac = CreateMockDacpac(folder, "db.dacpac", "Users");
                 var config = folder.WriteFile("efcpt-config.json", "{}");
                 var renaming = folder.WriteFile("efcpt.renaming.json", "[]");
                 var templateDir = folder.CreateDir("Templates");
