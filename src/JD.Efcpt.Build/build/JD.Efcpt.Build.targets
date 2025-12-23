@@ -180,4 +180,12 @@
     </ItemGroup>
   </Target>
 
+  <!-- Clean target: remove efcpt output directory when 'dotnet clean' is run -->
+  <Target Name="EfcptClean"
+          AfterTargets="Clean"
+          Condition="'$(EfcptEnabled)' == 'true'">
+    <Message Text="Cleaning efcpt output: $(EfcptOutput)" Importance="normal" />
+    <RemoveDir Directories="$(EfcptOutput)" Condition="Exists('$(EfcptOutput)')" />
+  </Target>
+
 </Project>

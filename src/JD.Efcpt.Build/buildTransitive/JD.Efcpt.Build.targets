@@ -262,4 +262,17 @@
     </ItemGroup>
   </Target>
 
+  <!--
+    Clean target: remove efcpt output directory when 'dotnet clean' is run.
+
+    This integrates with the standard clean/restore/build/pack pipeline by ensuring
+    that efcpt artifacts are properly cleaned alongside other intermediate outputs.
+  -->
+  <Target Name="EfcptClean"
+          AfterTargets="Clean"
+          Condition="'$(EfcptEnabled)' == 'true'">
+    <Message Text="Cleaning efcpt output: $(EfcptOutput)" Importance="normal" />
+    <RemoveDir Directories="$(EfcptOutput)" Condition="Exists('$(EfcptOutput)')" />
+  </Target>
+
 </Project>

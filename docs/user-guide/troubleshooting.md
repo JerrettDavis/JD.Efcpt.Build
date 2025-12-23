@@ -69,7 +69,7 @@ When `EfcptDumpResolvedInputs` is `true`, check `obj/efcpt/resolved-inputs.json`
 
 4. **Force regeneration:**
    ```bash
-   rmdir /s /q obj\efcpt
+   dotnet clean
    dotnet build
    ```
 
@@ -177,9 +177,9 @@ When `EfcptDumpResolvedInputs` is `true`, check `obj/efcpt/resolved-inputs.json`
 
 **Solutions:**
 
-1. **Delete fingerprint cache:**
+1. **Clean and rebuild:**
    ```bash
-   rmdir /s /q obj\efcpt
+   dotnet clean
    dotnet build
    ```
 
@@ -247,7 +247,7 @@ When `EfcptDumpResolvedInputs` is `true`, check `obj/efcpt/resolved-inputs.json`
 
 3. **Force regeneration:**
    ```bash
-   rmdir /s /q obj\efcpt
+   dotnet clean
    dotnet build
    ```
 
