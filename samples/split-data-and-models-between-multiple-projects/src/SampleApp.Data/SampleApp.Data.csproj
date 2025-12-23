@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Data project does NOT run efcpt - it receives copied DbContext/configs from Models project -->
+    <EfcptEnabled>false</EfcptEnabled>
+
+    <!-- Include external data files copied from Models project -->
+    <EfcptExternalDataDir>$(MSBuildProjectDirectory)\obj\efcpt\Generated\</EfcptExternalDataDir>
+  </PropertyGroup>
+
+  <!-- Reference the Models project (normal reference - Models builds first since we depend on it) -->
+  <ItemGroup>
+    <ProjectReference Include="..\SampleApp.Models\SampleApp.Models.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- NuGet package reference for external data support -->
+    <PackageReference Include="JD.Efcpt.Build" Version="*" />
+
+    <!-- EF Core dependencies -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.1">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.1" />
+  </ItemGroup>
+</Project>

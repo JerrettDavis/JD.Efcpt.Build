@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- EfcptBuildRoot for local development -->
+    <EfcptBuildRoot Condition="'$(EfcptBuildRoot)'==''">$(MSBuildThisFileDirectory)..\..\..\..\src\JD.Efcpt.Build\</EfcptBuildRoot>
+  </PropertyGroup>
+
+  <!-- Import JD.Efcpt.Build for external models support -->
+  <Import Project="$(EfcptBuildRoot)build\JD.Efcpt.Build.props" />
+
+  <PropertyGroup>
+    <!-- Models project does NOT run efcpt - it receives copied models -->
+    <EfcptEnabled>false</EfcptEnabled>
+  </PropertyGroup>
+
+  <!-- No EF Core dependencies - just plain POCOs with DataAnnotations -->
+  <ItemGroup>
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+  </ItemGroup>
+
+  <Import Project="$(EfcptBuildRoot)build\JD.Efcpt.Build.targets" />
+</Project>

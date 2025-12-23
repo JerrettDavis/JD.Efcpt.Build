@@ -170,14 +170,117 @@
     <WriteLinesToFile File="$(EfcptStampFile)" Lines="$(_EfcptFingerprint)" Overwrite="true" />
   </Target>
 
-  <!-- Always include generated files if present; compilation depends on them implicitly -->
+  <!--
+    ========================================================================
+    Split Outputs: Separate Models project from Data project
+    ========================================================================
+    When EfcptSplitOutputs=true, the Models project is the primary project
+    that runs efcpt and generates all files. Entity models stay in Models,
+    while DbContext and configurations are copied to the Data project.
+
+    This approach works because Data depends on Models, so Models builds
+    first and generates the code before Data needs the types.
+  -->
+
+  <!--
+    Validate split outputs configuration and resolve Data project path.
+    Ensures the Data project exists and is properly configured.
+  -->
+  <Target Name="EfcptValidateSplitOutputs"
+          DependsOnTargets="EfcptGenerateModels"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptSplitOutputs)' == 'true'">
+
+    <!-- Resolve Data project path -->
+    <PropertyGroup>
+      <_EfcptDataProjectPath Condition="'$(EfcptDataProject)' != ''">$([System.IO.Path]::GetFullPath('$(EfcptDataProject)', '$(MSBuildProjectDirectory)'))</_EfcptDataProjectPath>
+    </PropertyGroup>
+
+    <!-- Error if Data project not specified -->
+    <Error Condition="'$(_EfcptDataProjectPath)' == ''"
+           Text="EfcptSplitOutputs is enabled but EfcptDataProject is not set. Please specify the path to your Data project: &lt;EfcptDataProject&gt;..\MyProject.Data\MyProject.Data.csproj&lt;/EfcptDataProject&gt;" />
+
+    <!-- Error if Data project doesn't exist -->
+    <Error Condition="!Exists('$(_EfcptDataProjectPath)')"
+           Text="EfcptDataProject was specified but the file does not exist: $(_EfcptDataProjectPath)" />
+
+    <!-- Resolve Data project directory -->
+    <PropertyGroup>
+      <_EfcptDataProjectDir>$([System.IO.Path]::GetDirectoryName('$(_EfcptDataProjectPath)'))\</_EfcptDataProjectDir>
+      <_EfcptDataDestDir>$(_EfcptDataProjectDir)$(EfcptDataProjectOutputSubdir)</_EfcptDataDestDir>
+    </PropertyGroup>
+
+    <Message Text="Split outputs enabled. DbContext and configurations will be copied to: $(_EfcptDataDestDir)" Importance="high" />
+  </Target>
+
+  <!--
+    Copy generated DbContext and configuration files to the Data project.
+    Copies root-level .g.cs files (DbContext, configurations) but NOT the Models folder.
+    Cleans destination first to remove stale files, then copies fresh.
+  -->
+  <Target Name="EfcptCopyDataToDataProject"
+          DependsOnTargets="EfcptValidateSplitOutputs"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptSplitOutputs)' == 'true'">
+
+    <!-- Find data files to copy (root-level .g.cs files, excluding Models folder) -->
+    <ItemGroup>
+      <_EfcptDataFilesToCopy Include="$(EfcptGeneratedDir)*.g.cs" />
+      <_EfcptDataFilesToCopy Include="$(EfcptGeneratedDir)Configurations\**\*.g.cs" />
+    </ItemGroup>
+
+    <!-- Clean destination directory first to remove stale files -->
+    <RemoveDir Directories="$(_EfcptDataDestDir)" Condition="Exists('$(_EfcptDataDestDir)')" />
+    <MakeDir Directories="$(_EfcptDataDestDir)" />
+
+    <!-- Copy data files preserving directory structure -->
+    <Copy SourceFiles="@(_EfcptDataFilesToCopy)"
+          DestinationFiles="@(_EfcptDataFilesToCopy->'$(_EfcptDataDestDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true"
+          Condition="'@(_EfcptDataFilesToCopy)' != ''">
+      <Output TaskParameter="CopiedFiles" ItemName="_EfcptCopiedDataFiles" />
+    </Copy>
+
+    <Message Text="Copied @(_EfcptCopiedDataFiles->Count()) data files to Data project: $(_EfcptDataDestDir)"
+             Condition="'@(_EfcptCopiedDataFiles)' != ''"
+             Importance="high" />
+
+    <Message Text="No data files found to copy to Data project. Ensure your templates generate DbContext and configuration files in $(EfcptGeneratedDir)"
+             Condition="'@(_EfcptDataFilesToCopy)' == ''"
+             Importance="high" />
+  </Target>
+
+  <!--
+    Include generated files in compilation.
+    In split outputs mode (Models project), only include model files (from Models folder).
+    In normal mode, include all generated files.
+  -->
   <Target Name="EfcptAddToCompile"
           BeforeTargets="CoreCompile"
-          DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpac;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels"
+          DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpac;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels;EfcptCopyDataToDataProject"
           Condition="'$(EfcptEnabled)' == 'true'">
     <ItemGroup>
-      <Compile Include="$(EfcptGeneratedDir)**\*.g.cs" Visible="false" />
+      <!-- In split outputs mode (Models project is primary), only include model files -->
+      <Compile Include="$(EfcptGeneratedDir)Models\**\*.g.cs"
+               Visible="false"
+               Condition="'$(EfcptSplitOutputs)' == 'true'" />
+
+      <!-- In normal mode, include all generated files -->
+      <Compile Include="$(EfcptGeneratedDir)**\*.g.cs"
+               Visible="false"
+               Condition="'$(EfcptSplitOutputs)' != 'true'" />
     </ItemGroup>
+  </Target>
+
+  <!--
+    Include external data files from another project (for Data project consumption).
+    Used when Data project has EfcptEnabled=false but needs to compile copied DbContext/configs.
+  -->
+  <Target Name="EfcptIncludeExternalData"
+          BeforeTargets="CoreCompile"
+          Condition="'$(EfcptExternalDataDir)' != '' and Exists('$(EfcptExternalDataDir)')">
+    <ItemGroup>
+      <Compile Include="$(EfcptExternalDataDir)**\*.g.cs" Visible="false" />
+    </ItemGroup>
+    <Message Text="Including external data files from: $(EfcptExternalDataDir)" Importance="normal" />
   </Target>
 
   <!-- Clean target: remove efcpt output directory when 'dotnet clean' is run -->

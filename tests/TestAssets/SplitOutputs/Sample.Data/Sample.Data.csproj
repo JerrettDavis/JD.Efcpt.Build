@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- EfcptBuildRoot for local development -->
+    <EfcptBuildRoot Condition="'$(EfcptBuildRoot)'==''">$(MSBuildThisFileDirectory)..\..\..\..\src\JD.Efcpt.Build\</EfcptBuildRoot>
+  </PropertyGroup>
+
+  <Import Project="$(EfcptBuildRoot)build\JD.Efcpt.Build.props" />
+
+  <PropertyGroup>
+    <EfcptEnabled>true</EfcptEnabled>
+    <EfcptLogVerbosity>diagnostic</EfcptLogVerbosity>
+    <EfcptDumpResolvedInputs>true</EfcptDumpResolvedInputs>
+
+    <!-- Split Outputs configuration -->
+    <EfcptSplitOutputs>true</EfcptSplitOutputs>
+    <EfcptModelsProject>..\Sample.Models\Sample.Models.csproj</EfcptModelsProject>
+  </PropertyGroup>
+
+  <!-- Reference to Models project with BuildReference="false" -->
+  <ItemGroup>
+    <ProjectReference Include="..\Sample.Models\Sample.Models.csproj">
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+      <BuildReference>false</BuildReference>
+    </ProjectReference>
+  </ItemGroup>
+
+  <!-- Reference to SQL project for DACPAC generation -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\SampleDatabase\Sample.Database.sqlproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>None</OutputItemType>
+    </ProjectReference>
+  </ItemGroup>
+
+  <!-- EF Core dependencies for DbContext -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
+  </ItemGroup>
+
+  <Import Project="$(EfcptBuildRoot)build\JD.Efcpt.Build.targets" />
+</Project>

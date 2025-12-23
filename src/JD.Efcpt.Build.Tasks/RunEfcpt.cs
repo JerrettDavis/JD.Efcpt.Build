@@ -332,9 +332,29 @@ public sealed class RunEfcpt : Task
                 Directory.CreateDirectory(workingDir);
                 Directory.CreateDirectory(OutputDir);
 
+                // Generate realistic structure for testing split outputs:
+                // - DbContext in root (stays in Data project)
+                // - Entity models in Models subdirectory (copied to Models project)
+                var modelsDir = Path.Combine(OutputDir, "Models");
+                Directory.CreateDirectory(modelsDir);
+
+                // Root: DbContext (stays in Data project)
+                var dbContext = Path.Combine(OutputDir, "SampleDbContext.cs");
+                var source = DacpacPath ?? ConnectionString;
+                File.WriteAllText(dbContext, $"// generated from {source}\nnamespace Sample.Data;\npublic partial class SampleDbContext : DbContext {{ }}");
+
+                // Models folder: Entity classes (will be copied to Models project)
+                var blogModel = Path.Combine(modelsDir, "Blog.cs");
+                File.WriteAllText(blogModel, $"// generated from {source}\nnamespace Sample.Data.Models;\npublic partial class Blog {{ public int BlogId {{ get; set; }} }}");
+
+                var postModel = Path.Combine(modelsDir, "Post.cs");
+                File.WriteAllText(postModel, $"// generated from {source}\nnamespace Sample.Data.Models;\npublic partial class Post {{ public int PostId {{ get; set; }} }}");
+
+                // For backwards compatibility, also generate the legacy file
                 var sample = Path.Combine(OutputDir, "SampleModel.cs");
-                File.WriteAllText(sample, $"// generated from {DacpacPath}");
-                log.Detail("EFCPT_FAKE_EFCPT set; wrote sample output.");
+                File.WriteAllText(sample, $"// generated from {DacpacPath ?? ConnectionString}");
+
+                log.Detail("EFCPT_FAKE_EFCPT set; wrote sample output with Models subdirectory.");
                 return true;
             }
 

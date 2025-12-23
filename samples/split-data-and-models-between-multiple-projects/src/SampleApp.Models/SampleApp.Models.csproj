@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Models project IS the primary project - it runs efcpt -->
+    <EfcptEnabled>true</EfcptEnabled>
+    <EfcptLogVerbosity>detailed</EfcptLogVerbosity>
+    <EfcptDumpResolvedInputs>true</EfcptDumpResolvedInputs>
+
+    <!-- Split Outputs: copy DbContext and configurations to Data project -->
+    <EfcptSplitOutputs>true</EfcptSplitOutputs>
+    <EfcptDataProject>..\SampleApp.Data\SampleApp.Data.csproj</EfcptDataProject>
+  </PropertyGroup>
+
+  <!-- Reference the SQL Database Project -->
+  <ItemGroup>
+    <ProjectReference Include="..\SampleApp.Sql\SampleApp.Sql.sqlproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>None</OutputItemType>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- NuGet package reference for efcpt build -->
+    <PackageReference Include="JD.Efcpt.Build" Version="*" />
+
+    <!-- Only System.ComponentModel.Annotations - NO EF Core dependencies -->
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+  </ItemGroup>
+</Project>

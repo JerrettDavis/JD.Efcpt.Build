@@ -16,7 +16,7 @@ using System.IO;
 
 var rootDir = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "..", ".."));
 var artifactsDir = Path.Combine(rootDir, "artifacts");
-var sampleDir = Path.Combine(rootDir, "samples", "msbuild-sdk-sql-proj-generation");
+var sampleDir = Path.Combine(rootDir, "samples", "split-data-and-models-between-multiple-projects");
 var tasksProject = Path.Combine(rootDir, "src", "JD.Efcpt.Build.Tasks", "JD.Efcpt.Build.Tasks.csproj");
 var buildProject = Path.Combine(rootDir, "src", "JD.Efcpt.Build", "JD.Efcpt.Build.csproj");
 var nugetCachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages", "jd.efcpt.build");
