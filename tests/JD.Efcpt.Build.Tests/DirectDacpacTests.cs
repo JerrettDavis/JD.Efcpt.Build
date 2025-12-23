@@ -96,6 +96,12 @@ public sealed class DirectDacpacTests(ITestOutputHelper output) : TinyBddXunitBa
         var generatedDir = Path.Combine(outputDir, "Generated");
         var engine = new TestBuildEngine();
 
+        // Clean up any fingerprint file that may have been copied from test assets
+        // (e.g., created during CI solution build before tests run with --no-build)
+        var fingerprintFile = Path.Combine(outputDir, "fingerprint.txt");
+        if (File.Exists(fingerprintFile))
+            File.Delete(fingerprintFile);
+
         return new DirectDacpacState(folder, appDir, dbDir, directDacpacPath, outputDir, generatedDir, engine);
     }
 
@@ -335,8 +341,9 @@ public sealed class DirectDacpacTests(ITestOutputHelper output) : TinyBddXunitBa
                 // Write the first fingerprint
                 var firstFingerprint = r.Task.Fingerprint;
 
-                // Modify the DACPAC file (in a real scenario, this would be a new build)
-                File.AppendAllText(r.Stage.DirectDacpacPath, "modified content");
+                // Replace the DACPAC with a mock containing different schema
+                // (simulates rebuilding with schema changes)
+                MockDacpacHelper.CreateAtPath(r.Stage.DirectDacpacPath, "ModifiedTable");
 
                 // Recompute fingerprint
                 var fingerprintFile = Path.Combine(r.Stage.Resolve.State.OutputDir, "fingerprint.txt");

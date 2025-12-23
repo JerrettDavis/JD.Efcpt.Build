@@ -58,6 +58,12 @@ public sealed class PipelineTests(ITestOutputHelper output) : TinyBddXunitBase(o
         var generatedDir = Path.Combine(outputDir, "Generated");
         var engine = new TestBuildEngine();
 
+        // Clean up any fingerprint file that may have been copied from test assets
+        // (e.g., created during CI solution build before tests run with --no-build)
+        var fingerprintFile = Path.Combine(outputDir, "fingerprint.txt");
+        if (File.Exists(fingerprintFile))
+            File.Delete(fingerprintFile);
+
         return new PipelineState(folder, appDir, dbDir, outputDir, generatedDir, engine);
     }
 
@@ -66,7 +72,7 @@ public sealed class PipelineTests(ITestOutputHelper output) : TinyBddXunitBase(o
         var sqlproj = Path.Combine(state.DbDir, "Sample.Database.sqlproj");
         var dacpac = Path.Combine(state.DbDir, "bin", "Debug", "Sample.Database.dacpac");
         Directory.CreateDirectory(Path.GetDirectoryName(dacpac)!);
-        File.WriteAllText(dacpac, "dacpac");
+        MockDacpacHelper.CreateAtPath(dacpac, "SampleTable");
         File.SetLastWriteTimeUtc(sqlproj, DateTime.UtcNow.AddMinutes(-5));
         File.SetLastWriteTimeUtc(dacpac, DateTime.UtcNow);
         return state;

@@ -31,7 +31,7 @@ public sealed class ComputeFingerprintTests(ITestOutputHelper output) : TinyBddX
     private static SetupState SetupWithAllInputs()
     {
         var folder = new TestFolder();
-        var dacpac = folder.WriteFile("db.dacpac", "DACPAC content v1");
+        var dacpac = MockDacpacHelper.Create(folder, "db.dacpac", "Users");
         var config = folder.WriteFile("efcpt-config.json", "{}");
         var renaming = folder.WriteFile("efcpt.renaming.json", "[]");
         var templateDir = folder.CreateDir("Templates");
@@ -46,7 +46,7 @@ public sealed class ComputeFingerprintTests(ITestOutputHelper output) : TinyBddX
     private static SetupState SetupWithNoFingerprintFile()
     {
         var folder = new TestFolder();
-        var dacpac = folder.WriteFile("db.dacpac", "DACPAC content");
+        var dacpac = MockDacpacHelper.Create(folder, "db.dacpac", "Users");
         var config = folder.WriteFile("efcpt-config.json", "{}");
         var renaming = folder.WriteFile("efcpt.renaming.json", "[]");
         var templateDir = folder.CreateDir("Templates");
@@ -139,7 +139,9 @@ public sealed class ComputeFingerprintTests(ITestOutputHelper output) : TinyBddX
         await Given("inputs with existing fingerprint", SetupWithExistingFingerprintFile)
             .When("DACPAC is modified and task executes", s =>
             {
-                File.WriteAllText(s.DacpacPath, "DACPAC content v2 - modified!");
+                // Delete and recreate with different schema content
+                File.Delete(s.DacpacPath);
+                MockDacpacHelper.Create(s.Folder, "db.dacpac", "Orders");
                 return ExecuteTask(s);
             })
             .Then("task succeeds", r => r.Success)
@@ -301,7 +303,7 @@ public sealed class ComputeFingerprintTests(ITestOutputHelper output) : TinyBddX
         await Given("inputs with nested fingerprint path", () =>
             {
                 var folder = new TestFolder();
-                var dacpac = folder.WriteFile("db.dacpac", "content");
+                var dacpac = MockDacpacHelper.Create(folder, "db.dacpac", "Users");
                 var config = folder.WriteFile("efcpt-config.json", "{}");
                 var renaming = folder.WriteFile("efcpt.renaming.json", "[]");
                 var templateDir = folder.CreateDir("Templates");
@@ -324,7 +326,7 @@ public sealed class ComputeFingerprintTests(ITestOutputHelper output) : TinyBddX
         await Given("templates with nested structure", () =>
             {
                 var folder = new TestFolder();
-                var dacpac = folder.WriteFile("db.dacpac", "content");
+                var dacpac = MockDacpacHelper.Create(folder, "db.dacpac", "Users");
                 var config = folder.WriteFile("efcpt-config.json", "{}");
                 var renaming = folder.WriteFile("efcpt.renaming.json", "[]");
                 var templateDir = folder.CreateDir("Templates");
