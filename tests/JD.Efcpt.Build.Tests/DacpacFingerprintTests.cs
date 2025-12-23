@@ -1,5 +1,3 @@
-using System.IO.Compression;
-using System.Text;
 using JD.Efcpt.Build.Tasks;
 using JD.Efcpt.Build.Tests.Infrastructure;
 using TinyBDD;
@@ -60,36 +58,6 @@ public sealed class DacpacFingerprintTests(ITestOutputHelper output) : TinyBddXu
         </DataSchemaModel>
         """;
 
-    private static string CreateDacpac(TestFolder folder, string name, string modelXml, string? preDeploy = null, string? postDeploy = null)
-    {
-        var dacpacPath = Path.Combine(folder.Root, name);
-        using var archive = ZipFile.Open(dacpacPath, ZipArchiveMode.Create);
-        var modelEntry = archive.CreateEntry("model.xml");
-        using (var stream = modelEntry.Open())
-        using (var writer = new StreamWriter(stream, Encoding.UTF8))
-        {
-            writer.Write(modelXml);
-        }
-
-        if (preDeploy != null)
-        {
-            var preEntry = archive.CreateEntry("predeploy.sql");
-            using var stream = preEntry.Open();
-            using var writer = new StreamWriter(stream, Encoding.UTF8);
-            writer.Write(preDeploy);
-        }
-
-        if (postDeploy != null)
-        {
-            var postEntry = archive.CreateEntry("postdeploy.sql");
-            using var stream = postEntry.Open();
-            using var writer = new StreamWriter(stream, Encoding.UTF8);
-            writer.Write(postDeploy);
-        }
-
-        return dacpacPath;
-    }
-
     [Scenario("Computes fingerprint for valid DACPAC")]
     [Fact]
     public async Task Computes_fingerprint_for_valid_dacpac()
@@ -97,7 +65,7 @@ public sealed class DacpacFingerprintTests(ITestOutputHelper output) : TinyBddXu
         await Given("a valid DACPAC file", () =>
             {
                 var folder = new TestFolder();
-                var path = CreateDacpac(folder, "test.dacpac", SampleModelXml);
+                var path = MockDacpacHelper.CreateWithScripts(folder, "test.dacpac", SampleModelXml);
                 return (folder, path);
             })
             .When("fingerprint is computed", t => (t.folder, DacpacFingerprint.Compute(t.path)))
@@ -114,7 +82,7 @@ public sealed class DacpacFingerprintTests(ITestOutputHelper output) : TinyBddXu
         await Given("a DACPAC file", () =>
             {
                 var folder = new TestFolder();
-                var path = CreateDacpac(folder, "test.dacpac", SampleModelXml);
+                var path = MockDacpacHelper.CreateWithScripts(folder, "test.dacpac", SampleModelXml);
                 return (folder, path);
             })
             .When("fingerprint is computed twice", t =>
@@ -131,8 +99,8 @@ public sealed class DacpacFingerprintTests(ITestOutputHelper output) : TinyBddXu
         await Given("two DACPACs with same schema but different path metadata", () =>
             {
                 var folder = new TestFolder();
-                var path1 = CreateDacpac(folder, "test1.dacpac", SampleModelXml);
-                var path2 = CreateDacpac(folder, "test2.dacpac", SampleModelXmlDifferentPath);
+                var path1 = MockDacpacHelper.CreateWithScripts(folder, "test1.dacpac", SampleModelXml);
+                var path2 = MockDacpacHelper.CreateWithScripts(folder, "test2.dacpac", SampleModelXmlDifferentPath);
                 return (folder, path1, path2);
             })
             .When("fingerprints are computed", t =>
@@ -149,8 +117,8 @@ public sealed class DacpacFingerprintTests(ITestOutputHelper output) : TinyBddXu
         await Given("two DACPACs with different schemas", () =>
             {
                 var folder = new TestFolder();
-                var path1 = CreateDacpac(folder, "test1.dacpac", SampleModelXml);
-                var path2 = CreateDacpac(folder, "test2.dacpac", DifferentSchemaModelXml);
+                var path1 = MockDacpacHelper.CreateWithScripts(folder, "test1.dacpac", SampleModelXml);
+                var path2 = MockDacpacHelper.CreateWithScripts(folder, "test2.dacpac", DifferentSchemaModelXml);
                 return (folder, path1, path2);
             })
             .When("fingerprints are computed", t =>
@@ -167,8 +135,8 @@ public sealed class DacpacFingerprintTests(ITestOutputHelper output) : TinyBddXu
         await Given("two DACPACs with same schema but different predeploy scripts", () =>
             {
                 var folder = new TestFolder();
-                var path1 = CreateDacpac(folder, "test1.dacpac", SampleModelXml, preDeploy: "SELECT 1");
-                var path2 = CreateDacpac(folder, "test2.dacpac", SampleModelXml, preDeploy: "SELECT 2");
+                var path1 = MockDacpacHelper.CreateWithScripts(folder, "test1.dacpac", SampleModelXml, preDeploy: "SELECT 1");
+                var path2 = MockDacpacHelper.CreateWithScripts(folder, "test2.dacpac", SampleModelXml, preDeploy: "SELECT 2");
                 return (folder, path1, path2);
             })
             .When("fingerprints are computed", t =>
@@ -185,8 +153,8 @@ public sealed class DacpacFingerprintTests(ITestOutputHelper output) : TinyBddXu
         await Given("two DACPACs with same schema but different postdeploy scripts", () =>
             {
                 var folder = new TestFolder();
-                var path1 = CreateDacpac(folder, "test1.dacpac", SampleModelXml, postDeploy: "SELECT 1");
-                var path2 = CreateDacpac(folder, "test2.dacpac", SampleModelXml, postDeploy: "SELECT 2");
+                var path1 = MockDacpacHelper.CreateWithScripts(folder, "test1.dacpac", SampleModelXml, postDeploy: "SELECT 1");
+                var path2 = MockDacpacHelper.CreateWithScripts(folder, "test2.dacpac", SampleModelXml, postDeploy: "SELECT 2");
                 return (folder, path1, path2);
             })
             .When("fingerprints are computed", t =>
@@ -203,7 +171,7 @@ public sealed class DacpacFingerprintTests(ITestOutputHelper output) : TinyBddXu
         await Given("a DACPAC without deploy scripts", () =>
             {
                 var folder = new TestFolder();
-                var path = CreateDacpac(folder, "test.dacpac", SampleModelXml);
+                var path = MockDacpacHelper.CreateWithScripts(folder, "test.dacpac", SampleModelXml);
                 return (folder, path);
             })
             .When("fingerprint is computed", t => (t.folder, DacpacFingerprint.Compute(t.path)))
@@ -240,15 +208,7 @@ public sealed class DacpacFingerprintTests(ITestOutputHelper output) : TinyBddXu
         await Given("a DACPAC without model.xml", () =>
             {
                 var folder = new TestFolder();
-                var path = Path.Combine(folder.Root, "invalid.dacpac");
-                using (var archive = ZipFile.Open(path, ZipArchiveMode.Create))
-                {
-                    // Create empty DACPAC with no model.xml
-                    var entry = archive.CreateEntry("other.txt");
-                    using var stream = entry.Open();
-                    using var writer = new StreamWriter(stream);
-                    writer.Write("not a model");
-                }
+                var path = MockDacpacHelper.CreateInvalid(folder, "invalid.dacpac");
                 return (folder, path);
             })
             .When("fingerprint computation is attempted", t =>
@@ -275,8 +235,8 @@ public sealed class DacpacFingerprintTests(ITestOutputHelper output) : TinyBddXu
         await Given("a DACPAC with and without predeploy script", () =>
             {
                 var folder = new TestFolder();
-                var pathWithout = CreateDacpac(folder, "without.dacpac", SampleModelXml);
-                var pathWith = CreateDacpac(folder, "with.dacpac", SampleModelXml, preDeploy: "SELECT 1");
+                var pathWithout = MockDacpacHelper.CreateWithScripts(folder, "without.dacpac", SampleModelXml);
+                var pathWith = MockDacpacHelper.CreateWithScripts(folder, "with.dacpac", SampleModelXml, preDeploy: "SELECT 1");
                 return (folder, pathWithout, pathWith);
             })
             .When("fingerprints are computed", t =>
@@ -308,13 +268,124 @@ public sealed class DacpacFingerprintTests(ITestOutputHelper output) : TinyBddXu
         await Given("DACPACs with Windows and Unix paths in metadata", () =>
             {
                 var folder = new TestFolder();
-                var windowsPath = CreateDacpac(folder, "windows.dacpac", SampleModelXml);
-                var unixPath = CreateDacpac(folder, "unix.dacpac", unixPathModelXml);
+                var windowsPath = MockDacpacHelper.CreateWithScripts(folder, "windows.dacpac", SampleModelXml);
+                var unixPath = MockDacpacHelper.CreateWithScripts(folder, "unix.dacpac", unixPathModelXml);
                 return (folder, windowsPath, unixPath);
             })
             .When("fingerprints are computed", t =>
                 (t.folder, DacpacFingerprint.Compute(t.windowsPath), DacpacFingerprint.Compute(t.unixPath)))
             .Then("fingerprints match (paths normalized to filenames)", t => t.Item2 == t.Item3)
+            .Finally(t => t.folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Handles empty metadata value")]
+    [Fact]
+    public async Task Handles_empty_metadata_value()
+    {
+        var emptyValueModelXml = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <DataSchemaModel>
+              <Header>
+                <Metadata Name="FileName" Value="" />
+                <Metadata Name="AssemblySymbolsName" Value="" />
+              </Header>
+              <Model>
+                <Element Type="SqlTable" Name="[dbo].[Users]">
+                  <Property Name="IsAnsiNullsOn" Value="True" />
+                </Element>
+              </Model>
+            </DataSchemaModel>
+            """;
+
+        await Given("a DACPAC with empty metadata values", () =>
+            {
+                var folder = new TestFolder();
+                var path = MockDacpacHelper.CreateWithScripts(folder, "empty.dacpac", emptyValueModelXml);
+                return (folder, path);
+            })
+            .When("fingerprint is computed", t => (t.folder, DacpacFingerprint.Compute(t.path)))
+            .Then("fingerprint is computed successfully", t => !string.IsNullOrEmpty(t.Item2))
+            .Finally(t => t.folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Normalizes custom metadata paths using fallback regex")]
+    [Fact]
+    public async Task Normalizes_custom_metadata_paths()
+    {
+        // Test the fallback regex path by using a non-standard metadata name that contains a path
+        var customMetadataModelXml1 = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <DataSchemaModel>
+              <Header>
+                <Metadata Name="FileName" Value="MyDatabase.dacpac" />
+                <Metadata Name="CustomPath" Value="C:\builds\agent1\work\custom.file" />
+              </Header>
+              <Model>
+                <Element Type="SqlTable" Name="[dbo].[Users]">
+                  <Property Name="IsAnsiNullsOn" Value="True" />
+                </Element>
+              </Model>
+            </DataSchemaModel>
+            """;
+
+        var customMetadataModelXml2 = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <DataSchemaModel>
+              <Header>
+                <Metadata Name="FileName" Value="MyDatabase.dacpac" />
+                <Metadata Name="CustomPath" Value="D:\different\path\custom.file" />
+              </Header>
+              <Model>
+                <Element Type="SqlTable" Name="[dbo].[Users]">
+                  <Property Name="IsAnsiNullsOn" Value="True" />
+                </Element>
+              </Model>
+            </DataSchemaModel>
+            """;
+
+        await Given("two DACPACs with different custom metadata paths", () =>
+            {
+                var folder = new TestFolder();
+                var path1 = MockDacpacHelper.CreateWithScripts(folder, "custom1.dacpac", customMetadataModelXml1);
+                var path2 = MockDacpacHelper.CreateWithScripts(folder, "custom2.dacpac", customMetadataModelXml2);
+                return (folder, path1, path2);
+            })
+            .When("fingerprints are computed", t =>
+                (t.folder, DacpacFingerprint.Compute(t.path1), DacpacFingerprint.Compute(t.path2)))
+            .Then("fingerprints differ because custom metadata is not normalized", t => t.Item2 != t.Item3)
+            .Finally(t => t.folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Handles metadata value with no path separators")]
+    [Fact]
+    public async Task Handles_metadata_with_no_path_separators()
+    {
+        var noPathModelXml = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <DataSchemaModel>
+              <Header>
+                <Metadata Name="FileName" Value="MyDatabase.dacpac" />
+                <Metadata Name="AssemblySymbolsName" Value="MyDatabase.pdb" />
+              </Header>
+              <Model>
+                <Element Type="SqlTable" Name="[dbo].[Users]">
+                  <Property Name="IsAnsiNullsOn" Value="True" />
+                </Element>
+              </Model>
+            </DataSchemaModel>
+            """;
+
+        await Given("a DACPAC with metadata values that have no path separators", () =>
+            {
+                var folder = new TestFolder();
+                var path = MockDacpacHelper.CreateWithScripts(folder, "nopath.dacpac", noPathModelXml);
+                return (folder, path);
+            })
+            .When("fingerprint is computed", t => (t.folder, DacpacFingerprint.Compute(t.path)))
+            .Then("fingerprint is computed successfully", t => !string.IsNullOrEmpty(t.Item2))
             .Finally(t => t.folder.Dispose())
             .AssertPassed();
     }

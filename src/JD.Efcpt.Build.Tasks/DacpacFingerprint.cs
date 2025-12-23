@@ -142,7 +142,7 @@ internal static partial class DacpacFingerprint
     {
         "FileName" => FileNameMetadataRegex(),
         "AssemblySymbolsName" => AssemblySymbolsMetadataRegex(),
-        _ => new Regex($@"(<Metadata\s+Name=""{metadataName}""\s+Value="")([^""]+)("")", RegexOptions.Compiled)
+        _ => new Regex($"""(<Metadata\s+Name="{metadataName}"\s+Value=")([^"]+)(")""", RegexOptions.Compiled)
     };
     
     /// <summary>
@@ -153,6 +153,5 @@ internal static partial class DacpacFingerprint
 
     [GeneratedRegex("""(<Metadata\s+Name="AssemblySymbolsName"\s+Value=")([^"]+)(")""", RegexOptions.Compiled)]
     private static partial Regex AssemblySymbolsMetadataRegex();
-
-
+    
 }

@@ -1,5 +1,3 @@
-using System.IO.Compression;
-using System.Text;
 using Microsoft.Build.Utilities;
 using JD.Efcpt.Build.Tasks;
 using JD.Efcpt.Build.Tests.Infrastructure;
@@ -70,37 +68,6 @@ public sealed class DirectDacpacTests(ITestOutputHelper output) : TinyBddXunitBa
         RunResult Run,
         RenameGeneratedFiles Task,
         string[] GeneratedFiles);
-
-    /// <summary>
-    /// Creates a mock DACPAC file (ZIP archive with model.xml) containing a modified schema.
-    /// Used to simulate DACPAC changes without rebuilding the actual project.
-    /// </summary>
-    private static void CreateModifiedMockDacpac(string dacpacPath, string schemaContent)
-    {
-        var modelXml = $"""
-            <?xml version="1.0" encoding="utf-8"?>
-            <DataSchemaModel>
-              <Header>
-                <Metadata Name="FileName" Value="C:\\builds\\modified.dacpac" />
-              </Header>
-              <Model>
-                <Element Type="SqlTable" Name="[dbo].[{schemaContent}]">
-                  <Property Name="IsAnsiNullsOn" Value="True" />
-                </Element>
-              </Model>
-            </DataSchemaModel>
-            """;
-
-        // Delete existing file and create new one
-        if (File.Exists(dacpacPath))
-            File.Delete(dacpacPath);
-
-        using var archive = ZipFile.Open(dacpacPath, ZipArchiveMode.Create);
-        var modelEntry = archive.CreateEntry("model.xml");
-        using var stream = modelEntry.Open();
-        using var writer = new StreamWriter(stream, Encoding.UTF8);
-        writer.Write(modelXml);
-    }
 
     /// <summary>
     /// Sets up a test folder with both a .sqlproj reference (for resolve to succeed)
@@ -376,7 +343,7 @@ public sealed class DirectDacpacTests(ITestOutputHelper output) : TinyBddXunitBa
 
                 // Replace the DACPAC with a mock containing different schema
                 // (simulates rebuilding with schema changes)
-                CreateModifiedMockDacpac(r.Stage.DirectDacpacPath, "ModifiedTable");
+                MockDacpacHelper.CreateAtPath(r.Stage.DirectDacpacPath, "ModifiedTable");
 
                 // Recompute fingerprint
                 var fingerprintFile = Path.Combine(r.Stage.Resolve.State.OutputDir, "fingerprint.txt");
