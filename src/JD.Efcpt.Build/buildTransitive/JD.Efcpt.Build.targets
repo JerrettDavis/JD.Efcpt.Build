@@ -258,8 +258,6 @@
           DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpac;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels"
           Condition="'$(EfcptEnabled)' == 'true'">
     <ItemGroup>
-      <!-- Include root-level .g.cs files (DbContext) and all .g.cs files in Models subdirectory -->
-      <Compile Include="$(EfcptGeneratedDir)*.g.cs" Visible="false" />
       <Compile Include="$(EfcptGeneratedDir)**\*.g.cs" Visible="false" />
     </ItemGroup>
   </Target>
