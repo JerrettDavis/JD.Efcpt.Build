@@ -272,7 +272,6 @@ dotnet build -v detailed > build.log 2>&1
 **Quick Fix:**
 ```bash
 dotnet clean
-rmdir /s /q obj\efcpt
 dotnet build
 ```
 
@@ -298,7 +297,7 @@ dotnet build path\to\Database.sqlproj
 **Quick Fix:**
 ```bash
 # Force full regeneration
-rmdir /s /q obj\efcpt
+dotnet clean
 dotnet build
 ```
 
@@ -339,11 +338,8 @@ dotnet build
 ## Command Cheat Sheet
 
 ```bash
-# Clean build
+# Clean build and force regeneration
 dotnet clean && dotnet build
-
-# Force regeneration
-rmdir /s /q obj\efcpt && dotnet build
 
 # Detailed logging
 dotnet build -v detailed

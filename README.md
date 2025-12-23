@@ -762,7 +762,7 @@ Generated models appear in `obj/efcpt/Generated/` automatically!
 **Solution:** Delete intermediate folder to force regeneration:
 
 ```bash
-rmdir /s /q obj\efcpt
+dotnet clean
 dotnet build
 ```
 
