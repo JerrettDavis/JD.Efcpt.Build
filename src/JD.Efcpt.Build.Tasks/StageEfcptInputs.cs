@@ -264,14 +264,27 @@ public sealed class StageEfcptInputs : Task
     /// </summary>
     private static int? ParseTargetFrameworkVersion(string targetFramework)
     {
-        // Handle formats like "net8.0", "net9.0", "net10.0"
+        // Handle formats like "net8.0", "net9.0", "net10.0",
+        // including platform-specific variants such as "net10.0-windows" and "net10-windows".
         if (targetFramework.StartsWith("net", StringComparison.OrdinalIgnoreCase))
         {
             var versionPart = targetFramework.Substring(3);
-            var dotIndex = versionPart.IndexOf('.');
-            if (dotIndex > 0)
-                versionPart = versionPart.Substring(0, dotIndex);
 
+            // Trim at the first '.' or '-' after "net" so that we handle:
+            // - "net10.0"           -> "10"
+            // - "net10.0-windows"   -> "10"
+            // - "net10-windows"     -> "10"
+            var dotIndex = versionPart.IndexOf('.');
+            var hyphenIndex = versionPart.IndexOf('-');
+
+            int cutIndex;
+            if (dotIndex >= 0 && hyphenIndex >= 0)
+                cutIndex = Math.Min(dotIndex, hyphenIndex);
+            else
+                cutIndex = dotIndex >= 0 ? dotIndex : hyphenIndex;
+
+            if (cutIndex > 0)
+                versionPart = versionPart.Substring(0, cutIndex);
             if (int.TryParse(versionPart, out var version))
                 return version;
         }
