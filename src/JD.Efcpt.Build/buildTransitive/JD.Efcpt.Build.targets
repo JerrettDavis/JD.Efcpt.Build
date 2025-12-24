@@ -93,8 +93,46 @@
     <Message Text="Using pre-built DACPAC: $(_EfcptDacpacPath)" Importance="high" />
   </Target>
 
-  <Target Name="EfcptEnsureDacpac"
+  <!--
+    Stage 2b-1: build the SQL project using MSBuild's native task.
+
+    This target uses MSBuild's <MSBuild> task to build the SQL project, which ensures
+    proper dependency ordering and prevents race conditions when MSBuild runs in parallel
+    mode. The SQL project build will complete before any targets that depend on this one
+    can proceed.
+
+    Note: This stage is skipped when using connection string mode, direct DACPAC mode,
+    or when no SQL project is resolved.
+  -->
+  <Target Name="EfcptBuildSqlProj"
           DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptSqlProj)' != ''">
+    <Message Text="Building SQL project: $(_EfcptSqlProj)" Importance="normal" />
+    <MSBuild Projects="$(_EfcptSqlProj)"
+             Targets="Build"
+             Properties="Configuration=$(Configuration)"
+             BuildInParallel="false" />
+  </Target>
+
+  <!--
+    Stage 2b-2: ensure a DACPAC exists and is up to date for the resolved SQL project.
+
+    Inputs:
+      - _EfcptSqlProj     : sqlproj path resolved by EfcptResolveInputs
+      - Configuration     : build configuration used for the sqlproj
+      - MSBuildBinPath    : used to derive MsBuildExe on Windows
+      - EfcptDotNetExe    : optional path to dotnet for cross-platform builds
+      - EfcptLogVerbosity : controls logging verbosity for the task
+
+    Outputs:
+      - _EfcptDacpacPath  : full path to the resulting DACPAC
+
+    Note: This stage is skipped when using connection string mode or when EfcptDacpac is specified.
+    The EfcptBuildSqlProj target ensures the SQL project is built before this target runs,
+    so EnsureDacpacBuilt will typically just locate the existing DACPAC.
+  -->
+  <Target Name="EfcptEnsureDacpac"
+          DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptBuildSqlProj"
           Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true'">
     <EnsureDacpacBuilt
         SqlProjPath="$(_EfcptSqlProj)"
