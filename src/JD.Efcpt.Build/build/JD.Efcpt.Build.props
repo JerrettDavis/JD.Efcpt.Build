@@ -43,12 +43,14 @@
     <EfcptDumpResolvedInputs Condition="'$(EfcptDumpResolvedInputs)'==''">false</EfcptDumpResolvedInputs>
 
     <!--
-      Split Outputs: separate Models project (primary) from Data project.
-      The Models project runs efcpt, generates all files, then copies
-      DbContext and configurations to the Data project.
+      Split Outputs: separate a primary Models project from a secondary Data project.
+      Enable EfcptSplitOutputs in the Models project (with EfcptEnabled=true) and
+      set EfcptDataProject to the target Data project that should receive DbContext
+      and configuration classes.
 
-      Models project keeps: entity model classes (in Models/ subdirectory)
-      Data project receives: DbContext and configuration classes
+      The Models project runs efcpt and generates all files. It keeps the entity
+      model classes (for example, in a Models/ subdirectory), and copies DbContext
+      and configuration classes to the configured Data project.
     -->
     <EfcptSplitOutputs Condition="'$(EfcptSplitOutputs)'==''">false</EfcptSplitOutputs>
     <EfcptDataProject Condition="'$(EfcptDataProject)'==''"></EfcptDataProject>
