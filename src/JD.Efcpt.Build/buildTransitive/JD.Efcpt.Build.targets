@@ -253,28 +253,49 @@
 
   <!--
     Copy generated DbContext and configuration files to the Data project.
-    Copies root-level .g.cs files (DbContext, configurations) but NOT the Models folder.
-    Cleans destination first to remove stale files, then copies fresh.
+    - DbContext files go to the root of the destination
+    - Configuration files go to a Configurations subfolder
+    - Files are deleted from the Models project after copying
+    Only runs when source files exist (i.e., when generation actually occurred).
   -->
   <Target Name="EfcptCopyDataToDataProject"
           DependsOnTargets="EfcptValidateSplitOutputs"
           Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptSplitOutputs)' == 'true'">
 
-    <!-- Find data files to copy (root-level .g.cs files, excluding Models folder) -->
+    <!-- Find DbContext files (root-level .g.cs files that are NOT configurations) -->
     <ItemGroup>
-      <_EfcptDataFilesToCopy Include="$(EfcptGeneratedDir)*.g.cs" />
-      <_EfcptDataFilesToCopy Include="$(EfcptGeneratedDir)Configurations\**\*.g.cs" />
+      <_EfcptDbContextFiles Include="$(EfcptGeneratedDir)*.g.cs" Exclude="$(EfcptGeneratedDir)*Configuration.g.cs" />
     </ItemGroup>
 
-    <!-- Clean destination directory first to remove stale files -->
-    <RemoveDir Directories="$(_EfcptDataDestDir)" Condition="Exists('$(_EfcptDataDestDir)')" />
-    <MakeDir Directories="$(_EfcptDataDestDir)" />
+    <!-- Find Configuration files (root-level *Configuration.g.cs or in Configurations folder) -->
+    <ItemGroup>
+      <_EfcptConfigurationFiles Include="$(EfcptGeneratedDir)*Configuration.g.cs" />
+      <_EfcptConfigurationFiles Include="$(EfcptGeneratedDir)Configurations\**\*.g.cs" />
+    </ItemGroup>
 
-    <!-- Copy data files preserving directory structure -->
-    <Copy SourceFiles="@(_EfcptDataFilesToCopy)"
-          DestinationFiles="@(_EfcptDataFilesToCopy->'$(_EfcptDataDestDir)%(RecursiveDir)%(Filename)%(Extension)')"
+    <!-- Only proceed if there are source files to copy (generation occurred) -->
+    <PropertyGroup>
+      <_EfcptHasFilesToCopy Condition="'@(_EfcptDbContextFiles)' != '' or '@(_EfcptConfigurationFiles)' != ''">true</_EfcptHasFilesToCopy>
+    </PropertyGroup>
+
+    <!-- Clean destination directory first to remove stale files (only if we have files to copy) -->
+    <RemoveDir Directories="$(_EfcptDataDestDir)" Condition="'$(_EfcptHasFilesToCopy)' == 'true' and Exists('$(_EfcptDataDestDir)')" />
+    <MakeDir Directories="$(_EfcptDataDestDir)" Condition="'$(_EfcptHasFilesToCopy)' == 'true'" />
+    <MakeDir Directories="$(_EfcptDataDestDir)Configurations" Condition="'@(_EfcptConfigurationFiles)' != ''" />
+
+    <!-- Copy DbContext files to root of destination -->
+    <Copy SourceFiles="@(_EfcptDbContextFiles)"
+          DestinationFolder="$(_EfcptDataDestDir)"
           SkipUnchangedFiles="true"
-          Condition="'@(_EfcptDataFilesToCopy)' != ''">
+          Condition="'@(_EfcptDbContextFiles)' != ''">
+      <Output TaskParameter="CopiedFiles" ItemName="_EfcptCopiedDataFiles" />
+    </Copy>
+
+    <!-- Copy Configuration files to Configurations subfolder -->
+    <Copy SourceFiles="@(_EfcptConfigurationFiles)"
+          DestinationFolder="$(_EfcptDataDestDir)Configurations"
+          SkipUnchangedFiles="true"
+          Condition="'@(_EfcptConfigurationFiles)' != ''">
       <Output TaskParameter="CopiedFiles" ItemName="_EfcptCopiedDataFiles" />
     </Copy>
 
@@ -282,9 +303,16 @@
              Condition="'@(_EfcptCopiedDataFiles)' != ''"
              Importance="high" />
 
-    <Message Text="No data files found to copy to Data project. Ensure your templates generate DbContext and configuration files in $(EfcptGeneratedDir)"
-             Condition="'@(_EfcptDataFilesToCopy)' == ''"
-             Importance="high" />
+    <Message Text="Split outputs: No new files to copy (generation was skipped)"
+             Condition="'$(_EfcptHasFilesToCopy)' != 'true'"
+             Importance="normal" />
+
+    <!-- Delete DbContext and Configuration files from Models project after copying -->
+    <Delete Files="@(_EfcptDbContextFiles)" Condition="'@(_EfcptDbContextFiles)' != ''" />
+    <Delete Files="@(_EfcptConfigurationFiles)" Condition="'@(_EfcptConfigurationFiles)' != ''" />
+    <Message Text="Removed DbContext and configuration files from Models project"
+             Condition="'$(_EfcptHasFilesToCopy)' == 'true'"
+             Importance="normal" />
   </Target>
 
   <!--
