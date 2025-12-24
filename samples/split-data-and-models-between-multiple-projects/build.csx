@@ -63,11 +63,19 @@ Console.WriteLine();
 
 // Step 5: Clean sample output
 Console.WriteLine("Step 5: Cleaning sample output...");
-var sampleEfcptDir = Path.Combine(sampleDir, "EntityFrameworkCoreProject", "obj", "efcpt");
-if (Directory.Exists(sampleEfcptDir))
+var modelsEfcptDir = Path.Combine(sampleDir, "SampleApp.Models", "obj", "efcpt");
+var dataEfcptDir = Path.Combine(sampleDir, "SampleApp.Data", "obj", "efcpt");
+
+if (Directory.Exists(modelsEfcptDir))
 {
-    Directory.Delete(sampleEfcptDir, true);
-    Console.WriteLine($"  ✓ Removed: {sampleEfcptDir}");
+    Directory.Delete(modelsEfcptDir, true);
+    Console.WriteLine($"  ✓ Removed: {modelsEfcptDir}");
+}
+
+if (Directory.Exists(dataEfcptDir))
+{
+    Directory.Delete(dataEfcptDir, true);
+    Console.WriteLine($"  ✓ Removed: {dataEfcptDir}");
 }
 RunCommand("dotnet", "clean", sampleDir);
 Console.WriteLine();
