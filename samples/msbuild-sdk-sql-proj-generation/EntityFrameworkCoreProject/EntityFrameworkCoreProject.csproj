@@ -12,14 +12,15 @@
         <EfcptLogVerbosity>detailed</EfcptLogVerbosity>
         <EfcptDumpResolvedInputs>true</EfcptDumpResolvedInputs>
     </PropertyGroup>
-
-    <ItemGroup>
-        <!-- Reference the Database Project -->
-        <ProjectReference Include="..\DatabaseProject\DatabaseProject.sqlproj">
-            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-            <OutputItemType>None</OutputItemType>
-        </ProjectReference>
-    </ItemGroup>
+    
+<!-- Commented out to demonstrate the ability to dynamcially find a project without a direct reference -->
+<!--    <ItemGroup>-->
+<!--        &lt;!&ndash; Reference the Database Project &ndash;&gt;-->
+<!--        <ProjectReference Include="..\DatabaseProject\DatabaseProject.csproj">-->
+<!--            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>-->
+<!--            <OutputItemType>None</OutputItemType>-->
+<!--        </ProjectReference>-->
+<!--    </ItemGroup>-->
 
     <ItemGroup>
         <!-- NuGet package reference - demonstrates real-world consumption -->
