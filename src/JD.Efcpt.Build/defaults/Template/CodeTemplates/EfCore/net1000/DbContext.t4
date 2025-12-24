@@ -317,7 +317,7 @@ public partial class <#= Options.ContextName #> : DbContext
 #>
         });
 <#
-        // If any signicant code was generated, append it to the main environment
+        // If any significant code was generated, append it to the main environment
         if (anyEntityTypeConfiguration)
         {
             mainEnvironment.Append(GenerationEnvironment);
