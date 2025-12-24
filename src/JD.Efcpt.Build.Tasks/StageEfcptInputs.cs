@@ -69,6 +69,15 @@ public sealed class StageEfcptInputs : Task
     public string TemplateOutputDir { get; set; } = "";
 
     /// <summary>
+    /// Target framework of the consuming project (e.g., "net8.0", "net9.0", "net10.0").
+    /// </summary>
+    /// <value>
+    /// Used to select version-specific templates when available. If empty or not specified,
+    /// no version-specific selection is performed.
+    /// </value>
+    public string TargetFramework { get; set; } = "";
+
+    /// <summary>
     /// Controls how much diagnostic information the task writes to the MSBuild log.
     /// </summary>
     /// <value>
@@ -120,14 +129,26 @@ public sealed class StageEfcptInputs : Task
             
             var sourceTemplate = Path.GetFullPath(TemplateDir);
             var codeTemplatesSubdir = Path.Combine(sourceTemplate, "CodeTemplates");
-            
+
             // Check if source has Template/CodeTemplates/EFCore structure
             var efcoreSubdir = Path.Combine(codeTemplatesSubdir, "EFCore");
             if (Directory.Exists(efcoreSubdir))
             {
-                // Copy EFCore contents to CodeTemplates/EFCore
+                // Check for version-specific templates (e.g., EFCore/net800, EFCore/net900, EFCore/net1000)
+                var versionSpecificDir = TryResolveVersionSpecificTemplateDir(efcoreSubdir, TargetFramework, log);
                 var destEFCore = Path.Combine(finalStagedDir, "EFCore");
-                CopyDirectory(efcoreSubdir, destEFCore);
+
+                if (versionSpecificDir != null)
+                {
+                    // Copy version-specific templates to CodeTemplates/EFCore
+                    log.Detail($"Using version-specific templates from: {versionSpecificDir}");
+                    CopyDirectory(versionSpecificDir, destEFCore);
+                }
+                else
+                {
+                    // Copy entire EFCore contents to CodeTemplates/EFCore (fallback for user templates)
+                    CopyDirectory(efcoreSubdir, destEFCore);
+                }
                 StagedTemplateDir = finalStagedDir;
             }
             else if (Directory.Exists(codeTemplatesSubdir))
@@ -187,6 +208,95 @@ public sealed class StageEfcptInputs : Task
                  + Path.DirectorySeparatorChar;
 
         return child.StartsWith(parent, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Attempts to resolve a version-specific template directory based on the target framework.
+    /// </summary>
+    /// <param name="efcoreDir">The EFCore templates directory to search.</param>
+    /// <param name="targetFramework">The target framework (e.g., "net8.0", "net9.0", "net10.0").</param>
+    /// <param name="log">Build log for diagnostic output.</param>
+    /// <returns>The path to the version-specific directory, or null if not found.</returns>
+    private static string? TryResolveVersionSpecificTemplateDir(string efcoreDir, string targetFramework, BuildLog log)
+    {
+        if (string.IsNullOrWhiteSpace(targetFramework))
+            return null;
+
+        // Parse target framework to get major version (e.g., "net8.0" -> 8, "net10.0" -> 10)
+        var majorVersion = ParseTargetFrameworkVersion(targetFramework);
+        if (majorVersion == null)
+        {
+            log.Detail($"Could not parse target framework version from: {targetFramework}");
+            return null;
+        }
+
+        // Convert to folder format (e.g., 8 -> "net800", 10 -> "net1000")
+        var versionFolder = $"net{majorVersion}00";
+        var versionDir = Path.Combine(efcoreDir, versionFolder);
+
+        if (Directory.Exists(versionDir))
+        {
+            log.Detail($"Found version-specific template folder: {versionFolder}");
+            return versionDir;
+        }
+
+        // Try fallback to nearest lower version
+        var availableVersions = GetAvailableVersionFolders(efcoreDir);
+        var fallbackVersion = availableVersions
+            .Where(v => v <= majorVersion)
+            .OrderByDescending(v => v)
+            .FirstOrDefault();
+
+        if (fallbackVersion > 0)
+        {
+            var fallbackFolder = $"net{fallbackVersion}00";
+            var fallbackDir = Path.Combine(efcoreDir, fallbackFolder);
+            log.Detail($"Using fallback template folder {fallbackFolder} for target framework {targetFramework}");
+            return fallbackDir;
+        }
+
+        log.Detail($"No version-specific templates found for {targetFramework}");
+        return null;
+    }
+
+    /// <summary>
+    /// Parses the major version from a target framework string.
+    /// </summary>
+    private static int? ParseTargetFrameworkVersion(string targetFramework)
+    {
+        // Handle formats like "net8.0", "net9.0", "net10.0"
+        if (targetFramework.StartsWith("net", StringComparison.OrdinalIgnoreCase))
+        {
+            var versionPart = targetFramework.Substring(3);
+            var dotIndex = versionPart.IndexOf('.');
+            if (dotIndex > 0)
+                versionPart = versionPart.Substring(0, dotIndex);
+
+            if (int.TryParse(versionPart, out var version))
+                return version;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Gets the available version folder numbers from the EFCore directory.
+    /// </summary>
+    private static IEnumerable<int> GetAvailableVersionFolders(string efcoreDir)
+    {
+        if (!Directory.Exists(efcoreDir))
+            yield break;
+
+        foreach (var dir in Directory.EnumerateDirectories(efcoreDir))
+        {
+            var name = Path.GetFileName(dir);
+            if (name.StartsWith("net", StringComparison.OrdinalIgnoreCase) && name.EndsWith("00"))
+            {
+                var versionPart = name.Substring(3, name.Length - 5); // "net800" -> "8"
+                if (int.TryParse(versionPart, out var version))
+                    yield return version;
+            }
+        }
     }
 
     private string ResolveTemplateBaseDir(string outputDirFull, string templateOutputDirRaw)

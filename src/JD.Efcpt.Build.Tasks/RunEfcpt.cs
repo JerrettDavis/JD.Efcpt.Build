@@ -114,6 +114,13 @@ public sealed class RunEfcpt : Task
     /// The value is interpreted case-insensitively. The strings <c>true</c>, <c>1</c>, and <c>yes</c>
     /// enable restore; any other value disables it. Defaults to <c>true</c>.
     /// </value>
+    /// <remarks>
+    /// <para>
+    /// On .NET 10.0 or later, tool restoration is skipped even when this property is <c>true</c>
+    /// because the <c>dnx</c> command handles tool execution directly without requiring prior
+    /// installation. The tool is fetched and run on-demand by the dotnet SDK.
+    /// </para>
+    /// </remarks>
     public string ToolRestore { get; set; } = "true";
 
     /// <summary>
@@ -287,27 +294,29 @@ public sealed class RunEfcpt : Task
     private static readonly Lazy<ActionStrategy<ToolRestoreContext>> ToolRestoreStrategy = new(() =>
         ActionStrategy<ToolRestoreContext>.Create()
             // Manifest restore: restore tools from local manifest
-            .When(static (in ctx) => ctx is { UseManifest: true, ShouldRestore: true })
+            // Skip on .NET 10+ because dnx handles tool execution without installation
+            .When(static (in ctx) => ctx is { UseManifest: true, ShouldRestore: true } && !IsDotNet10OrLater())
             .Then((in ctx) =>
             {
                 var restoreCwd = ctx.ManifestDir ?? ctx.WorkingDir;
                 RunProcess(ctx.Log, ctx.DotNetExe, "tool restore", restoreCwd);
             })
             // Global restore: update global tool package
-            .When(static (in ctx) 
+            // Skip on .NET 10+ because dnx handles tool execution without installation
+            .When(static (in ctx)
                 => ctx is
                 {
-                    UseManifest: false, 
-                    ShouldRestore: true, 
-                    HasExplicitPath: false, 
+                    UseManifest: false,
+                    ShouldRestore: true,
+                    HasExplicitPath: false,
                     HasPackageId: true
-                })
+                } && !IsDotNet10OrLater())
             .Then((in ctx) =>
             {
                 var versionArg = string.IsNullOrWhiteSpace(ctx.ToolVersion) ? "" : $" --version \"{ctx.ToolVersion}\"";
                 RunProcess(ctx.Log, ctx.DotNetExe, $"tool update --global {ctx.ToolPackageId}{versionArg}", ctx.WorkingDir);
             })
-            // Default: no restoration needed
+            // Default: no restoration needed (includes .NET 10+ with dnx)
             .Default(static (in _) => { })
             .Build());
 

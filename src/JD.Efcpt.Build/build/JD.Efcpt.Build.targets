@@ -116,6 +116,7 @@
         RenamingPath="$(_EfcptResolvedRenaming)"
         TemplateDir="$(_EfcptResolvedTemplateDir)"
         TemplateOutputDir="$(EfcptGeneratedDir)"
+        TargetFramework="$(TargetFramework)"
         LogVerbosity="$(EfcptLogVerbosity)">
       <Output TaskParameter="StagedConfigPath" PropertyName="_EfcptStagedConfig" />
       <Output TaskParameter="StagedRenamingPath" PropertyName="_EfcptStagedRenaming" />

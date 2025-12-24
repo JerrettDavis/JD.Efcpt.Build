@@ -42,43 +42,35 @@
 
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
     <None Include="..\..\QUICKSTART.md" Pack="true" PackagePath="\" />
+    <None Update="defaults\Template\CodeTemplates\EfCore\net1000\DbContext.t4">
+      <Pack>true</Pack>
+      <PackagePath>buildTransitive\Defaults\</PackagePath>
+    </None>
+    <None Update="defaults\Template\CodeTemplates\EfCore\net1000\EntityType.t4">
+      <Pack>true</Pack>
+      <PackagePath>buildTransitive\Defaults\</PackagePath>
+    </None>
+    <None Update="defaults\Template\CodeTemplates\EfCore\net1000\EntityTypeConfiguration.t4">
+      <Pack>true</Pack>
+      <PackagePath>buildTransitive\Defaults\</PackagePath>
+    </None>
   </ItemGroup>
 
   <!-- Collect task assemblies from the referenced project after build -->
   <Target Name="IncludeTaskAssembliesInPack" BeforeTargets="_GetPackageFiles">
     <ItemGroup>
       <!-- Include task assemblies in tasks folder to avoid file locking during restore -->
-      <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net8.0\*.dll"
-            Pack="true"
-            PackagePath="tasks\net8.0\"
-            Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net8.0\JD.Efcpt.Build.Tasks.dll')" />
-      <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net8.0\*.deps.json"
-            Pack="true"
-            PackagePath="tasks\net8.0\"
-            Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net8.0\JD.Efcpt.Build.Tasks.dll')" />
-      <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net9.0\*.dll"
-            Pack="true"
-            PackagePath="tasks\net9.0\"
-            Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net9.0\JD.Efcpt.Build.Tasks.dll')" />
-      <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net9.0\*.deps.json"
-            Pack="true"
-            PackagePath="tasks\net9.0\"
-            Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net9.0\JD.Efcpt.Build.Tasks.dll')" />
-      <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net10.0\*.dll"
-            Pack="true"
-            PackagePath="tasks\net10.0\"
-            Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net10.0\JD.Efcpt.Build.Tasks.dll')" />
-      <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net10.0\*.deps.json"
-            Pack="true"
-            PackagePath="tasks\net10.0\"
-            Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net10.0\JD.Efcpt.Build.Tasks.dll')" />
+      <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net8.0\*.dll" Pack="true" PackagePath="tasks\net8.0\" Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net8.0\JD.Efcpt.Build.Tasks.dll')" />
+      <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net8.0\*.deps.json" Pack="true" PackagePath="tasks\net8.0\" Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net8.0\JD.Efcpt.Build.Tasks.dll')" />
+      <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net9.0\*.dll" Pack="true" PackagePath="tasks\net9.0\" Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net9.0\JD.Efcpt.Build.Tasks.dll')" />
+      <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net9.0\*.deps.json" Pack="true" PackagePath="tasks\net9.0\" Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net9.0\JD.Efcpt.Build.Tasks.dll')" />
+      <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net10.0\*.dll" Pack="true" PackagePath="tasks\net10.0\" Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net10.0\JD.Efcpt.Build.Tasks.dll')" />
+      <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net10.0\*.deps.json" Pack="true" PackagePath="tasks\net10.0\" Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net10.0\JD.Efcpt.Build.Tasks.dll')" />
     </ItemGroup>
   </Target>
 
   <ItemGroup>
-    <None Include="defaults\**\*.*"
-          Pack="true"
-          PackagePath="buildTransitive\Defaults\" />
+    <None Include="defaults\**\*.*" Pack="true" PackagePath="buildTransitive\Defaults\" />
   </ItemGroup>
 
 </Project>
