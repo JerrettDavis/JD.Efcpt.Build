@@ -205,31 +205,31 @@ public sealed class SplitOutputsTests(ITestOutputHelper output) : TinyBddXunitBa
             .Finally(r => r.Resolve.Context.Dispose())
             .AssertPassed();
 
-    [Scenario("Validation fails when EfcptModelsProject is not set with EfcptSplitOutputs enabled")]
+    [Scenario("Validation fails when EfcptDataProject is not set with EfcptSplitOutputs enabled")]
     [Fact]
-    public Task Validation_fails_when_models_project_not_set()
+    public Task Validation_fails_when_data_project_not_set()
     {
         // This test verifies the MSBuild error message
         // The actual validation happens in the EfcptValidateSplitOutputs target
         // We test that the error message is clear and actionable
-        var expectedError = "EfcptSplitOutputs is enabled but EfcptModelsProject is not set";
+        var expectedError = "EfcptSplitOutputs is enabled but EfcptDataProject is not set";
 
         return Given("the expected error message", () => expectedError)
-            .Then("error message is descriptive", msg => msg.Contains("EfcptModelsProject"))
+            .Then("error message is descriptive", msg => msg.Contains("EfcptDataProject"))
             .And("error message mentions EfcptSplitOutputs", msg => msg.Contains("EfcptSplitOutputs"))
             .AssertPassed();
     }
 
-    [Scenario("Validation fails when BuildReference is not false")]
+    [Scenario("Validation fails when Data project does not exist")]
     [Fact]
-    public Task Validation_fails_when_build_reference_not_false()
+    public Task Validation_fails_when_data_project_does_not_exist()
     {
         // This test verifies the MSBuild error message format
-        var expectedError = "EfcptSplitOutputs requires the Models project reference to have BuildReference=\"false\"";
+        var expectedError = "EfcptDataProject was specified but the file does not exist";
 
         return Given("the expected error message", () => expectedError)
-            .Then("error message mentions BuildReference", msg => msg.Contains("BuildReference"))
-            .And("error message mentions false value", msg => msg.Contains("false"))
+            .Then("error message mentions EfcptDataProject", msg => msg.Contains("EfcptDataProject"))
+            .And("error message mentions file does not exist", msg => msg.Contains("does not exist"))
             .AssertPassed();
     }
 }

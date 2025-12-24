@@ -12,30 +12,32 @@ src/
       Blog.sql
       Post.sql
       Author.sql
-  SampleApp.Models/        # Entity models only (NO EF Core dependencies)
+  SampleApp.Models/        # PRIMARY: Entity models only (NO EF Core dependencies)
     SampleApp.Models.csproj
-    obj/efcpt/Generated/Models/
-      Blog.g.cs            # Copied from SampleApp.Data during build
-      Post.g.cs
-      Author.g.cs
-  SampleApp.Data/          # DbContext + EF Core
-    SampleApp.Data.csproj
-    efcpt-config.json
+    efcpt-config.json      # efcpt configuration lives here
     efcpt.renaming.json
+    Template/              # T4 templates
     obj/efcpt/Generated/
-      SampleDbContext.g.cs
-      Models/              # Source models (copied to SampleApp.Models)
+      Models/              # Entity models (kept in Models project)
         Blog.g.cs
         Post.g.cs
         Author.g.cs
+      SampleDbContext.g.cs # DbContext (copied to Data project)
+      Configurations/      # Configurations (copied to Data project)
+  SampleApp.Data/          # SECONDARY: DbContext + EF Core
+    SampleApp.Data.csproj
+    obj/efcpt/Generated/   # Receives DbContext and configs from Models
+      SampleDbContext.g.cs
+      Configurations/
 ```
 
 ## How It Works
 
 The Split Outputs feature allows you to:
 
-1. **Generate entity models (POCOs) in a separate Models project** with no EF Core dependencies
-2. **Keep DbContext and configurations in a Data project** that references the Models project
+1. **Generate all files in the Models project** (the primary project with no EF Core dependencies)
+2. **Copy DbContext and configurations to the Data project** (which has EF Core dependencies)
+3. **Keep entity models in the Models project** for use by projects that shouldn't reference EF Core
 
 This is useful when:
 - You want entity models available to projects that shouldn't reference EF Core
@@ -44,45 +46,61 @@ This is useful when:
 
 ## Key Configuration
 
-### SampleApp.Data.csproj
+### SampleApp.Models.csproj (PRIMARY - runs efcpt)
 
 ```xml
 <PropertyGroup>
-  <!-- Enable split outputs -->
-  <EfcptSplitOutputs>true</EfcptSplitOutputs>
+  <!-- Models project IS the primary project - it runs efcpt -->
+  <EfcptEnabled>true</EfcptEnabled>
 
-  <!-- Path to Models project -->
-  <EfcptModelsProject>..\SampleApp.Models\SampleApp.Models.csproj</EfcptModelsProject>
+  <!-- Enable split outputs and specify Data project -->
+  <EfcptSplitOutputs>true</EfcptSplitOutputs>
+  <EfcptDataProject>..\SampleApp.Data\SampleApp.Data.csproj</EfcptDataProject>
 </PropertyGroup>
 
-<!-- Reference Models project with BuildReference="false" -->
+<!-- Reference SQL project -->
 <ItemGroup>
-  <ProjectReference Include="..\SampleApp.Models\SampleApp.Models.csproj">
-    <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-    <BuildReference>false</BuildReference>
+  <ProjectReference Include="..\SampleApp.Sql\SampleApp.Sql.sqlproj">
+    <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
+</ItemGroup>
+
+<!-- NO EF Core dependencies - just DataAnnotations -->
+<ItemGroup>
+  <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
 </ItemGroup>
 ```
 
-### SampleApp.Models.csproj
+### SampleApp.Data.csproj (SECONDARY - receives copied files)
 
 ```xml
 <PropertyGroup>
-  <!-- Models project does NOT run efcpt - it receives copied models -->
+  <!-- Data project does NOT run efcpt - it receives copied DbContext/configs -->
   <EfcptEnabled>false</EfcptEnabled>
+
+  <!-- Include external data files copied from Models project -->
+  <EfcptExternalDataDir>$(MSBuildProjectDirectory)\obj\efcpt\Generated\</EfcptExternalDataDir>
 </PropertyGroup>
+
+<!-- Reference Models project (normal reference - Models builds first) -->
+<ItemGroup>
+  <ProjectReference Include="..\SampleApp.Models\SampleApp.Models.csproj" />
+</ItemGroup>
+
+<!-- EF Core dependencies -->
+<ItemGroup>
+  <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.1" />
+</ItemGroup>
 ```
 
 ## Build Order
 
-The `BuildReference="false"` attribute is **required** on the Models project reference. This prevents MSBuild from building the Models project before the Data project generates and copies the model files.
-
 **Build sequence:**
 1. `SampleApp.Sql` is built → produces DACPAC
-2. `SampleApp.Data` runs efcpt → generates all files in `obj/efcpt/Generated/`
-3. `SampleApp.Data` copies `Models/**/*.g.cs` to `SampleApp.Models`
-4. `SampleApp.Data` explicitly builds `SampleApp.Models`
-5. `SampleApp.Data` compiles with reference to built `SampleApp.Models` assembly
+2. `SampleApp.Models` runs efcpt → generates all files in `obj/efcpt/Generated/`
+3. `SampleApp.Models` copies DbContext and configs to `SampleApp.Data/obj/efcpt/Generated/`
+4. `SampleApp.Models` compiles with only entity models (`Models/**/*.g.cs`)
+5. `SampleApp.Data` compiles with DbContext, configs, and reference to `SampleApp.Models`
 
 ## Building the Sample
 
@@ -90,8 +108,8 @@ The `BuildReference="false"` attribute is **required** on the Models project ref
 # From this directory
 dotnet build
 
-# Or build just the Data project (triggers everything)
-dotnet build src/SampleApp.Data/SampleApp.Data.csproj
+# Or build just the Models project (triggers generation and copy)
+dotnet build src/SampleApp.Models/SampleApp.Models.csproj
 ```
 
 ## Verifying the Output
@@ -99,10 +117,10 @@ dotnet build src/SampleApp.Data/SampleApp.Data.csproj
 After building, check:
 
 ```powershell
-# Models project should have generated entity files
+# Models project should have entity models
 ls src/SampleApp.Models/obj/efcpt/Generated/Models/
 
-# Data project should have DbContext but NOT entity models in compilation
+# Data project should have DbContext and configurations
 ls src/SampleApp.Data/obj/efcpt/Generated/
 ```
 

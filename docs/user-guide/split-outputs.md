@@ -6,8 +6,9 @@ This guide explains how to use the Split Outputs feature to separate generated e
 
 By default, JD.Efcpt.Build generates all EF Core artifacts (entities, DbContext, configurations) into a single project. The Split Outputs feature allows you to:
 
-- Generate entity models (POCOs) in a separate **Models project** with no EF Core dependencies
-- Keep DbContext and configurations in a **Data project** that references the Models project
+- **Generate all files in the Models project** (the primary project with no EF Core dependencies)
+- **Copy DbContext and configurations to the Data project** (which has EF Core dependencies)
+- **Keep entity models in the Models project** for use by projects that shouldn't reference EF Core
 
 This separation is useful when:
 - You want entity models available to projects that shouldn't reference EF Core
@@ -18,26 +19,31 @@ This separation is useful when:
 
 ```
 MySolution/
-  MyProject.Models/           # Entity models only (no EF Core)
+  MyProject.Models/           # PRIMARY: Entity models only (no EF Core)
     MyProject.Models.csproj
-    obj/efcpt/Generated/Models/
-      Blog.g.cs
-      Post.g.cs
-  MyProject.Data/             # DbContext + EF Core
-    MyProject.Data.csproj
-    efcpt-config.json
+    efcpt-config.json         # efcpt configuration lives here
+    efcpt.renaming.json
+    Template/                 # T4 templates
     obj/efcpt/Generated/
-      SampleDbContext.g.cs
-      Models/                 # Source models (copied to Models project)
+      Models/                 # Entity models (kept in Models project)
         Blog.g.cs
         Post.g.cs
+      MyDbContext.g.cs        # DbContext (copied to Data project)
+      Configurations/         # Configurations (copied to Data project)
+  MyProject.Data/             # SECONDARY: DbContext + EF Core
+    MyProject.Data.csproj
+    obj/efcpt/Generated/      # Receives DbContext and configs from Models
+      MyDbContext.g.cs
+      Configurations/
   MyDatabase/
     MyDatabase.sqlproj
 ```
 
 ## Configuration
 
-### Data Project (.csproj)
+### Models Project (.csproj) - PRIMARY
+
+The Models project is the primary project that runs efcpt and generates all files.
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
@@ -46,29 +52,59 @@ MySolution/
   </PropertyGroup>
 
   <!-- Import JD.Efcpt.Build -->
-  <PackageReference Include="JD.Efcpt.Build" Version="1.*" />
+  <ItemGroup>
+    <PackageReference Include="JD.Efcpt.Build" Version="1.*" />
+  </ItemGroup>
 
   <PropertyGroup>
-    <!-- Enable split outputs -->
+    <!-- Models project IS the primary project - it runs efcpt -->
+    <EfcptEnabled>true</EfcptEnabled>
+
+    <!-- Enable split outputs and specify Data project -->
     <EfcptSplitOutputs>true</EfcptSplitOutputs>
-
-    <!-- Path to Models project -->
-    <EfcptModelsProject>..\MyProject.Models\MyProject.Models.csproj</EfcptModelsProject>
+    <EfcptDataProject>..\MyProject.Data\MyProject.Data.csproj</EfcptDataProject>
   </PropertyGroup>
-
-  <!-- Reference Models project with BuildReference="false" -->
-  <ItemGroup>
-    <ProjectReference Include="..\MyProject.Models\MyProject.Models.csproj">
-      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-      <BuildReference>false</BuildReference>
-    </ProjectReference>
-  </ItemGroup>
 
   <!-- Reference SQL project -->
   <ItemGroup>
     <ProjectReference Include="..\MyDatabase\MyDatabase.sqlproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
+  </ItemGroup>
+
+  <!-- Only DataAnnotations - NO EF Core -->
+  <ItemGroup>
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+  </ItemGroup>
+</Project>
+```
+
+### Data Project (.csproj) - SECONDARY
+
+The Data project receives DbContext and configurations from the Models project.
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+
+  <!-- Import JD.Efcpt.Build for external data support -->
+  <ItemGroup>
+    <PackageReference Include="JD.Efcpt.Build" Version="1.*" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- Data project does NOT run efcpt - it receives copied DbContext/configs -->
+    <EfcptEnabled>false</EfcptEnabled>
+
+    <!-- Include external data files copied from Models project -->
+    <EfcptExternalDataDir>$(MSBuildProjectDirectory)\obj\efcpt\Generated\</EfcptExternalDataDir>
+  </PropertyGroup>
+
+  <!-- Reference Models project (normal reference - Models builds first) -->
+  <ItemGroup>
+    <ProjectReference Include="..\MyProject.Models\MyProject.Models.csproj" />
   </ItemGroup>
 
   <!-- EF Core packages -->
@@ -78,71 +114,40 @@ MySolution/
 </Project>
 ```
 
-### Models Project (.csproj)
-
-```xml
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-  </PropertyGroup>
-
-  <!-- Import JD.Efcpt.Build for external models support -->
-  <PackageReference Include="JD.Efcpt.Build" Version="1.*" />
-
-  <PropertyGroup>
-    <!-- Models project does NOT run efcpt -->
-    <EfcptEnabled>false</EfcptEnabled>
-  </PropertyGroup>
-
-  <!-- Only DataAnnotations - no EF Core -->
-  <ItemGroup>
-    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
-  </ItemGroup>
-</Project>
-```
-
 ## Properties Reference
 
 | Property | Default | Description |
 |----------|---------|-------------|
-| `EfcptSplitOutputs` | `false` | Enable split outputs mode |
-| `EfcptModelsProject` | (none) | Path to the Models project (.csproj) |
-| `EfcptModelsProjectOutputSubdir` | `obj\efcpt\Generated\Models\` | Destination subdirectory in Models project |
-| `EfcptDataProjectKeepLocalModels` | `false` | If true, also compile models in Data project |
-| `EfcptExternalModelsDir` | (none) | Directory containing external models to compile |
+| `EfcptSplitOutputs` | `false` | Enable split outputs mode (set in Models project) |
+| `EfcptDataProject` | (none) | Path to the Data project that receives DbContext/configs |
+| `EfcptDataProjectOutputSubdir` | `obj\efcpt\Generated\` | Destination subdirectory in Data project |
+| `EfcptExternalDataDir` | (none) | Directory containing external data files to compile (set in Data project) |
 
 ## Build Order
 
-The `BuildReference="false"` attribute is **required** on the Models project reference. This prevents MSBuild from building the Models project before the Data project generates and copies the model files.
-
-Without this attribute, the build would fail because:
-1. MSBuild tries to build Models first (dependency order)
-2. Models project has no source files yet
-3. Build fails
-
-With `BuildReference="false"`:
-1. Data project generates all files
-2. Data project copies model files to Models project
-3. Data project explicitly builds Models project
-4. Data project compiles with reference to built Models assembly
+**Build sequence:**
+1. SQL project is built → produces DACPAC
+2. Models project runs efcpt → generates all files in `obj/efcpt/Generated/`
+3. Models project copies DbContext and configs to Data project via `EfcptCopyDataToDataProject`
+4. Models project compiles with only entity models (`Models/**/*.g.cs`)
+5. Data project compiles with DbContext, configs, and reference to Models assembly
 
 ## How It Works
 
 1. **EfcptValidateSplitOutputs** - Validates configuration:
-   - Ensures `EfcptModelsProject` is set and exists
-   - Verifies `BuildReference="false"` on the ProjectReference
+   - Ensures `EfcptDataProject` is set and exists
+   - Resolves the Data project path
 
-2. **EfcptCopyModelsToModelsProject** - Copies generated models:
+2. **EfcptCopyDataToDataProject** - Copies generated DbContext and configs:
    - Clears destination to remove stale files
-   - Copies `Models/**/*.g.cs` to Models project
+   - Copies root-level `*.g.cs` files (DbContext) and `Configurations/**/*.g.cs` to Data project
 
-3. **EfcptBuildModelsProject** - Builds Models project:
-   - Invokes MSBuild with `EfcptEnabled=false`
-   - Passes `EfcptExternalModelsDir` for source inclusion
+3. **EfcptAddToCompile** - Includes appropriate files:
+   - In Models project (split mode): only includes `Models/**/*.g.cs`
+   - In Data project: includes files from `EfcptExternalDataDir`
 
-4. **EfcptAddToCompile** - Includes appropriate files:
-   - In Data project: excludes `Models/**/*.g.cs`
-   - In Models project: includes from `EfcptExternalModelsDir`
+4. **EfcptIncludeExternalData** - In Data project:
+   - Includes `*.g.cs` files from `EfcptExternalDataDir` in compilation
 
 ## Templates
 
@@ -156,39 +161,38 @@ $(OutputDir)/Models/EntityName.cs
 And DbContext/configurations to:
 ```
 $(OutputDir)/DbContextName.cs
+$(OutputDir)/Configurations/EntityConfiguration.cs
 ```
 
 ## Troubleshooting
 
-### "EfcptModelsProject is not set"
+### "EfcptDataProject is not set"
 
-Set the `EfcptModelsProject` property to the path of your Models project:
-
-```xml
-<EfcptModelsProject>..\MyProject.Models\MyProject.Models.csproj</EfcptModelsProject>
-```
-
-### "BuildReference must be false"
-
-Update your ProjectReference to include `BuildReference="false"`:
+Set the `EfcptDataProject` property in your Models project to the path of your Data project:
 
 ```xml
-<ProjectReference Include="..\MyProject.Models\MyProject.Models.csproj">
-  <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-  <BuildReference>false</BuildReference>
-</ProjectReference>
+<EfcptDataProject>..\MyProject.Data\MyProject.Data.csproj</EfcptDataProject>
 ```
 
-### No models copied to Models project
+### No DbContext copied to Data project
 
-Ensure your templates generate entity files in a `Models` subdirectory. Check that files exist at:
+Ensure your templates generate DbContext files at the root level (not in Models folder). Check that files exist at:
+```
+obj/efcpt/Generated/*.g.cs
+```
+
+### Entity models not found in Models project
+
+Ensure your templates generate entity files in a `Models` subdirectory:
 ```
 obj/efcpt/Generated/Models/*.g.cs
 ```
 
 ### Duplicate type definitions
 
-If you see duplicate type errors, ensure `EfcptDataProjectKeepLocalModels` is `false` (the default), which excludes model files from the Data project compilation.
+If you see duplicate type errors:
+- Ensure the Models project only compiles `Models/**/*.g.cs` (handled automatically in split mode)
+- Ensure the Data project uses `EfcptExternalDataDir` to include copied files
 
 ## Next Steps
 
