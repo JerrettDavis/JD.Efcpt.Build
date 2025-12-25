@@ -42,7 +42,7 @@ Set these properties in your `.csproj` file or `Directory.Build.props`.
 | `EfcptAppSettings` | *(empty)* | Path to `appsettings.json` for connection string |
 | `EfcptAppConfig` | *(empty)* | Path to `app.config` or `web.config` for connection string |
 | `EfcptConnectionStringName` | `DefaultConnection` | Key name in configuration file |
-| `EfcptProvider` | `mssql` | Database provider identifier |
+| `EfcptProvider` | `mssql` | Database provider: `mssql`, `postgres`, `mysql`, `sqlite`, `oracle`, `firebird`, `snowflake` |
 
 ### Tool Configuration Properties
 

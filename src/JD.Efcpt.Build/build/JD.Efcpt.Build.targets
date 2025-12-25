@@ -101,21 +101,32 @@
     Build the SQL project using MSBuild's native task to ensure proper dependency ordering.
     This prevents race conditions when MSBuild runs in parallel mode - the SQL project
     build will complete before any targets that depend on this one can proceed.
+    Note: Condition is on the task, not the target, because target conditions evaluate
+    before DependsOnTargets complete.
   -->
   <Target Name="EfcptBuildSqlProj"
           DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptSqlProj)' != ''">
-    <Message Text="Building SQL project: $(_EfcptSqlProj)" Importance="normal" />
-    <MSBuild Projects="$(_EfcptSqlProj)"
+          Condition="'$(EfcptEnabled)' == 'true'">
+    <Message Condition="'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptSqlProj)' != ''"
+             Text="Building SQL project: $(_EfcptSqlProj)" Importance="normal" />
+    <MSBuild Condition="'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptSqlProj)' != ''"
+             Projects="$(_EfcptSqlProj)"
              Targets="Build"
              Properties="Configuration=$(Configuration)"
              BuildInParallel="false" />
   </Target>
 
+  <!--
+    EfcptEnsureDacpac: Build dacpac if needed (not in connection string mode).
+    Note: The condition check happens INSIDE the target (not on the target itself)
+    because target conditions are evaluated before DependsOnTargets run.
+  -->
   <Target Name="EfcptEnsureDacpac"
           DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptBuildSqlProj"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true'">
+          Condition="'$(EfcptEnabled)' == 'true'">
+    <!-- Only run the dacpac task when NOT in connection string mode and NOT using direct dacpac -->
     <EnsureDacpacBuilt
+        Condition="'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true'"
         SqlProjPath="$(_EfcptSqlProj)"
         Configuration="$(Configuration)"
         MsBuildExe="$(MSBuildBinPath)msbuild.exe"
@@ -126,7 +137,7 @@
   </Target>
 
   <Target Name="EfcptStageInputs"
-          DependsOnTargets="EfcptEnsureDacpac;EfcptUseDirectDacpac"
+          DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpac;EfcptUseDirectDacpac"
           Condition="'$(EfcptEnabled)' == 'true'">
     <StageEfcptInputs
         OutputDir="$(EfcptOutput)"
@@ -230,6 +241,7 @@
         DacpacPath="$(_EfcptDacpacPath)"
         ConnectionString="$(_EfcptResolvedConnectionString)"
         UseConnectionStringMode="$(_EfcptUseConnectionString)"
+        Provider="$(EfcptProvider)"
         ConfigPath="$(_EfcptStagedConfig)"
         RenamingPath="$(_EfcptStagedRenaming)"
         TemplateDir="$(_EfcptStagedTemplateDir)"

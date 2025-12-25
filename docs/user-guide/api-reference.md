@@ -87,7 +87,7 @@ Queries database schema metadata and computes a fingerprint (connection string m
 |-----------|----------|-------------|
 | `ConnectionString` | Yes | Database connection string |
 | `OutputDir` | Yes | Output directory (writes `schema-model.json`) |
-| `Provider` | No | Provider identifier (default: `mssql`) |
+| `Provider` | No | Provider identifier: `mssql`, `postgres`, `mysql`, `sqlite`, `oracle`, `firebird`, `snowflake` (default: `mssql`) |
 | `LogVerbosity` | No | Logging level |
 
 **Outputs:**

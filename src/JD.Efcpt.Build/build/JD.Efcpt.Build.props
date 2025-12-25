@@ -19,6 +19,8 @@
     <EfcptAppSettings Condition="'$(EfcptAppSettings)'==''"></EfcptAppSettings>
     <EfcptAppConfig Condition="'$(EfcptAppConfig)'==''"></EfcptAppConfig>
     <EfcptConnectionStringName Condition="'$(EfcptConnectionStringName)'==''">DefaultConnection</EfcptConnectionStringName>
+    <!-- Database provider: mssql (default), postgres, mysql, sqlite, oracle, firebird, snowflake -->
+    <EfcptProvider Condition="'$(EfcptProvider)'==''">mssql</EfcptProvider>
 
     <!-- Solution probing -->
     <EfcptSolutionDir Condition="'$(EfcptSolutionDir)'==''">$(SolutionDir)</EfcptSolutionDir>
