@@ -193,7 +193,7 @@ public sealed class FirebirdSchemaReaderTests(ITestOutputHelper output) : TinyBd
                     .Select(row => row["TABLE_NAME"]?.ToString())
                     .ToList();
             })
-            .Then("RDB$ tables are excluded", tables => !tables.Any(t => t?.StartsWith("RDB$") == true))
+            .Then("RDB$ tables are excluded", tables => !tables.Any(t => t is not null && t.StartsWith("RDB$")))
             .And("user tables are included", tables => tables.Contains("USERS") && tables.Contains("PRODUCTS"))
             .AssertPassed();
     }
@@ -218,7 +218,7 @@ public sealed class FirebirdSchemaReaderTests(ITestOutputHelper output) : TinyBd
                     .Select(row => row["TABLE_NAME"]?.ToString())
                     .ToList();
             })
-            .Then("MON$ tables are excluded", tables => !tables.Any(t => t?.StartsWith("MON$") == true))
+            .Then("MON$ tables are excluded", tables => !tables.Any(t => t is not null && t.StartsWith("MON$")))
             .And("user tables are included", tables => tables.Contains("ORDERS"))
             .AssertPassed();
     }
@@ -430,7 +430,7 @@ public sealed class FirebirdSchemaReaderTests(ITestOutputHelper output) : TinyBd
                     .Select(row => row["INDEX_NAME"]?.ToString())
                     .ToList();
             })
-            .Then("RDB$ indexes are excluded", indexes => !indexes.Any(i => i?.StartsWith("RDB$") == true))
+            .Then("RDB$ indexes are excluded", indexes => !indexes.Any(i => i is not null && i.StartsWith("RDB$")))
             .And("user indexes are included", indexes => indexes.Contains("PK_USERS"))
             .AssertPassed();
     }

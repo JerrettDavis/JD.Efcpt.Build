@@ -99,13 +99,13 @@ internal static class ResourceResolutionChain
         ExistsPredicate exists,
         out string foundPath)
     {
-        foreach (var name in resourceNames)
+        var matchingCandidate = resourceNames
+            .Select(name => Path.Combine(directory, name))
+            .FirstOrDefault(candidate => exists(candidate));
+
+        if (matchingCandidate is not null)
         {
-            var candidate = Path.Combine(directory, name);
-            if (!exists(candidate))
-                continue;
-            
-            foundPath = candidate;
+            foundPath = matchingCandidate;
             return true;
         }
 

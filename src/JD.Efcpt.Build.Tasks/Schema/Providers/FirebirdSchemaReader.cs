@@ -194,12 +194,5 @@ internal sealed class FirebirdSchemaReader : ISchemaReader
     }
 
     private static string? GetExistingColumn(DataTable table, params string[] possibleNames)
-    {
-        foreach (var name in possibleNames)
-        {
-            if (table.Columns.Contains(name))
-                return name;
-        }
-        return null;
-    }
+        => possibleNames.FirstOrDefault(name => table.Columns.Contains(name));
 }

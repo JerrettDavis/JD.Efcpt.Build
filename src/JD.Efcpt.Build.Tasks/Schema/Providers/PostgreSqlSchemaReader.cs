@@ -140,12 +140,5 @@ internal sealed class PostgreSqlSchemaReader : ISchemaReader
     }
 
     private static string GetColumnName(DataTable table, params string[] possibleNames)
-    {
-        foreach (var name in possibleNames)
-        {
-            if (table.Columns.Contains(name))
-                return name;
-        }
-        return possibleNames[0];
-    }
+        => possibleNames.FirstOrDefault(name => table.Columns.Contains(name)) ?? possibleNames[0];
 }

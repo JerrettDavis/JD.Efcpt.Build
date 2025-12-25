@@ -279,11 +279,13 @@ public sealed class StageEfcptInputs : Task
         var dotIndex = versionPart.IndexOf('.');
         var hyphenIndex = versionPart.IndexOf('-');
 
-        int cutIndex;
-        if (dotIndex >= 0 && hyphenIndex >= 0)
-            cutIndex = Math.Min(dotIndex, hyphenIndex);
-        else
-            cutIndex = dotIndex >= 0 ? dotIndex : hyphenIndex;
+        var cutIndex = (dotIndex >= 0, hyphenIndex >= 0) switch
+        {
+            (true, true) => Math.Min(dotIndex, hyphenIndex),
+            (true, false) => dotIndex,
+            (false, true) => hyphenIndex,
+            _ => -1
+        };
 
         if (cutIndex > 0)
             versionPart = versionPart[..cutIndex];

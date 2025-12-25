@@ -77,7 +77,7 @@ internal sealed class SqliteSchemaReader : ISchemaReader
             var type = reader.IsDBNull(2) ? "TEXT" : reader.GetString(2);
             var notNull = reader.GetInt32(3) == 1;
             var defaultValue = reader.IsDBNull(4) ? null : reader.GetString(4);
-            var isPrimaryKey = reader.GetInt32(5) == 1;
+            // Note: pk column (index 5) indicates primary key membership but is handled via indexes
 
             columns.Add(new ColumnModel(
                 Name: name,

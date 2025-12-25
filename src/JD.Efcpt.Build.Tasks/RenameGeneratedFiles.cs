@@ -50,11 +50,12 @@ public sealed class RenameGeneratedFiles : Task
         if (!Directory.Exists(GeneratedDir))
             return true;
 
-        foreach (var file in Directory.EnumerateFiles(GeneratedDir, "*.cs", SearchOption.AllDirectories))
-        {
-            if (file.EndsWith(".g.cs", StringComparison.OrdinalIgnoreCase))
-                continue;
+        var filesToRename = Directory
+            .EnumerateFiles(GeneratedDir, "*.cs", SearchOption.AllDirectories)
+            .Where(file => !file.EndsWith(".g.cs", StringComparison.OrdinalIgnoreCase));
 
+        foreach (var file in filesToRename)
+        {
             var newPath = Path.Combine(Path.GetDirectoryName(file)!, Path.GetFileNameWithoutExtension(file) + ".g.cs");
             if (File.Exists(newPath))
                 File.Delete(newPath);
