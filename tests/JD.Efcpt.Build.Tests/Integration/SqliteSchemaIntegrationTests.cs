@@ -173,7 +173,7 @@ public sealed class SqliteSchemaIntegrationTests(ITestOutputHelper output) : Tin
                 var fp2 = SchemaFingerprinter.ComputeFingerprint(schema2);
                 return (ctx, fp1, fp2);
             })
-            .Then("fingerprints are equal", r => r.fp1 == r.fp2)
+            .Then("fingerprints are equal", r => string.Equals(r.fp1, r.fp2, StringComparison.Ordinal))
             .And("fingerprint is not empty", r => !string.IsNullOrEmpty(r.fp1))
             .Finally(r => r.ctx.Dispose())
             .AssertPassed();
@@ -202,7 +202,7 @@ public sealed class SqliteSchemaIntegrationTests(ITestOutputHelper output) : Tin
 
                 return (ctx, fp1, fp2);
             })
-            .Then("fingerprints are different", r => r.fp1 != r.fp2)
+            .Then("fingerprints are different", r => !string.Equals(r.fp1, r.fp2, StringComparison.Ordinal))
             .Finally(r => r.ctx.Dispose())
             .AssertPassed();
     }

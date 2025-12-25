@@ -205,7 +205,7 @@ public sealed class MySqlSchemaIntegrationTests(ITestOutputHelper output) : Tiny
     {
         await Given("a MySQL container with test schema", SetupDatabaseWithSchema)
             .When("fingerprint computed twice", ExecuteComputeFingerprint)
-            .Then("fingerprints are equal", r => r.Fingerprint1 == r.Fingerprint2)
+            .Then("fingerprints are equal", r => string.Equals(r.Fingerprint1, r.Fingerprint2, StringComparison.Ordinal))
             .And("fingerprint is not empty", r => !string.IsNullOrEmpty(r.Fingerprint1))
             .Finally(r => r.Context.Dispose())
             .AssertPassed();
@@ -217,7 +217,7 @@ public sealed class MySqlSchemaIntegrationTests(ITestOutputHelper output) : Tiny
     {
         await Given("a MySQL container with test schema", SetupDatabaseWithSchema)
             .When("schema is modified", ExecuteComputeFingerprintWithChange)
-            .Then("fingerprints are different", r => r.Fingerprint1 != r.Fingerprint2)
+            .Then("fingerprints are different", r => !string.Equals(r.Fingerprint1, r.Fingerprint2, StringComparison.Ordinal))
             .Finally(r => r.Context.Dispose())
             .AssertPassed();
     }
