@@ -162,9 +162,25 @@ internal sealed class SqliteSchemaReader : ISchemaReader
         return columns;
     }
 
+    /// <summary>
+    /// Escapes an identifier for use in SQLite PRAGMA commands.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// PRAGMA commands in SQLite do not support parameterized queries, so identifiers
+    /// must be embedded directly in the SQL string. This method escapes identifiers using
+    /// SQLite's standard double-quote escaping mechanism.
+    /// </para>
+    /// <para>
+    /// Security note: All identifier values used with this method come from SQLite's own
+    /// metadata tables (sqlite_master, PRAGMA index_list), not from external user input.
+    /// The escaping protects against special characters in legitimate table/index names.
+    /// </para>
+    /// </remarks>
     private static string EscapeIdentifier(string identifier)
     {
         // Escape double quotes by doubling them, then wrap in quotes
+        // This is SQLite's standard identifier quoting mechanism
         return $"\"{identifier.Replace("\"", "\"\"")}\"";
     }
 }
