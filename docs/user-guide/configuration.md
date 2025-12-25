@@ -71,6 +71,103 @@ Set these properties in your `.csproj` file or `Directory.Build.props`.
 | `EfcptLogVerbosity` | `minimal` | Logging level: `minimal` or `detailed` |
 | `EfcptDumpResolvedInputs` | `false` | Log all resolved input paths |
 
+### Config Override Properties
+
+These properties override values in `efcpt-config.json` without editing the JSON file directly. This is useful for CI/CD scenarios or when you want different settings per build configuration.
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `EfcptApplyMsBuildOverrides` | `true` | Whether to apply MSBuild property overrides to user-provided config files |
+
+#### Names Section Overrides
+
+| Property | JSON Property | Description |
+|----------|---------------|-------------|
+| `EfcptConfigRootNamespace` | `root-namespace` | Root namespace for generated code |
+| `EfcptConfigDbContextName` | `dbcontext-name` | Name of the DbContext class |
+| `EfcptConfigDbContextNamespace` | `dbcontext-namespace` | Namespace for the DbContext class |
+| `EfcptConfigModelNamespace` | `model-namespace` | Namespace for entity model classes |
+
+#### File Layout Section Overrides
+
+| Property | JSON Property | Description |
+|----------|---------------|-------------|
+| `EfcptConfigOutputPath` | `output-path` | Output path for generated entity files |
+| `EfcptConfigDbContextOutputPath` | `output-dbcontext-path` | Output path for the DbContext file |
+| `EfcptConfigSplitDbContext` | `split-dbcontext-preview` | Enable split DbContext generation (preview) |
+| `EfcptConfigUseSchemaFolders` | `use-schema-folders-preview` | Use schema-based folders (preview) |
+| `EfcptConfigUseSchemaNamespaces` | `use-schema-namespaces-preview` | Use schema-based namespaces (preview) |
+
+#### Code Generation Section Overrides
+
+| Property | JSON Property | Description |
+|----------|---------------|-------------|
+| `EfcptConfigEnableOnConfiguring` | `enable-on-configuring` | Add OnConfiguring method to the DbContext |
+| `EfcptConfigGenerationType` | `type` | Type of files to generate: `all`, `dbcontext`, `entities` |
+| `EfcptConfigUseDatabaseNames` | `use-database-names` | Use table and column names from the database |
+| `EfcptConfigUseDataAnnotations` | `use-data-annotations` | Use DataAnnotation attributes rather than fluent API |
+| `EfcptConfigUseNullableReferenceTypes` | `use-nullable-reference-types` | Use nullable reference types |
+| `EfcptConfigUseInflector` | `use-inflector` | Pluralize or singularize generated names |
+| `EfcptConfigUseLegacyInflector` | `use-legacy-inflector` | Use EF6 Pluralizer instead of Humanizer |
+| `EfcptConfigUseManyToManyEntity` | `use-many-to-many-entity` | Preserve many-to-many entity instead of skipping |
+| `EfcptConfigUseT4` | `use-t4` | Customize code using T4 templates |
+| `EfcptConfigUseT4Split` | `use-t4-split` | Customize code using T4 templates with EntityTypeConfiguration.t4 |
+| `EfcptConfigRemoveDefaultSqlFromBool` | `remove-defaultsql-from-bool-properties` | Remove SQL default from bool columns |
+| `EfcptConfigSoftDeleteObsoleteFiles` | `soft-delete-obsolete-files` | Run cleanup of obsolete files |
+| `EfcptConfigDiscoverMultipleResultSets` | `discover-multiple-stored-procedure-resultsets-preview` | Discover multiple result sets from stored procedures (preview) |
+| `EfcptConfigUseAlternateResultSetDiscovery` | `use-alternate-stored-procedure-resultset-discovery` | Use sp_describe_first_result_set for result set discovery |
+| `EfcptConfigT4TemplatePath` | `t4-template-path` | Global path to T4 templates |
+| `EfcptConfigUseNoNavigations` | `use-no-navigations-preview` | Remove all navigation properties (preview) |
+| `EfcptConfigMergeDacpacs` | `merge-dacpacs` | Merge .dacpac files when using references |
+| `EfcptConfigRefreshObjectLists` | `refresh-object-lists` | Refresh object lists from database during scaffolding |
+| `EfcptConfigGenerateMermaidDiagram` | `generate-mermaid-diagram` | Create a Mermaid ER diagram during scaffolding |
+| `EfcptConfigUseDecimalAnnotationForSprocs` | `use-decimal-data-annotation-for-sproc-results` | Use explicit decimal annotation for stored procedure results |
+| `EfcptConfigUsePrefixNavigationNaming` | `use-prefix-navigation-naming` | Use prefix-based naming of navigations (EF Core 8+) |
+| `EfcptConfigUseDatabaseNamesForRoutines` | `use-database-names-for-routines` | Use database names for stored procedures and functions |
+| `EfcptConfigUseInternalAccessForRoutines` | `use-internal-access-modifiers-for-sprocs-and-functions` | Use internal access modifiers for stored procedures and functions |
+
+#### Type Mappings Section Overrides
+
+| Property | JSON Property | Description |
+|----------|---------------|-------------|
+| `EfcptConfigUseDateOnlyTimeOnly` | `use-DateOnly-TimeOnly` | Map date and time to DateOnly/TimeOnly |
+| `EfcptConfigUseHierarchyId` | `use-HierarchyId` | Map hierarchyId type |
+| `EfcptConfigUseSpatial` | `use-spatial` | Map spatial columns |
+| `EfcptConfigUseNodaTime` | `use-NodaTime` | Use NodaTime types |
+
+#### Replacements Section Overrides
+
+| Property | JSON Property | Description |
+|----------|---------------|-------------|
+| `EfcptConfigPreserveCasingWithRegex` | `preserve-casing-with-regex` | Preserve casing with regex when custom naming |
+
+#### Override Behavior
+
+- **Default config**: When using the library-provided default config, overrides are **always** applied
+- **User-provided config**: Overrides are only applied if `EfcptApplyMsBuildOverrides` is `true` (default)
+- **Empty values**: Empty or whitespace-only property values are treated as "no override" and preserve the original JSON value
+
+#### Example Usage
+
+Override settings via MSBuild properties in your `.csproj`:
+
+```xml
+<PropertyGroup>
+  <EfcptConfigRootNamespace>MyApp.Data</EfcptConfigRootNamespace>
+  <EfcptConfigDbContextName>AppDbContext</EfcptConfigDbContextName>
+  <EfcptConfigUseNullableReferenceTypes>true</EfcptConfigUseNullableReferenceTypes>
+  <EfcptConfigUseDateOnlyTimeOnly>true</EfcptConfigUseDateOnlyTimeOnly>
+</PropertyGroup>
+```
+
+Or per-configuration in CI/CD:
+
+```xml
+<PropertyGroup Condition="'$(Configuration)' == 'Release'">
+  <EfcptConfigEnableOnConfiguring>false</EfcptConfigEnableOnConfiguring>
+</PropertyGroup>
+```
+
 ## efcpt-config.json
 
 The primary configuration file for EF Core Power Tools generation options.

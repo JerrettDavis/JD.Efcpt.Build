@@ -13,7 +13,7 @@ When you add the package to your project, it hooks into the build pipeline and e
 
 ## The Build Pipeline
 
-The pipeline consists of six stages that run before C# compilation:
+The pipeline consists of seven stages that run before C# compilation:
 
 ### Stage 1: EfcptResolveInputs
 
@@ -65,7 +65,29 @@ The pipeline consists of six stages that run before C# compilation:
 - `StagedRenamingPath` - Path to staged renaming rules
 - `StagedTemplateDir` - Path to staged templates
 
-### Stage 4: EfcptComputeFingerprint
+### Stage 4: EfcptApplyConfigOverrides
+
+**Purpose**: Apply MSBuild property overrides to the staged configuration.
+
+**What it does**:
+- Reads the staged `efcpt-config.json` file
+- Applies any non-empty MSBuild property overrides (37 properties across 5 sections)
+- Uses a typed model matching the complete efcpt-config.json schema
+- Writes the modified configuration back to the staged file
+
+**Override Sections**:
+- **Names** - Namespace and DbContext naming
+- **File Layout** - Output paths and organization
+- **Code Generation** - 23 generation options
+- **Type Mappings** - DateOnly/TimeOnly, HierarchyId, spatial, NodaTime
+- **Replacements** - Custom naming with regex casing preservation
+
+**Override Behavior**:
+- When using the library default config, overrides are always applied
+- When using a user-provided config, overrides are only applied if `EfcptApplyMsBuildOverrides` is `true`
+- Empty or whitespace-only values are treated as "no override"
+
+### Stage 5: EfcptComputeFingerprint
 
 **Purpose**: Detect whether code regeneration is needed.
 
@@ -81,7 +103,7 @@ The pipeline consists of six stages that run before C# compilation:
 - `Fingerprint` - The computed XxHash64 hash
 - `HasChanged` - Boolean indicating whether regeneration is needed
 
-### Stage 5: EfcptGenerateModels
+### Stage 6: EfcptGenerateModels
 
 **Purpose**: Run the EF Core Power Tools CLI to generate code.
 
@@ -98,7 +120,7 @@ The pipeline consists of six stages that run before C# compilation:
 3. **global** - Uses globally installed tool
 4. **explicit** - Uses path specified in `EfcptToolPath`
 
-### Stage 6: EfcptAddToCompile
+### Stage 7: EfcptAddToCompile
 
 **Purpose**: Include generated files in compilation.
 
@@ -113,9 +135,11 @@ Fingerprinting is a key optimization that prevents unnecessary code regeneration
 ### What's Included in the Fingerprint
 
 - **DACPAC content** (in .sqlproj mode) or **schema metadata** (in connection string mode)
-- **efcpt-config.json** - Generation options, namespaces, table selection
+- **efcpt-config.json** - Generation options, namespaces, table selection (including MSBuild overrides)
 - **efcpt.renaming.json** - Custom naming rules
 - **T4 templates** - All template files and their contents
+
+Note: The fingerprint is computed after MSBuild property overrides are applied, so changing an override property (like `EfcptConfigRootNamespace`) will trigger regeneration.
 
 All hashing uses XxHash64, a fast non-cryptographic hash algorithm.
 
