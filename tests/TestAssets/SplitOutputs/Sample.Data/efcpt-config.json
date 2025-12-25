@@ -1,0 +1,10 @@
+{
+  "names": {
+    "root-namespace": "Sample.Data",
+    "dbcontext-name": "SampleDbContext"
+  },
+  "code-generation": {
+    "use-t4": true,
+    "t4-template-path": "."
+  }
+}

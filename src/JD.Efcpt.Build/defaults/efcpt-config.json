@@ -1,9 +1,5 @@
 {
   "$schema": "https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/master/samples/efcpt-config.schema.json",
-  "tables": [],
-  "views": [],
-  "stored-procedures": [],
-  "functions": [],
   "code-generation":
   { 
      "enable-on-configuring": false,
@@ -11,7 +7,7 @@
      "use-database-names": false,
      "use-data-annotations": false,
      "use-nullable-reference-types": true,
-     "use-inflector": false,
+     "use-inflector": true,
      "use-legacy-inflector": false,
      "use-many-to-many-entity": false,
      "use-t4": true,
@@ -19,10 +15,7 @@
      "soft-delete-obsolete-files": false,
      "discover-multiple-stored-procedure-resultsets-preview": false,
      "use-alternate-stored-procedure-resultset-discovery": false,
-     "t4-template-path": null,
-     "use-no-navigations-preview": false,
-     "merge-dacpacs": false,
-     "refresh-object-lists": false
+     "t4-template-path": null
   },
   "names":
   {

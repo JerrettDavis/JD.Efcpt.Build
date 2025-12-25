@@ -16,7 +16,7 @@ using System.IO;
 
 var rootDir = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "..", ".."));
 var artifactsDir = Path.Combine(rootDir, "artifacts");
-var sampleDir = Path.Combine(rootDir, "samples", "msbuild-sdk-sql-proj-generation");
+var sampleDir = Path.Combine(rootDir, "samples", "split-data-and-models-between-multiple-projects");
 var tasksProject = Path.Combine(rootDir, "src", "JD.Efcpt.Build.Tasks", "JD.Efcpt.Build.Tasks.csproj");
 var buildProject = Path.Combine(rootDir, "src", "JD.Efcpt.Build", "JD.Efcpt.Build.csproj");
 var nugetCachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages", "jd.efcpt.build");
@@ -63,11 +63,19 @@ Console.WriteLine();
 
 // Step 5: Clean sample output
 Console.WriteLine("Step 5: Cleaning sample output...");
-var sampleEfcptDir = Path.Combine(sampleDir, "EntityFrameworkCoreProject", "obj", "efcpt");
-if (Directory.Exists(sampleEfcptDir))
+var modelsEfcptDir = Path.Combine(sampleDir, "SampleApp.Models", "obj", "efcpt");
+var dataEfcptDir = Path.Combine(sampleDir, "SampleApp.Data", "obj", "efcpt");
+
+if (Directory.Exists(modelsEfcptDir))
 {
-    Directory.Delete(sampleEfcptDir, true);
-    Console.WriteLine($"  ✓ Removed: {sampleEfcptDir}");
+    Directory.Delete(modelsEfcptDir, true);
+    Console.WriteLine($"  ✓ Removed: {modelsEfcptDir}");
+}
+
+if (Directory.Exists(dataEfcptDir))
+{
+    Directory.Delete(dataEfcptDir, true);
+    Console.WriteLine($"  ✓ Removed: {dataEfcptDir}");
 }
 RunCommand("dotnet", "clean", sampleDir);
 Console.WriteLine();

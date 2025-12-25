@@ -114,6 +114,13 @@ public sealed class RunEfcpt : Task
     /// The value is interpreted case-insensitively. The strings <c>true</c>, <c>1</c>, and <c>yes</c>
     /// enable restore; any other value disables it. Defaults to <c>true</c>.
     /// </value>
+    /// <remarks>
+    /// <para>
+    /// On .NET 10.0 or later, tool restoration is skipped even when this property is <c>true</c>
+    /// because the <c>dnx</c> command handles tool execution directly without requiring prior
+    /// installation. The tool is fetched and run on-demand by the dotnet SDK.
+    /// </para>
+    /// </remarks>
     public string ToolRestore { get; set; } = "true";
 
     /// <summary>
@@ -287,27 +294,29 @@ public sealed class RunEfcpt : Task
     private static readonly Lazy<ActionStrategy<ToolRestoreContext>> ToolRestoreStrategy = new(() =>
         ActionStrategy<ToolRestoreContext>.Create()
             // Manifest restore: restore tools from local manifest
-            .When(static (in ctx) => ctx is { UseManifest: true, ShouldRestore: true })
+            // Skip on .NET 10+ because dnx handles tool execution without installation
+            .When(static (in ctx) => ctx is { UseManifest: true, ShouldRestore: true } && !IsDotNet10OrLater())
             .Then((in ctx) =>
             {
                 var restoreCwd = ctx.ManifestDir ?? ctx.WorkingDir;
                 RunProcess(ctx.Log, ctx.DotNetExe, "tool restore", restoreCwd);
             })
             // Global restore: update global tool package
-            .When(static (in ctx) 
+            // Skip on .NET 10+ because dnx handles tool execution without installation
+            .When(static (in ctx)
                 => ctx is
                 {
-                    UseManifest: false, 
-                    ShouldRestore: true, 
-                    HasExplicitPath: false, 
+                    UseManifest: false,
+                    ShouldRestore: true,
+                    HasExplicitPath: false,
                     HasPackageId: true
-                })
+                } && !IsDotNet10OrLater())
             .Then((in ctx) =>
             {
                 var versionArg = string.IsNullOrWhiteSpace(ctx.ToolVersion) ? "" : $" --version \"{ctx.ToolVersion}\"";
                 RunProcess(ctx.Log, ctx.DotNetExe, $"tool update --global {ctx.ToolPackageId}{versionArg}", ctx.WorkingDir);
             })
-            // Default: no restoration needed
+            // Default: no restoration needed (includes .NET 10+ with dnx)
             .Default(static (in _) => { })
             .Build());
 
@@ -332,9 +341,29 @@ public sealed class RunEfcpt : Task
                 Directory.CreateDirectory(workingDir);
                 Directory.CreateDirectory(OutputDir);
 
+                // Generate realistic structure for testing split outputs:
+                // - DbContext in root (stays in Data project)
+                // - Entity models in Models subdirectory (copied to Models project)
+                var modelsDir = Path.Combine(OutputDir, "Models");
+                Directory.CreateDirectory(modelsDir);
+
+                // Root: DbContext (stays in Data project)
+                var dbContext = Path.Combine(OutputDir, "SampleDbContext.cs");
+                var source = DacpacPath ?? ConnectionString;
+                File.WriteAllText(dbContext, $"// generated from {source}\nnamespace Sample.Data;\npublic partial class SampleDbContext : DbContext {{ }}");
+
+                // Models folder: Entity classes (will be copied to Models project)
+                var blogModel = Path.Combine(modelsDir, "Blog.cs");
+                File.WriteAllText(blogModel, $"// generated from {source}\nnamespace Sample.Data.Models;\npublic partial class Blog {{ public int BlogId {{ get; set; }} }}");
+
+                var postModel = Path.Combine(modelsDir, "Post.cs");
+                File.WriteAllText(postModel, $"// generated from {source}\nnamespace Sample.Data.Models;\npublic partial class Post {{ public int PostId {{ get; set; }} }}");
+
+                // For backwards compatibility, also generate the legacy file
                 var sample = Path.Combine(OutputDir, "SampleModel.cs");
-                File.WriteAllText(sample, $"// generated from {DacpacPath}");
-                log.Detail("EFCPT_FAKE_EFCPT set; wrote sample output.");
+                File.WriteAllText(sample, $"// generated from {DacpacPath ?? ConnectionString}");
+
+                log.Detail("EFCPT_FAKE_EFCPT set; wrote sample output with Models subdirectory.");
                 return true;
             }
 
