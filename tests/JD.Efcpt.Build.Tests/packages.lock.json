@@ -49,6 +49,15 @@
           "Microsoft.TestPlatform.TestHost": "18.0.1"
         }
       },
+      "Testcontainers.FirebirdSql": {
+        "type": "Direct",
+        "requested": "[4.4.0, )",
+        "resolved": "4.4.0",
+        "contentHash": "ONWpb1QljC5vBbe9PJ1b4S0efEGSnWSDifRvphSD6lOuCmZyvvLYmtkLVVUY+KFdl8xxIs7Lvn2Hk+FWO5rOcg==",
+        "dependencies": {
+          "Testcontainers": "4.4.0"
+        }
+      },
       "Testcontainers.MsSql": {
         "type": "Direct",
         "requested": "[4.9.0, )",
@@ -63,6 +72,15 @@
         "requested": "[4.9.0, )",
         "resolved": "4.9.0",
         "contentHash": "CjZP47VejTl6xVpAXZrPwA5oqFUXSMKQKIc8va+HLFpf0nJkRLpzt6LfkzFvLIfdXzGPY4z6iMcBYJ3hmsl1UQ==",
+        "dependencies": {
+          "Testcontainers": "4.9.0"
+        }
+      },
+      "Testcontainers.Oracle": {
+        "type": "Direct",
+        "requested": "[4.9.0, )",
+        "resolved": "4.9.0",
+        "contentHash": "Dmz72RXx3Yy+1fszpTme2zA8jZHF/v1tNq0vxQ1ynEWre7CZTktUV1fjW1ssESRPpR2RGkRncCXqrQVZC5qBRw==",
         "dependencies": {
           "Testcontainers": "4.9.0"
         }

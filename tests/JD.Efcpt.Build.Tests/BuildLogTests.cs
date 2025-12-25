@@ -207,3 +207,139 @@ public sealed class BuildLogTests(ITestOutputHelper output) : TinyBddXunitBase(o
             .AssertPassed();
     }
 }
+
+/// <summary>
+/// Tests for the NullBuildLog no-op implementation.
+/// </summary>
+[Feature("NullBuildLog: no-op logging for testing")]
+[Collection(nameof(AssemblySetup))]
+public sealed class NullBuildLogTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+{
+    [Scenario("NullBuildLog.Instance is singleton")]
+    [Fact]
+    public async Task Instance_is_singleton()
+    {
+        await Given("the NullBuildLog class", () => true)
+            .When("accessing Instance twice", _ =>
+            {
+                var first = Tasks.NullBuildLog.Instance;
+                var second = Tasks.NullBuildLog.Instance;
+                return (first, second);
+            })
+            .Then("same instance is returned", r => ReferenceEquals(r.first, r.second))
+            .AssertPassed();
+    }
+
+    [Scenario("Info does not throw")]
+    [Fact]
+    public async Task Info_does_not_throw()
+    {
+        await Given("a NullBuildLog instance", () => Tasks.NullBuildLog.Instance)
+            .When("Info is called", log =>
+            {
+                log.Info("Test message");
+                return true;
+            })
+            .Then("no exception is thrown", success => success)
+            .AssertPassed();
+    }
+
+    [Scenario("Detail does not throw")]
+    [Fact]
+    public async Task Detail_does_not_throw()
+    {
+        await Given("a NullBuildLog instance", () => Tasks.NullBuildLog.Instance)
+            .When("Detail is called", log =>
+            {
+                log.Detail("Detailed message");
+                return true;
+            })
+            .Then("no exception is thrown", success => success)
+            .AssertPassed();
+    }
+
+    [Scenario("Warn does not throw")]
+    [Fact]
+    public async Task Warn_does_not_throw()
+    {
+        await Given("a NullBuildLog instance", () => Tasks.NullBuildLog.Instance)
+            .When("Warn is called", log =>
+            {
+                log.Warn("Warning message");
+                return true;
+            })
+            .Then("no exception is thrown", success => success)
+            .AssertPassed();
+    }
+
+    [Scenario("Warn with code does not throw")]
+    [Fact]
+    public async Task Warn_with_code_does_not_throw()
+    {
+        await Given("a NullBuildLog instance", () => Tasks.NullBuildLog.Instance)
+            .When("Warn with code is called", log =>
+            {
+                log.Warn("CODE001", "Warning with code");
+                return true;
+            })
+            .Then("no exception is thrown", success => success)
+            .AssertPassed();
+    }
+
+    [Scenario("Error does not throw")]
+    [Fact]
+    public async Task Error_does_not_throw()
+    {
+        await Given("a NullBuildLog instance", () => Tasks.NullBuildLog.Instance)
+            .When("Error is called", log =>
+            {
+                log.Error("Error message");
+                return true;
+            })
+            .Then("no exception is thrown", success => success)
+            .AssertPassed();
+    }
+
+    [Scenario("Error with code does not throw")]
+    [Fact]
+    public async Task Error_with_code_does_not_throw()
+    {
+        await Given("a NullBuildLog instance", () => Tasks.NullBuildLog.Instance)
+            .When("Error with code is called", log =>
+            {
+                log.Error("CODE002", "Error with code");
+                return true;
+            })
+            .Then("no exception is thrown", success => success)
+            .AssertPassed();
+    }
+
+    [Scenario("All methods can be called in sequence")]
+    [Fact]
+    public async Task All_methods_can_be_called_in_sequence()
+    {
+        await Given("a NullBuildLog instance", () => Tasks.NullBuildLog.Instance)
+            .When("all methods are called", log =>
+            {
+                log.Info("Info");
+                log.Detail("Detail");
+                log.Warn("Warn");
+                log.Warn("CODE", "Warn with code");
+                log.Error("Error");
+                log.Error("CODE", "Error with code");
+                return true;
+            })
+            .Then("no exception is thrown", success => success)
+            .AssertPassed();
+    }
+
+    [Scenario("NullBuildLog implements IBuildLog")]
+    [Fact]
+    public async Task Implements_IBuildLog()
+    {
+        await Given("a NullBuildLog instance", () => Tasks.NullBuildLog.Instance)
+            .When("checking interface", log => log is Tasks.IBuildLog)
+            .Then("implements IBuildLog", result => result)
+            .AssertPassed();
+    }
+}
