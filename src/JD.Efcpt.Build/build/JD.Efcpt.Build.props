@@ -41,5 +41,22 @@
     <!-- Diagnostics -->
     <EfcptLogVerbosity Condition="'$(EfcptLogVerbosity)'==''">minimal</EfcptLogVerbosity>
     <EfcptDumpResolvedInputs Condition="'$(EfcptDumpResolvedInputs)'==''">false</EfcptDumpResolvedInputs>
+
+    <!--
+      Split Outputs: separate a primary Models project from a secondary Data project.
+      Enable EfcptSplitOutputs in the Models project (with EfcptEnabled=true) and
+      set EfcptDataProject to the target Data project that should receive DbContext
+      and configuration classes.
+
+      The Models project runs efcpt and generates all files. It keeps the entity
+      model classes (for example, in a Models/ subdirectory), and copies DbContext
+      and configuration classes to the configured Data project.
+    -->
+    <EfcptSplitOutputs Condition="'$(EfcptSplitOutputs)'==''">false</EfcptSplitOutputs>
+    <EfcptDataProject Condition="'$(EfcptDataProject)'==''"></EfcptDataProject>
+    <EfcptDataProjectOutputSubdir Condition="'$(EfcptDataProjectOutputSubdir)'==''">obj\efcpt\Generated\</EfcptDataProjectOutputSubdir>
+
+    <!-- External Data: for Data project to include DbContext/configs copied from Models project -->
+    <EfcptExternalDataDir Condition="'$(EfcptExternalDataDir)'==''"></EfcptExternalDataDir>
   </PropertyGroup>
 </Project>

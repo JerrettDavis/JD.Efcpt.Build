@@ -1,21 +1,21 @@
 <Project>
 
-  <!--
-    JD.Efcpt.Build main MSBuild integration for efcpt.
-    ...existing code...
-  -->
-
   <!-- Determine the correct task assembly path based on MSBuild version -->
   <PropertyGroup>
     <!-- Use the appropriate .NET version for the task assembly -->
     <_EfcptTasksFolder Condition="'$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.12'))">net10.0</_EfcptTasksFolder>
     <_EfcptTasksFolder Condition="'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.10'))">net9.0</_EfcptTasksFolder>
     <_EfcptTasksFolder Condition="'$(_EfcptTasksFolder)' == ''">net8.0</_EfcptTasksFolder>
+
+    <!-- Primary path: NuGet package location -->
     <_EfcptTaskAssembly>$(MSBuildThisFileDirectory)..\tasks\$(_EfcptTasksFolder)\JD.Efcpt.Build.Tasks.dll</_EfcptTaskAssembly>
+
+    <!-- Fallback path: Local development (when building from source) -->
+    <_EfcptTaskAssembly Condition="!Exists('$(_EfcptTaskAssembly)')">$(MSBuildThisFileDirectory)..\..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\$(_EfcptTasksFolder)\JD.Efcpt.Build.Tasks.dll</_EfcptTaskAssembly>
+    <_EfcptTaskAssembly Condition="!Exists('$(_EfcptTaskAssembly)') and '$(Configuration)' == ''">$(MSBuildThisFileDirectory)..\..\JD.Efcpt.Build.Tasks\bin\Debug\$(_EfcptTasksFolder)\JD.Efcpt.Build.Tasks.dll</_EfcptTaskAssembly>
   </PropertyGroup>
 
-  <!-- Register MSBuild tasks from the tasks assembly -->
-  <!-- Use AssemblyFile to avoid NuGet copying/locking the DLL -->
+  <!-- Register MSBuild tasks - use AssemblyFile to avoid NuGet copying/locking the DLL -->
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs"
              AssemblyFile="$(_EfcptTaskAssembly)" />
 
@@ -37,21 +37,7 @@
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.QuerySchemaMetadata"
              AssemblyFile="$(_EfcptTaskAssembly)" />
 
-  <!--
-    Stage 1: resolve the SQL project and key efcpt inputs (config, renaming, template).
-
-    Inputs (selected MSBuild properties):
-      - EfcptEnabled           : master switch, must be 'true' to run the pipeline
-      - EfcptSqlProj           : optional override path to the .sqlproj to use
-      - EfcptConfig            : optional override path to efcpt-config.json
-      - EfcptRenaming          : optional override path to efcpt.renaming.json
-      - EfcptTemplateDir       : optional override path to the template directory
-      - EfcptSolutionDir       : optional solution root to probe for inputs
-      - EfcptSolutionPath      : optional solution file path for SQL project fallback scanning
-      - EfcptProbeSolutionDir  : boolean-like flag controlling whether SolutionDir is probed (default: true)
-      - EfcptOutput            : output directory used by later stages
-      - EfcptDumpResolvedInputs: when 'true', write resolved-inputs.json for debugging
-  -->
+  <!-- Main pipeline -->
   <Target Name="EfcptResolveInputs"
           Condition="'$(EfcptEnabled)' == 'true'">
     <ResolveSqlProjAndInputs
@@ -82,18 +68,6 @@
     </ResolveSqlProjAndInputs>
   </Target>
 
-  <!--
-    Stage 1.5: query database schema metadata when using connection string mode.
-
-    Inputs:
-      - _EfcptResolvedConnectionString : connection string resolved by EfcptResolveInputs
-      - EfcptOutput        : output directory for schema-model.json
-      - EfcptProvider      : database provider (mssql, postgresql, etc.)
-      - EfcptLogVerbosity  : controls logging verbosity
-
-    Outputs:
-      - _EfcptSchemaFingerprint : XxHash64 fingerprint of the database schema
-  -->
   <Target Name="EfcptQuerySchemaMetadata"
           AfterTargets="EfcptResolveInputs"
           BeforeTargets="EfcptStageInputs"
@@ -107,18 +81,6 @@
     </QuerySchemaMetadata>
   </Target>
 
-  <!--
-    Stage 2a: use a pre-built DACPAC directly when EfcptDacpac is specified.
-
-    Inputs:
-      - EfcptDacpac : explicit path to a pre-built DACPAC file
-
-    Outputs:
-      - _EfcptDacpacPath      : full path to the DACPAC
-      - _EfcptUseDirectDacpac : flag indicating direct DACPAC mode
-
-    Note: This stage is skipped when using connection string mode or when EfcptDacpac is not set.
-  -->
   <Target Name="EfcptUseDirectDacpac"
           DependsOnTargets="EfcptResolveInputs"
           Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(EfcptDacpac)' != ''">
@@ -182,15 +144,6 @@
     </EnsureDacpacBuilt>
   </Target>
 
-  <!--
-    Stage 3: copy configuration, renaming, and templates into the working output directory.
-
-    Inputs:
-      - EfcptOutput          : directory where staged assets will be placed
-      - _EfcptResolvedConfig : config path resolved by EfcptResolveInputs
-      - _EfcptResolvedRenaming : renaming path resolved by EfcptResolveInputs
-      - _EfcptResolvedTemplateDir : template directory resolved by EfcptResolveInputs
-  -->
   <Target Name="EfcptStageInputs"
           DependsOnTargets="EfcptEnsureDacpac;EfcptUseDirectDacpac"
           Condition="'$(EfcptEnabled)' == 'true'">
@@ -201,6 +154,7 @@
         RenamingPath="$(_EfcptResolvedRenaming)"
         TemplateDir="$(_EfcptResolvedTemplateDir)"
         TemplateOutputDir="$(EfcptGeneratedDir)"
+        TargetFramework="$(TargetFramework)"
         LogVerbosity="$(EfcptLogVerbosity)">
       <Output TaskParameter="StagedConfigPath" PropertyName="_EfcptStagedConfig" />
       <Output TaskParameter="StagedRenamingPath" PropertyName="_EfcptStagedRenaming" />
@@ -208,18 +162,6 @@
     </StageEfcptInputs>
   </Target>
 
-  <!--
-    Stage 4: compute a fingerprint over the DACPAC and staged inputs to detect changes.
-
-    Inputs:
-      - _EfcptDacpacPath       : DACPAC produced or reused by EfcptEnsureDacpac (DACPAC mode)
-      - _EfcptSchemaFingerprint: schema fingerprint from EfcptQuerySchemaMetadata (connection string mode)
-      - _EfcptUseConnectionString: flag indicating whether connection string mode is active
-      - _EfcptStagedConfig     : config file staged by EfcptStageInputs
-      - _EfcptStagedRenaming   : renaming file staged by EfcptStageInputs
-      - _EfcptStagedTemplateDir: template directory staged by EfcptStageInputs
-      - EfcptFingerprintFile   : path to the fingerprint cache file
-  -->
   <Target Name="EfcptComputeFingerprint"
           DependsOnTargets="EfcptStageInputs"
           Condition="'$(EfcptEnabled)' == 'true'">
@@ -237,9 +179,6 @@
     </ComputeFingerprint>
   </Target>
 
-  <!--
-    Stage 5: run efcpt to generate EF Core model files when the fingerprint has changed.
-  -->
   <Target Name="EfcptGenerateModels"
           DependsOnTargets="EfcptComputeFingerprint"
           BeforeTargets="CoreCompile"
@@ -271,26 +210,147 @@
   </Target>
 
   <!--
-    Stage 6: always include generated files in the Compile item group when present.
+    ========================================================================
+    Split Outputs: Separate Models project from Data project
+    ========================================================================
+    When EfcptSplitOutputs=true, the Models project is the primary project
+    that runs efcpt and generates all files. Entity models stay in Models,
+    while DbContext and configurations are copied to the Data project.
 
-    This target runs before CoreCompile and ensures the entire EFCPT pipeline executes.
-    It explicitly depends on the full pipeline to ensure all targets run in order.
+    This approach works because Data depends on Models, so Models builds
+    first and generates the code before Data needs the types.
+  -->
+
+  <!--
+    Validate split outputs configuration and resolve Data project path.
+    Ensures the Data project exists and is properly configured.
+  -->
+  <Target Name="EfcptValidateSplitOutputs"
+          DependsOnTargets="EfcptGenerateModels"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptSplitOutputs)' == 'true'">
+
+    <!-- Resolve Data project path -->
+    <PropertyGroup>
+      <_EfcptDataProjectPath Condition="'$(EfcptDataProject)' != ''">$([System.IO.Path]::GetFullPath('$(EfcptDataProject)', '$(MSBuildProjectDirectory)'))</_EfcptDataProjectPath>
+    </PropertyGroup>
+
+    <!-- Error if Data project not specified -->
+    <Error Condition="'$(_EfcptDataProjectPath)' == ''"
+           Text="EfcptSplitOutputs is enabled but EfcptDataProject is not set. Please specify the path to your Data project: &lt;EfcptDataProject&gt;..\MyProject.Data\MyProject.Data.csproj&lt;/EfcptDataProject&gt;" />
+
+    <!-- Error if Data project doesn't exist -->
+    <Error Condition="!Exists('$(_EfcptDataProjectPath)')"
+           Text="EfcptDataProject was specified but the file does not exist: $(_EfcptDataProjectPath)" />
+
+    <!-- Resolve Data project directory -->
+    <PropertyGroup>
+      <_EfcptDataProjectDir>$([System.IO.Path]::GetDirectoryName('$(_EfcptDataProjectPath)'))\</_EfcptDataProjectDir>
+      <_EfcptDataDestDir>$(_EfcptDataProjectDir)$(EfcptDataProjectOutputSubdir)</_EfcptDataDestDir>
+    </PropertyGroup>
+
+    <Message Text="Split outputs enabled. DbContext and configurations will be copied to: $(_EfcptDataDestDir)" Importance="high" />
+  </Target>
+
+  <!--
+    Copy generated DbContext and configuration files to the Data project.
+    - DbContext files go to the root of the destination
+    - Configuration files go to a Configurations subfolder
+    - Files are deleted from the Models project after copying
+    Only runs when source files exist (i.e., when generation actually occurred).
+  -->
+  <Target Name="EfcptCopyDataToDataProject"
+          DependsOnTargets="EfcptValidateSplitOutputs"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptSplitOutputs)' == 'true'">
+
+    <!-- Find DbContext files (root-level .g.cs files that are NOT configurations) -->
+    <ItemGroup>
+      <_EfcptDbContextFiles Include="$(EfcptGeneratedDir)*.g.cs" Exclude="$(EfcptGeneratedDir)*Configuration.g.cs" />
+    </ItemGroup>
+
+    <!-- Find Configuration files (root-level *Configuration.g.cs or in Configurations folder) -->
+    <ItemGroup>
+      <_EfcptConfigurationFiles Include="$(EfcptGeneratedDir)*Configuration.g.cs" />
+      <_EfcptConfigurationFiles Include="$(EfcptGeneratedDir)Configurations\**\*.g.cs" />
+    </ItemGroup>
+
+    <!-- Only proceed if there are source files to copy (generation occurred) -->
+    <PropertyGroup>
+      <_EfcptHasFilesToCopy Condition="'@(_EfcptDbContextFiles)' != '' or '@(_EfcptConfigurationFiles)' != ''">true</_EfcptHasFilesToCopy>
+    </PropertyGroup>
+
+    <!-- Clean destination directory first to remove stale files (only if we have files to copy) -->
+    <RemoveDir Directories="$(_EfcptDataDestDir)" Condition="'$(_EfcptHasFilesToCopy)' == 'true' and Exists('$(_EfcptDataDestDir)')" />
+    <MakeDir Directories="$(_EfcptDataDestDir)" Condition="'$(_EfcptHasFilesToCopy)' == 'true'" />
+    <MakeDir Directories="$(_EfcptDataDestDir)Configurations" Condition="'@(_EfcptConfigurationFiles)' != ''" />
+
+    <!-- Copy DbContext files to root of destination -->
+    <Copy SourceFiles="@(_EfcptDbContextFiles)"
+          DestinationFolder="$(_EfcptDataDestDir)"
+          SkipUnchangedFiles="true"
+          Condition="'@(_EfcptDbContextFiles)' != ''">
+      <Output TaskParameter="CopiedFiles" ItemName="_EfcptCopiedDataFiles" />
+    </Copy>
+
+    <!-- Copy Configuration files to Configurations subfolder -->
+    <Copy SourceFiles="@(_EfcptConfigurationFiles)"
+          DestinationFolder="$(_EfcptDataDestDir)Configurations"
+          SkipUnchangedFiles="true"
+          Condition="'@(_EfcptConfigurationFiles)' != ''">
+      <Output TaskParameter="CopiedFiles" ItemName="_EfcptCopiedDataFiles" />
+    </Copy>
+
+    <Message Text="Copied @(_EfcptCopiedDataFiles->Count()) data files to Data project: $(_EfcptDataDestDir)"
+             Condition="'@(_EfcptCopiedDataFiles)' != ''"
+             Importance="high" />
+
+    <Message Text="Split outputs: No new files to copy (generation was skipped)"
+             Condition="'$(_EfcptHasFilesToCopy)' != 'true'"
+             Importance="normal" />
+
+    <!-- Delete DbContext and Configuration files from Models project after copying -->
+    <Delete Files="@(_EfcptDbContextFiles)" Condition="'@(_EfcptDbContextFiles)' != ''" />
+    <Delete Files="@(_EfcptConfigurationFiles)" Condition="'@(_EfcptConfigurationFiles)' != ''" />
+    <Message Text="Removed DbContext and configuration files from Models project"
+             Condition="'$(_EfcptHasFilesToCopy)' == 'true'"
+             Importance="normal" />
+  </Target>
+
+  <!--
+    Include generated files in compilation.
+    In split outputs mode (Models project), only include model files (from Models folder).
+    In normal mode, include all generated files.
   -->
   <Target Name="EfcptAddToCompile"
           BeforeTargets="CoreCompile"
-          DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpac;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels"
+          DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpac;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels;EfcptCopyDataToDataProject"
           Condition="'$(EfcptEnabled)' == 'true'">
     <ItemGroup>
-      <Compile Include="$(EfcptGeneratedDir)**\*.g.cs" Visible="false" />
+      <!-- In split outputs mode (Models project is primary), only include model files -->
+      <Compile Include="$(EfcptGeneratedDir)Models\**\*.g.cs"
+               Visible="false"
+               Condition="'$(EfcptSplitOutputs)' == 'true'" />
+
+      <!-- In normal mode, include all generated files -->
+      <Compile Include="$(EfcptGeneratedDir)**\*.g.cs"
+               Visible="false"
+               Condition="'$(EfcptSplitOutputs)' != 'true'" />
     </ItemGroup>
   </Target>
 
   <!--
-    Clean target: remove efcpt output directory when 'dotnet clean' is run.
-
-    This integrates with the standard clean/restore/build/pack pipeline by ensuring
-    that efcpt artifacts are properly cleaned alongside other intermediate outputs.
+    Include external data files from another project (for Data project consumption).
+    Used when Data project has EfcptEnabled=false but needs to compile copied DbContext/configs.
   -->
+  <Target Name="EfcptIncludeExternalData"
+          BeforeTargets="CoreCompile"
+          Condition="'$(EfcptExternalDataDir)' != '' and Exists('$(EfcptExternalDataDir)')">
+    <ItemGroup>
+      <Compile Include="$(EfcptExternalDataDir)**\*.g.cs" Visible="false" />
+    </ItemGroup>
+    <Message Text="Including external data files from: $(EfcptExternalDataDir)" Importance="normal" />
+  </Target>
+
+  <!-- Clean target: remove efcpt output directory when 'dotnet clean' is run -->
   <Target Name="EfcptClean"
           AfterTargets="Clean"
           Condition="'$(EfcptEnabled)' == 'true'">

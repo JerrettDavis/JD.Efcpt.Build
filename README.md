@@ -13,25 +13,30 @@ Automate database-first EF Core model generation as part of your build pipeline.
 
 ## 🚀 Quick Start
 
-### Install (2-3 steps, 30 seconds)
+### Install (2 steps, 30 seconds)
 
-**Step 1:** Add the NuGet package to your application project:
-
-```xml
-<ItemGroup>
-  <PackageReference Include="JD.Efcpt.Build" Version="x.x.x" />
-</ItemGroup>
-```
-
-**Step 2:** *(Optional for .NET 10+)* Ensure EF Core Power Tools CLI is available:
-
-> **✨ .NET 10+ Users:** The tool is automatically executed via `dnx` and does **not** need to be installed. Skip this step if you're using .NET 10.0 or later!
+**Step 1:** Add the NuGet package to your application project / class library:
 
 ```bash
-# Only required for .NET 8.0 and 9.0
+dotnet add package JD.Efcpt.Build
+```
+
+**Step 2:** Build your project:
+
+```bash
+dotnet build
+```
+
+**That's it!** Your EF Core DbContext and entities are now automatically generated from your database project during every build.
+
+> **✨ .NET 8 and 9 Users must install the `ErikEJ.EFCorePowerTools.Cli` tool in advance:** 
+
+```bash
 dotnet tool install --global ErikEJ.EFCorePowerTools.Cli --version "8.*"
 dotnet tool install --global ErikEJ.EFCorePowerTools.Cli --version "9.*"
 ```
+
+---
 
 **Step 3:** Build your project:
 
@@ -110,7 +115,10 @@ The package orchestrates a MSBuild pipeline with these stages:
 
 - **.NET SDK 8.0+** (or compatible version)
 - **EF Core Power Tools CLI** (`ErikEJ.EFCorePowerTools.Cli`) - **Not required for .NET 10.0+** (uses `dnx` instead)
-- **SQL Server Database Project** (`.sqlproj`) that compiles to DACPAC
+- **SQL Server Database Project** that compiles to DACPAC:
+  - **[MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj)** - Cross-platform, works on Linux/macOS/Windows
+  - **[Microsoft.Build.Sql](https://github.com/microsoft/DacFx)** - Cross-platform SDK-style projects
+  - **Traditional `.sqlproj`** - Requires Windows/Visual Studio build tools
 
 ### Step 1: Install the Package
 
@@ -772,6 +780,8 @@ dotnet build
 
 ### GitHub Actions
 
+> **💡 Cross-Platform Support:** If you use [MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj) or [Microsoft.Build.Sql](https://github.com/microsoft/DacFx) for your database project, you can use `ubuntu-latest` instead of `windows-latest` runners. Traditional `.sqlproj` files require Windows build agents.
+
 **.NET 10+ (Recommended - No tool installation required!)**
 
 ```yaml
@@ -781,7 +791,7 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-latest  # Use ubuntu-latest with MSBuild.Sdk.SqlProj or Microsoft.Build.Sql
 
     steps:
     - uses: actions/checkout@v3
@@ -810,7 +820,7 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-latest  # Use ubuntu-latest with MSBuild.Sdk.SqlProj or Microsoft.Build.Sql
 
     steps:
     - uses: actions/checkout@v3
@@ -840,7 +850,7 @@ trigger:
   - main
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'windows-latest'  # Use ubuntu-latest with MSBuild.Sdk.SqlProj or Microsoft.Build.Sql
 
 steps:
 - task: UseDotNet@2
@@ -868,6 +878,8 @@ steps:
 
 ### Docker
 
+> **💡 Note:** Docker builds work with [MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj) or [Microsoft.Build.Sql](https://github.com/microsoft/DacFx) database projects. Traditional `.sqlproj` files are not supported in Linux containers.
+
 ```dockerfile
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
@@ -892,7 +904,7 @@ RUN dotnet build --configuration Release --no-restore
 1. **Use .NET 10+** - Eliminates the need for tool manifests and installation steps via `dnx`
 2. **Use local tool manifest (.NET 8-9)** - Ensures consistent `efcpt` version across environments
 3. **Cache tool restoration (.NET 8-9)** - Speed up builds by caching `.dotnet/tools`
-4. **Windows agents for DACPAC** - Database projects typically require Windows build agents
+4. **Cross-platform SQL projects** - Use [MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj) or [Microsoft.Build.Sql](https://github.com/microsoft/DacFx) to build DACPACs on Linux/macOS (traditional `.sqlproj` requires Windows)
 5. **Deterministic builds** - Generated code should be identical across builds with same inputs
 
 ---
@@ -1185,7 +1197,10 @@ By default the build uses `dotnet tool run efcpt` when a local tool manifest is 
 
 - .NET SDK 8.0 or newer.
 - EF Core Power Tools CLI installed as a .NET tool (global or local).
-- A SQL Server Database Project (`.sqlproj`) that can be built to a DACPAC. On build agents this usually requires the appropriate SQL Server Data Tools / build tools components.
+- A SQL Server Database Project that compiles to a DACPAC:
+  - **[MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj)** - Cross-platform, works on Linux/macOS/Windows
+  - **[Microsoft.Build.Sql](https://github.com/microsoft/DacFx)** - Cross-platform SDK-style projects
+  - **Traditional `.sqlproj`** - Requires Windows with SQL Server Data Tools / build tools components
 
 ---
 
@@ -1451,7 +1466,7 @@ No special steps are required beyond installing the prerequisites. A typical CI 
 
 On each run the EF Core models are regenerated only when the DACPAC or EF Core Power Tools inputs change.
 
-Ensure that the build agent has the necessary SQL Server Data Tools components to build the `.sqlproj` to a DACPAC.
+> **💡 Tip:** Use [MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj) or [Microsoft.Build.Sql](https://github.com/microsoft/DacFx) to build DACPACs on Linux/macOS CI agents. Traditional `.sqlproj` files require Windows agents with SQL Server Data Tools components.
 
 ---
 
@@ -1468,7 +1483,8 @@ Ensure that the build agent has the necessary SQL Server Data Tools components t
 ### 8.2 DACPAC build problems
 
 - Ensure that either `msbuild.exe` (Windows) or `dotnet msbuild` is available.
-- Install the SQL Server Data Tools / database build components on the machine running the build.
+- For **traditional `.sqlproj`** files: Install the SQL Server Data Tools / database build components on a Windows machine.
+- For **cross-platform builds**: Use [MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj) or [Microsoft.Build.Sql](https://github.com/microsoft/DacFx) which work on Linux/macOS/Windows without additional components.
 - Review the detailed build log from the `EnsureDacpacBuilt` task for underlying MSBuild errors.
 
 ### 8.3 `efcpt` CLI issues

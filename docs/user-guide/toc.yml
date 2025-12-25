@@ -12,6 +12,8 @@
   href: t4-templates.md
 - name: CI/CD Integration
   href: ci-cd.md
+- name: Split Outputs
+  href: split-outputs.md
 - name: Advanced Topics
   href: advanced.md
 - name: Troubleshooting

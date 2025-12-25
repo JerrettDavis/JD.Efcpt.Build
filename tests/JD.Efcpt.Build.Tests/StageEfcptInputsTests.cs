@@ -64,7 +64,7 @@ public sealed class StageEfcptInputsTests(ITestOutputHelper output) : TinyBddXun
         return Path.Combine(folder.Root, root);
     }
 
-    private static StageResult ExecuteStage(StageSetup setup, string templateOutputDir)
+    private static StageResult ExecuteStage(StageSetup setup, string templateOutputDir, string? targetFramework = null)
     {
         var task = new StageEfcptInputs
         {
@@ -74,7 +74,8 @@ public sealed class StageEfcptInputsTests(ITestOutputHelper output) : TinyBddXun
             ConfigPath = setup.ConfigPath,
             RenamingPath = setup.RenamingPath,
             TemplateDir = setup.TemplateDir,
-            TemplateOutputDir = templateOutputDir
+            TemplateOutputDir = templateOutputDir,
+            TargetFramework = targetFramework ?? ""
         };
 
         var success = task.Execute();
@@ -175,6 +176,461 @@ public sealed class StageEfcptInputsTests(ITestOutputHelper output) : TinyBddXun
             })
             .And("config file is staged", r => File.Exists(r.Task.StagedConfigPath))
             .And("renaming file is staged", r => File.Exists(r.Task.StagedRenamingPath))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    private static StageSetup CreateVersionSpecificTemplateSetup()
+    {
+        var folder = new TestFolder();
+        var projectDir = folder.CreateDir("app");
+        var outputDir = Path.Combine(projectDir, "obj", "efcpt");
+        var config = folder.WriteFile("app/efcpt-config.json", "{}");
+        var renaming = folder.WriteFile("app/efcpt.renaming.json", "[]");
+
+        // Create version-specific template structure like defaults
+        const string root = "template";
+        folder.WriteFile($"{root}/CodeTemplates/EFCore/net800/DbContext.t4", "net8 template");
+        folder.WriteFile($"{root}/CodeTemplates/EFCore/net900/DbContext.t4", "net9 template");
+        folder.WriteFile($"{root}/CodeTemplates/EFCore/net1000/DbContext.t4", "net10 template");
+
+        var templateDir = Path.Combine(folder.Root, root);
+        return new StageSetup(folder, projectDir, outputDir, config, renaming, templateDir);
+    }
+
+    [Scenario("Selects version-specific templates for net8.0")]
+    [Fact]
+    public async Task Selects_version_specific_templates_for_net80()
+    {
+        await Given("setup with version-specific templates", CreateVersionSpecificTemplateSetup)
+            .When("execute stage with net8.0 target framework", setup => ExecuteStage(setup, "", "net8.0"))
+            .Then("task succeeds", r => r.Success)
+            .And("DbContext.t4 contains net8 content", r =>
+            {
+                var dbContextPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "DbContext.t4");
+                return File.Exists(dbContextPath) && File.ReadAllText(dbContextPath).Contains("net8 template");
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Selects version-specific templates for net10.0")]
+    [Fact]
+    public async Task Selects_version_specific_templates_for_net100()
+    {
+        await Given("setup with version-specific templates", CreateVersionSpecificTemplateSetup)
+            .When("execute stage with net10.0 target framework", setup => ExecuteStage(setup, "", "net10.0"))
+            .Then("task succeeds", r => r.Success)
+            .And("DbContext.t4 contains net10 content", r =>
+            {
+                var dbContextPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "DbContext.t4");
+                return File.Exists(dbContextPath) && File.ReadAllText(dbContextPath).Contains("net10 template");
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Falls back to lower version when exact match not found")]
+    [Fact]
+    public async Task Falls_back_to_lower_version_when_exact_match_not_found()
+    {
+        await Given("setup with version-specific templates", CreateVersionSpecificTemplateSetup)
+            .When("execute stage with net11.0 target framework", setup => ExecuteStage(setup, "", "net11.0"))
+            .Then("task succeeds", r => r.Success)
+            .And("DbContext.t4 contains net10 content (fallback)", r =>
+            {
+                var dbContextPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "DbContext.t4");
+                return File.Exists(dbContextPath) && File.ReadAllText(dbContextPath).Contains("net10 template");
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Uses regular templates when no target framework specified")]
+    [Fact]
+    public async Task Uses_regular_templates_when_no_target_framework_specified()
+    {
+        await Given("setup with EFCore subdirectory template", () => CreateSetup(TemplateShape.EfCoreSubdir))
+            .When("execute stage without target framework", setup => ExecuteStage(setup, ""))
+            .Then("task succeeds", r => r.Success)
+            .And("template files are staged", r =>
+            {
+                var entityPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "Entity.t4");
+                return File.Exists(entityPath);
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Uses regular templates when target framework is null")]
+    [Fact]
+    public async Task Uses_regular_templates_when_target_framework_is_null()
+    {
+        await Given("setup with EFCore subdirectory template", () => CreateSetup(TemplateShape.EfCoreSubdir))
+            .When("execute stage with null target framework", setup => ExecuteStage(setup, "", null))
+            .Then("task succeeds", r => r.Success)
+            .And("template files are staged", r =>
+            {
+                var entityPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "Entity.t4");
+                return File.Exists(entityPath);
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Falls back to regular templates with malformed target framework 'net'")]
+    [Fact]
+    public async Task Falls_back_to_regular_templates_with_malformed_framework_net()
+    {
+        await Given("setup with EFCore subdirectory template", () => CreateSetup(TemplateShape.EfCoreSubdir))
+            .When("execute stage with malformed 'net' framework", setup => ExecuteStage(setup, "", "net"))
+            .Then("task succeeds", r => r.Success)
+            .And("template files are staged", r =>
+            {
+                var entityPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "Entity.t4");
+                return File.Exists(entityPath);
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Falls back to regular templates with malformed target framework 'netabc'")]
+    [Fact]
+    public async Task Falls_back_to_regular_templates_with_malformed_framework_netabc()
+    {
+        await Given("setup with EFCore subdirectory template", () => CreateSetup(TemplateShape.EfCoreSubdir))
+            .When("execute stage with malformed 'netabc' framework", setup => ExecuteStage(setup, "", "netabc"))
+            .Then("task succeeds", r => r.Success)
+            .And("template files are staged", r =>
+            {
+                var entityPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "Entity.t4");
+                return File.Exists(entityPath);
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Parses target framework without minor version 'net8'")]
+    [Fact]
+    public async Task Parses_target_framework_without_minor_version()
+    {
+        await Given("setup with version-specific templates", CreateVersionSpecificTemplateSetup)
+            .When("execute stage with 'net8' framework", setup => ExecuteStage(setup, "", "net8"))
+            .Then("task succeeds", r => r.Success)
+            .And("DbContext.t4 contains net8 content", r =>
+            {
+                var dbContextPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "DbContext.t4");
+                return File.Exists(dbContextPath) && File.ReadAllText(dbContextPath).Contains("net8 template");
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Parses target framework with patch version 'net8.0.1'")]
+    [Fact]
+    public async Task Parses_target_framework_with_patch_version()
+    {
+        await Given("setup with version-specific templates", CreateVersionSpecificTemplateSetup)
+            .When("execute stage with 'net8.0.1' framework", setup => ExecuteStage(setup, "", "net8.0.1"))
+            .Then("task succeeds", r => r.Success)
+            .And("DbContext.t4 contains net8 content", r =>
+            {
+                var dbContextPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "DbContext.t4");
+                return File.Exists(dbContextPath) && File.ReadAllText(dbContextPath).Contains("net8 template");
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    private static StageSetup CreateNonStandardFolderSetup()
+    {
+        var folder = new TestFolder();
+        var projectDir = folder.CreateDir("app");
+        var outputDir = Path.Combine(projectDir, "obj", "efcpt");
+        var config = folder.WriteFile("app/efcpt-config.json", "{}");
+        var renaming = folder.WriteFile("app/efcpt.renaming.json", "[]");
+
+        // Create templates with non-standard folder names that should be ignored
+        const string root = "template";
+        folder.WriteFile($"{root}/CodeTemplates/EFCore/net800/DbContext.t4", "net8 template");
+        folder.WriteFile($"{root}/CodeTemplates/EFCore/net8/Invalid.t4", "invalid - no 00 suffix");
+        folder.WriteFile($"{root}/CodeTemplates/EFCore/net900x/Invalid.t4", "invalid - extra char");
+        folder.WriteFile($"{root}/CodeTemplates/EFCore/NET1000/DbContext.t4", "uppercase - should be ignored");
+
+        var templateDir = Path.Combine(folder.Root, root);
+        return new StageSetup(folder, projectDir, outputDir, config, renaming, templateDir);
+    }
+
+    [Scenario("Ignores non-standard folder names and uses valid version folder")]
+    [Fact]
+    public async Task Ignores_non_standard_folder_names_and_uses_valid_version_folder()
+    {
+        await Given("setup with non-standard folder names", CreateNonStandardFolderSetup)
+            .When("execute stage with net8.0 framework", setup => ExecuteStage(setup, "", "net8.0"))
+            .Then("task succeeds", r => r.Success)
+            .And("DbContext.t4 contains net8 content from valid folder", r =>
+            {
+                var dbContextPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "DbContext.t4");
+                return File.Exists(dbContextPath) && File.ReadAllText(dbContextPath).Contains("net8 template");
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Falls back correctly when only lower version folders exist")]
+    [Fact]
+    public async Task Falls_back_correctly_when_only_lower_version_folders_exist()
+    {
+        await Given("setup with non-standard folder names", CreateNonStandardFolderSetup)
+            .When("execute stage with net9.0 framework", setup => ExecuteStage(setup, "", "net9.0"))
+            .Then("task succeeds", r => r.Success)
+            .And("DbContext.t4 contains net8 content (fallback)", r =>
+            {
+                var dbContextPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "DbContext.t4");
+                // Should fall back to net800 since net900x is invalid and NET1000 is uppercase
+                return File.Exists(dbContextPath) && File.ReadAllText(dbContextPath).Contains("net8 template");
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    // ========================================================================
+    // Edge cases: Framework versions outside expected ranges
+    // ========================================================================
+
+    [Scenario("Falls back to regular templates when version is below minimum available")]
+    [Fact]
+    public async Task Falls_back_to_regular_templates_when_version_below_minimum()
+    {
+        await Given("setup with version-specific templates starting at net800", CreateVersionSpecificTemplateSetup)
+            .When("execute stage with net6.0 framework", setup => ExecuteStage(setup, "", "net6.0"))
+            .Then("task succeeds", r => r.Success)
+            .And("no template files are staged since no fallback version exists", r =>
+            {
+                // net6.0 is below net800, and there are no lower versions to fall back to
+                // The task should still succeed but not copy version-specific templates
+                var dbContextPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "DbContext.t4");
+                // When no fallback is found, it falls back to copying the entire EFCore directory
+                // which contains only version folders, so no DbContext.t4 at root
+                return !File.Exists(dbContextPath) || !File.ReadAllText(dbContextPath).Contains("net");
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Falls back to regular templates when version is net5.0")]
+    [Fact]
+    public async Task Falls_back_to_regular_templates_when_version_is_net5()
+    {
+        await Given("setup with version-specific templates", CreateVersionSpecificTemplateSetup)
+            .When("execute stage with net5.0 framework", setup => ExecuteStage(setup, "", "net5.0"))
+            .Then("task succeeds", r => r.Success)
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Falls back to regular templates when version is net7.0")]
+    [Fact]
+    public async Task Falls_back_to_regular_templates_when_version_is_net7()
+    {
+        await Given("setup with version-specific templates", CreateVersionSpecificTemplateSetup)
+            .When("execute stage with net7.0 framework", setup => ExecuteStage(setup, "", "net7.0"))
+            .Then("task succeeds", r => r.Success)
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Uses regular templates with empty string target framework")]
+    [Fact]
+    public async Task Uses_regular_templates_with_empty_string_framework()
+    {
+        await Given("setup with EFCore subdirectory template", () => CreateSetup(TemplateShape.EfCoreSubdir))
+            .When("execute stage with empty string framework", setup => ExecuteStage(setup, "", ""))
+            .Then("task succeeds", r => r.Success)
+            .And("template files are staged", r =>
+            {
+                var entityPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "Entity.t4");
+                return File.Exists(entityPath);
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Uses regular templates with whitespace-only target framework")]
+    [Fact]
+    public async Task Uses_regular_templates_with_whitespace_only_framework()
+    {
+        await Given("setup with EFCore subdirectory template", () => CreateSetup(TemplateShape.EfCoreSubdir))
+            .When("execute stage with whitespace framework", setup => ExecuteStage(setup, "", "   "))
+            .Then("task succeeds", r => r.Success)
+            .And("template files are staged", r =>
+            {
+                var entityPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "Entity.t4");
+                return File.Exists(entityPath);
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Falls back to regular templates with .NET Standard framework")]
+    [Fact]
+    public async Task Falls_back_to_regular_templates_with_netstandard_framework()
+    {
+        await Given("setup with EFCore subdirectory template", () => CreateSetup(TemplateShape.EfCoreSubdir))
+            .When("execute stage with netstandard2.0 framework", setup => ExecuteStage(setup, "", "netstandard2.0"))
+            .Then("task succeeds", r => r.Success)
+            .And("template files are staged", r =>
+            {
+                var entityPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "Entity.t4");
+                return File.Exists(entityPath);
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Falls back to regular templates with .NET Framework")]
+    [Fact]
+    public async Task Falls_back_to_regular_templates_with_net_framework()
+    {
+        await Given("setup with EFCore subdirectory template", () => CreateSetup(TemplateShape.EfCoreSubdir))
+            .When("execute stage with net48 framework", setup => ExecuteStage(setup, "", "net48"))
+            .Then("task succeeds", r => r.Success)
+            .And("template files are staged", r =>
+            {
+                var entityPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "Entity.t4");
+                return File.Exists(entityPath);
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Falls back to highest available version for very high framework version")]
+    [Fact]
+    public async Task Falls_back_to_highest_available_for_very_high_version()
+    {
+        await Given("setup with version-specific templates", CreateVersionSpecificTemplateSetup)
+            .When("execute stage with net99.0 framework", setup => ExecuteStage(setup, "", "net99.0"))
+            .Then("task succeeds", r => r.Success)
+            .And("DbContext.t4 contains net10 content (highest available)", r =>
+            {
+                var dbContextPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "DbContext.t4");
+                return File.Exists(dbContextPath) && File.ReadAllText(dbContextPath).Contains("net10 template");
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    private static StageSetup CreateOnlyHigherVersionFolderSetup()
+    {
+        var folder = new TestFolder();
+        var projectDir = folder.CreateDir("app");
+        var outputDir = Path.Combine(projectDir, "obj", "efcpt");
+        var config = folder.WriteFile("app/efcpt-config.json", "{}");
+        var renaming = folder.WriteFile("app/efcpt.renaming.json", "[]");
+
+        // Create only net1000 folder - no lower versions
+        const string root = "template";
+        folder.WriteFile($"{root}/CodeTemplates/EFCore/net1000/DbContext.t4", "net10 only template");
+
+        var templateDir = Path.Combine(folder.Root, root);
+        return new StageSetup(folder, projectDir, outputDir, config, renaming, templateDir);
+    }
+
+    [Scenario("No fallback available when only higher version folders exist")]
+    [Fact]
+    public async Task No_fallback_available_when_only_higher_version_folders_exist()
+    {
+        await Given("setup with only net1000 folder", CreateOnlyHigherVersionFolderSetup)
+            .When("execute stage with net8.0 framework", setup => ExecuteStage(setup, "", "net8.0"))
+            .Then("task succeeds", r => r.Success)
+            .And("DbContext.t4 is not at EFCore root since no fallback exists", r =>
+            {
+                var dbContextPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "DbContext.t4");
+                // When no suitable version is found and no fallback exists,
+                // the entire EFCore directory is copied which includes subfolders
+                return !File.Exists(dbContextPath);
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Handles framework with negative-like version gracefully")]
+    [Fact]
+    public async Task Handles_framework_with_negative_like_version_gracefully()
+    {
+        await Given("setup with EFCore subdirectory template", () => CreateSetup(TemplateShape.EfCoreSubdir))
+            .When("execute stage with 'net-8.0' framework", setup => ExecuteStage(setup, "", "net-8.0"))
+            .Then("task succeeds", r => r.Success)
+            .And("template files are staged", r =>
+            {
+                var entityPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "Entity.t4");
+                return File.Exists(entityPath);
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Handles framework with special characters gracefully")]
+    [Fact]
+    public async Task Handles_framework_with_special_characters_gracefully()
+    {
+        await Given("setup with EFCore subdirectory template", () => CreateSetup(TemplateShape.EfCoreSubdir))
+            .When("execute stage with 'net@8.0' framework", setup => ExecuteStage(setup, "", "net@8.0"))
+            .Then("task succeeds", r => r.Success)
+            .And("template files are staged", r =>
+            {
+                var entityPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "Entity.t4");
+                return File.Exists(entityPath);
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Uses net10 templates for net10.0-windows framework")]
+    [Fact]
+    public async Task Uses_net10_templates_for_platform_specific_framework()
+    {
+        await Given("setup with version-specific templates", CreateVersionSpecificTemplateSetup)
+            .When("execute stage with net10.0-windows framework", setup => ExecuteStage(setup, "", "net10.0-windows"))
+            .Then("task succeeds", r => r.Success)
+            .And("DbContext.t4 contains net10 content", r =>
+            {
+                var dbContextPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "DbContext.t4");
+                return File.Exists(dbContextPath) && File.ReadAllText(dbContextPath).Contains("net10 template");
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    private static StageSetup CreateNoVersionFoldersSetup()
+    {
+        var folder = new TestFolder();
+        var projectDir = folder.CreateDir("app");
+        var outputDir = Path.Combine(projectDir, "obj", "efcpt");
+        var config = folder.WriteFile("app/efcpt-config.json", "{}");
+        var renaming = folder.WriteFile("app/efcpt.renaming.json", "[]");
+
+        // Create EFCore templates without version-specific folders
+        const string root = "template";
+        folder.WriteFile($"{root}/CodeTemplates/EFCore/DbContext.t4", "regular template");
+        folder.WriteFile($"{root}/CodeTemplates/EFCore/Entity.t4", "entity template");
+
+        var templateDir = Path.Combine(folder.Root, root);
+        return new StageSetup(folder, projectDir, outputDir, config, renaming, templateDir);
+    }
+
+    [Scenario("Uses regular templates when no version folders exist")]
+    [Fact]
+    public async Task Uses_regular_templates_when_no_version_folders_exist()
+    {
+        await Given("setup with no version-specific folders", CreateNoVersionFoldersSetup)
+            .When("execute stage with net10.0 framework", setup => ExecuteStage(setup, "", "net10.0"))
+            .Then("task succeeds", r => r.Success)
+            .And("DbContext.t4 contains regular content", r =>
+            {
+                var dbContextPath = Path.Combine(r.Task.StagedTemplateDir, "EFCore", "DbContext.t4");
+                return File.Exists(dbContextPath) && File.ReadAllText(dbContextPath).Contains("regular template");
+            })
             .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }

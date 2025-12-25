@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+    <File Path="nuget.config" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/SampleApp.Sql/SampleApp.Sql.sqlproj" />
+    <Project Path="src/SampleApp.Models/SampleApp.Models.csproj" />
+    <Project Path="src/SampleApp.Data/SampleApp.Data.csproj" />
+  </Folder>
+</Solution>
