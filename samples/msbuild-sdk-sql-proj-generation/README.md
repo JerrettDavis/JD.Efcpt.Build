@@ -1,10 +1,25 @@
-# Simple Generation Sample
+# MSBuild.Sdk.SqlProj Generation Sample
 
-This sample demonstrates using `JD.Efcpt.Build` to generate EF Core models from a SQL Server Database Project.
+This sample demonstrates using `JD.Efcpt.Build` with the **[MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj)** SDK.
+
+## Key Differences from Microsoft.Build.Sql
+
+**MSBuild.Sdk.SqlProj**:
+- Uses `.csproj` or `.fsproj` file extension (not `.sqlproj`)
+- Community-maintained SDK with additional features and extensibility
+- Cross-platform: works on Linux/macOS/Windows
+- More similar to the legacy .NET Framework SQL Projects
+
+**Microsoft.Build.Sql**:
+- Uses `.sqlproj` file extension
+- Microsoft's official SDK for SQL Projects in .NET SDK
+- Cross-platform: works on Linux/macOS/Windows
+
+Both produce DACPACs that work with JD.Efcpt.Build.
 
 ## Project Structure
 
-- `DatabaseProject/` - SQL Server Database Project that defines the schema
+- `DatabaseProject/` - MSBuild.Sdk.SqlProj project (uses `.csproj` extension)
 - `EntityFrameworkCoreProject/` - .NET project that consumes the generated EF Core models
 
 ## How It Works

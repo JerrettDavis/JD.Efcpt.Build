@@ -27,7 +27,9 @@ dotnet build
 ```
 MySolution/
 ├── src/MyApp/MyApp.csproj
-└── database/MyDb/MyDb.sqlproj
+└── database/MyDb/
+    └── MyDb.sqlproj          # Microsoft.Build.Sql
+    # OR MyDb.csproj           # MSBuild.Sdk.SqlProj
 ```
 
 **MyApp.csproj:**
@@ -38,6 +40,8 @@ MySolution/
 
 <PropertyGroup>
   <EfcptSqlProj>..\..\database\MyDb\MyDb.sqlproj</EfcptSqlProj>
+  <!-- For Microsoft.Build.Sql, use .sqlproj -->
+  <!-- For MSBuild.Sdk.SqlProj, use .csproj or .fsproj -->
 </PropertyGroup>
 ```
 
@@ -154,6 +158,7 @@ Templates automatically staged to `obj/efcpt/Generated/CodeTemplates/`
 ```xml
 <PropertyGroup>
   <EfcptSqlProj>..\..\database\MyDb\MyDb.sqlproj</EfcptSqlProj>
+  <!-- For Microsoft.Build.Sql, use .sqlproj; for MSBuild.Sdk.SqlProj, use .csproj/.fsproj -->
 </PropertyGroup>
 ```
 
@@ -288,8 +293,9 @@ dotnet tool restore
 
 **Quick Fix:**
 ```bash
-# Test database project independently
+# Test SQL Project independently
 dotnet build path\to\Database.sqlproj
+# Or for MSBuild.Sdk.SqlProj: dotnet build path\to\Database.csproj
 ```
 
 ### Issue: Old schema still generating
@@ -319,7 +325,7 @@ dotnet build
 
 | Property | Use When | Example |
 |----------|----------|---------|
-| `EfcptSqlProj` | Database project not auto-discovered | `..\..\db\MyDb.sqlproj` |
+| `EfcptSqlProj` | SQL Project not auto-discovered | `..\..\db\MyDb.sqlproj` or `..\..\db\MyDb.csproj` |
 | `EfcptConfig` | Using custom config file name | `my-config.json` |
 | `EfcptTemplateDir` | Using custom template location | `CustomTemplates` |
 | `EfcptLogVerbosity` | Debugging issues | `detailed` |
@@ -422,10 +428,12 @@ YourProject/
 
 <PropertyGroup Condition="'$(Environment)' == 'Development'">
   <EfcptSqlProj>..\..\database\Dev\Dev.sqlproj</EfcptSqlProj>
+  <!-- Or Dev.csproj for MSBuild.Sdk.SqlProj -->
 </PropertyGroup>
 
 <PropertyGroup Condition="'$(Environment)' == 'Production'">
   <EfcptSqlProj>..\..\database\Prod\Prod.sqlproj</EfcptSqlProj>
+  <!-- Or Prod.csproj for MSBuild.Sdk.SqlProj -->
 </PropertyGroup>
 ```
 
@@ -444,6 +452,7 @@ YourProject/
 <PropertyGroup>
   <!-- Project-specific override -->
   <EfcptSqlProj>..\..\database\MyDb\MyDb.sqlproj</EfcptSqlProj>
+  <!-- For Microsoft.Build.Sql, use .sqlproj; for MSBuild.Sdk.SqlProj, use .csproj/.fsproj -->
 </PropertyGroup>
 ```
 

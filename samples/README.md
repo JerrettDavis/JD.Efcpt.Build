@@ -6,9 +6,9 @@ This directory contains sample projects demonstrating various usage patterns of 
 
 | Sample | Input Mode | SQL SDK / Provider | Key Features |
 |--------|------------|-------------------|--------------|
-| [simple-generation](#simple-generation) | DACPAC | Traditional .sqlproj | Basic usage, direct source import |
-| [msbuild-sdk-sql-proj-generation](#msbuild-sdk-sql-proj-generation) | DACPAC | MSBuild.Sdk.SqlProj | Modern cross-platform SQL SDK |
-| [split-data-and-models-between-multiple-projects](#split-outputs) | DACPAC | Traditional .sqlproj | Clean architecture, split outputs |
+| [simple-generation](#simple-generation) | DACPAC | Traditional SQL Project (.sqlproj) | Basic usage, direct source import |
+| [msbuild-sdk-sql-proj-generation](#msbuild-sdk-sql-proj-generation) | DACPAC | MSBuild.Sdk.SqlProj (.csproj) | Modern cross-platform SQL SDK |
+| [split-data-and-models-between-multiple-projects](#split-outputs) | DACPAC | Traditional SQL Project (.sqlproj) | Clean architecture, split outputs |
 | [connection-string-sqlite](#connection-string-sqlite) | Connection String | SQLite | Direct database reverse engineering |
 
 ## Input Modes
@@ -16,25 +16,30 @@ This directory contains sample projects demonstrating various usage patterns of 
 JD.Efcpt.Build supports two primary input modes:
 
 ### 1. DACPAC Mode (Default)
-Reverse engineers from a SQL Server Database Project that produces a .dacpac file.
+Reverse engineers from a SQL Project that produces a .dacpac file.
 
-JD.Efcpt.Build supports multiple SQL project SDKs:
+JD.Efcpt.Build supports multiple SQL Project SDKs:
 
-| SDK | Cross-Platform | Notes |
-|-----|----------------|-------|
-| [Microsoft.Build.Sql](https://github.com/microsoft/DacFx) | Yes | Microsoft's official SDK-style SQL projects |
-| [MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj) | Yes | Popular community SDK for cross-platform builds |
-| Traditional .sqlproj | No (Windows only) | Requires SQL Server Data Tools |
+| SDK | Extension | Cross-Platform | Notes |
+|-----|-----------|----------------|-------|
+| [Microsoft.Build.Sql](https://github.com/microsoft/DacFx) | `.sqlproj` | Yes | Microsoft's official SDK-style SQL Projects for .NET |
+| [MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj) | `.csproj` or `.fsproj` | Yes | Community SDK with additional features and extensibility |
+| Traditional SQL Projects | `.sqlproj` | No (Windows only) | Legacy format, requires SQL Server Data Tools |
 
 ```xml
 <ItemGroup>
   <ProjectReference Include="..\Database\Database.sqlproj">
     <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
+  <!-- Use .sqlproj for Microsoft.Build.Sql -->
+  <!-- Use .csproj or .fsproj for MSBuild.Sdk.SqlProj -->
 </ItemGroup>
 ```
 
-Both SDK-style projects work identically with JD.Efcpt.Build - the package automatically detects and builds them.
+**Key Differences:**
+- **Microsoft.Build.Sql** uses `.sqlproj` extension and is Microsoft's official SDK
+- **MSBuild.Sdk.SqlProj** uses `.csproj`/`.fsproj` extension (despite having "SqlProj" in its name)
+- Both produce DACPACs and work identically with JD.Efcpt.Build
 
 ### 2. Connection String Mode
 Reverse engineers directly from a live database connection.
@@ -70,8 +75,8 @@ Basic sample demonstrating DACPAC-based model generation with direct source impo
 
 ```
 simple-generation/
-├── DatabaseProject/          # SQL Server Database Project
-│   └── DatabaseProject.sqlproj
+├── DatabaseProject/          # SQL Project
+│   └── DatabaseProject.sqlproj  # Traditional format
 ├── EntityFrameworkCoreProject/
 │   ├── EntityFrameworkCoreProject.csproj
 │   ├── efcpt-config.json
@@ -90,12 +95,12 @@ dotnet build simple-generation/SimpleGenerationSample.sln
 
 **Location:** `msbuild-sdk-sql-proj-generation/`
 
-Demonstrates using a modern SDK-style SQL project (MSBuild.Sdk.SqlProj) for cross-platform DACPAC builds. This sample works on Windows, Linux, and macOS.
+Demonstrates using MSBuild.Sdk.SqlProj for cross-platform DACPAC builds. This SDK uses `.csproj` extension (not `.sqlproj`).
 
 ```
 msbuild-sdk-sql-proj-generation/
 ├── DatabaseProject/          # MSBuild.Sdk.SqlProj project
-│   └── DatabaseProject.csproj
+│   └── DatabaseProject.csproj   # Uses .csproj extension
 ├── EntityFrameworkCoreProject/
 │   ├── EntityFrameworkCoreProject.csproj
 │   └── efcpt-config.json
@@ -103,11 +108,11 @@ msbuild-sdk-sql-proj-generation/
 ```
 
 **Key Features:**
-- Uses `MSBuild.Sdk.SqlProj` SDK for the database project (cross-platform)
-- Works identically to traditional .sqlproj but runs on any OS
-- Dynamic SQL project discovery (no explicit reference needed)
+- Uses `MSBuild.Sdk.SqlProj` SDK for the SQL Project (note: uses `.csproj` extension)
+- Works on Windows, Linux, and macOS
+- Dynamic SQL Project discovery (no explicit reference needed)
 
-> **Note:** You can also use `Microsoft.Build.Sql` SDK, which is Microsoft's official SDK-style SQL project format. Both SDKs are fully supported.
+> **Note:** Despite having "SqlProj" in its name, MSBuild.Sdk.SqlProj uses `.csproj` or `.fsproj` extensions, not `.sqlproj`.
 
 ---
 
@@ -120,7 +125,7 @@ Advanced sample showing how to split generated output across multiple projects f
 ```
 split-data-and-models-between-multiple-projects/
 └── src/
-    ├── SampleApp.Sql/       # SQL Database Project
+    ├── SampleApp.Sql/       # SQL Project (Microsoft.Build.Sql format)
     ├── SampleApp.Models/    # Entity classes only (NO EF Core)
     └── SampleApp.Data/      # DbContext + EF Core dependencies
 ```
@@ -145,7 +150,7 @@ split-data-and-models-between-multiple-projects/
 
 **Location:** `connection-string-sqlite/`
 
-Demonstrates connection string mode with SQLite - no SQL project needed, reverse engineers directly from a database.
+Demonstrates connection string mode with SQLite - no SQL Project needed, reverse engineers directly from a database.
 
 ```
 connection-string-sqlite/
