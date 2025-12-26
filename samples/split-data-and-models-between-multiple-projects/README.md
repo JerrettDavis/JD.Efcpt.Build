@@ -6,8 +6,8 @@ This sample demonstrates using `JD.Efcpt.Build` with the **Split Outputs** featu
 
 ```
 src/
-  SampleApp.Sql/           # SQL Server Database Project (schema definition)
-    SampleApp.Sql.sqlproj
+  SampleApp.Sql/           # SQL Project (schema definition)
+    SampleApp.Sql.sqlproj  # Microsoft.Build.Sql format
     dbo/Tables/
       Blog.sql
       Post.sql
@@ -58,11 +58,12 @@ This is useful when:
   <EfcptDataProject>..\SampleApp.Data\SampleApp.Data.csproj</EfcptDataProject>
 </PropertyGroup>
 
-<!-- Reference SQL project -->
+<!-- Reference SQL Project -->
 <ItemGroup>
   <ProjectReference Include="..\SampleApp.Sql\SampleApp.Sql.sqlproj">
     <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
+  <!-- Use .sqlproj for Microsoft.Build.Sql, .csproj/.fsproj for MSBuild.Sdk.SqlProj -->
 </ItemGroup>
 
 <!-- NO EF Core dependencies - just DataAnnotations -->

@@ -20,14 +20,14 @@ The pipeline consists of seven stages that run before C# compilation:
 **Purpose**: Discover the database source and locate all configuration files.
 
 **What it does**:
-- Locates the SQL Server Database Project (.sqlproj) from project references or explicit configuration
+- Locates the SQL Project from project references or explicit configuration
 - Resolves the EF Core Power Tools configuration file (`efcpt-config.json`)
 - Finds renaming rules (`efcpt.renaming.json`)
 - Discovers T4 template directories
 - Resolves connection strings from various sources (explicit property, appsettings.json, app.config)
 
 **Outputs**:
-- `SqlProjPath` - Path to the discovered database project
+- `SqlProjPath` - Path to the discovered SQL Project
 - `ResolvedConfigPath` - Path to the configuration file
 - `ResolvedRenamingPath` - Path to renaming rules
 - `ResolvedTemplateDir` - Path to templates
@@ -37,8 +37,8 @@ The pipeline consists of seven stages that run before C# compilation:
 
 **Purpose**: Prepare the schema source for code generation.
 
-**DACPAC Mode** (when using .sqlproj):
-- Builds the SQL Server Database Project to produce a DACPAC file
+**DACPAC Mode** (when using SQL Project):
+- Builds the SQL Project to produce a DACPAC file
 - Only rebuilds if source files are newer than the existing DACPAC
 - Uses `msbuild.exe` on Windows or `dotnet msbuild` on other platforms
 
@@ -200,22 +200,25 @@ For each input type, the package searches in this order:
 
 ### SQL Project Discovery
 
-The package discovers SQL projects by:
+The package discovers SQL Projects by:
 
 1. Checking `EfcptSqlProj` property (if set)
-2. Scanning `ProjectReference` items for .sqlproj files
-3. Looking for .sqlproj in the solution directory
-4. Checking for modern SDK-style SQL projects
+2. Scanning `ProjectReference` items for SQL Projects
+3. Looking for SQL Projects in the solution directory
+4. Checking for modern SDK-style SQL Projects
 
 **Supported SQL Project SDKs:**
 
-| SDK | Cross-Platform | Notes |
-|-----|----------------|-------|
-| [Microsoft.Build.Sql](https://github.com/microsoft/DacFx) | Yes | Microsoft's official SDK-style SQL projects |
-| [MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj) | Yes | Popular community SDK |
-| Traditional .sqlproj | No (Windows only) | Requires SQL Server Data Tools |
+| SDK | Extension | Cross-Platform | Notes |
+|-----|-----------|----------------|-------|
+| [Microsoft.Build.Sql](https://github.com/microsoft/DacFx) | `.sqlproj` | Yes | Microsoft's official SDK-style SQL Projects for .NET |
+| [MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj) | `.csproj` or `.fsproj` | Yes | Community SDK with additional features and extensibility |
+| Traditional SQL Projects | `.sqlproj` | No (Windows only) | Legacy format, requires SQL Server Data Tools |
 
-Both SDK-style projects work identically - they produce DACPACs that JD.Efcpt.Build uses for code generation.
+**Key Differences:**
+- **Microsoft.Build.Sql** uses the `.sqlproj` extension and is Microsoft's official modern SDK for SQL Projects in .NET SDK
+- **MSBuild.Sdk.SqlProj** uses `.csproj` or `.fsproj` extensions (despite having "SqlProj" in its name), provides more configurability and extensibility
+- Both SDK-style projects produce DACPACs that JD.Efcpt.Build uses for code generation
 
 ## Generated File Naming
 

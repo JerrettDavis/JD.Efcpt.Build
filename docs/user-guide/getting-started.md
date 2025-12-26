@@ -8,7 +8,7 @@ Before you begin, ensure you have:
 
 - **.NET SDK 8.0 or later** installed
 - One of:
-  - A **SQL Server Database Project** (.sqlproj) that produces a DACPAC
+  - A **SQL Server Database Project** that produces a DACPAC
   - A live database connection (SQL Server, PostgreSQL, MySQL, SQLite, Oracle, Firebird, or Snowflake)
 - Basic familiarity with MSBuild and NuGet
 
@@ -65,7 +65,7 @@ dotnet build
 
 On the first build, the package will:
 
-1. Discover your SQL Server Database Project
+1. Discover your SQL Project
 2. Build it to a DACPAC
 3. Run the EF Core Power Tools CLI
 4. Generate DbContext and entity classes
@@ -95,26 +95,29 @@ YourSolution/
 │       └── efcpt-config.json       # Optional: customize generation
 └── database/
     └── YourDatabase/
-        └── YourDatabase.sqlproj    # Your database project
+        └── YourDatabase.sqlproj    # Your SQL Project (Microsoft.Build.Sql)
+                                    # OR YourDatabase.csproj (MSBuild.Sdk.SqlProj)
 ```
 
 ## Minimal Configuration
 
 For most projects, no configuration is required. The package uses sensible defaults:
 
-- Auto-discovers `.sqlproj` in your solution
+- Auto-discovers SQL Project in your solution (`.sqlproj` for Microsoft.Build.Sql, `.csproj`/`.fsproj` for MSBuild.Sdk.SqlProj)
 - Uses `efcpt-config.json` if present
 - Generates to `obj/efcpt/Generated/`
 - Enables nullable reference types
 - Organizes files by database schema
 
-### Explicit Database Project Path
+### Explicit SQL Project Path
 
-If auto-discovery doesn't find your database project, specify it explicitly:
+If auto-discovery doesn't find your SQL Project, specify it explicitly:
 
 ```xml
 <PropertyGroup>
   <EfcptSqlProj>..\database\YourDatabase\YourDatabase.sqlproj</EfcptSqlProj>
+  <!-- For Microsoft.Build.Sql, use .sqlproj extension -->
+  <!-- For MSBuild.Sdk.SqlProj, use .csproj or .fsproj extension -->
 </PropertyGroup>
 ```
 
@@ -146,7 +149,7 @@ Create `efcpt-config.json` in your project directory to customize generation:
 
 ## Using a Live Database
 
-If you don't have a .sqlproj, you can generate models directly from a database connection. JD.Efcpt.Build supports multiple database providers:
+If you don't have a SQL Project, you can generate models directly from a database connection. JD.Efcpt.Build supports multiple database providers:
 
 | Provider | Value | Example |
 |----------|-------|---------|
@@ -237,7 +240,7 @@ dotnet build
 
 ### Database project not found
 
-If the package can't find your .sqlproj:
+If the package can't find your SQL Project:
 
 1. Ensure the project exists and builds independently
 2. Set `EfcptSqlProj` explicitly in your .csproj
