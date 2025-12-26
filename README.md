@@ -38,16 +38,6 @@ dotnet tool install --global ErikEJ.EFCorePowerTools.Cli --version "9.*"
 
 ---
 
-**Step 3:** Build your project:
-
-```bash
-dotnet build
-```
-
-**That's it!** Your EF Core DbContext and entities are now automatically generated from your database project during every build.
-
----
-
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
