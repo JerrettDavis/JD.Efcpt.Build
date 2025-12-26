@@ -62,7 +62,7 @@ When `EfcptDumpResolvedInputs` is `true`, check `obj/efcpt/resolved-inputs.json`
    </PropertyGroup>
    ```
 
-3. **Check if database project is found:**
+3. **Check if SQL Project is found:**
    - Enable `EfcptDumpResolvedInputs`
    - Look for `sqlProjPath` in `resolved-inputs.json`
    - Set `EfcptSqlProj` explicitly if needed
@@ -73,10 +73,10 @@ When `EfcptDumpResolvedInputs` is `true`, check `obj/efcpt/resolved-inputs.json`
    dotnet build
    ```
 
-### Database Project Not Found
+### SQL Project Not Found
 
 **Symptoms:**
-- Build warning: "Could not find SQL project"
+- Build warning: "Could not find SQL Project"
 - `sqlProjPath` is empty in resolved inputs
 
 **Solutions:**
@@ -84,14 +84,22 @@ When `EfcptDumpResolvedInputs` is `true`, check `obj/efcpt/resolved-inputs.json`
 1. **Set path explicitly:**
    ```xml
    <PropertyGroup>
+     <!-- For traditional Microsoft.Build.Sql projects -->
      <EfcptSqlProj>..\database\MyDatabase.sqlproj</EfcptSqlProj>
+     
+     <!-- Or for modern MSBuild.Sdk.SqlProj projects -->
+     <EfcptSqlProj>..\database\MyDatabase.csproj</EfcptSqlProj>
    </PropertyGroup>
    ```
 
 2. **Add project reference:**
    ```xml
    <ItemGroup>
+     <!-- For .sqlproj files -->
      <ProjectReference Include="..\database\MyDatabase.sqlproj" />
+     
+     <!-- Or for MSBuild.Sdk.SqlProj projects (.csproj) -->
+     <ProjectReference Include="..\database\MyDatabase.csproj" />
    </ItemGroup>
    ```
 

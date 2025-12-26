@@ -4,7 +4,7 @@ JD.Efcpt.Build is designed to work seamlessly in continuous integration and depl
 
 ## Overview
 
-The package requires no special configuration for CI/CD. Models are generated deterministically from your database project or connection, ensuring consistent results across environments.
+The package requires no special configuration for CI/CD. Models are generated deterministically from your SQL Project or connection, ensuring consistent results across environments.
 
 ## Prerequisites
 
@@ -12,7 +12,8 @@ Ensure your CI/CD environment has:
 
 - .NET SDK 8.0 or later
 - EF Core Power Tools CLI (not required for .NET 10+)
-- For DACPAC mode: SQL Server Data Tools components
+- For DACPAC mode with traditional Microsoft.Build.Sql projects: SQL Server Data Tools components
+- For DACPAC mode with MSBuild.Sdk.SqlProj projects: No additional components required (SDK is NuGet-based)
 
 ## GitHub Actions
 

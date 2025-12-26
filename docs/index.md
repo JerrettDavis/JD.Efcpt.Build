@@ -14,7 +14,7 @@ JD.Efcpt.Build transforms EF Core Power Tools into a fully automated build step.
 
 - **Zero Manual Steps**: Generate EF Core models automatically as part of your build
 - **Incremental Builds**: Only regenerates when schema or configuration changes
-- **Dual Source Support**: Work with SQL Server Database Projects (.sqlproj) or connect directly to databases
+- **Dual Source Support**: Work with SQL Projects (Microsoft.Build.Sql or MSBuild.Sdk.SqlProj) or connect directly to databases
 - **T4 Template Support**: Customize code generation with your own templates
 - **CI/CD Ready**: Works everywhere .NET runs—local dev, GitHub Actions, Azure DevOps, Docker
 
@@ -46,8 +46,8 @@ Your EF Core DbContext and entities are now automatically generated from your da
 
 The package orchestrates a six-stage MSBuild pipeline:
 
-1. **Resolve** - Discover database project and configuration files
-2. **Build** - Compile .sqlproj to DACPAC (or query live database)
+1. **Resolve** - Discover SQL Project and configuration files
+2. **Build** - Compile SQL Project to DACPAC (or query live database)
 3. **Stage** - Prepare configuration and templates
 4. **Fingerprint** - Detect if regeneration is needed
 5. **Generate** - Run efcpt CLI to create EF Core models
@@ -57,7 +57,7 @@ The package orchestrates a six-stage MSBuild pipeline:
 
 - .NET SDK 8.0 or later
 - EF Core Power Tools CLI (auto-executed via `dnx` on .NET 10+)
-- SQL Server Database Project (.sqlproj) or live database connection
+- SQL Project (Microsoft.Build.Sql `.sqlproj` or MSBuild.Sdk.SqlProj `.csproj`/`.fsproj`) or live database connection
 
 ## Next Steps
 

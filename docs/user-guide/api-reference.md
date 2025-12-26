@@ -8,9 +8,9 @@ These targets are executed as part of the build pipeline:
 
 | Target | Purpose | When It Runs |
 |--------|---------|--------------|
-| `EfcptResolveInputs` | Discovers database project and config files | Before build |
+| `EfcptResolveInputs` | Discovers SQL Project and config files | Before build |
 | `EfcptQuerySchemaMetadata` | Queries database schema (connection string mode) | After resolve |
-| `EfcptEnsureDacpac` | Builds `.sqlproj` to DACPAC (DACPAC mode) | After resolve |
+| `EfcptEnsureDacpac` | Builds SQL Project to DACPAC (DACPAC mode) | After resolve |
 | `EfcptStageInputs` | Stages config and templates | After DACPAC/schema |
 | `EfcptComputeFingerprint` | Detects if regeneration needed | After staging |
 | `EfcptGenerateModels` | Runs `efcpt` CLI | When fingerprint changes |
@@ -20,7 +20,7 @@ These targets are executed as part of the build pipeline:
 
 ### ResolveSqlProjAndInputs
 
-Discovers database project and configuration files.
+Discovers SQL Project and configuration files.
 
 **Parameters:**
 
@@ -30,7 +30,7 @@ Discovers database project and configuration files.
 | `ProjectDirectory` | Yes | Directory containing the consuming project |
 | `Configuration` | Yes | Active build configuration (e.g., `Debug` or `Release`) |
 | `ProjectReferences` | No | Project references of the consuming project |
-| `SqlProjOverride` | No | Optional override path for the SQL project |
+| `SqlProjOverride` | No | Optional override path for the SQL Project |
 | `ConfigOverride` | No | Optional override path for efcpt config |
 | `RenamingOverride` | No | Optional override path for renaming rules |
 | `TemplateDirOverride` | No | Optional override path for templates |
@@ -49,7 +49,7 @@ Discovers database project and configuration files.
 
 | Output | Description |
 |--------|-------------|
-| `SqlProjPath` | Discovered SQL project path |
+| `SqlProjPath` | Discovered SQL Project path |
 | `ResolvedConfigPath` | Discovered config path |
 | `ResolvedRenamingPath` | Discovered renaming path |
 | `ResolvedTemplateDir` | Discovered template directory |
@@ -58,13 +58,13 @@ Discovers database project and configuration files.
 
 ### EnsureDacpacBuilt
 
-Builds a `.sqlproj` to DACPAC if it's out of date.
+Builds a SQL Project to DACPAC if it's out of date.
 
 **Parameters:**
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `SqlProjPath` | Yes | Path to `.sqlproj` |
+| `SqlProjPath` | Yes | Path to SQL Project (`.sqlproj`, `.csproj`, or `.fsproj`) |
 | `Configuration` | Yes | Build configuration (e.g., `Debug` / `Release`) |
 | `MsBuildExe` | No | Path to `msbuild.exe` |
 | `DotNetExe` | No | Path to dotnet host |

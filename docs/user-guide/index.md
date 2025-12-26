@@ -10,14 +10,16 @@ JD.Efcpt.Build eliminates this manual step by:
 
 - **Automating code generation** during `dotnet build`
 - **Detecting schema changes** using fingerprinting to avoid unnecessary regeneration
-- **Supporting multiple input sources** including SQL Server Database Projects (.sqlproj) and live database connections
+- **Supporting multiple input sources** including SQL Projects (Microsoft.Build.Sql and MSBuild.Sdk.SqlProj) and live database connections
 - **Enabling CI/CD workflows** where models are generated consistently on any build machine
 
 ## When to Use JD.Efcpt.Build
 
 Use this package when:
 
-- You have a SQL Server database described by a Database Project (`.sqlproj`) and want EF Core models generated automatically
+- You have a SQL Server database described by a SQL Project and want EF Core models generated automatically
+  - Traditional **Microsoft.Build.Sql** projects (`.sqlproj` extension)
+  - Modern **MSBuild.Sdk.SqlProj** projects (`.csproj` or `.fsproj` extension)
 - You want EF Core Power Tools generation to run as part of `dotnet build` instead of being a manual step
 - You need deterministic, source-controlled model generation that works identically on developer machines and in CI/CD
 - You're working in a team environment and need consistent code generation across developers
@@ -29,12 +31,12 @@ The package hooks into MSBuild to run a multi-stage pipeline:
 ```
 ┌───────────────────────────────────────────────────────────────┐
 │ Stage 1: Resolve                                              │
-│ Discover .sqlproj or connection string, locate config files   │
+│ Discover SQL Project or connection string, locate configs    │
 └───────────────────────────────────────────────────────────────┘
                             │
 ┌───────────────────────────────────────────────────────────────┐
 │ Stage 2: Build DACPAC (or Query Schema)                       │
-│ Build .sqlproj to DACPAC or fingerprint live database         │
+│ Build SQL Project to DACPAC or fingerprint live database     │
 └───────────────────────────────────────────────────────────────┘
                             │
 ┌───────────────────────────────────────────────────────────────┐
@@ -74,19 +76,20 @@ Models are only regenerated when this fingerprint changes, making subsequent bui
 
 ### Dual Input Modes
 
-**DACPAC Mode** (Default): Works with SQL Server Database Projects
-- Automatically builds your .sqlproj to a DACPAC
+**DACPAC Mode** (Default): Works with SQL Projects
+- Automatically builds your SQL Project to a DACPAC
+- Supports both Microsoft.Build.Sql (`.sqlproj`) and MSBuild.Sdk.SqlProj (`.csproj`/`.fsproj`)
 - Generates models from the DACPAC schema
 
 **Connection String Mode**: Works with live databases
 - Connects directly to a database server
-- No .sqlproj required
+- No SQL Project required
 - Ideal for cloud databases or existing production systems
 
 ### Smart Discovery
 
 The package automatically discovers:
-- Database projects in your solution
+- SQL Projects in your solution (both `.sqlproj` and SDK-style projects)
 - Configuration files in standard locations
 - T4 templates in conventional directories
 - Connection strings from appsettings.json
