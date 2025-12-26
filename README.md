@@ -796,7 +796,7 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: windows-latest  # Use ubuntu-latest with MSBuild.Sdk.SqlProj or Microsoft.Build.Sql
+    runs-on: windows-latest  # Use ubuntu-latest with Microsoft.Build.Sql or MSBuild.Sdk.SqlProj
 
     steps:
     - uses: actions/checkout@v3
@@ -1471,7 +1471,7 @@ No special steps are required beyond installing the prerequisites. A typical CI 
 
 On each run the EF Core models are regenerated only when the DACPAC or EF Core Power Tools inputs change.
 
-> **💡 Tip:** Use [MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj) or [Microsoft.Build.Sql](https://github.com/microsoft/DacFx) to build DACPACs on Linux/macOS CI agents. Traditional `.sqlproj` files require Windows agents with SQL Server Data Tools components.
+> **💡 Tip:** Use [Microsoft.Build.Sql](https://github.com/microsoft/DacFx) or [MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj) to build DACPACs on Linux/macOS CI agents. Traditional `.sqlproj` files require Windows agents with SQL Server Data Tools components.
 
 ---
 
