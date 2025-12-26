@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Strategies;
 using Microsoft.Build.Framework;
@@ -242,36 +241,12 @@ public sealed class EnsureDacpacBuilt : Task
             return;
         }
 
-        var normalized = CommandNormalizationStrategy.Normalize(selection.Exe, selection.Args);
-
-        var psi = new ProcessStartInfo
-        {
-            FileName = normalized.FileName,
-            Arguments = normalized.Args,
-            WorkingDirectory = Path.GetDirectoryName(sqlproj) ?? "",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-        };
-
-        var testDac = Environment.GetEnvironmentVariable("EFCPT_TEST_DACPAC");
-        if (!string.IsNullOrWhiteSpace(testDac))
-            psi.Environment["EFCPT_TEST_DACPAC"] = testDac;
-
-        var p = Process.Start(psi) ?? throw new InvalidOperationException($"Failed to start: {normalized.FileName}");
-        var stdout = p.StandardOutput.ReadToEnd();
-        var stderr = p.StandardError.ReadToEnd();
-        p.WaitForExit();
-
-        if (p.ExitCode != 0)
-        {
-            log.Error(stdout);
-            log.Error(stderr);
-            throw new InvalidOperationException($"SQL project build failed with exit code {p.ExitCode}");
-        }
-
-        if (!string.IsNullOrWhiteSpace(stdout)) log.Detail(stdout);
-        if (!string.IsNullOrWhiteSpace(stderr)) log.Detail(stderr);
+        ProcessRunner.RunBuildOrThrow(
+            log,
+            selection.Exe,
+            selection.Args,
+            Path.GetDirectoryName(sqlproj) ?? "",
+            $"SQL project build failed");
     }
 
     private void WriteFakeDacpac(BuildLog log, string sqlproj)

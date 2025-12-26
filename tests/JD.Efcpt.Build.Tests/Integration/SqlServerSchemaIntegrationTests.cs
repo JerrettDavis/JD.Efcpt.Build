@@ -1,4 +1,5 @@
 using JD.Efcpt.Build.Tasks.Schema;
+using JD.Efcpt.Build.Tasks.Schema.Providers;
 using Microsoft.Data.SqlClient;
 using Testcontainers.MsSql;
 using TinyBDD;

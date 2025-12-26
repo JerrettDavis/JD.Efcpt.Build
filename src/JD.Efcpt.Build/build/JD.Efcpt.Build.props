@@ -19,6 +19,8 @@
     <EfcptAppSettings Condition="'$(EfcptAppSettings)'==''"></EfcptAppSettings>
     <EfcptAppConfig Condition="'$(EfcptAppConfig)'==''"></EfcptAppConfig>
     <EfcptConnectionStringName Condition="'$(EfcptConnectionStringName)'==''">DefaultConnection</EfcptConnectionStringName>
+    <!-- Database provider: mssql (default), postgres, mysql, sqlite, oracle, firebird, snowflake -->
+    <EfcptProvider Condition="'$(EfcptProvider)'==''">mssql</EfcptProvider>
 
     <!-- Solution probing -->
     <EfcptSolutionDir Condition="'$(EfcptSolutionDir)'==''">$(SolutionDir)</EfcptSolutionDir>
@@ -58,5 +60,63 @@
 
     <!-- External Data: for Data project to include DbContext/configs copied from Models project -->
     <EfcptExternalDataDir Condition="'$(EfcptExternalDataDir)'==''"></EfcptExternalDataDir>
+
+    <!--
+      Config Overrides: Apply MSBuild properties to override efcpt-config.json values.
+      When EfcptApplyMsBuildOverrides is true (default), properties set below will override
+      the corresponding values in the config file. This allows configuration via MSBuild
+      without editing JSON files directly.
+
+      When using the library default config, overrides are ALWAYS applied.
+      When using a user-provided config, overrides are only applied if EfcptApplyMsBuildOverrides=true.
+    -->
+    <EfcptApplyMsBuildOverrides Condition="'$(EfcptApplyMsBuildOverrides)'==''">true</EfcptApplyMsBuildOverrides>
+
+    <!-- Names section overrides -->
+    <EfcptConfigRootNamespace Condition="'$(EfcptConfigRootNamespace)'==''"></EfcptConfigRootNamespace>
+    <EfcptConfigDbContextName Condition="'$(EfcptConfigDbContextName)'==''"></EfcptConfigDbContextName>
+    <EfcptConfigDbContextNamespace Condition="'$(EfcptConfigDbContextNamespace)'==''"></EfcptConfigDbContextNamespace>
+    <EfcptConfigModelNamespace Condition="'$(EfcptConfigModelNamespace)'==''"></EfcptConfigModelNamespace>
+
+    <!-- File layout section overrides -->
+    <EfcptConfigOutputPath Condition="'$(EfcptConfigOutputPath)'==''"></EfcptConfigOutputPath>
+    <EfcptConfigDbContextOutputPath Condition="'$(EfcptConfigDbContextOutputPath)'==''"></EfcptConfigDbContextOutputPath>
+    <EfcptConfigSplitDbContext Condition="'$(EfcptConfigSplitDbContext)'==''"></EfcptConfigSplitDbContext>
+    <EfcptConfigUseSchemaFolders Condition="'$(EfcptConfigUseSchemaFolders)'==''"></EfcptConfigUseSchemaFolders>
+    <EfcptConfigUseSchemaNamespaces Condition="'$(EfcptConfigUseSchemaNamespaces)'==''"></EfcptConfigUseSchemaNamespaces>
+
+    <!-- Code generation section overrides -->
+    <EfcptConfigEnableOnConfiguring Condition="'$(EfcptConfigEnableOnConfiguring)'==''"></EfcptConfigEnableOnConfiguring>
+    <EfcptConfigGenerationType Condition="'$(EfcptConfigGenerationType)'==''"></EfcptConfigGenerationType>
+    <EfcptConfigUseDatabaseNames Condition="'$(EfcptConfigUseDatabaseNames)'==''"></EfcptConfigUseDatabaseNames>
+    <EfcptConfigUseDataAnnotations Condition="'$(EfcptConfigUseDataAnnotations)'==''"></EfcptConfigUseDataAnnotations>
+    <EfcptConfigUseNullableReferenceTypes Condition="'$(EfcptConfigUseNullableReferenceTypes)'==''"></EfcptConfigUseNullableReferenceTypes>
+    <EfcptConfigUseInflector Condition="'$(EfcptConfigUseInflector)'==''"></EfcptConfigUseInflector>
+    <EfcptConfigUseLegacyInflector Condition="'$(EfcptConfigUseLegacyInflector)'==''"></EfcptConfigUseLegacyInflector>
+    <EfcptConfigUseManyToManyEntity Condition="'$(EfcptConfigUseManyToManyEntity)'==''"></EfcptConfigUseManyToManyEntity>
+    <EfcptConfigUseT4 Condition="'$(EfcptConfigUseT4)'==''"></EfcptConfigUseT4>
+    <EfcptConfigUseT4Split Condition="'$(EfcptConfigUseT4Split)'==''"></EfcptConfigUseT4Split>
+    <EfcptConfigRemoveDefaultSqlFromBool Condition="'$(EfcptConfigRemoveDefaultSqlFromBool)'==''"></EfcptConfigRemoveDefaultSqlFromBool>
+    <EfcptConfigSoftDeleteObsoleteFiles Condition="'$(EfcptConfigSoftDeleteObsoleteFiles)'==''"></EfcptConfigSoftDeleteObsoleteFiles>
+    <EfcptConfigDiscoverMultipleResultSets Condition="'$(EfcptConfigDiscoverMultipleResultSets)'==''"></EfcptConfigDiscoverMultipleResultSets>
+    <EfcptConfigUseAlternateResultSetDiscovery Condition="'$(EfcptConfigUseAlternateResultSetDiscovery)'==''"></EfcptConfigUseAlternateResultSetDiscovery>
+    <EfcptConfigT4TemplatePath Condition="'$(EfcptConfigT4TemplatePath)'==''"></EfcptConfigT4TemplatePath>
+    <EfcptConfigUseNoNavigations Condition="'$(EfcptConfigUseNoNavigations)'==''"></EfcptConfigUseNoNavigations>
+    <EfcptConfigMergeDacpacs Condition="'$(EfcptConfigMergeDacpacs)'==''"></EfcptConfigMergeDacpacs>
+    <EfcptConfigRefreshObjectLists Condition="'$(EfcptConfigRefreshObjectLists)'==''"></EfcptConfigRefreshObjectLists>
+    <EfcptConfigGenerateMermaidDiagram Condition="'$(EfcptConfigGenerateMermaidDiagram)'==''"></EfcptConfigGenerateMermaidDiagram>
+    <EfcptConfigUseDecimalAnnotationForSprocs Condition="'$(EfcptConfigUseDecimalAnnotationForSprocs)'==''"></EfcptConfigUseDecimalAnnotationForSprocs>
+    <EfcptConfigUsePrefixNavigationNaming Condition="'$(EfcptConfigUsePrefixNavigationNaming)'==''"></EfcptConfigUsePrefixNavigationNaming>
+    <EfcptConfigUseDatabaseNamesForRoutines Condition="'$(EfcptConfigUseDatabaseNamesForRoutines)'==''"></EfcptConfigUseDatabaseNamesForRoutines>
+    <EfcptConfigUseInternalAccessForRoutines Condition="'$(EfcptConfigUseInternalAccessForRoutines)'==''"></EfcptConfigUseInternalAccessForRoutines>
+
+    <!-- Type mappings section overrides -->
+    <EfcptConfigUseDateOnlyTimeOnly Condition="'$(EfcptConfigUseDateOnlyTimeOnly)'==''"></EfcptConfigUseDateOnlyTimeOnly>
+    <EfcptConfigUseHierarchyId Condition="'$(EfcptConfigUseHierarchyId)'==''"></EfcptConfigUseHierarchyId>
+    <EfcptConfigUseSpatial Condition="'$(EfcptConfigUseSpatial)'==''"></EfcptConfigUseSpatial>
+    <EfcptConfigUseNodaTime Condition="'$(EfcptConfigUseNodaTime)'==''"></EfcptConfigUseNodaTime>
+
+    <!-- Replacements section overrides -->
+    <EfcptConfigPreserveCasingWithRegex Condition="'$(EfcptConfigPreserveCasingWithRegex)'==''"></EfcptConfigPreserveCasingWithRegex>
   </PropertyGroup>
 </Project>

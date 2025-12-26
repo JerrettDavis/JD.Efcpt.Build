@@ -7,7 +7,9 @@ This guide walks you through installing JD.Efcpt.Build and generating your first
 Before you begin, ensure you have:
 
 - **.NET SDK 8.0 or later** installed
-- A **SQL Server Database Project** (.sqlproj) or a live SQL Server database
+- One of:
+  - A **SQL Server Database Project** (.sqlproj) that produces a DACPAC
+  - A live database connection (SQL Server, PostgreSQL, MySQL, SQLite, Oracle, Firebird, or Snowflake)
 - Basic familiarity with MSBuild and NuGet
 
 ## Installation
@@ -144,11 +146,30 @@ Create `efcpt-config.json` in your project directory to customize generation:
 
 ## Using a Live Database
 
-If you don't have a .sqlproj, you can generate models directly from a database connection:
+If you don't have a .sqlproj, you can generate models directly from a database connection. JD.Efcpt.Build supports multiple database providers:
 
+| Provider | Value | Example |
+|----------|-------|---------|
+| SQL Server | `mssql` | Default |
+| PostgreSQL | `postgres` | `Host=localhost;Database=mydb;Username=user;Password=pass` |
+| MySQL | `mysql` | `Server=localhost;Database=mydb;User=root;Password=secret` |
+| SQLite | `sqlite` | `Data Source=./mydatabase.db` |
+| Oracle | `oracle` | `Data Source=localhost:1521/ORCL;User Id=system;Password=oracle` |
+| Firebird | `firebird` | `Database=localhost:C:\data\mydb.fdb;User=SYSDBA;Password=masterkey` |
+| Snowflake | `snowflake` | `account=myaccount;user=myuser;password=mypassword;db=mydb` |
+
+**SQL Server example:**
 ```xml
 <PropertyGroup>
   <EfcptConnectionString>Server=localhost;Database=MyDb;Integrated Security=True;</EfcptConnectionString>
+</PropertyGroup>
+```
+
+**PostgreSQL example:**
+```xml
+<PropertyGroup>
+  <EfcptProvider>postgres</EfcptProvider>
+  <EfcptConnectionString>Host=localhost;Database=mydb;Username=user;Password=pass</EfcptConnectionString>
 </PropertyGroup>
 ```
 

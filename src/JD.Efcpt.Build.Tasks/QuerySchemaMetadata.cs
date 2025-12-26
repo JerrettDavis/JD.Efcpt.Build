@@ -2,7 +2,6 @@ using System.Text.Json;
 using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Schema;
 using Microsoft.Build.Framework;
-using Microsoft.Data.SqlClient;
 using Task = Microsoft.Build.Utilities.Task;
 
 namespace JD.Efcpt.Build.Tasks;
@@ -36,10 +35,10 @@ public sealed class QuerySchemaMetadata : Task
     public string OutputDir { get; set; } = "";
 
     /// <summary>
-    /// Database provider type (mssql, postgresql, mysql, mariadb).
+    /// Database provider type.
     /// </summary>
     /// <remarks>
-    /// Phase 1 only supports mssql (SQL Server).
+    /// Supported providers: mssql, postgres, mysql, sqlite, oracle, firebird, snowflake.
     /// </remarks>
     public string Provider { get; set; } = "mssql";
 
@@ -73,17 +72,17 @@ public sealed class QuerySchemaMetadata : Task
 
         try
         {
-            // Validate connection
-            ValidateConnection(ConnectionString, log);
+            // Normalize and validate provider
+            var normalizedProvider = DatabaseProviderFactory.NormalizeProvider(Provider);
+            var providerDisplayName = DatabaseProviderFactory.GetProviderDisplayName(normalizedProvider);
 
-            // Select schema reader based on provider
-            var reader = Provider.ToLowerInvariant() switch
-            {
-                "mssql" or "sqlserver" => new SqlServerSchemaReader(),
-                _ => throw new NotSupportedException($"Database provider '{Provider}' is not supported. Phase 1 supports 'mssql' only.")
-            };
+            // Validate connection using the appropriate provider
+            ValidateConnection(normalizedProvider, ConnectionString, log);
 
-            log.Detail($"Reading schema metadata from {Provider} database...");
+            // Create schema reader for the provider
+            var reader = DatabaseProviderFactory.CreateSchemaReader(normalizedProvider);
+
+            log.Detail($"Reading schema metadata from {providerDisplayName} database...");
             var schema = reader.ReadSchema(ConnectionString);
 
             log.Detail($"Schema read: {schema.Tables.Count} tables");
@@ -116,12 +115,12 @@ public sealed class QuerySchemaMetadata : Task
         }
     }
 
-    private static void ValidateConnection(string connectionString, BuildLog log)
+    private static void ValidateConnection(string provider, string connectionString, BuildLog log)
     {
         try
         {
-            using var connection = new SqlConnection(connectionString);
-            connection.Open(SqlConnectionOverrides.OpenWithoutRetry);
+            using var connection = DatabaseProviderFactory.CreateConnection(provider, connectionString);
+            connection.Open();
             log.Detail("Database connection validated successfully.");
         }
         catch (Exception ex)

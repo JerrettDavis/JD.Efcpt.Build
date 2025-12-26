@@ -1,6 +1,6 @@
 using System.Diagnostics;
+using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Extensions;
-using JD.Efcpt.Build.Tasks.Strategies;
 using Microsoft.Build.Framework;
 using PatternKit.Behavioral.Strategy;
 using Task = Microsoft.Build.Utilities.Task;
@@ -299,7 +299,7 @@ public sealed class RunEfcpt : Task
             .Then((in ctx) =>
             {
                 var restoreCwd = ctx.ManifestDir ?? ctx.WorkingDir;
-                RunProcess(ctx.Log, ctx.DotNetExe, "tool restore", restoreCwd);
+                ProcessRunner.RunOrThrow(ctx.Log, ctx.DotNetExe, "tool restore", restoreCwd);
             })
             // Global restore: update global tool package
             // Skip on .NET 10+ because dnx handles tool execution without installation
@@ -314,7 +314,7 @@ public sealed class RunEfcpt : Task
             .Then((in ctx) =>
             {
                 var versionArg = string.IsNullOrWhiteSpace(ctx.ToolVersion) ? "" : $" --version \"{ctx.ToolVersion}\"";
-                RunProcess(ctx.Log, ctx.DotNetExe, $"tool update --global {ctx.ToolPackageId}{versionArg}", ctx.WorkingDir);
+                ProcessRunner.RunOrThrow(ctx.Log, ctx.DotNetExe, $"tool update --global {ctx.ToolPackageId}{versionArg}", ctx.WorkingDir);
             })
             // Default: no restoration needed (includes .NET 10+ with dnx)
             .Default(static (in _) => { })
@@ -326,100 +326,99 @@ public sealed class RunEfcpt : Task
     /// <returns>>True on success; false on error.</returns>
     public override bool Execute()
     {
-        var log = new BuildLog(Log, LogVerbosity);
+        var decorator = TaskExecutionDecorator.Create(ExecuteCore);
+        var ctx = new TaskExecutionContext(Log, nameof(RunEfcpt));
+        return decorator.Execute(in ctx);
+    }
 
-        try
+    private bool ExecuteCore(TaskExecutionContext ctx)
+    {
+        var log = new BuildLog(ctx.Logger, LogVerbosity);
+
+        var workingDir = Path.GetFullPath(WorkingDirectory);
+        var args = BuildArgs();
+
+        var fake = Environment.GetEnvironmentVariable("EFCPT_FAKE_EFCPT");
+        if (!string.IsNullOrWhiteSpace(fake))
         {
-            var workingDir = Path.GetFullPath(WorkingDirectory);
-            var args = BuildArgs();
-
-            var fake = Environment.GetEnvironmentVariable("EFCPT_FAKE_EFCPT");
-            if (!string.IsNullOrWhiteSpace(fake))
-            {
-                log.Info($"Running in working directory {workingDir}: (fake efcpt) {args}");
-                log.Info($"Output will be written to {OutputDir}");
-                Directory.CreateDirectory(workingDir);
-                Directory.CreateDirectory(OutputDir);
-
-                // Generate realistic structure for testing split outputs:
-                // - DbContext in root (stays in Data project)
-                // - Entity models in Models subdirectory (copied to Models project)
-                var modelsDir = Path.Combine(OutputDir, "Models");
-                Directory.CreateDirectory(modelsDir);
-
-                // Root: DbContext (stays in Data project)
-                var dbContext = Path.Combine(OutputDir, "SampleDbContext.cs");
-                var source = DacpacPath ?? ConnectionString;
-                File.WriteAllText(dbContext, $"// generated from {source}\nnamespace Sample.Data;\npublic partial class SampleDbContext : DbContext {{ }}");
-
-                // Models folder: Entity classes (will be copied to Models project)
-                var blogModel = Path.Combine(modelsDir, "Blog.cs");
-                File.WriteAllText(blogModel, $"// generated from {source}\nnamespace Sample.Data.Models;\npublic partial class Blog {{ public int BlogId {{ get; set; }} }}");
-
-                var postModel = Path.Combine(modelsDir, "Post.cs");
-                File.WriteAllText(postModel, $"// generated from {source}\nnamespace Sample.Data.Models;\npublic partial class Post {{ public int PostId {{ get; set; }} }}");
-
-                // For backwards compatibility, also generate the legacy file
-                var sample = Path.Combine(OutputDir, "SampleModel.cs");
-                File.WriteAllText(sample, $"// generated from {DacpacPath ?? ConnectionString}");
-
-                log.Detail("EFCPT_FAKE_EFCPT set; wrote sample output with Models subdirectory.");
-                return true;
-            }
-
-            // Determine whether we will use a local tool manifest or fall back to the global tool.
-            var manifestDir = FindManifestDir(workingDir);
-            var mode = ToolMode;
-
-            // On non-Windows, a bare efcpt executable is unlikely to exist unless explicitly provided
-            // via ToolPath. To avoid fragile PATH assumptions on CI agents, treat "auto" as
-            // "tool-manifest" whenever a manifest is present *or* when running on non-Windows and
-            // no explicit ToolPath was supplied.
-            var forceManifestOnNonWindows = !OperatingSystem.IsWindows() && !PathUtils.HasExplicitPath(ToolPath);
-
-            // Use the Strategy pattern to resolve tool invocation
-            var context = new ToolResolutionContext(
-                ToolPath, mode, manifestDir, forceManifestOnNonWindows,
-                DotNetExe, ToolCommand, ToolPackageId, workingDir, args, log);
-
-            var invocation = ToolResolutionStrategy.Value.Execute(in context);
-
-            var invokeExe = invocation.Exe;
-            var invokeArgs = invocation.Args;
-            var invokeCwd = invocation.Cwd;
-            var useManifest = invocation.UseManifest;
-
-            log.Info($"Running in working directory {invokeCwd}: {invokeExe} {invokeArgs}");
+            log.Info($"Running in working directory {workingDir}: (fake efcpt) {args}");
             log.Info($"Output will be written to {OutputDir}");
             Directory.CreateDirectory(workingDir);
             Directory.CreateDirectory(OutputDir);
 
-            // Restore tools if needed using the ActionStrategy pattern
-            var restoreContext = new ToolRestoreContext(
-                UseManifest: useManifest,
-                ShouldRestore: ToolRestore.IsTrue(),
-                HasExplicitPath: PathUtils.HasExplicitPath(ToolPath),
-                HasPackageId: PathUtils.HasValue(ToolPackageId),
-                ManifestDir: manifestDir,
-                WorkingDir: workingDir,
-                DotNetExe: DotNetExe,
-                ToolPath: ToolPath,
-                ToolPackageId: ToolPackageId,
-                ToolVersion: ToolVersion,
-                Log: log
-            );
+            // Generate realistic structure for testing split outputs:
+            // - DbContext in root (stays in Data project)
+            // - Entity models in Models subdirectory (copied to Models project)
+            var modelsDir = Path.Combine(OutputDir, "Models");
+            Directory.CreateDirectory(modelsDir);
 
-            ToolRestoreStrategy.Value.Execute(in restoreContext);
+            // Root: DbContext (stays in Data project)
+            var dbContext = Path.Combine(OutputDir, "SampleDbContext.cs");
+            var source = DacpacPath ?? ConnectionString;
+            File.WriteAllText(dbContext, $"// generated from {source}\nnamespace Sample.Data;\npublic partial class SampleDbContext : DbContext {{ }}");
 
-            RunProcess(log, invokeExe, invokeArgs, invokeCwd);
+            // Models folder: Entity classes (will be copied to Models project)
+            var blogModel = Path.Combine(modelsDir, "Blog.cs");
+            File.WriteAllText(blogModel, $"// generated from {source}\nnamespace Sample.Data.Models;\npublic partial class Blog {{ public int BlogId {{ get; set; }} }}");
 
+            var postModel = Path.Combine(modelsDir, "Post.cs");
+            File.WriteAllText(postModel, $"// generated from {source}\nnamespace Sample.Data.Models;\npublic partial class Post {{ public int PostId {{ get; set; }} }}");
+
+            // For backwards compatibility, also generate the legacy file
+            var sample = Path.Combine(OutputDir, "SampleModel.cs");
+            File.WriteAllText(sample, $"// generated from {DacpacPath ?? ConnectionString}");
+
+            log.Detail("EFCPT_FAKE_EFCPT set; wrote sample output with Models subdirectory.");
             return true;
         }
-        catch (Exception ex)
-        {
-            Log.LogErrorFromException(ex, true);
-            return false;
-        }
+
+        // Determine whether we will use a local tool manifest or fall back to the global tool.
+        var manifestDir = FindManifestDir(workingDir);
+        var mode = ToolMode;
+
+        // On non-Windows, a bare efcpt executable is unlikely to exist unless explicitly provided
+        // via ToolPath. To avoid fragile PATH assumptions on CI agents, treat "auto" as
+        // "tool-manifest" whenever a manifest is present *or* when running on non-Windows and
+        // no explicit ToolPath was supplied.
+        var forceManifestOnNonWindows = !OperatingSystem.IsWindows() && !PathUtils.HasExplicitPath(ToolPath);
+
+        // Use the Strategy pattern to resolve tool invocation
+        var context = new ToolResolutionContext(
+            ToolPath, mode, manifestDir, forceManifestOnNonWindows,
+            DotNetExe, ToolCommand, ToolPackageId, workingDir, args, log);
+
+        var invocation = ToolResolutionStrategy.Value.Execute(in context);
+
+        var invokeExe = invocation.Exe;
+        var invokeArgs = invocation.Args;
+        var invokeCwd = invocation.Cwd;
+        var useManifest = invocation.UseManifest;
+
+        log.Info($"Running in working directory {invokeCwd}: {invokeExe} {invokeArgs}");
+        log.Info($"Output will be written to {OutputDir}");
+        Directory.CreateDirectory(workingDir);
+        Directory.CreateDirectory(OutputDir);
+
+        // Restore tools if needed using the ActionStrategy pattern
+        var restoreContext = new ToolRestoreContext(
+            UseManifest: useManifest,
+            ShouldRestore: ToolRestore.IsTrue(),
+            HasExplicitPath: PathUtils.HasExplicitPath(ToolPath),
+            HasPackageId: PathUtils.HasValue(ToolPackageId),
+            ManifestDir: manifestDir,
+            WorkingDir: workingDir,
+            DotNetExe: DotNetExe,
+            ToolPath: ToolPath,
+            ToolPackageId: ToolPackageId,
+            ToolVersion: ToolVersion,
+            Log: log
+        );
+
+        ToolRestoreStrategy.Value.Execute(in restoreContext);
+
+        ProcessRunner.RunOrThrow(log, invokeExe, invokeArgs, invokeCwd);
+
+        return true;
     }
 
 
@@ -529,36 +528,5 @@ public sealed class RunEfcpt : Task
         }
 
         return null;
-    }
-
-    private static void RunProcess(BuildLog log, string fileName, string args, string workingDir)
-    {
-        var normalized = CommandNormalizationStrategy.Normalize(fileName, args);
-        log.Info($"> {normalized.FileName} {normalized.Args}");
-
-        var psi = new ProcessStartInfo
-        {
-            FileName = normalized.FileName,
-            Arguments = normalized.Args,
-            WorkingDirectory = workingDir,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-        };
-
-        var testDac = Environment.GetEnvironmentVariable("EFCPT_TEST_DACPAC");
-        if (!string.IsNullOrWhiteSpace(testDac))
-            psi.Environment["EFCPT_TEST_DACPAC"] = testDac;
-
-        using var p = Process.Start(psi) ?? throw new InvalidOperationException($"Failed to start: {normalized.FileName}");
-        var stdout = p.StandardOutput.ReadToEnd();
-        var stderr = p.StandardError.ReadToEnd();
-        p.WaitForExit();
-
-        if (!string.IsNullOrWhiteSpace(stdout)) log.Info(stdout);
-        if (!string.IsNullOrWhiteSpace(stderr)) log.Error(stderr);
-
-        if (p.ExitCode != 0)
-            throw new InvalidOperationException($"Process failed ({p.ExitCode}): {normalized.FileName} {normalized.Args}");
     }
 }
