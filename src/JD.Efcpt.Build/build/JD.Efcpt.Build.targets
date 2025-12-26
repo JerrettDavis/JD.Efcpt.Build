@@ -40,6 +40,9 @@
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.ApplyConfigOverrides"
              AssemblyFile="$(_EfcptTaskAssembly)" />
 
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.ResolveDbContextName"
+             AssemblyFile="$(_EfcptTaskAssembly)" />
+
   <!-- Main pipeline -->
   <Target Name="EfcptResolveInputs"
           Condition="'$(EfcptEnabled)' == 'true'">
@@ -136,8 +139,31 @@
     </EnsureDacpacBuilt>
   </Target>
 
-  <Target Name="EfcptStageInputs"
+  <!--
+    Resolve DbContext name from SQL project, DACPAC, or connection string.
+    This runs after DACPAC is ensured/resolved but before staging to allow
+    the resolved name to be used as an override in ApplyConfigOverrides.
+  -->
+  <Target Name="EfcptResolveDbContextName"
           DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpac;EfcptUseDirectDacpac"
+          Condition="'$(EfcptEnabled)' == 'true'">
+    <ResolveDbContextName
+        ExplicitDbContextName="$(EfcptConfigDbContextName)"
+        SqlProjPath="$(_EfcptSqlProj)"
+        DacpacPath="$(_EfcptDacpacPath)"
+        ConnectionString="$(_EfcptResolvedConnectionString)"
+        UseConnectionStringMode="$(_EfcptUseConnectionString)"
+        LogVerbosity="$(EfcptLogVerbosity)">
+      <Output TaskParameter="ResolvedDbContextName" PropertyName="_EfcptResolvedDbContextName" />
+    </ResolveDbContextName>
+    <!-- Set the config property to the resolved name if not explicitly set by user -->
+    <PropertyGroup>
+      <EfcptConfigDbContextName Condition="'$(EfcptConfigDbContextName)' == ''">$(_EfcptResolvedDbContextName)</EfcptConfigDbContextName>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="EfcptStageInputs"
+          DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpac;EfcptUseDirectDacpac;EfcptResolveDbContextName"
           Condition="'$(EfcptEnabled)' == 'true'">
     <StageEfcptInputs
         OutputDir="$(EfcptOutput)"
