@@ -6,6 +6,8 @@ This directory contains sample projects demonstrating various usage patterns of 
 
 | Sample | Input Mode | SQL SDK / Provider | Key Features |
 |--------|------------|-------------------|--------------|
+| [microsoft-build-sql-zero-config](#microsoft-build-sql-zero-config) | DACPAC | Microsoft.Build.Sql | **Zero-config** with official MS SDK |
+| [dacpac-zero-config](#dacpac-zero-config) | DACPAC | Pre-built .dacpac | **Zero-config** direct DACPAC |
 | [simple-generation](#simple-generation) | DACPAC | Traditional .sqlproj | Basic usage, direct source import |
 | [msbuild-sdk-sql-proj-generation](#msbuild-sdk-sql-proj-generation) | DACPAC | MSBuild.Sdk.SqlProj | Modern cross-platform SQL SDK |
 | [split-data-and-models-between-multiple-projects](#split-outputs) | DACPAC | Traditional .sqlproj | Clean architecture, split outputs |
@@ -26,58 +28,58 @@ JD.Efcpt.Build supports multiple SQL project SDKs:
 | [MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj) | Yes | Popular community SDK for cross-platform builds |
 | Traditional .sqlproj | No (Windows only) | Requires SQL Server Data Tools |
 
-```xml
-<ItemGroup>
-  <ProjectReference Include="..\Database\Database.sqlproj">
-    <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-  </ProjectReference>
-</ItemGroup>
-```
-
 Both SDK-style projects work identically with JD.Efcpt.Build - the package automatically detects and builds them.
 
 ### 2. Connection String Mode
 Reverse engineers directly from a live database connection.
 
-```xml
-<PropertyGroup>
-  <EfcptConnectionString>Data Source=./database.db</EfcptConnectionString>
-  <EfcptProvider>sqlite</EfcptProvider>
-</PropertyGroup>
-```
-
-#### Supported Providers
-
-| Provider | Value | NuGet Package Used |
-|----------|-------|-------------------|
-| SQL Server | `mssql` | Microsoft.Data.SqlClient |
-| PostgreSQL | `postgres` | Npgsql |
-| MySQL/MariaDB | `mysql` | MySqlConnector |
-| SQLite | `sqlite` | Microsoft.Data.Sqlite |
-| Oracle | `oracle` | Oracle.ManagedDataAccess.Core |
-| Firebird | `firebird` | FirebirdSql.Data.FirebirdClient |
-| Snowflake | `snowflake` | Snowflake.Data |
-
 ---
 
 ## Sample Details
+
+### microsoft-build-sql-zero-config
+
+**Location:** `microsoft-build-sql-zero-config/`
+
+Demonstrates true **zero-configuration** usage with Microsoft's official `Microsoft.Build.Sql` SDK. Just add JD.Efcpt.Build to your project - no efcpt-config.json, no templates, no project references needed.
+
+**Key Features:**
+- **Zero configuration** - no efcpt-config.json, templates, or project references
+- Uses Microsoft's official `Microsoft.Build.Sql` SDK (cross-platform)
+- Automatic SQL project discovery from solution
+- Default sensible configuration applied automatically
+
+**Build:**
+```bash
+dotnet build microsoft-build-sql-zero-config/ZeroConfigMsBuildSql.sln
+```
+
+---
+
+### dacpac-zero-config
+
+**Location:** `dacpac-zero-config/`
+
+Demonstrates **zero-configuration** reverse engineering directly from a pre-built `.dacpac` file. Ideal when you receive a DACPAC from a DBA or CI/CD pipeline.
+
+**Key Features:**
+- **Zero configuration** - no efcpt-config.json or templates
+- Uses pre-built DACPAC file (no SQL project in solution)
+- Simply set `EfcptDacpac` property to point to the .dacpac file
+- No build step for SQL project - just reverse engineering
+
+**Build:**
+```bash
+dotnet build dacpac-zero-config/ZeroConfigDacpac.sln
+```
+
+---
 
 ### simple-generation
 
 **Location:** `simple-generation/`
 
 Basic sample demonstrating DACPAC-based model generation with direct source import (useful for development).
-
-```
-simple-generation/
-├── DatabaseProject/          # SQL Server Database Project
-│   └── DatabaseProject.sqlproj
-├── EntityFrameworkCoreProject/
-│   ├── EntityFrameworkCoreProject.csproj
-│   ├── efcpt-config.json
-│   └── Template/            # T4 templates
-└── SimpleGenerationSample.sln
-```
 
 **Build:**
 ```bash
@@ -92,22 +94,10 @@ dotnet build simple-generation/SimpleGenerationSample.sln
 
 Demonstrates using a modern SDK-style SQL project (MSBuild.Sdk.SqlProj) for cross-platform DACPAC builds. This sample works on Windows, Linux, and macOS.
 
-```
-msbuild-sdk-sql-proj-generation/
-├── DatabaseProject/          # MSBuild.Sdk.SqlProj project
-│   └── DatabaseProject.csproj
-├── EntityFrameworkCoreProject/
-│   ├── EntityFrameworkCoreProject.csproj
-│   └── efcpt-config.json
-└── SimpleGenerationSample.sln
-```
-
 **Key Features:**
 - Uses `MSBuild.Sdk.SqlProj` SDK for the database project (cross-platform)
 - Works identically to traditional .sqlproj but runs on any OS
 - Dynamic SQL project discovery (no explicit reference needed)
-
-> **Note:** You can also use `Microsoft.Build.Sql` SDK, which is Microsoft's official SDK-style SQL project format. Both SDKs are fully supported.
 
 ---
 
@@ -117,27 +107,11 @@ msbuild-sdk-sql-proj-generation/
 
 Advanced sample showing how to split generated output across multiple projects following clean architecture principles.
 
-```
-split-data-and-models-between-multiple-projects/
-└── src/
-    ├── SampleApp.Sql/       # SQL Database Project
-    ├── SampleApp.Models/    # Entity classes only (NO EF Core)
-    └── SampleApp.Data/      # DbContext + EF Core dependencies
-```
-
 **Key Features:**
 - `EfcptSplitOutputs=true` enables split generation
 - Models project has no EF Core dependency
 - DbContext and configurations go to Data project
 - Automatic file distribution during build
-
-**Configuration (Models project):**
-```xml
-<PropertyGroup>
-  <EfcptSplitOutputs>true</EfcptSplitOutputs>
-  <EfcptDataProject>..\SampleApp.Data\SampleApp.Data.csproj</EfcptDataProject>
-</PropertyGroup>
-```
 
 ---
 
@@ -146,33 +120,6 @@ split-data-and-models-between-multiple-projects/
 **Location:** `connection-string-sqlite/`
 
 Demonstrates connection string mode with SQLite - no SQL project needed, reverse engineers directly from a database.
-
-```
-connection-string-sqlite/
-├── Database/
-│   ├── sample.db            # SQLite database file
-│   └── schema.sql           # Schema documentation
-├── EntityFrameworkCoreProject/
-│   ├── EntityFrameworkCoreProject.csproj
-│   ├── efcpt-config.json
-│   └── Template/
-├── setup-database.ps1       # Creates sample database
-└── README.md
-```
-
-**Setup:**
-```powershell
-./setup-database.ps1         # Creates Database/sample.db
-dotnet build EntityFrameworkCoreProject
-```
-
-**Key Configuration:**
-```xml
-<PropertyGroup>
-  <EfcptConnectionString>Data Source=$(MSBuildProjectDirectory)\..\Database\sample.db</EfcptConnectionString>
-  <EfcptProvider>sqlite</EfcptProvider>
-</PropertyGroup>
-```
 
 ---
 
@@ -183,6 +130,8 @@ All samples use:
 - **efcpt-config.json** for EF Core Power Tools configuration
 - **efcpt.renaming.json** for entity/property renaming rules (optional)
 - **Fingerprint-based incremental builds** - only regenerates when schema changes
+
+> **Note:** The zero-config samples (`microsoft-build-sql-zero-config` and `dacpac-zero-config`) use sensible defaults and don't require any configuration files.
 
 ## Getting Started
 

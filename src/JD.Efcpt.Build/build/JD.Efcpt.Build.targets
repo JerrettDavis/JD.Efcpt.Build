@@ -42,7 +42,7 @@
 
   <!-- Main pipeline -->
   <Target Name="EfcptResolveInputs"
-          Condition="'$(EfcptEnabled)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptDacpac)' == ''">
     <ResolveSqlProjAndInputs
         ProjectFullPath="$(MSBuildProjectFullPath)"
         ProjectDirectory="$(MSBuildProjectDirectory)"
@@ -72,6 +72,22 @@
     </ResolveSqlProjAndInputs>
   </Target>
 
+  <!-- Simplified resolution for direct DACPAC mode (bypass SQL project detection) -->
+  <Target Name="EfcptResolveInputsForDirectDacpac"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptDacpac)' != ''">
+    <PropertyGroup>
+      <_EfcptResolvedConfig Condition="Exists('$(MSBuildProjectDirectory)\$(EfcptConfig)')">$(MSBuildProjectDirectory)\$(EfcptConfig)</_EfcptResolvedConfig>
+      <_EfcptResolvedConfig Condition="'$(_EfcptResolvedConfig)' == ''">$(MSBuildThisFileDirectory)Defaults\efcpt-config.json</_EfcptResolvedConfig>
+      <_EfcptResolvedRenaming Condition="Exists('$(MSBuildProjectDirectory)\$(EfcptRenaming)')">$(MSBuildProjectDirectory)\$(EfcptRenaming)</_EfcptResolvedRenaming>
+      <_EfcptResolvedRenaming Condition="'$(_EfcptResolvedRenaming)' == ''">$(MSBuildThisFileDirectory)Defaults\efcpt.renaming.json</_EfcptResolvedRenaming>
+      <_EfcptResolvedTemplateDir Condition="Exists('$(MSBuildProjectDirectory)\$(EfcptTemplateDir)')">$(MSBuildProjectDirectory)\$(EfcptTemplateDir)</_EfcptResolvedTemplateDir>
+      <_EfcptResolvedTemplateDir Condition="'$(_EfcptResolvedTemplateDir)' == ''">$(MSBuildThisFileDirectory)Defaults\Template</_EfcptResolvedTemplateDir>
+      <_EfcptIsUsingDefaultConfig>true</_EfcptIsUsingDefaultConfig>
+      <_EfcptUseConnectionString>false</_EfcptUseConnectionString>
+    </PropertyGroup>
+    <MakeDir Directories="$(EfcptOutput)" />
+  </Target>
+
   <Target Name="EfcptQuerySchemaMetadata"
           AfterTargets="EfcptResolveInputs"
           BeforeTargets="EfcptStageInputs"
@@ -86,7 +102,7 @@
   </Target>
 
   <Target Name="EfcptUseDirectDacpac"
-          DependsOnTargets="EfcptResolveInputs"
+          DependsOnTargets="EfcptResolveInputs;EfcptResolveInputsForDirectDacpac"
           Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(EfcptDacpac)' != ''">
     <PropertyGroup>
       <_EfcptDacpacPath>$([System.IO.Path]::GetFullPath('$(EfcptDacpac)', '$(MSBuildProjectDirectory)'))</_EfcptDacpacPath>
