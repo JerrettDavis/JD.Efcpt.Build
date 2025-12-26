@@ -596,15 +596,25 @@ When multiple connection string sources are present, this priority order is used
 
 ### Database Provider Support
 
-**Currently Supported:**
-- **SQL Server** (`mssql`) - Fully supported
+JD.Efcpt.Build supports all database providers that EF Core Power Tools supports:
 
-**Planned for Future Versions:**
-- ⏳ PostgreSQL (`postgresql`)
-- ⏳ MySQL (`mysql`)
-- ⏳ MariaDB (`mariadb`)
-- ⏳ Oracle (`oracle`)
-- ⏳ SQLite (`sqlite`)
+| Provider | Value | Aliases | Notes |
+|----------|-------|---------|-------|
+| SQL Server | `mssql` | `sqlserver`, `sql-server` | Default provider |
+| PostgreSQL | `postgres` | `postgresql`, `pgsql` | Uses Npgsql |
+| MySQL/MariaDB | `mysql` | `mariadb` | Uses MySqlConnector |
+| SQLite | `sqlite` | `sqlite3` | Single-file databases |
+| Oracle | `oracle` | `oracledb` | Uses Oracle.ManagedDataAccess.Core |
+| Firebird | `firebird` | `fb` | Uses FirebirdSql.Data.FirebirdClient |
+| Snowflake | `snowflake` | `sf` | Uses Snowflake.Data |
+
+**Example:**
+```xml
+<PropertyGroup>
+  <EfcptProvider>postgres</EfcptProvider>
+  <EfcptConnectionString>Host=localhost;Database=mydb;Username=user;Password=pass</EfcptConnectionString>
+</PropertyGroup>
+```
 
 ### Security Best Practices
 
@@ -949,7 +959,7 @@ When `EfcptConnectionString` is set (or when a connection string can be resolved
 | `EfcptAppSettings` | *(empty)* | Optional `appsettings.json` path used to resolve connection strings |
 | `EfcptAppConfig` | *(empty)* | Optional `app.config`/`web.config` path used to resolve connection strings |
 | `EfcptConnectionStringName` | `DefaultConnection` | Connection string name/key to read from configuration files |
-| `EfcptProvider` | `mssql` | Provider identifier for schema querying and efcpt (Phase 1 supports SQL Server only) |
+| `EfcptProvider` | `mssql` | Database provider (mssql, postgres, mysql, sqlite, oracle, firebird, snowflake) |
 
 #### Tool Configuration
 
@@ -1043,7 +1053,7 @@ Queries database schema metadata and computes a deterministic schema fingerprint
 **Parameters:**
 - `ConnectionString` (required) - Database connection string
 - `OutputDir` (required) - Output directory (writes `schema-model.json` for diagnostics)
-- `Provider` - Provider identifier (default: `mssql`; Phase 1 supports SQL Server only)
+- `Provider` - Database provider identifier (mssql, postgres, mysql, sqlite, oracle, firebird, snowflake)
 - `LogVerbosity` - Logging level
 
 **Outputs:**
@@ -1289,8 +1299,8 @@ The behavior of the pipeline is controlled by a set of MSBuild properties. You c
   - Connection string name/key to read from configuration files.
 
 - `EfcptProvider` (default: `mssql`)
-  - Provider identifier passed to schema querying and efcpt.
-  - Phase 1 supports SQL Server only.
+  - Database provider identifier.
+  - Supported values: `mssql`, `postgres`, `mysql`, `sqlite`, `oracle`, `firebird`, `snowflake`.
 
 - `EfcptConfig`
   - Optional override for the EF Core Power Tools configuration file (defaults to `efcpt-config.json` in the project directory when present).

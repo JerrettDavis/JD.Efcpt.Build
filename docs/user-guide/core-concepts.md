@@ -200,12 +200,22 @@ For each input type, the package searches in this order:
 
 ### SQL Project Discovery
 
-The package discovers .sqlproj files by:
+The package discovers SQL projects by:
 
 1. Checking `EfcptSqlProj` property (if set)
 2. Scanning `ProjectReference` items for .sqlproj files
 3. Looking for .sqlproj in the solution directory
-4. Checking for modern SQL SDK projects (projects using `Microsoft.Build.Sql` SDK)
+4. Checking for modern SDK-style SQL projects
+
+**Supported SQL Project SDKs:**
+
+| SDK | Cross-Platform | Notes |
+|-----|----------------|-------|
+| [Microsoft.Build.Sql](https://github.com/microsoft/DacFx) | Yes | Microsoft's official SDK-style SQL projects |
+| [MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj) | Yes | Popular community SDK |
+| Traditional .sqlproj | No (Windows only) | Requires SQL Server Data Tools |
+
+Both SDK-style projects work identically - they produce DACPACs that JD.Efcpt.Build uses for code generation.
 
 ## Generated File Naming
 
