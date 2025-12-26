@@ -1,10 +1,10 @@
 # Simple Generation Sample
 
-This sample demonstrates using `JD.Efcpt.Build` to generate EF Core models from a SQL Server Database Project.
+This sample demonstrates using `JD.Efcpt.Build` to generate EF Core models from a SQL Project.
 
 ## Project Structure
 
-- `DatabaseProject/` - SQL Server Database Project that defines the schema
+- `DatabaseProject/` - SQL Project that defines the schema
 - `EntityFrameworkCoreProject/` - .NET project that consumes the generated EF Core models
 
 ## How It Works
