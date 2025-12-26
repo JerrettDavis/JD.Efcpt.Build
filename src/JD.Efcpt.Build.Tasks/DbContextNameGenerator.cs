@@ -217,7 +217,6 @@ public static partial class DbContextNameGenerator
         var parts = nameWithoutTrailingDigits
             .Split(['_', '-'], StringSplitOptions.RemoveEmptyEntries)
             .Select(ToPascalCase)
-            .Where(p => !string.IsNullOrWhiteSpace(p))
             .ToArray();
 
         if (parts.Length == 0)
@@ -229,11 +228,13 @@ public static partial class DbContextNameGenerator
         // Remove any remaining non-letter characters
         var cleaned = NonLetterRegex().Replace(joined, "");
 
-        if (string.IsNullOrWhiteSpace(cleaned))
+        if (string.IsNullOrWhiteSpace(cleaned) || cleaned.Length == 0)
             return DefaultContextName;
 
         // Ensure it starts with uppercase
-        cleaned = char.ToUpperInvariant(cleaned[0]) + cleaned[1..];
+        cleaned = cleaned.Length == 1 
+            ? char.ToUpperInvariant(cleaned[0]).ToString()
+            : char.ToUpperInvariant(cleaned[0]) + cleaned[1..];
 
         // Add "Context" suffix if not already present
         if (!cleaned.EndsWith(ContextSuffix, StringComparison.OrdinalIgnoreCase))
@@ -247,13 +248,15 @@ public static partial class DbContextNameGenerator
     /// </summary>
     private static string ToPascalCase(string input)
     {
-        if (string.IsNullOrWhiteSpace(input))
+        if (string.IsNullOrWhiteSpace(input) || input.Length == 0)
             return string.Empty;
 
         // If already PascalCase or single word, just ensure first letter is uppercase
         if (!input.Contains(' ') && !input.Contains('-'))
         {
-            return char.ToUpperInvariant(input[0]) + input[1..];
+            return input.Length == 1
+                ? char.ToUpperInvariant(input[0]).ToString()
+                : char.ToUpperInvariant(input[0]) + input[1..];
         }
 
         // Split on spaces or hyphens and capitalize each word
