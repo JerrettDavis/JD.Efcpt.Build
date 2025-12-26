@@ -112,13 +112,13 @@ Each data project has its own configuration:
 ```xml
 <!-- MyApp.Data.Primary.csproj -->
 <PropertyGroup>
-  <!-- Traditional Microsoft.Build.Sql project -->
+  <!-- SQL Project with .sqlproj extension -->
   <EfcptSqlProj>..\..\database\Primary.sqlproj</EfcptSqlProj>
 </PropertyGroup>
 
 <!-- MyApp.Data.Reporting.csproj -->
 <PropertyGroup>
-  <!-- Modern MSBuild.Sdk.SqlProj project (uses .csproj extension) -->
+  <!-- MSBuild.Sdk.SqlProj project (uses .csproj extension) -->
   <EfcptSqlProj>..\..\database\Reporting.csproj</EfcptSqlProj>
 </PropertyGroup>
 ```
@@ -255,18 +255,18 @@ Control how the .sqlproj is built:
 
 ## Modern SQL SDK Projects
 
-JD.Efcpt.Build supports both traditional and modern SQL Project formats:
+JD.Efcpt.Build supports modern SQL SDK projects that use **Microsoft.Build.Sql** or **MSBuild.Sdk.SqlProj**:
 
-### Traditional SQL Projects (Microsoft.Build.Sql)
+### Microsoft.Build.Sql SDK
 
-These are the classic SQL Server Database Projects with `.sqlproj` extension:
+**Microsoft.Build.Sql** is Microsoft's official SDK for building SQL Server Database Projects with the .NET SDK:
 
 ```xml
-<!-- Traditional SQL Project -->
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" 
-         ToolsVersion="4.0">
+<!-- SQL Project using Microsoft.Build.Sql SDK -->
+<Project Sdk="Microsoft.Build.Sql/0.1.12-preview">
   <PropertyGroup>
     <Name>DatabaseProject</Name>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <SqlServerVersion>Sql160</SqlServerVersion>
   </PropertyGroup>
 </Project>
@@ -274,16 +274,22 @@ These are the classic SQL Server Database Projects with `.sqlproj` extension:
 
 **File extension:** `.sqlproj`
 
-**SDK:** Microsoft.Build.Sql (traditional MSBuild format)
+**SDK:** Microsoft.Build.Sql (official Microsoft SDK)
 
-**Requirements:** SQL Server Data Tools or MSBuild with database build components
+**Requirements:** .NET SDK only (no SQL Server Data Tools or Visual Studio required)
 
-### Modern SDK-Style SQL Projects (MSBuild.Sdk.SqlProj)
+**Key Features:**
+- Official Microsoft support
+- Cross-platform with .NET SDK
+- Standard `.sqlproj` file extension
+- Modern SDK-style project format
 
-The **MSBuild.Sdk.SqlProj** package provides a modern SDK-style project format for SQL Server databases. Despite having "SqlProj" in its name, these projects use standard `.csproj` or `.fsproj` file extensions:
+### MSBuild.Sdk.SqlProj SDK
+
+**MSBuild.Sdk.SqlProj** is a community-maintained SDK that provides similar functionality with additional configurability and extensibility:
 
 ```xml
-<!-- Modern SDK-style SQL Project using MSBuild.Sdk.SqlProj -->
+<!-- SQL Project using MSBuild.Sdk.SqlProj SDK -->
 <Project Sdk="MSBuild.Sdk.SqlProj/3.3.0">
   <PropertyGroup>
     <Name>DatabaseProject</Name>
@@ -295,28 +301,52 @@ The **MSBuild.Sdk.SqlProj** package provides a modern SDK-style project format f
 
 **File extension:** `.csproj` or `.fsproj` (NOT `.sqlproj`)
 
-**SDK:** MSBuild.Sdk.SqlProj (NuGet package)
+**SDK:** MSBuild.Sdk.SqlProj (community-maintained NuGet package)
 
-**Requirements:** .NET SDK only (no SQL Server Data Tools required)
+**Requirements:** .NET SDK only
 
-**Key Benefits:**
-- Works cross-platform with just the .NET SDK
-- No Visual Studio or SQL Server Data Tools required
-- Simpler project file format
-- Better integration with modern .NET tooling
+**Key Features:**
+- Additional configurability and extensibility
+- Cross-platform with .NET SDK
+- Uses `.csproj` or `.fsproj` file extensions despite the SDK name
+- More similar to legacy .NET Framework `.sqlproj` projects in some behaviors
 
-### Using MSBuild.Sdk.SqlProj Projects
+### Legacy .sqlproj Projects
 
-When using MSBuild.Sdk.SqlProj projects with JD.Efcpt.Build:
+JD.Efcpt.Build also supports legacy SQL Server Database Projects that use the traditional .NET Framework format:
 
 ```xml
-<!-- Point to the .csproj file, not .sqlproj -->
+<!-- Legacy .NET Framework SQL Project -->
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" 
+         ToolsVersion="4.0">
+  <PropertyGroup>
+    <Name>DatabaseProject</Name>
+    <SqlServerVersion>Sql160</SqlServerVersion>
+  </PropertyGroup>
+</Project>
+```
+
+**File extension:** `.sqlproj`
+
+**Format:** Traditional MSBuild format (not SDK-style)
+
+**Requirements:** SQL Server Data Tools (SSDT) or Visual Studio with database tooling
+
+### Using Different SQL Project Types
+
+When referencing SQL Projects in JD.Efcpt.Build, specify the project file path:
+
+```xml
 <PropertyGroup>
+  <!-- Microsoft.Build.Sql or legacy .sqlproj -->
+  <EfcptSqlProj>..\..\database\MyDatabase\MyDatabase.sqlproj</EfcptSqlProj>
+  
+  <!-- MSBuild.Sdk.SqlProj (uses .csproj extension) -->
   <EfcptSqlProj>..\..\database\MyDatabase\MyDatabase.csproj</EfcptSqlProj>
 </PropertyGroup>
 ```
 
-The package automatically detects both project types and handles them appropriately.
+The package automatically detects the project type and handles it appropriately.
 
 ## Excluding Tables and Schemas
 

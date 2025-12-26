@@ -18,8 +18,9 @@ JD.Efcpt.Build eliminates this manual step by:
 Use this package when:
 
 - You have a SQL Server database described by a SQL Project and want EF Core models generated automatically
-  - Traditional **Microsoft.Build.Sql** projects (`.sqlproj` extension)
-  - Modern **MSBuild.Sdk.SqlProj** projects (`.csproj` or `.fsproj` extension)
+  - **Microsoft.Build.Sql** - Microsoft's modern SDK for `.sqlproj` projects
+  - **MSBuild.Sdk.SqlProj** - Community SDK using `.csproj` or `.fsproj` extensions
+  - **Legacy .sqlproj** - Traditional .NET Framework format
 - You want EF Core Power Tools generation to run as part of `dotnet build` instead of being a manual step
 - You need deterministic, source-controlled model generation that works identically on developer machines and in CI/CD
 - You're working in a team environment and need consistent code generation across developers
@@ -78,7 +79,7 @@ Models are only regenerated when this fingerprint changes, making subsequent bui
 
 **DACPAC Mode** (Default): Works with SQL Projects
 - Automatically builds your SQL Project to a DACPAC
-- Supports both Microsoft.Build.Sql (`.sqlproj`) and MSBuild.Sdk.SqlProj (`.csproj`/`.fsproj`)
+- Supports Microsoft.Build.Sql (`.sqlproj`), MSBuild.Sdk.SqlProj (`.csproj`/`.fsproj`), and legacy `.sqlproj`
 - Generates models from the DACPAC schema
 
 **Connection String Mode**: Works with live databases

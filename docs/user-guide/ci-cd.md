@@ -12,8 +12,8 @@ Ensure your CI/CD environment has:
 
 - .NET SDK 8.0 or later
 - EF Core Power Tools CLI (not required for .NET 10+)
-- For DACPAC mode with traditional Microsoft.Build.Sql projects: SQL Server Data Tools components
-- For DACPAC mode with MSBuild.Sdk.SqlProj projects: No additional components required (SDK is NuGet-based)
+- For DACPAC mode with legacy .NET Framework .sqlproj projects: SQL Server Data Tools components
+- For DACPAC mode with Microsoft.Build.Sql or MSBuild.Sdk.SqlProj projects: No additional components required (SDKs are NuGet-based)
 
 ## GitHub Actions
 

@@ -57,7 +57,7 @@ The package orchestrates a six-stage MSBuild pipeline:
 
 - .NET SDK 8.0 or later
 - EF Core Power Tools CLI (auto-executed via `dnx` on .NET 10+)
-- SQL Project (Microsoft.Build.Sql `.sqlproj` or MSBuild.Sdk.SqlProj `.csproj`/`.fsproj`) or live database connection
+- SQL Project (Microsoft.Build.Sql `.sqlproj`, MSBuild.Sdk.SqlProj `.csproj`/`.fsproj`, or legacy `.sqlproj`) or live database connection
 
 ## Next Steps
 

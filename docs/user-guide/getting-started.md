@@ -7,7 +7,11 @@ This guide walks you through installing JD.Efcpt.Build and generating your first
 Before you begin, ensure you have:
 
 - **.NET SDK 8.0 or later** installed
-- A **SQL Project** (either traditional Microsoft.Build.Sql `.sqlproj` or modern MSBuild.Sdk.SqlProj `.csproj`/`.fsproj`) or a live SQL Server database
+- A **SQL Project**:
+  - **Microsoft.Build.Sql** - Modern Microsoft SDK for `.sqlproj` (requires .NET SDK)
+  - **MSBuild.Sdk.SqlProj** - Community SDK using `.csproj`/`.fsproj` (requires .NET SDK)
+  - **Legacy .sqlproj** - Traditional format (requires SSDT)
+  - Or a live SQL Server database
 - Basic familiarity with MSBuild and NuGet
 
 ## Installation
@@ -93,8 +97,9 @@ YourSolution/
 │       └── efcpt-config.json       # Optional: customize generation
 └── database/
     └── YourDatabase/
-        └── YourDatabase.sqlproj    # Your SQL Project (Microsoft.Build.Sql format)
-                                     # Or: YourDatabase.csproj (MSBuild.Sdk.SqlProj format)
+        └── YourDatabase.sqlproj    # Your SQL Project
+                                     # (.sqlproj for Microsoft.Build.Sql or legacy)
+                                     # (.csproj for MSBuild.Sdk.SqlProj)
 ```
 
 ## Minimal Configuration
@@ -113,10 +118,10 @@ If auto-discovery doesn't find your SQL Project, specify it explicitly:
 
 ```xml
 <PropertyGroup>
-  <!-- For traditional Microsoft.Build.Sql projects -->
+  <!-- For Microsoft.Build.Sql or legacy .sqlproj projects -->
   <EfcptSqlProj>..\database\YourDatabase\YourDatabase.sqlproj</EfcptSqlProj>
   
-  <!-- Or for modern MSBuild.Sdk.SqlProj projects -->
+  <!-- Or for MSBuild.Sdk.SqlProj projects (.csproj extension) -->
   <EfcptSqlProj>..\database\YourDatabase\YourDatabase.csproj</EfcptSqlProj>
 </PropertyGroup>
 ```

@@ -110,7 +110,10 @@ The package orchestrates a MSBuild pipeline with these stages:
 
 - **.NET SDK 8.0+** (or compatible version)
 - **EF Core Power Tools CLI** (`ErikEJ.EFCorePowerTools.Cli`) - **Not required for .NET 10.0+** (uses `dnx` instead)
-- **SQL Project** - Either a traditional SQL Server Database Project using **Microsoft.Build.Sql** (`.sqlproj` extension) or a modern SQL SDK project using **MSBuild.Sdk.SqlProj** (`.csproj` or `.fsproj` extension)
+- **SQL Project** - Either:
+  - **Microsoft.Build.Sql** - Modern Microsoft SDK for `.sqlproj` projects (requires .NET SDK)
+  - **MSBuild.Sdk.SqlProj** - Community SDK using `.csproj` or `.fsproj` extensions (requires .NET SDK)
+  - **Legacy .sqlproj** - Traditional .NET Framework format (requires SSDT)
 
 ### Step 1: Install the Package
 
@@ -519,7 +522,7 @@ When multiple connection string sources are present, this priority order is used
   </ItemGroup>
 
   <PropertyGroup>
-    <!-- Traditional SQL Project (Microsoft.Build.Sql) -->
+    <!-- SQL Project (Microsoft.Build.Sql, MSBuild.Sdk.SqlProj, or legacy) -->
     <EfcptSqlProj>..\Database\Database.sqlproj</EfcptSqlProj>
   </PropertyGroup>
 </Project>
@@ -1189,9 +1192,10 @@ By default the build uses `dotnet tool run efcpt` when a local tool manifest is 
 - .NET SDK 8.0 or newer.
 - EF Core Power Tools CLI installed as a .NET tool (global or local).
 - A SQL Project that can be built to a DACPAC:
-  - **Microsoft.Build.Sql** - Traditional SQL Server Database Projects (`.sqlproj` extension)
-  - **MSBuild.Sdk.SqlProj** - Modern SDK-style SQL projects (`.csproj` or `.fsproj` extension)
-- On build agents, the appropriate SQL Server Data Tools / build tools components may be required.
+  - **Microsoft.Build.Sql** - Modern Microsoft SDK for `.sqlproj` projects (requires .NET SDK)
+  - **MSBuild.Sdk.SqlProj** - Community SDK using `.csproj` or `.fsproj` extensions (requires .NET SDK)
+  - **Legacy .sqlproj** - Traditional .NET Framework format (requires SSDT)
+- On build agents, the appropriate tooling for your SQL Project type may be required.
 
 ---
 
@@ -1474,8 +1478,8 @@ Ensure that the build agent has the necessary SQL Server Data Tools components t
 ### 8.2 DACPAC build problems
 
 - Ensure that either `msbuild.exe` (Windows) or `dotnet msbuild` is available.
-- For traditional Microsoft.Build.Sql projects, install the SQL Server Data Tools / database build components on the machine running the build.
-- For MSBuild.Sdk.SqlProj projects, ensure the SDK is available via NuGet restore.
+- For legacy .NET Framework .sqlproj projects, install the SQL Server Data Tools / database build components on the machine running the build.
+- For Microsoft.Build.Sql and MSBuild.Sdk.SqlProj projects, ensure the SDK is available via NuGet restore.
 - Review the detailed build log from the `EnsureDacpacBuilt` task for underlying MSBuild errors.
 
 ### 8.3 `efcpt` CLI issues

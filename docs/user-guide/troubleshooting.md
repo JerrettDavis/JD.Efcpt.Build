@@ -84,10 +84,10 @@ When `EfcptDumpResolvedInputs` is `true`, check `obj/efcpt/resolved-inputs.json`
 1. **Set path explicitly:**
    ```xml
    <PropertyGroup>
-     <!-- For traditional Microsoft.Build.Sql projects -->
+     <!-- For Microsoft.Build.Sql or legacy .sqlproj projects -->
      <EfcptSqlProj>..\database\MyDatabase.sqlproj</EfcptSqlProj>
      
-     <!-- Or for modern MSBuild.Sdk.SqlProj projects -->
+     <!-- Or for MSBuild.Sdk.SqlProj projects (.csproj extension) -->
      <EfcptSqlProj>..\database\MyDatabase.csproj</EfcptSqlProj>
    </PropertyGroup>
    ```

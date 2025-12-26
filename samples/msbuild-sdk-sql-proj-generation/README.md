@@ -1,23 +1,26 @@
-# Modern SDK-Style SQL Project Sample
+# MSBuild.Sdk.SqlProj Sample
 
-This sample demonstrates using `JD.Efcpt.Build` with a modern **MSBuild.Sdk.SqlProj** SQL Project.
+This sample demonstrates using `JD.Efcpt.Build` with the **MSBuild.Sdk.SqlProj** community SDK.
 
 ## Project Structure
 
-- `DatabaseProject/` - Modern SDK-style SQL Project using **MSBuild.Sdk.SqlProj**
+- `DatabaseProject/` - SQL Project using **MSBuild.Sdk.SqlProj** SDK
   - Note: Despite the SDK name containing "SqlProj", this project uses a **`.csproj`** file extension
 - `EntityFrameworkCoreProject/` - .NET project that consumes the generated EF Core models
 
 ## Important: Understanding MSBuild.Sdk.SqlProj
 
-The **MSBuild.Sdk.SqlProj** package provides modern SDK-style SQL projects. Key points:
+The **MSBuild.Sdk.SqlProj** package is a community-maintained SDK for SQL projects. Key points:
 
 - **File Extension:** Uses `.csproj` or `.fsproj` (NOT `.sqlproj`)
 - **SDK Reference:** `<Project Sdk="MSBuild.Sdk.SqlProj/3.3.0">`
 - **No Visual Studio Required:** Works with just the .NET SDK
 - **Cross-Platform:** Builds on Windows, Linux, and macOS
+- **Additional Features:** Offers more configurability and extensibility compared to Microsoft's SDK
 
-This is different from traditional **Microsoft.Build.Sql** projects which use the `.sqlproj` extension.
+This is different from:
+- **Microsoft.Build.Sql** - Microsoft's official SDK that uses `.sqlproj` extension
+- **Legacy .sqlproj** - Traditional .NET Framework format requiring SSDT
 
 ## How It Works
 

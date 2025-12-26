@@ -1,21 +1,22 @@
-# Traditional SQL Project Sample
+# SQL Project Sample (.sqlproj format)
 
-This sample demonstrates using `JD.Efcpt.Build` with a traditional **Microsoft.Build.Sql** SQL Project.
+This sample demonstrates using `JD.Efcpt.Build` with a SQL Project using the `.sqlproj` file format.
 
 ## Project Structure
 
-- `DatabaseProject/` - Traditional SQL Server Database Project using **Microsoft.Build.Sql** (`.sqlproj` extension)
+- `DatabaseProject/` - SQL Project with `.sqlproj` extension
 - `EntityFrameworkCoreProject/` - .NET project that consumes the generated EF Core models
 
-## Important: Understanding Microsoft.Build.Sql
+## Important: Understanding .sqlproj Projects
 
-This sample uses the traditional **Microsoft.Build.Sql** format:
+This sample uses a `.sqlproj` file, which can be built using:
 
-- **File Extension:** Uses `.sqlproj`
-- **Format:** Traditional MSBuild project format (not SDK-style)
-- **Requirements:** SQL Server Data Tools or MSBuild with database build components
+- **Microsoft.Build.Sql** - Microsoft's modern SDK for `.sqlproj` projects (requires .NET SDK only)
+- **Legacy .sqlproj** - Traditional .NET Framework format (requires SSDT/Visual Studio)
 
-This is different from **MSBuild.Sdk.SqlProj** projects which use `.csproj` or `.fsproj` extensions despite having "SqlProj" in the SDK name.
+Both formats use the `.sqlproj` file extension, but Microsoft.Build.Sql is the modern, cross-platform approach.
+
+This is different from **MSBuild.Sdk.SqlProj** which uses `.csproj` or `.fsproj` extensions despite having "SqlProj" in the SDK name.
 
 ## How It Works
 
@@ -40,7 +41,7 @@ dotnet build
 ```
 
 The build will:
-- Build the traditional Microsoft.Build.Sql project (DatabaseProject.sqlproj) to a DACPAC
+- Build the SQL Project (DatabaseProject.sqlproj) to a DACPAC
 - Run the Efcpt pipeline to generate EF Core models
 - Compile the generated models into the application
 
