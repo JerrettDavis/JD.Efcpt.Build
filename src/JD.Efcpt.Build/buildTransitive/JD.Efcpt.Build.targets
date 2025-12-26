@@ -37,6 +37,9 @@
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.QuerySchemaMetadata"
              AssemblyFile="$(_EfcptTaskAssembly)" />
 
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.ApplyConfigOverrides"
+             AssemblyFile="$(_EfcptTaskAssembly)" />
+
   <!-- Main pipeline -->
   <Target Name="EfcptResolveInputs"
           Condition="'$(EfcptEnabled)' == 'true'">
@@ -65,6 +68,7 @@
       <Output TaskParameter="ResolvedTemplateDir" PropertyName="_EfcptResolvedTemplateDir" />
       <Output TaskParameter="ResolvedConnectionString" PropertyName="_EfcptResolvedConnectionString" />
       <Output TaskParameter="UseConnectionString" PropertyName="_EfcptUseConnectionString" />
+      <Output TaskParameter="IsUsingDefaultConfig" PropertyName="_EfcptIsUsingDefaultConfig" />
     </ResolveSqlProjAndInputs>
   </Target>
 
@@ -162,8 +166,59 @@
     </StageEfcptInputs>
   </Target>
 
-  <Target Name="EfcptComputeFingerprint"
+  <!--
+    Apply MSBuild property overrides to the staged efcpt-config.json file.
+    Runs after staging but before fingerprinting to ensure overrides are included in the hash.
+  -->
+  <Target Name="EfcptApplyConfigOverrides"
           DependsOnTargets="EfcptStageInputs"
+          Condition="'$(EfcptEnabled)' == 'true'">
+    <ApplyConfigOverrides
+        StagedConfigPath="$(_EfcptStagedConfig)"
+        ApplyOverrides="$(EfcptApplyMsBuildOverrides)"
+        IsUsingDefaultConfig="$(_EfcptIsUsingDefaultConfig)"
+        LogVerbosity="$(EfcptLogVerbosity)"
+        RootNamespace="$(EfcptConfigRootNamespace)"
+        DbContextName="$(EfcptConfigDbContextName)"
+        DbContextNamespace="$(EfcptConfigDbContextNamespace)"
+        ModelNamespace="$(EfcptConfigModelNamespace)"
+        OutputPath="$(EfcptConfigOutputPath)"
+        DbContextOutputPath="$(EfcptConfigDbContextOutputPath)"
+        SplitDbContext="$(EfcptConfigSplitDbContext)"
+        UseSchemaFolders="$(EfcptConfigUseSchemaFolders)"
+        UseSchemaNamespaces="$(EfcptConfigUseSchemaNamespaces)"
+        EnableOnConfiguring="$(EfcptConfigEnableOnConfiguring)"
+        GenerationType="$(EfcptConfigGenerationType)"
+        UseDatabaseNames="$(EfcptConfigUseDatabaseNames)"
+        UseDataAnnotations="$(EfcptConfigUseDataAnnotations)"
+        UseNullableReferenceTypes="$(EfcptConfigUseNullableReferenceTypes)"
+        UseInflector="$(EfcptConfigUseInflector)"
+        UseLegacyInflector="$(EfcptConfigUseLegacyInflector)"
+        UseManyToManyEntity="$(EfcptConfigUseManyToManyEntity)"
+        UseT4="$(EfcptConfigUseT4)"
+        UseT4Split="$(EfcptConfigUseT4Split)"
+        RemoveDefaultSqlFromBool="$(EfcptConfigRemoveDefaultSqlFromBool)"
+        SoftDeleteObsoleteFiles="$(EfcptConfigSoftDeleteObsoleteFiles)"
+        DiscoverMultipleResultSets="$(EfcptConfigDiscoverMultipleResultSets)"
+        UseAlternateResultSetDiscovery="$(EfcptConfigUseAlternateResultSetDiscovery)"
+        T4TemplatePath="$(EfcptConfigT4TemplatePath)"
+        UseNoNavigations="$(EfcptConfigUseNoNavigations)"
+        MergeDacpacs="$(EfcptConfigMergeDacpacs)"
+        RefreshObjectLists="$(EfcptConfigRefreshObjectLists)"
+        GenerateMermaidDiagram="$(EfcptConfigGenerateMermaidDiagram)"
+        UseDecimalAnnotationForSprocs="$(EfcptConfigUseDecimalAnnotationForSprocs)"
+        UsePrefixNavigationNaming="$(EfcptConfigUsePrefixNavigationNaming)"
+        UseDatabaseNamesForRoutines="$(EfcptConfigUseDatabaseNamesForRoutines)"
+        UseInternalAccessForRoutines="$(EfcptConfigUseInternalAccessForRoutines)"
+        UseDateOnlyTimeOnly="$(EfcptConfigUseDateOnlyTimeOnly)"
+        UseHierarchyId="$(EfcptConfigUseHierarchyId)"
+        UseSpatial="$(EfcptConfigUseSpatial)"
+        UseNodaTime="$(EfcptConfigUseNodaTime)"
+        PreserveCasingWithRegex="$(EfcptConfigPreserveCasingWithRegex)" />
+  </Target>
+
+  <Target Name="EfcptComputeFingerprint"
+          DependsOnTargets="EfcptApplyConfigOverrides"
           Condition="'$(EfcptEnabled)' == 'true'">
     <ComputeFingerprint
         DacpacPath="$(_EfcptDacpacPath)"

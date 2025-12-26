@@ -202,6 +202,16 @@ public sealed partial class ResolveSqlProjAndInputs : Task
     [Output]
     public string UseConnectionString { get; set; } = "false";
 
+    /// <summary>
+    /// Indicates whether the resolved configuration file is the library default (not user-provided).
+    /// </summary>
+    /// <value>
+    /// The string "true" when the configuration was resolved from <see cref="DefaultsRoot"/>;
+    /// otherwise "false".
+    /// </value>
+    [Output]
+    public string IsUsingDefaultConfig { get; set; } = "false";
+
     #region Context Records
 
     private readonly record struct SqlProjResolutionContext(
@@ -297,6 +307,7 @@ public sealed partial class ResolveSqlProjAndInputs : Task
         ResolvedTemplateDir = resolutionState.TemplateDir;
         ResolvedConnectionString = resolutionState.ConnectionString;
         UseConnectionString = resolutionState.UseConnectionStringMode ? "true" : "false";
+        IsUsingDefaultConfig = IsConfigFromDefaults(resolutionState.ConfigPath) ? "true" : "false";
 
         if (DumpResolvedInputs.IsTrue())
             WriteDumpFile(resolutionState);
@@ -600,6 +611,18 @@ public sealed partial class ResolveSqlProjAndInputs : Task
         return chain.Execute(in context, out var result)
             ? result!
             : throw new InvalidOperationException("Chain should always produce result or throw");
+    }
+
+    private bool IsConfigFromDefaults(string configPath)
+    {
+        if (string.IsNullOrWhiteSpace(DefaultsRoot) || string.IsNullOrWhiteSpace(configPath))
+            return false;
+
+        var normalizedConfig = Path.GetFullPath(configPath);
+        var normalizedDefaults = Path.GetFullPath(DefaultsRoot).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                                 + Path.DirectorySeparatorChar;
+
+        return normalizedConfig.StartsWith(normalizedDefaults, StringComparison.OrdinalIgnoreCase);
     }
 
     private string? TryResolveConnectionString(BuildLog log)

@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Suppress CS8669 for generated code that doesn't have #nullable directive -->
+    <NoWarn>$(NoWarn);CS8669</NoWarn>
+  </PropertyGroup>
+
+  <!--
+    Development Mode: Import from local source
+    For production, replace this section with: <PackageReference Include="JD.Efcpt.Build" Version="*" />
+  -->
+  <PropertyGroup>
+    <EfcptBuildRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\..\src\JD.Efcpt.Build\'))</EfcptBuildRoot>
+  </PropertyGroup>
+  <Import Project="$(EfcptBuildRoot)build\JD.Efcpt.Build.props" />
+
+  <!-- JD.Efcpt.Build Configuration -->
+  <PropertyGroup>
+    <!-- Connection String Mode: reverse engineer directly from SQLite database -->
+    <EfcptConnectionString>Data Source=$(MSBuildProjectDirectory)\..\Database\sample.db</EfcptConnectionString>
+    <EfcptProvider>sqlite</EfcptProvider>
+
+    <!-- Enable verbose logging to see what's happening -->
+    <EfcptLogVerbosity>detailed</EfcptLogVerbosity>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- EF Core runtime packages -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.1" />
+  </ItemGroup>
+
+  <!-- Import targets after package references -->
+  <Import Project="$(EfcptBuildRoot)build\JD.Efcpt.Build.targets" />
+
+</Project>

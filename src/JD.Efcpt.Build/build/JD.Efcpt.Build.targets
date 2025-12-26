@@ -37,6 +37,9 @@
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.QuerySchemaMetadata"
              AssemblyFile="$(_EfcptTaskAssembly)" />
 
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.ApplyConfigOverrides"
+             AssemblyFile="$(_EfcptTaskAssembly)" />
+
   <!-- Main pipeline -->
   <Target Name="EfcptResolveInputs"
           Condition="'$(EfcptEnabled)' == 'true'">
@@ -65,6 +68,7 @@
       <Output TaskParameter="ResolvedTemplateDir" PropertyName="_EfcptResolvedTemplateDir" />
       <Output TaskParameter="ResolvedConnectionString" PropertyName="_EfcptResolvedConnectionString" />
       <Output TaskParameter="UseConnectionString" PropertyName="_EfcptUseConnectionString" />
+      <Output TaskParameter="IsUsingDefaultConfig" PropertyName="_EfcptIsUsingDefaultConfig" />
     </ResolveSqlProjAndInputs>
   </Target>
 
@@ -97,21 +101,32 @@
     Build the SQL project using MSBuild's native task to ensure proper dependency ordering.
     This prevents race conditions when MSBuild runs in parallel mode - the SQL project
     build will complete before any targets that depend on this one can proceed.
+    Note: Condition is on the task, not the target, because target conditions evaluate
+    before DependsOnTargets complete.
   -->
   <Target Name="EfcptBuildSqlProj"
           DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptSqlProj)' != ''">
-    <Message Text="Building SQL project: $(_EfcptSqlProj)" Importance="normal" />
-    <MSBuild Projects="$(_EfcptSqlProj)"
+          Condition="'$(EfcptEnabled)' == 'true'">
+    <Message Condition="'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptSqlProj)' != ''"
+             Text="Building SQL project: $(_EfcptSqlProj)" Importance="normal" />
+    <MSBuild Condition="'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptSqlProj)' != ''"
+             Projects="$(_EfcptSqlProj)"
              Targets="Build"
              Properties="Configuration=$(Configuration)"
              BuildInParallel="false" />
   </Target>
 
+  <!--
+    EfcptEnsureDacpac: Build dacpac if needed (not in connection string mode).
+    Note: The condition check happens INSIDE the target (not on the target itself)
+    because target conditions are evaluated before DependsOnTargets run.
+  -->
   <Target Name="EfcptEnsureDacpac"
           DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptBuildSqlProj"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true'">
+          Condition="'$(EfcptEnabled)' == 'true'">
+    <!-- Only run the dacpac task when NOT in connection string mode and NOT using direct dacpac -->
     <EnsureDacpacBuilt
+        Condition="'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true'"
         SqlProjPath="$(_EfcptSqlProj)"
         Configuration="$(Configuration)"
         MsBuildExe="$(MSBuildBinPath)msbuild.exe"
@@ -122,7 +137,7 @@
   </Target>
 
   <Target Name="EfcptStageInputs"
-          DependsOnTargets="EfcptEnsureDacpac;EfcptUseDirectDacpac"
+          DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpac;EfcptUseDirectDacpac"
           Condition="'$(EfcptEnabled)' == 'true'">
     <StageEfcptInputs
         OutputDir="$(EfcptOutput)"
@@ -139,8 +154,59 @@
     </StageEfcptInputs>
   </Target>
 
-  <Target Name="EfcptComputeFingerprint"
+  <!--
+    Apply MSBuild property overrides to the staged efcpt-config.json file.
+    Runs after staging but before fingerprinting to ensure overrides are included in the hash.
+  -->
+  <Target Name="EfcptApplyConfigOverrides"
           DependsOnTargets="EfcptStageInputs"
+          Condition="'$(EfcptEnabled)' == 'true'">
+    <ApplyConfigOverrides
+        StagedConfigPath="$(_EfcptStagedConfig)"
+        ApplyOverrides="$(EfcptApplyMsBuildOverrides)"
+        IsUsingDefaultConfig="$(_EfcptIsUsingDefaultConfig)"
+        LogVerbosity="$(EfcptLogVerbosity)"
+        RootNamespace="$(EfcptConfigRootNamespace)"
+        DbContextName="$(EfcptConfigDbContextName)"
+        DbContextNamespace="$(EfcptConfigDbContextNamespace)"
+        ModelNamespace="$(EfcptConfigModelNamespace)"
+        OutputPath="$(EfcptConfigOutputPath)"
+        DbContextOutputPath="$(EfcptConfigDbContextOutputPath)"
+        SplitDbContext="$(EfcptConfigSplitDbContext)"
+        UseSchemaFolders="$(EfcptConfigUseSchemaFolders)"
+        UseSchemaNamespaces="$(EfcptConfigUseSchemaNamespaces)"
+        EnableOnConfiguring="$(EfcptConfigEnableOnConfiguring)"
+        GenerationType="$(EfcptConfigGenerationType)"
+        UseDatabaseNames="$(EfcptConfigUseDatabaseNames)"
+        UseDataAnnotations="$(EfcptConfigUseDataAnnotations)"
+        UseNullableReferenceTypes="$(EfcptConfigUseNullableReferenceTypes)"
+        UseInflector="$(EfcptConfigUseInflector)"
+        UseLegacyInflector="$(EfcptConfigUseLegacyInflector)"
+        UseManyToManyEntity="$(EfcptConfigUseManyToManyEntity)"
+        UseT4="$(EfcptConfigUseT4)"
+        UseT4Split="$(EfcptConfigUseT4Split)"
+        RemoveDefaultSqlFromBool="$(EfcptConfigRemoveDefaultSqlFromBool)"
+        SoftDeleteObsoleteFiles="$(EfcptConfigSoftDeleteObsoleteFiles)"
+        DiscoverMultipleResultSets="$(EfcptConfigDiscoverMultipleResultSets)"
+        UseAlternateResultSetDiscovery="$(EfcptConfigUseAlternateResultSetDiscovery)"
+        T4TemplatePath="$(EfcptConfigT4TemplatePath)"
+        UseNoNavigations="$(EfcptConfigUseNoNavigations)"
+        MergeDacpacs="$(EfcptConfigMergeDacpacs)"
+        RefreshObjectLists="$(EfcptConfigRefreshObjectLists)"
+        GenerateMermaidDiagram="$(EfcptConfigGenerateMermaidDiagram)"
+        UseDecimalAnnotationForSprocs="$(EfcptConfigUseDecimalAnnotationForSprocs)"
+        UsePrefixNavigationNaming="$(EfcptConfigUsePrefixNavigationNaming)"
+        UseDatabaseNamesForRoutines="$(EfcptConfigUseDatabaseNamesForRoutines)"
+        UseInternalAccessForRoutines="$(EfcptConfigUseInternalAccessForRoutines)"
+        UseDateOnlyTimeOnly="$(EfcptConfigUseDateOnlyTimeOnly)"
+        UseHierarchyId="$(EfcptConfigUseHierarchyId)"
+        UseSpatial="$(EfcptConfigUseSpatial)"
+        UseNodaTime="$(EfcptConfigUseNodaTime)"
+        PreserveCasingWithRegex="$(EfcptConfigPreserveCasingWithRegex)" />
+  </Target>
+
+  <Target Name="EfcptComputeFingerprint"
+          DependsOnTargets="EfcptApplyConfigOverrides"
           Condition="'$(EfcptEnabled)' == 'true'">
     <ComputeFingerprint
         DacpacPath="$(_EfcptDacpacPath)"
@@ -175,6 +241,7 @@
         DacpacPath="$(_EfcptDacpacPath)"
         ConnectionString="$(_EfcptResolvedConnectionString)"
         UseConnectionStringMode="$(_EfcptUseConnectionString)"
+        Provider="$(EfcptProvider)"
         ConfigPath="$(_EfcptStagedConfig)"
         RenamingPath="$(_EfcptStagedRenaming)"
         TemplateDir="$(_EfcptStagedTemplateDir)"

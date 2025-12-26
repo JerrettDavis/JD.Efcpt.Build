@@ -32,7 +32,8 @@ internal static class TaskExecutionDecorator
     /// <returns>A decorator that handles exceptions and logging.</returns>
     public static Decorator<TaskExecutionContext, bool> Create(
         Func<TaskExecutionContext, bool> coreLogic)
-        => Decorator<TaskExecutionContext, bool>.Create(a => coreLogic(a))
+        => Decorator<TaskExecutionContext, bool>
+            .Create(a => coreLogic(a))
             .Around((ctx, next) =>
             {
                 try

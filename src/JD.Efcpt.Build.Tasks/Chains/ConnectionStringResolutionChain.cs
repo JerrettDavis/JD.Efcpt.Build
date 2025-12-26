@@ -45,121 +45,92 @@ internal static class ConnectionStringResolutionChain
             })
             // Branch 2: Explicit EfcptAppSettings path
             .When((in ctx) =>
-                TryParseFromExplicitPath(
-                    ctx.EfcptAppSettings,
-                    "EfcptAppSettings",
-                    ctx.ProjectDirectory,
-                    ctx.ConnectionStringName,
-                    ctx.Log,
-                    out _))
+                HasExplicitConfigFile(ctx.EfcptAppSettings, ctx.ProjectDirectory))
             .Then(ctx =>
-                TryParseFromExplicitPath(
+                ParseFromExplicitPath(
                     ctx.EfcptAppSettings,
                     "EfcptAppSettings",
                     ctx.ProjectDirectory,
                     ctx.ConnectionStringName,
-                    ctx.Log,
-                    out var result)
-                    ? result
-                    : null)
+                    ctx.Log))
             // Branch 3: Explicit EfcptAppConfig path
             .When((in ctx) =>
-                TryParseFromExplicitPath(
-                    ctx.EfcptAppConfig,
-                    "EfcptAppConfig",
-                    ctx.ProjectDirectory,
-                    ctx.ConnectionStringName,
-                    ctx.Log,
-                    out _))
+                HasExplicitConfigFile(ctx.EfcptAppConfig, ctx.ProjectDirectory))
             .Then(ctx =>
-                TryParseFromExplicitPath(
+                ParseFromExplicitPath(
                     ctx.EfcptAppConfig,
                     "EfcptAppConfig",
                     ctx.ProjectDirectory,
                     ctx.ConnectionStringName,
-                    ctx.Log,
-                    out var result)
-                    ? result
-                    : null)
+                    ctx.Log))
             // Branch 4: Auto-discover appsettings*.json files
             .When((in ctx) =>
-                TryAutoDiscoverAppSettings(
-                    ctx.ProjectDirectory,
-                    ctx.ConnectionStringName,
-                    ctx.Log,
-                    out _))
+                HasAppSettingsFiles(ctx.ProjectDirectory))
             .Then(ctx =>
-                TryAutoDiscoverAppSettings(
+                ParseFromAutoDiscoveredAppSettings(
                     ctx.ProjectDirectory,
                     ctx.ConnectionStringName,
-                    ctx.Log,
-                    out var result)
-                    ? result
-                    : null)
+                    ctx.Log))
             // Branch 5: Auto-discover app.config/web.config
             .When((in ctx) =>
-                TryAutoDiscoverAppConfig(
-                    ctx.ProjectDirectory,
-                    ctx.ConnectionStringName,
-                    ctx.Log,
-                    out _))
+                HasAppConfigFiles(ctx.ProjectDirectory))
             .Then(ctx =>
-                TryAutoDiscoverAppConfig(
+                ParseFromAutoDiscoveredAppConfig(
                     ctx.ProjectDirectory,
                     ctx.ConnectionStringName,
-                    ctx.Log,
-                    out var result)
-                    ? result
-                    : null)
+                    ctx.Log))
             // Final fallback: No connection string found - return null for .sqlproj fallback
-            .Finally(static (in ctx, out result, _) =>
+            .Finally(static (in _, out result, _) =>
             {
                 result = null;
                 return true; // Success with null indicates fallback to .sqlproj mode
             })
             .Build();
 
-    private static bool TryParseFromExplicitPath(
-        string explicitPath,
-        string propertyName,
-        string projectDirectory,
-        string connectionStringName,
-        BuildLog log,
-        out string? connectionString)
-    {
-        connectionString = null;
+    #region Existence Checks (for When clauses)
 
+    private static bool HasExplicitConfigFile(string explicitPath, string projectDirectory)
+    {
         if (!PathUtils.HasValue(explicitPath))
             return false;
 
         var fullPath = PathUtils.FullPath(explicitPath, projectDirectory);
-        if (!File.Exists(fullPath))
-            return false;
+        return File.Exists(fullPath);
+    }
+
+    private static bool HasAppSettingsFiles(string projectDirectory)
+        => Directory.GetFiles(projectDirectory, "appsettings*.json").Length > 0;
+
+    private static bool HasAppConfigFiles(string projectDirectory)
+        => File.Exists(Path.Combine(projectDirectory, "app.config")) ||
+           File.Exists(Path.Combine(projectDirectory, "web.config"));
+
+    #endregion
+
+    #region Parsing (for Then clauses)
+
+    private static string? ParseFromExplicitPath(
+        string explicitPath,
+        string propertyName,
+        string projectDirectory,
+        string connectionStringName,
+        BuildLog log)
+    {
+        var fullPath = PathUtils.FullPath(explicitPath, projectDirectory);
 
         var validator = new ConfigurationFileTypeValidator();
         validator.ValidateAndWarn(fullPath, propertyName, log);
 
         var result = ParseConnectionStringFromFile(fullPath, connectionStringName, log);
-        if (result.Success && !string.IsNullOrWhiteSpace(result.ConnectionString))
-        {
-            connectionString = result.ConnectionString;
-            return true;
-        }
-
-        return false;
+        return result.Success ? result.ConnectionString : null;
     }
 
-    private static bool TryAutoDiscoverAppSettings(
+    private static string? ParseFromAutoDiscoveredAppSettings(
         string projectDirectory,
         string connectionStringName,
-        BuildLog log,
-        out string? connectionString)
+        BuildLog log)
     {
-        connectionString = null;
-
         var appSettingsFiles = Directory.GetFiles(projectDirectory, "appsettings*.json");
-        if (appSettingsFiles.Length == 0)
-            return false;
 
         if (appSettingsFiles.Length > 1)
         {
@@ -172,43 +143,38 @@ internal static class ConnectionStringResolutionChain
         {
             var parser = new AppSettingsConnectionStringParser();
             var result = parser.Parse(file, connectionStringName, log);
-            if (result.Success && !string.IsNullOrWhiteSpace(result.ConnectionString))
-            {
-                log.Detail($"Resolved connection string from auto-discovered file: {Path.GetFileName(file)}");
-                connectionString = result.ConnectionString;
-                return true;
-            }
+            if (!result.Success || string.IsNullOrWhiteSpace(result.ConnectionString))
+                continue;
+
+            log.Detail($"Resolved connection string from auto-discovered file: {Path.GetFileName(file)}");
+            return result.ConnectionString;
         }
 
-        return false;
+        return null;
     }
 
-    private static bool TryAutoDiscoverAppConfig(
+    private static string? ParseFromAutoDiscoveredAppConfig(
         string projectDirectory,
         string connectionStringName,
-        BuildLog log,
-        out string? connectionString)
+        BuildLog log)
     {
-        connectionString = null;
-
         var configFiles = new[] { "app.config", "web.config" };
         foreach (var configFile in configFiles)
         {
             var path = Path.Combine(projectDirectory, configFile);
-            if (File.Exists(path))
+            if (!File.Exists(path))
+                continue;
+
+            var parser = new AppConfigConnectionStringParser();
+            var result = parser.Parse(path, connectionStringName, log);
+            if (result.Success && !string.IsNullOrWhiteSpace(result.ConnectionString))
             {
-                var parser = new AppConfigConnectionStringParser();
-                var result = parser.Parse(path, connectionStringName, log);
-                if (result.Success && !string.IsNullOrWhiteSpace(result.ConnectionString))
-                {
-                    log.Detail($"Resolved connection string from auto-discovered file: {configFile}");
-                    connectionString = result.ConnectionString;
-                    return true;
-                }
+                log.Detail($"Resolved connection string from auto-discovered file: {configFile}");
+                return result.ConnectionString;
             }
         }
 
-        return false;
+        return null;
     }
 
     private static ConnectionStringResult ParseConnectionStringFromFile(
@@ -224,4 +190,6 @@ internal static class ConnectionStringResolutionChain
             _ => ConnectionStringResult.Failed()
         };
     }
+
+    #endregion
 }

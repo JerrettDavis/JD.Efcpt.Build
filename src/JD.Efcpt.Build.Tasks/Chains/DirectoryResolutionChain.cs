@@ -12,12 +12,30 @@ public readonly record struct DirectoryResolutionContext(
     bool ProbeSolutionDir,
     string DefaultsRoot,
     IReadOnlyList<string> DirNames
-);
+)
+{
+    /// <summary>
+    /// Converts this context to a <see cref="ResourceResolutionContext"/> for use with the unified resolver.
+    /// </summary>
+    internal ResourceResolutionContext ToResourceContext() => new(
+        OverridePath,
+        ProjectDirectory,
+        SolutionDir,
+        ProbeSolutionDir,
+        DefaultsRoot,
+        DirNames
+    );
+}
 
 /// <summary>
 /// ResultChain for resolving directories with a multi-tier fallback strategy.
 /// </summary>
 /// <remarks>
+/// <para>
+/// This class provides directory-specific resolution using <see cref="ResourceResolutionChain"/>
+/// with <see cref="Directory.Exists"/> as the existence predicate.
+/// </para>
+/// <para>
 /// Resolution order:
 /// <list type="number">
 /// <item>Explicit override path (if rooted or contains directory separator)</item>
@@ -25,77 +43,26 @@ public readonly record struct DirectoryResolutionContext(
 /// <item>Solution directory (if ProbeSolutionDir is true)</item>
 /// <item>Defaults root</item>
 /// </list>
-/// Throws DirectoryNotFoundException if directory cannot be found in any location.
+/// Throws <see cref="DirectoryNotFoundException"/> if directory cannot be found in any location.
+/// </para>
 /// </remarks>
 internal static class DirectoryResolutionChain
 {
+    /// <summary>
+    /// Builds a resolution chain for directories.
+    /// </summary>
+    /// <returns>A configured ResultChain for directory resolution.</returns>
     public static ResultChain<DirectoryResolutionContext, string> Build()
         => ResultChain<DirectoryResolutionContext, string>.Create()
-            // Branch 1: Explicit override path (rooted or contains directory separator)
-            .When(static (in ctx)
-                => PathUtils.HasExplicitPath(ctx.OverridePath))
+            .When(static (in _) => true)
             .Then(ctx =>
             {
-                var path = PathUtils.FullPath(ctx.OverridePath, ctx.ProjectDirectory);
-                return Directory.Exists(path)
-                    ? path
-                    : throw new DirectoryNotFoundException($"Template override not found: {path}");
-            })
-            // Branch 2: Search project directory
-            .When(static (in ctx)
-                => TryFindInDirectory(ctx.ProjectDirectory, ctx.DirNames, out _))
-            .Then(ctx =>
-                TryFindInDirectory(ctx.ProjectDirectory, ctx.DirNames, out var found)
-                    ? found
-                    : throw new InvalidOperationException("Should not reach here"))
-            // Branch 3: Search solution directory (if enabled)
-            .When((in ctx)
-                => ctx.ProbeSolutionDir &&
-                   !string.IsNullOrWhiteSpace(ctx.SolutionDir) &&
-                   TryFindInDirectory(
-                       PathUtils.FullPath(ctx.SolutionDir, ctx.ProjectDirectory),
-                       ctx.DirNames,
-                       out _))
-            .Then(ctx =>
-            {
-                var solDir = PathUtils.FullPath(ctx.SolutionDir, ctx.ProjectDirectory);
-                return TryFindInDirectory(solDir, ctx.DirNames, out var found)
-                    ? found
-                    : throw new InvalidOperationException("Should not reach here");
-            })
-            // Branch 4: Search defaults root
-            .When((in ctx)
-                => !string.IsNullOrWhiteSpace(ctx.DefaultsRoot) &&
-                   TryFindInDirectory(ctx.DefaultsRoot, ctx.DirNames, out _))
-            .Then(ctx
-                => TryFindInDirectory(ctx.DefaultsRoot, ctx.DirNames, out var found)
-                    ? found
-                    : throw new InvalidOperationException("Should not reach here"))
-            // Final fallback: throw descriptive error
-            .Finally(static (in ctx, out result, _) =>
-            {
-                result = null;
-                throw new DirectoryNotFoundException(
-                    $"Unable to locate {string.Join(" or ", ctx.DirNames)}. " +
-                    $"Provide EfcptTemplateDir, place Template next to project, in solution dir, or ensure defaults are present.");
+                var resourceCtx = ctx.ToResourceContext();
+                return ResourceResolutionChain.Resolve(
+                    in resourceCtx,
+                    exists: Directory.Exists,
+                    overrideNotFound: (msg, _) => new DirectoryNotFoundException(msg),
+                    notFound: (msg, _) => new DirectoryNotFoundException(msg));
             })
             .Build();
-
-    private static bool TryFindInDirectory(
-        string baseDirectory,
-        IReadOnlyList<string> dirNames,
-        out string foundPath)
-    {
-        foreach (var name in dirNames)
-        {
-            var candidate = Path.Combine(baseDirectory, name);
-            if (!Directory.Exists(candidate)) continue;
-
-            foundPath = candidate;
-            return true;
-        }
-
-        foundPath = string.Empty;
-        return false;
-    }
 }

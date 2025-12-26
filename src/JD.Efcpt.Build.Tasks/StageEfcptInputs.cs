@@ -1,3 +1,4 @@
+using JD.Efcpt.Build.Tasks.Decorators;
 using Microsoft.Build.Framework;
 using Task = Microsoft.Build.Utilities.Task;
 
@@ -104,76 +105,76 @@ public sealed class StageEfcptInputs : Task
     /// <inheritdoc />
     public override bool Execute()
     {
-        var log = new BuildLog(Log, LogVerbosity);
-        try
+        var decorator = TaskExecutionDecorator.Create(ExecuteCore);
+        var ctx = new TaskExecutionContext(Log, nameof(StageEfcptInputs));
+        return decorator.Execute(in ctx);
+    }
+
+    private bool ExecuteCore(TaskExecutionContext ctx)
+    {
+        var log = new BuildLog(ctx.Logger, LogVerbosity);
+
+        Directory.CreateDirectory(OutputDir);
+
+        var configName = Path.GetFileName(ConfigPath);
+        StagedConfigPath = Path.Combine(OutputDir, string.IsNullOrWhiteSpace(configName) ? "efcpt-config.json" : configName);
+        File.Copy(ConfigPath, StagedConfigPath, overwrite: true);
+
+        var renamingName = Path.GetFileName(RenamingPath);
+        StagedRenamingPath = Path.Combine(OutputDir, string.IsNullOrWhiteSpace(renamingName) ? "efcpt.renaming.json" : renamingName);
+        File.Copy(RenamingPath, StagedRenamingPath, overwrite: true);
+
+        var outputDirFull = Full(OutputDir);
+        var templateBaseDir = ResolveTemplateBaseDir(outputDirFull, TemplateOutputDir);
+        var finalStagedDir = Path.Combine(templateBaseDir, "CodeTemplates");
+
+        // Delete any existing CodeTemplates to ensure clean state
+        if (Directory.Exists(finalStagedDir))
+            Directory.Delete(finalStagedDir, recursive: true);
+
+        Directory.CreateDirectory(finalStagedDir);
+
+        var sourceTemplate = Path.GetFullPath(TemplateDir);
+        var codeTemplatesSubdir = Path.Combine(sourceTemplate, "CodeTemplates");
+
+        // Check if source has Template/CodeTemplates/EFCore structure
+        var efcoreSubdir = Path.Combine(codeTemplatesSubdir, "EFCore");
+        if (Directory.Exists(efcoreSubdir))
         {
-            Directory.CreateDirectory(OutputDir);
+            // Check for version-specific templates (e.g., EFCore/net800, EFCore/net900, EFCore/net1000)
+            var versionSpecificDir = TryResolveVersionSpecificTemplateDir(efcoreSubdir, TargetFramework, log);
+            var destEFCore = Path.Combine(finalStagedDir, "EFCore");
 
-            var configName = Path.GetFileName(ConfigPath);
-            StagedConfigPath = Path.Combine(OutputDir, string.IsNullOrWhiteSpace(configName) ? "efcpt-config.json" : configName);
-            File.Copy(ConfigPath, StagedConfigPath, overwrite: true);
-
-            var renamingName = Path.GetFileName(RenamingPath);
-            StagedRenamingPath = Path.Combine(OutputDir, string.IsNullOrWhiteSpace(renamingName) ? "efcpt.renaming.json" : renamingName);
-            File.Copy(RenamingPath, StagedRenamingPath, overwrite: true);
-
-            var outputDirFull = Full(OutputDir);
-            var templateBaseDir = ResolveTemplateBaseDir(outputDirFull, TemplateOutputDir);
-            var finalStagedDir = Path.Combine(templateBaseDir, "CodeTemplates");
-            
-            // Delete any existing CodeTemplates to ensure clean state
-            if (Directory.Exists(finalStagedDir))
-                Directory.Delete(finalStagedDir, recursive: true);
-            
-            Directory.CreateDirectory(finalStagedDir);
-            
-            var sourceTemplate = Path.GetFullPath(TemplateDir);
-            var codeTemplatesSubdir = Path.Combine(sourceTemplate, "CodeTemplates");
-
-            // Check if source has Template/CodeTemplates/EFCore structure
-            var efcoreSubdir = Path.Combine(codeTemplatesSubdir, "EFCore");
-            if (Directory.Exists(efcoreSubdir))
+            if (versionSpecificDir != null)
             {
-                // Check for version-specific templates (e.g., EFCore/net800, EFCore/net900, EFCore/net1000)
-                var versionSpecificDir = TryResolveVersionSpecificTemplateDir(efcoreSubdir, TargetFramework, log);
-                var destEFCore = Path.Combine(finalStagedDir, "EFCore");
-
-                if (versionSpecificDir != null)
-                {
-                    // Copy version-specific templates to CodeTemplates/EFCore
-                    log.Detail($"Using version-specific templates from: {versionSpecificDir}");
-                    CopyDirectory(versionSpecificDir, destEFCore);
-                }
-                else
-                {
-                    // Copy entire EFCore contents to CodeTemplates/EFCore (fallback for user templates)
-                    CopyDirectory(efcoreSubdir, destEFCore);
-                }
-                StagedTemplateDir = finalStagedDir;
-            }
-            else if (Directory.Exists(codeTemplatesSubdir))
-            {
-                // Copy entire CodeTemplates subdirectory
-                CopyDirectory(codeTemplatesSubdir, finalStagedDir);
-                StagedTemplateDir = finalStagedDir;
+                // Copy version-specific templates to CodeTemplates/EFCore
+                log.Detail($"Using version-specific templates from: {versionSpecificDir}");
+                CopyDirectory(versionSpecificDir, destEFCore);
             }
             else
             {
-                // No CodeTemplates subdirectory - copy and rename entire template dir
-                CopyDirectory(sourceTemplate, finalStagedDir);
-                StagedTemplateDir = finalStagedDir;
+                // Copy entire EFCore contents to CodeTemplates/EFCore (fallback for user templates)
+                CopyDirectory(efcoreSubdir, destEFCore);
             }
-
-            log.Detail($"Staged config: {StagedConfigPath}");
-            log.Detail($"Staged renaming: {StagedRenamingPath}");
-            log.Detail($"Staged template: {StagedTemplateDir}");
-            return true;
+            StagedTemplateDir = finalStagedDir;
         }
-        catch (Exception ex)
+        else if (Directory.Exists(codeTemplatesSubdir))
         {
-            Log.LogErrorFromException(ex, true);
-            return false;
+            // Copy entire CodeTemplates subdirectory
+            CopyDirectory(codeTemplatesSubdir, finalStagedDir);
+            StagedTemplateDir = finalStagedDir;
         }
+        else
+        {
+            // No CodeTemplates subdirectory - copy and rename entire template dir
+            CopyDirectory(sourceTemplate, finalStagedDir);
+            StagedTemplateDir = finalStagedDir;
+        }
+
+        log.Detail($"Staged config: {StagedConfigPath}");
+        log.Detail($"Staged renaming: {StagedRenamingPath}");
+        log.Detail($"Staged template: {StagedTemplateDir}");
+        return true;
     }
 
     private static void CopyDirectory(string sourceDir, string destDir)
@@ -264,30 +265,32 @@ public sealed class StageEfcptInputs : Task
     /// </summary>
     private static int? ParseTargetFrameworkVersion(string targetFramework)
     {
+        if (!targetFramework.StartsWith("net", StringComparison.OrdinalIgnoreCase))
+            return null;
+        
         // Handle formats like "net8.0", "net9.0", "net10.0",
         // including platform-specific variants such as "net10.0-windows" and "net10-windows".
-        if (targetFramework.StartsWith("net", StringComparison.OrdinalIgnoreCase))
+        var versionPart = targetFramework[3..];
+
+        // Trim at the first '.' or '-' after "net" so that we handle:
+        // - "net10.0"           -> "10"
+        // - "net10.0-windows"   -> "10"
+        // - "net10-windows"     -> "10"
+        var dotIndex = versionPart.IndexOf('.');
+        var hyphenIndex = versionPart.IndexOf('-');
+
+        var cutIndex = (dotIndex >= 0, hyphenIndex >= 0) switch
         {
-            var versionPart = targetFramework.Substring(3);
+            (true, true) => Math.Min(dotIndex, hyphenIndex),
+            (true, false) => dotIndex,
+            (false, true) => hyphenIndex,
+            _ => -1
+        };
 
-            // Trim at the first '.' or '-' after "net" so that we handle:
-            // - "net10.0"           -> "10"
-            // - "net10.0-windows"   -> "10"
-            // - "net10-windows"     -> "10"
-            var dotIndex = versionPart.IndexOf('.');
-            var hyphenIndex = versionPart.IndexOf('-');
-
-            int cutIndex;
-            if (dotIndex >= 0 && hyphenIndex >= 0)
-                cutIndex = Math.Min(dotIndex, hyphenIndex);
-            else
-                cutIndex = dotIndex >= 0 ? dotIndex : hyphenIndex;
-
-            if (cutIndex > 0)
-                versionPart = versionPart.Substring(0, cutIndex);
-            if (int.TryParse(versionPart, out var version))
-                return version;
-        }
+        if (cutIndex > 0)
+            versionPart = versionPart[..cutIndex];
+        if (int.TryParse(versionPart, out var version))
+            return version;
 
         return null;
     }
@@ -303,12 +306,12 @@ public sealed class StageEfcptInputs : Task
         foreach (var dir in Directory.EnumerateDirectories(efcoreDir))
         {
             var name = Path.GetFileName(dir);
-            if (name.StartsWith("net", StringComparison.OrdinalIgnoreCase) && name.EndsWith("00"))
-            {
-                var versionPart = name.Substring(3, name.Length - 5); // "net800" -> "8"
-                if (int.TryParse(versionPart, out var version))
-                    yield return version;
-            }
+            if (!name.StartsWith("net", StringComparison.OrdinalIgnoreCase) || !name.EndsWith("00"))
+                continue;
+            
+            var versionPart = name.Substring(3, name.Length - 5); // "net800" -> "8"
+            if (int.TryParse(versionPart, out var version))
+                yield return version;
         }
     }
 

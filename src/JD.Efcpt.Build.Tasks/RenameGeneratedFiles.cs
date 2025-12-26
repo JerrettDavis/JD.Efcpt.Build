@@ -1,3 +1,4 @@
+using JD.Efcpt.Build.Tasks.Decorators;
 using Microsoft.Build.Framework;
 using Task = Microsoft.Build.Utilities.Task;
 
@@ -37,31 +38,32 @@ public sealed class RenameGeneratedFiles : Task
     /// <inheritdoc />
     public override bool Execute()
     {
-        var log = new BuildLog(Log, LogVerbosity);
-        try
-        {
-            if (!Directory.Exists(GeneratedDir))
-                return true;
+        var decorator = TaskExecutionDecorator.Create(ExecuteCore);
+        var ctx = new TaskExecutionContext(Log, nameof(RenameGeneratedFiles));
+        return decorator.Execute(in ctx);
+    }
 
-            foreach (var file in Directory.EnumerateFiles(GeneratedDir, "*.cs", SearchOption.AllDirectories))
-            {
-                if (file.EndsWith(".g.cs", StringComparison.OrdinalIgnoreCase))
-                    continue;
+    private bool ExecuteCore(TaskExecutionContext ctx)
+    {
+        var log = new BuildLog(ctx.Logger, LogVerbosity);
 
-                var newPath = Path.Combine(Path.GetDirectoryName(file)!, Path.GetFileNameWithoutExtension(file) + ".g.cs");
-                if (File.Exists(newPath))
-                    File.Delete(newPath);
-
-                File.Move(file, newPath);
-                log.Detail($"Renamed: {file} -> {newPath}");
-            }
-
+        if (!Directory.Exists(GeneratedDir))
             return true;
-        }
-        catch (Exception ex)
+
+        var filesToRename = Directory
+            .EnumerateFiles(GeneratedDir, "*.cs", SearchOption.AllDirectories)
+            .Where(file => !file.EndsWith(".g.cs", StringComparison.OrdinalIgnoreCase));
+
+        foreach (var file in filesToRename)
         {
-            Log.LogErrorFromException(ex, true);
-            return false;
+            var newPath = Path.Combine(Path.GetDirectoryName(file)!, Path.GetFileNameWithoutExtension(file) + ".g.cs");
+            if (File.Exists(newPath))
+                File.Delete(newPath);
+
+            File.Move(file, newPath);
+            log.Detail($"Renamed: {file} -> {newPath}");
         }
+
+        return true;
     }
 }

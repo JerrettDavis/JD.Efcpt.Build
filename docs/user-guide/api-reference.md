@@ -12,7 +12,8 @@ These targets are executed as part of the build pipeline:
 | `EfcptQuerySchemaMetadata` | Queries database schema (connection string mode) | After resolve |
 | `EfcptEnsureDacpac` | Builds `.sqlproj` to DACPAC (DACPAC mode) | After resolve |
 | `EfcptStageInputs` | Stages config and templates | After DACPAC/schema |
-| `EfcptComputeFingerprint` | Detects if regeneration needed | After staging |
+| `EfcptApplyConfigOverrides` | Applies MSBuild property overrides to staged config | After staging |
+| `EfcptComputeFingerprint` | Detects if regeneration needed | After overrides |
 | `EfcptGenerateModels` | Runs `efcpt` CLI | When fingerprint changes |
 | `EfcptAddToCompile` | Adds `.g.cs` files to compilation | Before C# compile |
 
@@ -86,7 +87,7 @@ Queries database schema metadata and computes a fingerprint (connection string m
 |-----------|----------|-------------|
 | `ConnectionString` | Yes | Database connection string |
 | `OutputDir` | Yes | Output directory (writes `schema-model.json`) |
-| `Provider` | No | Provider identifier (default: `mssql`) |
+| `Provider` | No | Provider identifier: `mssql`, `postgres`, `mysql`, `sqlite`, `oracle`, `firebird`, `snowflake` (default: `mssql`) |
 | `LogVerbosity` | No | Logging level |
 
 **Outputs:**
@@ -180,6 +181,87 @@ Renames generated `.cs` files to `.g.cs`.
 | `GeneratedDir` | Yes | Directory containing generated files |
 | `LogVerbosity` | No | Logging level |
 
+### ApplyConfigOverrides
+
+Applies MSBuild property overrides to the staged `efcpt-config.json` file. This task enables configuration via MSBuild properties without editing JSON files directly.
+
+**Control Parameters:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `StagedConfigPath` | Yes | Path to the staged efcpt-config.json file |
+| `ApplyOverrides` | No | Whether to apply overrides to user-provided configs (default: `true`) |
+| `IsUsingDefaultConfig` | No | Whether using library default config (default: `false`) |
+| `LogVerbosity` | No | Logging level |
+
+**Names Section Parameters:**
+
+| Parameter | JSON Property | Description |
+|-----------|---------------|-------------|
+| `RootNamespace` | `root-namespace` | Root namespace for generated code |
+| `DbContextName` | `dbcontext-name` | Name of the DbContext class |
+| `DbContextNamespace` | `dbcontext-namespace` | Namespace for the DbContext class |
+| `ModelNamespace` | `model-namespace` | Namespace for entity model classes |
+
+**File Layout Section Parameters:**
+
+| Parameter | JSON Property | Description |
+|-----------|---------------|-------------|
+| `OutputPath` | `output-path` | Output path for generated files |
+| `DbContextOutputPath` | `output-dbcontext-path` | Output path for the DbContext file |
+| `SplitDbContext` | `split-dbcontext-preview` | Enable split DbContext generation |
+| `UseSchemaFolders` | `use-schema-folders-preview` | Use schema-based folders |
+| `UseSchemaNamespaces` | `use-schema-namespaces-preview` | Use schema-based namespaces |
+
+**Code Generation Section Parameters:**
+
+| Parameter | JSON Property | Description |
+|-----------|---------------|-------------|
+| `EnableOnConfiguring` | `enable-on-configuring` | Add OnConfiguring method |
+| `GenerationType` | `type` | Type of files to generate |
+| `UseDatabaseNames` | `use-database-names` | Use database names |
+| `UseDataAnnotations` | `use-data-annotations` | Use DataAnnotation attributes |
+| `UseNullableReferenceTypes` | `use-nullable-reference-types` | Use nullable reference types |
+| `UseInflector` | `use-inflector` | Pluralize/singularize names |
+| `UseLegacyInflector` | `use-legacy-inflector` | Use EF6 Pluralizer |
+| `UseManyToManyEntity` | `use-many-to-many-entity` | Preserve many-to-many entity |
+| `UseT4` | `use-t4` | Use T4 templates |
+| `UseT4Split` | `use-t4-split` | Use T4 with EntityTypeConfiguration |
+| `RemoveDefaultSqlFromBool` | `remove-defaultsql-from-bool-properties` | Remove SQL default from bool |
+| `SoftDeleteObsoleteFiles` | `soft-delete-obsolete-files` | Cleanup obsolete files |
+| `DiscoverMultipleResultSets` | `discover-multiple-stored-procedure-resultsets-preview` | Discover multiple result sets |
+| `UseAlternateResultSetDiscovery` | `use-alternate-stored-procedure-resultset-discovery` | Use alternate discovery |
+| `T4TemplatePath` | `t4-template-path` | Path to T4 templates |
+| `UseNoNavigations` | `use-no-navigations-preview` | Remove navigation properties |
+| `MergeDacpacs` | `merge-dacpacs` | Merge .dacpac files |
+| `RefreshObjectLists` | `refresh-object-lists` | Refresh object lists |
+| `GenerateMermaidDiagram` | `generate-mermaid-diagram` | Generate Mermaid diagram |
+| `UseDecimalAnnotationForSprocs` | `use-decimal-data-annotation-for-sproc-results` | Use decimal annotation |
+| `UsePrefixNavigationNaming` | `use-prefix-navigation-naming` | Use prefix navigation naming |
+| `UseDatabaseNamesForRoutines` | `use-database-names-for-routines` | Use database names for routines |
+| `UseInternalAccessForRoutines` | `use-internal-access-modifiers-for-sprocs-and-functions` | Use internal access modifiers |
+
+**Type Mappings Section Parameters:**
+
+| Parameter | JSON Property | Description |
+|-----------|---------------|-------------|
+| `UseDateOnlyTimeOnly` | `use-DateOnly-TimeOnly` | Map to DateOnly/TimeOnly |
+| `UseHierarchyId` | `use-HierarchyId` | Map hierarchyId type |
+| `UseSpatial` | `use-spatial` | Map spatial columns |
+| `UseNodaTime` | `use-NodaTime` | Use NodaTime types |
+
+**Replacements Section Parameters:**
+
+| Parameter | JSON Property | Description |
+|-----------|---------------|-------------|
+| `PreserveCasingWithRegex` | `preserve-casing-with-regex` | Preserve casing with regex |
+
+**Override Behavior:**
+
+- When `IsUsingDefaultConfig` is `true`, overrides are always applied regardless of `ApplyOverrides`
+- When using a user-provided config, overrides are only applied if `ApplyOverrides` is `true`
+- Empty or whitespace-only parameter values are treated as "no override"
+
 ## MSBuild Properties Reference
 
 ### Core Properties
@@ -233,6 +315,76 @@ Renames generated `.cs` files to `.g.cs`.
 | `EfcptDumpResolvedInputs` | `false` | Write resolved inputs to JSON |
 | `EfcptFingerprintFile` | `$(EfcptOutput)fingerprint.txt` | Fingerprint cache location |
 | `EfcptStampFile` | `$(EfcptOutput).efcpt.stamp` | Generation stamp file |
+
+### Config Override Properties
+
+These properties override values in `efcpt-config.json` without editing the JSON file directly.
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `EfcptApplyMsBuildOverrides` | `true` | Whether to apply MSBuild property overrides |
+
+#### Names Section
+
+| Property | JSON Property | Description |
+|----------|---------------|-------------|
+| `EfcptConfigRootNamespace` | `root-namespace` | Root namespace for generated code |
+| `EfcptConfigDbContextName` | `dbcontext-name` | Name of the DbContext class |
+| `EfcptConfigDbContextNamespace` | `dbcontext-namespace` | Namespace for the DbContext class |
+| `EfcptConfigModelNamespace` | `model-namespace` | Namespace for entity model classes |
+
+#### File Layout Section
+
+| Property | JSON Property | Description |
+|----------|---------------|-------------|
+| `EfcptConfigOutputPath` | `output-path` | Output path for generated files |
+| `EfcptConfigDbContextOutputPath` | `output-dbcontext-path` | Output path for DbContext |
+| `EfcptConfigSplitDbContext` | `split-dbcontext-preview` | Split DbContext generation |
+| `EfcptConfigUseSchemaFolders` | `use-schema-folders-preview` | Use schema-based folders |
+| `EfcptConfigUseSchemaNamespaces` | `use-schema-namespaces-preview` | Use schema-based namespaces |
+
+#### Code Generation Section
+
+| Property | JSON Property | Description |
+|----------|---------------|-------------|
+| `EfcptConfigEnableOnConfiguring` | `enable-on-configuring` | Add OnConfiguring method |
+| `EfcptConfigGenerationType` | `type` | Type of files to generate |
+| `EfcptConfigUseDatabaseNames` | `use-database-names` | Use database names |
+| `EfcptConfigUseDataAnnotations` | `use-data-annotations` | Use DataAnnotation attributes |
+| `EfcptConfigUseNullableReferenceTypes` | `use-nullable-reference-types` | Use nullable reference types |
+| `EfcptConfigUseInflector` | `use-inflector` | Pluralize/singularize names |
+| `EfcptConfigUseLegacyInflector` | `use-legacy-inflector` | Use EF6 Pluralizer |
+| `EfcptConfigUseManyToManyEntity` | `use-many-to-many-entity` | Preserve many-to-many entity |
+| `EfcptConfigUseT4` | `use-t4` | Use T4 templates |
+| `EfcptConfigUseT4Split` | `use-t4-split` | Use T4 with EntityTypeConfiguration |
+| `EfcptConfigRemoveDefaultSqlFromBool` | `remove-defaultsql-from-bool-properties` | Remove SQL default from bool |
+| `EfcptConfigSoftDeleteObsoleteFiles` | `soft-delete-obsolete-files` | Cleanup obsolete files |
+| `EfcptConfigDiscoverMultipleResultSets` | `discover-multiple-stored-procedure-resultsets-preview` | Discover multiple result sets |
+| `EfcptConfigUseAlternateResultSetDiscovery` | `use-alternate-stored-procedure-resultset-discovery` | Use alternate discovery |
+| `EfcptConfigT4TemplatePath` | `t4-template-path` | Path to T4 templates |
+| `EfcptConfigUseNoNavigations` | `use-no-navigations-preview` | Remove navigation properties |
+| `EfcptConfigMergeDacpacs` | `merge-dacpacs` | Merge .dacpac files |
+| `EfcptConfigRefreshObjectLists` | `refresh-object-lists` | Refresh object lists |
+| `EfcptConfigGenerateMermaidDiagram` | `generate-mermaid-diagram` | Generate Mermaid diagram |
+| `EfcptConfigUseDecimalAnnotationForSprocs` | `use-decimal-data-annotation-for-sproc-results` | Use decimal annotation |
+| `EfcptConfigUsePrefixNavigationNaming` | `use-prefix-navigation-naming` | Use prefix navigation naming |
+| `EfcptConfigUseDatabaseNamesForRoutines` | `use-database-names-for-routines` | Use database names for routines |
+| `EfcptConfigUseInternalAccessForRoutines` | `use-internal-access-modifiers-for-sprocs-and-functions` | Use internal access modifiers |
+
+#### Type Mappings Section
+
+| Property | JSON Property | Description |
+|----------|---------------|-------------|
+| `EfcptConfigUseDateOnlyTimeOnly` | `use-DateOnly-TimeOnly` | Map to DateOnly/TimeOnly |
+| `EfcptConfigUseHierarchyId` | `use-HierarchyId` | Map hierarchyId type |
+| `EfcptConfigUseSpatial` | `use-spatial` | Map spatial columns |
+| `EfcptConfigUseNodaTime` | `use-NodaTime` | Use NodaTime types |
+
+#### Replacements Section
+
+| Property | JSON Property | Description |
+|----------|---------------|-------------|
+| `EfcptConfigPreserveCasingWithRegex` | `preserve-casing-with-regex` | Preserve casing with regex |
 
 ## Configuration File Schemas
 
@@ -733,16 +885,20 @@ Renames generated `.cs` files to `.g.cs`.
 3. EfcptStageInputs
    └── Copies config, renaming, templates to obj/efcpt/
 
-4. EfcptComputeFingerprint
-   └── Computes XxHash64 of all inputs
+4. EfcptApplyConfigOverrides
+   └── Applies MSBuild property overrides to staged config
+   └── Uses typed model for all 37 config properties
+
+5. EfcptComputeFingerprint
+   └── Computes XxHash64 of all inputs (including overrides)
    └── Compares with cached fingerprint
 
-5. EfcptGenerateModels (only if fingerprint changed)
+6. EfcptGenerateModels (only if fingerprint changed)
    └── Executes efcpt CLI
    └── Renames files to .g.cs
    └── Updates fingerprint cache
 
-6. EfcptAddToCompile
+7. EfcptAddToCompile
    └── Adds *.g.cs to Compile item group
 ```
 

@@ -146,7 +146,7 @@ This means your builds are still **incremental** - models are only regenerated w
 | `EfcptAppSettings` | *(empty)* | Path to `appsettings.json` file |
 | `EfcptAppConfig` | *(empty)* | Path to `app.config` or `web.config` file |
 | `EfcptConnectionStringName` | `DefaultConnection` | Name of the connection string key |
-| `EfcptProvider` | `mssql` | Database provider (currently only `mssql` supported) |
+| `EfcptProvider` | `mssql` | Database provider (see Supported Providers below) |
 
 ### Output Properties
 
@@ -159,15 +159,118 @@ These properties are set by the pipeline and can be used in subsequent targets:
 
 ## Database Provider Support
 
-**Currently Supported:**
-- SQL Server (`mssql`) - Fully supported
+JD.Efcpt.Build supports all database providers that EF Core Power Tools supports:
 
-**Planned for Future Versions:**
-- PostgreSQL (`postgresql`)
-- MySQL (`mysql`)
-- MariaDB (`mariadb`)
-- Oracle (`oracle`)
-- SQLite (`sqlite`)
+| Provider | Value | Aliases | Notes |
+|----------|-------|---------|-------|
+| SQL Server | `mssql` | `sqlserver`, `sql-server` | Default provider |
+| PostgreSQL | `postgres` | `postgresql`, `pgsql` | Uses Npgsql |
+| MySQL/MariaDB | `mysql` | `mariadb` | Uses MySqlConnector |
+| SQLite | `sqlite` | `sqlite3` | Single-file databases |
+| Oracle | `oracle` | `oracledb` | Uses Oracle.ManagedDataAccess.Core |
+| Firebird | `firebird` | `fb` | Uses FirebirdSql.Data.FirebirdClient |
+| Snowflake | `snowflake` | `sf` | Uses Snowflake.Data |
+
+### Provider Configuration
+
+Specify the provider in your `.csproj`:
+
+```xml
+<PropertyGroup>
+  <EfcptProvider>postgres</EfcptProvider>
+  <EfcptConnectionString>Host=localhost;Database=mydb;Username=user;Password=pass</EfcptConnectionString>
+</PropertyGroup>
+```
+
+### Connection String Examples
+
+#### SQL Server
+```xml
+<PropertyGroup>
+  <EfcptProvider>mssql</EfcptProvider>
+  <EfcptConnectionString>Server=localhost;Database=MyDb;Integrated Security=True;TrustServerCertificate=True</EfcptConnectionString>
+</PropertyGroup>
+```
+
+#### PostgreSQL
+```xml
+<PropertyGroup>
+  <EfcptProvider>postgres</EfcptProvider>
+  <EfcptConnectionString>Host=localhost;Database=mydb;Username=postgres;Password=secret</EfcptConnectionString>
+</PropertyGroup>
+```
+
+#### MySQL/MariaDB
+```xml
+<PropertyGroup>
+  <EfcptProvider>mysql</EfcptProvider>
+  <EfcptConnectionString>Server=localhost;Database=mydb;User=root;Password=secret</EfcptConnectionString>
+</PropertyGroup>
+```
+
+#### SQLite
+```xml
+<PropertyGroup>
+  <EfcptProvider>sqlite</EfcptProvider>
+  <EfcptConnectionString>Data Source=./mydatabase.db</EfcptConnectionString>
+</PropertyGroup>
+```
+
+#### Oracle
+```xml
+<PropertyGroup>
+  <EfcptProvider>oracle</EfcptProvider>
+  <EfcptConnectionString>Data Source=localhost:1521/ORCL;User Id=system;Password=oracle</EfcptConnectionString>
+</PropertyGroup>
+```
+
+#### Firebird
+```xml
+<PropertyGroup>
+  <EfcptProvider>firebird</EfcptProvider>
+  <EfcptConnectionString>Database=localhost:C:\data\mydb.fdb;User=SYSDBA;Password=masterkey</EfcptConnectionString>
+</PropertyGroup>
+```
+
+#### Snowflake
+```xml
+<PropertyGroup>
+  <EfcptProvider>snowflake</EfcptProvider>
+  <EfcptConnectionString>account=myaccount;user=myuser;password=mypassword;db=mydb;schema=public</EfcptConnectionString>
+</PropertyGroup>
+```
+
+### Provider-Specific Notes
+
+**PostgreSQL:**
+- Uses lowercase identifiers by default
+- Schema defaults to "public" if not specified
+- Supports all PostgreSQL data types
+
+**MySQL/MariaDB:**
+- InnoDB primary keys are treated as clustered indexes
+- Schema concept maps to database name
+- Compatible with MariaDB
+
+**SQLite:**
+- No schema concept (single database)
+- Limited index metadata available
+- Excellent for local development and testing
+
+**Oracle:**
+- Schema maps to user/owner
+- System schemas (SYS, SYSTEM, etc.) are automatically excluded
+- Uses uppercase identifiers
+
+**Firebird:**
+- No schema concept
+- System objects (RDB$*, MON$*) are automatically excluded
+- Identifiers may have trailing whitespace (trimmed automatically)
+
+**Snowflake:**
+- Uses INFORMATION_SCHEMA for metadata
+- No traditional indexes (uses micro-partitioning)
+- Primary key and unique constraints are reported as indexes for fingerprinting
 
 ## Security Best Practices
 
