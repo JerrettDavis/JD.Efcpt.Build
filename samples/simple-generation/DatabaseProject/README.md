@@ -1,4 +1,16 @@
-# New SDK-style SQL project with Microsoft.Build.Sql
+# Traditional SQL Project using Microsoft.Build.Sql
+
+This is a traditional SQL Server Database Project that uses **Microsoft.Build.Sql**.
+
+**Important:** This project uses the `.sqlproj` file extension, which is the traditional format.
+
+## Project Format
+
+- **Format:** Traditional MSBuild (not SDK-style)
+- **File Extension:** `.sqlproj`
+- **Requirements:** SQL Server Data Tools or MSBuild with database build components
+
+This is different from **MSBuild.Sdk.SqlProj** projects which use `.csproj` or `.fsproj` extensions despite having "SqlProj" in the SDK name.
 
 ## Build
 

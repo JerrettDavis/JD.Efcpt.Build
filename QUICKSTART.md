@@ -27,7 +27,7 @@ dotnet build
 ```
 MySolution/
 ├── src/MyApp/MyApp.csproj
-└── database/MyDb/MyDb.sqlproj
+└── database/MyDb/MyDb.sqlproj   # Microsoft.Build.Sql format
 ```
 
 **MyApp.csproj:**
@@ -289,8 +289,10 @@ dotnet tool restore
 
 **Quick Fix:**
 ```bash
-# Test database project independently
+# Test SQL Project independently
 dotnet build path\to\Database.sqlproj
+# or for MSBuild.Sdk.SqlProj projects (.csproj)
+dotnet build path\to\Database.csproj
 ```
 
 ### Issue: Old schema still generating
@@ -320,7 +322,7 @@ dotnet build
 
 | Property | Use When | Example |
 |----------|----------|---------|
-| `EfcptSqlProj` | Database project not auto-discovered | `..\..\db\MyDb.sqlproj` |
+| `EfcptSqlProj` | SQL Project not auto-discovered | `..\..\db\MyDb.sqlproj` |
 | `EfcptConfig` | Using custom config file name | `my-config.json` |
 | `EfcptTemplateDir` | Using custom template location | `CustomTemplates` |
 | `EfcptLogVerbosity` | Debugging issues | `detailed` |

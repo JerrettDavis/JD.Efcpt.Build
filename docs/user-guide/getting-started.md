@@ -7,7 +7,7 @@ This guide walks you through installing JD.Efcpt.Build and generating your first
 Before you begin, ensure you have:
 
 - **.NET SDK 8.0 or later** installed
-- A **SQL Server Database Project** (.sqlproj) or a live SQL Server database
+- A **SQL Project** (either traditional Microsoft.Build.Sql `.sqlproj` or modern MSBuild.Sdk.SqlProj `.csproj`/`.fsproj`) or a live SQL Server database
 - Basic familiarity with MSBuild and NuGet
 
 ## Installation
@@ -63,7 +63,7 @@ dotnet build
 
 On the first build, the package will:
 
-1. Discover your SQL Server Database Project
+1. Discover your SQL Project
 2. Build it to a DACPAC
 3. Run the EF Core Power Tools CLI
 4. Generate DbContext and entity classes
@@ -93,14 +93,15 @@ YourSolution/
 │       └── efcpt-config.json       # Optional: customize generation
 └── database/
     └── YourDatabase/
-        └── YourDatabase.sqlproj    # Your database project
+        └── YourDatabase.sqlproj    # Your SQL Project (Microsoft.Build.Sql format)
+                                     # Or: YourDatabase.csproj (MSBuild.Sdk.SqlProj format)
 ```
 
 ## Minimal Configuration
 
 For most projects, no configuration is required. The package uses sensible defaults:
 
-- Auto-discovers `.sqlproj` in your solution
+- Auto-discovers SQL Projects in your solution
 - Uses `efcpt-config.json` if present
 - Generates to `obj/efcpt/Generated/`
 - Enables nullable reference types
@@ -108,11 +109,15 @@ For most projects, no configuration is required. The package uses sensible defau
 
 ### Explicit Database Project Path
 
-If auto-discovery doesn't find your database project, specify it explicitly:
+If auto-discovery doesn't find your SQL Project, specify it explicitly:
 
 ```xml
 <PropertyGroup>
+  <!-- For traditional Microsoft.Build.Sql projects -->
   <EfcptSqlProj>..\database\YourDatabase\YourDatabase.sqlproj</EfcptSqlProj>
+  
+  <!-- Or for modern MSBuild.Sdk.SqlProj projects -->
+  <EfcptSqlProj>..\database\YourDatabase\YourDatabase.csproj</EfcptSqlProj>
 </PropertyGroup>
 ```
 
@@ -144,7 +149,7 @@ Create `efcpt-config.json` in your project directory to customize generation:
 
 ## Using a Live Database
 
-If you don't have a .sqlproj, you can generate models directly from a database connection:
+If you don't have a SQL Project, you can generate models directly from a database connection:
 
 ```xml
 <PropertyGroup>
@@ -216,7 +221,7 @@ dotnet build
 
 ### Database project not found
 
-If the package can't find your .sqlproj:
+If the package can't find your SQL Project:
 
 1. Ensure the project exists and builds independently
 2. Set `EfcptSqlProj` explicitly in your .csproj

@@ -62,7 +62,7 @@ dotnet build
 
 `JD.Efcpt.Build` transforms EF Core Power Tools into a **fully automated build step**. Instead of manually regenerating your EF Core models in Visual Studio, this package:
 
-✅ **Automatically builds** your SQL Server Database Project (`.sqlproj`) to a DACPAC
+✅ **Automatically builds** your SQL Project to a DACPAC
 ✅ **OR connects directly** to your database via connection string
 ✅ **Runs EF Core Power Tools** CLI during `dotnet build`
 ✅ **Generates DbContext and entities** from your database schema
@@ -74,8 +74,8 @@ dotnet build
 
 The package orchestrates a MSBuild pipeline with these stages:
 
-1. **Resolve** - Locate database project and configuration files
-2. **Build** - Compile `.sqlproj` to DACPAC (if needed)
+1. **Resolve** - Locate SQL Project and configuration files
+2. **Build** - Compile SQL Project to DACPAC (if needed)
 3. **Stage** - Prepare configuration and templates
 4. **Fingerprint** - Detect if regeneration is needed
 5. **Generate** - Run `efcpt` to create EF Core models
@@ -96,7 +96,7 @@ The package orchestrates a MSBuild pipeline with these stages:
 
 ### Build Integration
 
-- **Automatic DACPAC compilation** from `.sqlproj` files
+- **Automatic DACPAC compilation** from SQL Projects
 - **Project discovery** - Automatically finds your database project
 - **Template staging** - Handles T4 templates correctly (no duplicate folders!)
 - **Generated file management** - Clean `.g.cs` file naming and compilation
@@ -110,7 +110,7 @@ The package orchestrates a MSBuild pipeline with these stages:
 
 - **.NET SDK 8.0+** (or compatible version)
 - **EF Core Power Tools CLI** (`ErikEJ.EFCorePowerTools.Cli`) - **Not required for .NET 10.0+** (uses `dnx` instead)
-- **SQL Server Database Project** (`.sqlproj`) that compiles to DACPAC
+- **SQL Project** - Either a traditional SQL Server Database Project using **Microsoft.Build.Sql** (`.sqlproj` extension) or a modern SQL SDK project using **MSBuild.Sdk.SqlProj** (`.csproj` or `.fsproj` extension)
 
 ### Step 1: Install the Package
 
@@ -169,7 +169,7 @@ YourSolution/
 │                   └── EntityType.t4
 └── database/
     └── YourDatabase/
-        └── YourDatabase.sqlproj    # Your database project
+        └── YourDatabase.sqlproj    # Your SQL Project (Microsoft.Build.Sql format)
 ```
 
 ### Minimal Configuration (YourApp.csproj)
@@ -186,7 +186,7 @@ YourSolution/
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.1" />
   </ItemGroup>
 
-  <!-- Optional: Point to specific database project -->
+  <!-- Optional: Point to specific SQL Project -->
   <PropertyGroup>
     <EfcptSqlProj>..\..\database\YourDatabase\YourDatabase.sqlproj</EfcptSqlProj>
   </PropertyGroup>
@@ -222,7 +222,7 @@ These files are **automatically compiled** into your project!
 
 Just add the package. Sensible defaults are applied:
 
-- Auto-discovers `.sqlproj` in solution
+- Auto-discovers SQL Projects in solution
 - Uses `efcpt-config.json` if present, otherwise uses defaults
 - Generates to `obj/efcpt/Generated/`
 - Enables nullable reference types
@@ -390,15 +390,15 @@ Customize table and column naming:
 
 **Use Connection String Mode When:**
 
-- You don't have a SQL Server Database Project (`.sqlproj`)
+- You don't have a SQL Project
 - You want faster builds (no DACPAC compilation step)
 - You're working with a cloud database or managed database instance
 - You prefer to scaffold from a live database environment
 
 **Use DACPAC Mode When:**
 
-- You have an existing `.sqlproj` that defines your schema
-- You want schema versioning through database projects
+- You have an existing SQL Project that defines your schema
+- You want schema versioning through SQL Projects
 - You prefer design-time schema validation
 - Your CI/CD already builds DACPACs
 
@@ -519,6 +519,7 @@ When multiple connection string sources are present, this priority order is used
   </ItemGroup>
 
   <PropertyGroup>
+    <!-- Traditional SQL Project (Microsoft.Build.Sql) -->
     <EfcptSqlProj>..\Database\Database.sqlproj</EfcptSqlProj>
   </PropertyGroup>
 </Project>
@@ -903,8 +904,8 @@ RUN dotnet build --configuration Release --no-restore
 
 | Target | Purpose | When It Runs |
 |--------|---------|--------------|
-| `EfcptResolveInputs` | Discovers database project and config files | Before build |
-| `EfcptEnsureDacpac` | Builds `.sqlproj` to DACPAC if needed | After resolve |
+| `EfcptResolveInputs` | Discovers SQL Project and config files | Before build |
+| `EfcptEnsureDacpac` | Builds SQL Project to DACPAC if needed | After resolve |
 | `EfcptStageInputs` | Stages config and templates | After DACPAC |
 | `EfcptComputeFingerprint` | Detects if regeneration needed | After staging |
 | `EfcptGenerateModels` | Runs `efcpt` CLI | When fingerprint changes |
@@ -917,7 +918,7 @@ RUN dotnet build --configuration Release --no-restore
 | Property | Default | Description |
 |----------|---------|-------------|
 | `EfcptEnabled` | `true` | Master switch for the entire pipeline |
-| `EfcptSqlProj` | *(auto-discovered)* | Path to `.sqlproj` file |
+| `EfcptSqlProj` | *(auto-discovered)* | Path to SQL Project file (`.sqlproj` for Microsoft.Build.Sql or `.csproj`/`.fsproj` for MSBuild.Sdk.SqlProj) |
 | `EfcptConfig` | `efcpt-config.json` | EF Core Power Tools configuration |
 | `EfcptRenaming` | `efcpt.renaming.json` | Renaming rules file |
 | `EfcptTemplateDir` | `Template` | T4 template directory |
@@ -1054,7 +1055,7 @@ Discovers database project and configuration files.
 - `ProjectDirectory` (required) - Directory containing the consuming project
 - `Configuration` (required) - Active build configuration (e.g. `Debug` or `Release`)
 - `ProjectReferences` - Project references of the consuming project
-- `SqlProjOverride` - Optional override path for the SQL project
+- `SqlProjOverride` - Optional override path for the SQL Project
 - `ConfigOverride` - Optional override path for efcpt config
 - `RenamingOverride` - Optional override path for renaming rules
 - `TemplateDirOverride` - Optional override path for templates
@@ -1070,7 +1071,7 @@ Discovers database project and configuration files.
 - `EfcptConnectionStringName` - Connection string name/key (default: `DefaultConnection`)
 
 **Outputs:**
-- `SqlProjPath` - Discovered SQL project path
+- `SqlProjPath` - Discovered SQL Project path
 - `ResolvedConfigPath` - Discovered config path
 - `ResolvedRenamingPath` - Discovered renaming path
 - `ResolvedTemplateDir` - Discovered template directory
@@ -1082,7 +1083,7 @@ Discovers database project and configuration files.
 Builds a `.sqlproj` to DACPAC if it's out of date.
 
 **Parameters:**
-- `SqlProjPath` (required) - Path to `.sqlproj`
+- `SqlProjPath` (required) - Path to SQL Project (`.sqlproj`, `.csproj`, or `.fsproj`)
 - `Configuration` (required) - Build configuration (e.g. `Debug` / `Release`)
 - `MsBuildExe` - Path to `msbuild.exe` (preferred on Windows when present)
 - `DotNetExe` - Path to dotnet host (used for `dotnet msbuild` when `msbuild.exe` is unavailable)
@@ -1130,7 +1131,9 @@ This project is licensed under the MIT License. See LICENSE file for details.
 
 Use `JD.Efcpt.Build` when:
 
-- You have a SQL Server database described by a Database Project (`.sqlproj`) and want EF Core DbContext and entity classes generated from it.
+- You have a SQL Server database described by a SQL Project and want EF Core DbContext and entity classes generated from it.
+  - **Traditional projects** using **Microsoft.Build.Sql** (`.sqlproj` extension)
+  - **Modern SDK-style projects** using **MSBuild.Sdk.SqlProj** (`.csproj` or `.fsproj` extension)
 - You want EF Core Power Tools generation to run as part of `dotnet build` instead of being a manual step in Visual Studio.
 - You need deterministic, source-controlled model generation that works the same way on developer machines and in CI/CD.
 
@@ -1185,7 +1188,10 @@ By default the build uses `dotnet tool run efcpt` when a local tool manifest is 
 
 - .NET SDK 8.0 or newer.
 - EF Core Power Tools CLI installed as a .NET tool (global or local).
-- A SQL Server Database Project (`.sqlproj`) that can be built to a DACPAC. On build agents this usually requires the appropriate SQL Server Data Tools / build tools components.
+- A SQL Project that can be built to a DACPAC:
+  - **Microsoft.Build.Sql** - Traditional SQL Server Database Projects (`.sqlproj` extension)
+  - **MSBuild.Sdk.SqlProj** - Modern SDK-style SQL projects (`.csproj` or `.fsproj` extension)
+- On build agents, the appropriate SQL Server Data Tools / build tools components may be required.
 
 ---
 
@@ -1193,9 +1199,9 @@ By default the build uses `dotnet tool run efcpt` when a local tool manifest is 
 
 `JD.Efcpt.Build` wires a set of MSBuild targets into your project. When `EfcptEnabled` is `true` (the default), the following pipeline runs as part of `dotnet build`:
 
-1. **EfcptResolveInputs** – locates the `.sqlproj` and resolves configuration inputs.
+1. **EfcptResolveInputs** – locates the SQL Project and resolves configuration inputs.
 2. **EfcptQuerySchemaMetadata** *(connection string mode only)* – fingerprints the live database schema.
-3. **EfcptEnsureDacpac** *(.sqlproj mode only)* – builds the database project to a DACPAC if needed.
+3. **EfcptEnsureDacpac** *(SQL Project mode only)* – builds the SQL Project to a DACPAC if needed.
 4. **EfcptStageInputs** – stages the EF Core Power Tools configuration, renaming rules, and templates into an intermediate directory.
 5. **EfcptComputeFingerprint** – computes a fingerprint across the DACPAC (or schema fingerprint) and staged inputs.
 6. **EfcptGenerateModels** – runs `efcpt` and renames generated files to `.g.cs` when the fingerprint changes.
@@ -1212,13 +1218,13 @@ The underlying targets and tasks live in `build/JD.Efcpt.Build.targets` and `JD.
 A common setup looks like this:
 
 - `MyApp.csproj` – application project where you want the EF Core DbContext and entities.
-- `Database/Database.sqlproj` – SQL Server Database Project that produces a DACPAC.
+- `Database/Database.sqlproj` – SQL Project that produces a DACPAC (using Microsoft.Build.Sql).
 - `Directory.Build.props` – optional solution-wide configuration.
 
 ### 4.2 Quick start
 
 1. Add `JD.Efcpt.Build` to your application project (or to `Directory.Build.props`).
-2. Ensure a `.sqlproj` exists somewhere in the solution that builds to a DACPAC.
+2. Ensure a SQL Project exists somewhere in the solution that builds to a DACPAC.
 3. Optionally copy the default `efcpt-config.json` from the package (see below) into your application project to customize namespaces and options.
 4. Run:
 
@@ -1228,7 +1234,7 @@ A common setup looks like this:
 
 On the first run the build will:
 
-- Build the `.sqlproj` to a DACPAC.
+- Build the SQL Project to a DACPAC.
 - Stage EF Core Power Tools configuration.
 - Run `efcpt` to generate DbContext and entity types.
 - Place generated code under the directory specified by `EfcptGeneratedDir` (by default under `obj/efcpt/Generated` in the sample tests).
@@ -1255,7 +1261,7 @@ The behavior of the pipeline is controlled by a set of MSBuild properties. You c
   - Used by `EfcptGenerateModels` and `EfcptAddToCompile`.
 
 - `EfcptSqlProj`
-  - Optional override for the path to the Database Project (`.sqlproj`).
+  - Optional override for the path to the SQL Project.
   - When not set, `ResolveSqlProjAndInputs` attempts to discover the project based on project references and solution layout.
 
 - `EfcptConnectionString`
@@ -1460,15 +1466,16 @@ Ensure that the build agent has the necessary SQL Server Data Tools components t
 ### 8.1 Generated models do not appear
 
 - Confirm that `EfcptEnabled` is `true` for the project.
-- Verify that the `.sqlproj` can be built independently (for example, by opening it in Visual Studio or running `dotnet msbuild` directly).
-- If discovery fails, set `EfcptSqlProj` explicitly to the full path of the `.sqlproj`.
+- Verify that the SQL Project can be built independently (for example, by opening it in Visual Studio or running `dotnet msbuild` directly).
+- If discovery fails, set `EfcptSqlProj` explicitly to the full path of the SQL Project.
 - Increase logging verbosity by setting `EfcptLogVerbosity` to `detailed` and inspect the build output.
 - Check that `EfcptGeneratedDir` exists after the build and that it contains `.g.cs` files.
 
 ### 8.2 DACPAC build problems
 
 - Ensure that either `msbuild.exe` (Windows) or `dotnet msbuild` is available.
-- Install the SQL Server Data Tools / database build components on the machine running the build.
+- For traditional Microsoft.Build.Sql projects, install the SQL Server Data Tools / database build components on the machine running the build.
+- For MSBuild.Sdk.SqlProj projects, ensure the SDK is available via NuGet restore.
 - Review the detailed build log from the `EnsureDacpacBuilt` task for underlying MSBuild errors.
 
 ### 8.3 `efcpt` CLI issues

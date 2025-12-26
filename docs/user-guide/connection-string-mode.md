@@ -1,6 +1,6 @@
 # Connection String Mode
 
-JD.Efcpt.Build supports generating EF Core models directly from a live database connection, as an alternative to using SQL Server Database Projects (.sqlproj).
+JD.Efcpt.Build supports generating EF Core models directly from a live database connection, as an alternative to using SQL Projects.
 
 ## Overview
 
@@ -10,15 +10,15 @@ Connection string mode allows you to reverse-engineer your EF Core models direct
 
 **Use Connection String Mode when:**
 
-- You don't have a SQL Server Database Project (.sqlproj)
+- You don't have a SQL Project
 - You want faster builds (no DACPAC compilation step)
 - You're working with a cloud database or managed database instance
 - You prefer to scaffold from a live database environment
 
 **Use DACPAC Mode when:**
 
-- You have an existing `.sqlproj` that defines your schema
-- You want schema versioning through database projects
+- You have an existing SQL Project that defines your schema
+- You want schema versioning through SQL Projects
 - You prefer design-time schema validation
 - Your CI/CD already builds DACPACs
 

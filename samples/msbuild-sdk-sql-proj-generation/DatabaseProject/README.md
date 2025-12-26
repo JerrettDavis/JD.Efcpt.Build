@@ -1,4 +1,16 @@
-# New SDK-style SQL project with Microsoft.Build.Sql
+# Modern SDK-style SQL Project using MSBuild.Sdk.SqlProj
+
+This is a modern SQL Project that uses the **MSBuild.Sdk.SqlProj** SDK.
+
+**Important:** Despite the SDK name containing "SqlProj", this project file uses a **`.csproj`** extension, not `.sqlproj`.
+
+## Project Format
+
+- **SDK:** MSBuild.Sdk.SqlProj (NuGet package)
+- **File Extension:** `.csproj`
+- **Benefits:** Cross-platform, no Visual Studio required, simpler project format
+
+This is different from traditional **Microsoft.Build.Sql** projects which use the `.sqlproj` extension.
 
 ## Build
 

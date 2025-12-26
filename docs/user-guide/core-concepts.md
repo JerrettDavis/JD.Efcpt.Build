@@ -20,14 +20,14 @@ The pipeline consists of six stages that run before C# compilation:
 **Purpose**: Discover the database source and locate all configuration files.
 
 **What it does**:
-- Locates the SQL Server Database Project (.sqlproj) from project references or explicit configuration
+- Locates the SQL Project (`.sqlproj` for Microsoft.Build.Sql or `.csproj`/`.fsproj` for MSBuild.Sdk.SqlProj) from project references or explicit configuration
 - Resolves the EF Core Power Tools configuration file (`efcpt-config.json`)
 - Finds renaming rules (`efcpt.renaming.json`)
 - Discovers T4 template directories
 - Resolves connection strings from various sources (explicit property, appsettings.json, app.config)
 
 **Outputs**:
-- `SqlProjPath` - Path to the discovered database project
+- `SqlProjPath` - Path to the discovered SQL Project
 - `ResolvedConfigPath` - Path to the configuration file
 - `ResolvedRenamingPath` - Path to renaming rules
 - `ResolvedTemplateDir` - Path to templates
@@ -37,8 +37,8 @@ The pipeline consists of six stages that run before C# compilation:
 
 **Purpose**: Prepare the schema source for code generation.
 
-**DACPAC Mode** (when using .sqlproj):
-- Builds the SQL Server Database Project to produce a DACPAC file
+**DACPAC Mode** (when using SQL Project):
+- Builds the SQL Project to produce a DACPAC file
 - Only rebuilds if source files are newer than the existing DACPAC
 - Uses `msbuild.exe` on Windows or `dotnet msbuild` on other platforms
 
@@ -176,12 +176,14 @@ For each input type, the package searches in this order:
 
 ### SQL Project Discovery
 
-The package discovers .sqlproj files by:
+The package discovers SQL Projects by:
 
 1. Checking `EfcptSqlProj` property (if set)
-2. Scanning `ProjectReference` items for .sqlproj files
-3. Looking for .sqlproj in the solution directory
-4. Checking for modern SQL SDK projects (projects using `Microsoft.Build.Sql` SDK)
+2. Scanning `ProjectReference` items for SQL Project files
+3. Looking for SQL Projects in the solution directory
+4. Checking for modern SQL SDK projects:
+   - **Microsoft.Build.Sql** SDK (traditional `.sqlproj` files)
+   - **MSBuild.Sdk.SqlProj** SDK (modern `.csproj` or `.fsproj` files)
 
 ## Generated File Naming
 
