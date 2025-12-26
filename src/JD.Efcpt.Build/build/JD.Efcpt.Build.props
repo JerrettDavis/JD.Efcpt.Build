@@ -73,7 +73,7 @@
     <EfcptApplyMsBuildOverrides Condition="'$(EfcptApplyMsBuildOverrides)'==''">true</EfcptApplyMsBuildOverrides>
 
     <!-- Names section overrides -->
-    <EfcptConfigRootNamespace Condition="'$(EfcptConfigRootNamespace)'==''"></EfcptConfigRootNamespace>
+    <EfcptConfigRootNamespace Condition="'$(EfcptConfigRootNamespace)'==''">$(RootNamespace)</EfcptConfigRootNamespace>
     <EfcptConfigDbContextName Condition="'$(EfcptConfigDbContextName)'==''"></EfcptConfigDbContextName>
     <EfcptConfigDbContextNamespace Condition="'$(EfcptConfigDbContextNamespace)'==''"></EfcptConfigDbContextNamespace>
     <EfcptConfigModelNamespace Condition="'$(EfcptConfigModelNamespace)'==''"></EfcptConfigModelNamespace>
