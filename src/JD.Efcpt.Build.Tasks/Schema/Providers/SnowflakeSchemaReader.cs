@@ -1,4 +1,5 @@
 using System.Data;
+using JD.Efcpt.Build.Tasks.Extensions;
 using Snowflake.Data.Client;
 
 namespace JD.Efcpt.Build.Tasks.Schema.Providers;
@@ -90,7 +91,7 @@ internal sealed class SnowflakeSchemaReader : ISchemaReader
     }
 
     private static bool IsSystemSchema(string schema)
-        => string.Equals(schema, "INFORMATION_SCHEMA", StringComparison.OrdinalIgnoreCase);
+        => schema.EqualsIgnoreCase("INFORMATION_SCHEMA");
 
     private static IEnumerable<ColumnModel> GetColumnsForTable(
         SnowflakeDbConnection connection,
@@ -105,8 +106,8 @@ internal sealed class SnowflakeSchemaReader : ISchemaReader
             {
                 return columnsData
                     .AsEnumerable()
-                    .Where(row => string.Equals(row["TABLE_SCHEMA"]?.ToString(), schemaName, StringComparison.OrdinalIgnoreCase) &&
-                                  string.Equals(row["TABLE_NAME"]?.ToString(), tableName, StringComparison.OrdinalIgnoreCase))
+                    .Where(row => (row["TABLE_SCHEMA"]?.ToString()).EqualsIgnoreCase(schemaName) &&
+                                  (row["TABLE_NAME"]?.ToString()).EqualsIgnoreCase(tableName))
                     .OrderBy(row => Convert.ToInt32(row["ORDINAL_POSITION"]))
                     .Select(row => new ColumnModel(
                         Name: row["COLUMN_NAME"]?.ToString() ?? "",
@@ -114,7 +115,7 @@ internal sealed class SnowflakeSchemaReader : ISchemaReader
                         MaxLength: row.IsNull("CHARACTER_MAXIMUM_LENGTH") ? 0 : Convert.ToInt32(row["CHARACTER_MAXIMUM_LENGTH"]),
                         Precision: row.IsNull("NUMERIC_PRECISION") ? 0 : Convert.ToInt32(row["NUMERIC_PRECISION"]),
                         Scale: row.IsNull("NUMERIC_SCALE") ? 0 : Convert.ToInt32(row["NUMERIC_SCALE"]),
-                        IsNullable: row["IS_NULLABLE"]?.ToString() == "YES",
+                        IsNullable: (row["IS_NULLABLE"]?.ToString()).EqualsIgnoreCase("YES"),
                         OrdinalPosition: Convert.ToInt32(row["ORDINAL_POSITION"]),
                         DefaultValue: row.IsNull("COLUMN_DEFAULT") ? null : row["COLUMN_DEFAULT"]?.ToString()
                     ))
@@ -171,7 +172,7 @@ internal sealed class SnowflakeSchemaReader : ISchemaReader
                 MaxLength: reader.GetInt32(2),
                 Precision: reader.GetInt32(3),
                 Scale: reader.GetInt32(4),
-                IsNullable: reader.GetString(5) == "YES",
+                IsNullable: reader.GetString(5).EqualsIgnoreCase("YES"),
                 OrdinalPosition: reader.GetInt32(6),
                 DefaultValue: reader.IsDBNull(7) ? null : reader.GetString(7)
             ));

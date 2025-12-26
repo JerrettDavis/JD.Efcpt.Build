@@ -1,4 +1,5 @@
 using System.Data;
+using JD.Efcpt.Build.Tasks.Extensions;
 using Oracle.ManagedDataAccess.Client;
 
 namespace JD.Efcpt.Build.Tasks.Schema.Providers;
@@ -51,8 +52,8 @@ internal sealed class OracleSchemaReader : ISchemaReader
                     var tableType = row[tableTypeCol]?.ToString() ?? "";
                     // Filter to user tables, exclude system objects
                     if (!string.IsNullOrEmpty(tableType) &&
-                        !string.Equals(tableType, "User", StringComparison.OrdinalIgnoreCase) &&
-                        !string.Equals(tableType, "TABLE", StringComparison.OrdinalIgnoreCase))
+                        !tableType.EqualsIgnoreCase("User") &&
+                        !tableType.EqualsIgnoreCase("TABLE"))
                         return false;
                 }
                 return true;
@@ -103,8 +104,8 @@ internal sealed class OracleSchemaReader : ISchemaReader
         return columnsData
             .AsEnumerable()
             .Where(row =>
-                (ownerCol == null || string.Equals(row[ownerCol]?.ToString(), schemaName, StringComparison.OrdinalIgnoreCase)) &&
-                (tableNameCol == null || string.Equals(row[tableNameCol]?.ToString(), tableName, StringComparison.OrdinalIgnoreCase)))
+                (ownerCol == null || (row[ownerCol]?.ToString()).EqualsIgnoreCase(schemaName)) &&
+                (tableNameCol == null || (row[tableNameCol]?.ToString()).EqualsIgnoreCase(tableName)))
             .OrderBy(row => idCol != null && !row.IsNull(idCol) ? Convert.ToInt32(row[idCol]) : ordinal++)
             .Select((row, index) => new ColumnModel(
                 Name: columnNameCol != null ? row[columnNameCol]?.ToString() ?? "" : "",
@@ -112,7 +113,7 @@ internal sealed class OracleSchemaReader : ISchemaReader
                 MaxLength: lengthCol != null && !row.IsNull(lengthCol) ? Convert.ToInt32(row[lengthCol]) : 0,
                 Precision: precisionCol != null && !row.IsNull(precisionCol) ? Convert.ToInt32(row[precisionCol]) : 0,
                 Scale: scaleCol != null && !row.IsNull(scaleCol) ? Convert.ToInt32(row[scaleCol]) : 0,
-                IsNullable: nullableCol != null && (row[nullableCol]?.ToString() == "Y" || row[nullableCol]?.ToString() == "YES"),
+                IsNullable: nullableCol != null && ((row[nullableCol]?.ToString()).EqualsIgnoreCase("Y") || (row[nullableCol]?.ToString()).EqualsIgnoreCase("YES")),
                 OrdinalPosition: idCol != null && !row.IsNull(idCol) ? Convert.ToInt32(row[idCol]) : index + 1,
                 DefaultValue: defaultCol != null && !row.IsNull(defaultCol) ? row[defaultCol]?.ToString() : null
             ));
@@ -132,18 +133,18 @@ internal sealed class OracleSchemaReader : ISchemaReader
         return indexesData
             .AsEnumerable()
             .Where(row =>
-                (ownerCol == null || string.Equals(row[ownerCol]?.ToString(), schemaName, StringComparison.OrdinalIgnoreCase)) &&
-                (tableNameCol == null || string.Equals(row[tableNameCol]?.ToString(), tableName, StringComparison.OrdinalIgnoreCase)))
+                (ownerCol == null || (row[ownerCol]?.ToString()).EqualsIgnoreCase(schemaName)) &&
+                (tableNameCol == null || (row[tableNameCol]?.ToString()).EqualsIgnoreCase(tableName)))
             .Select(row => indexNameCol != null ? row[indexNameCol]?.ToString() ?? "" : "")
             .Where(name => !string.IsNullOrEmpty(name))
             .Distinct()
             .Select(indexName =>
             {
                 var indexRow = indexesData.AsEnumerable()
-                    .FirstOrDefault(r => indexNameCol != null && string.Equals(r[indexNameCol]?.ToString(), indexName, StringComparison.OrdinalIgnoreCase));
+                    .FirstOrDefault(r => indexNameCol != null && (r[indexNameCol]?.ToString()).EqualsIgnoreCase(indexName));
 
                 var isUnique = indexRow != null && uniquenessCol != null &&
-                    string.Equals(indexRow[uniquenessCol]?.ToString(), "UNIQUE", StringComparison.OrdinalIgnoreCase);
+                    (indexRow[uniquenessCol]?.ToString()).EqualsIgnoreCase("UNIQUE");
 
                 // Check if it's a primary key index (Oracle names them with _PK suffix typically)
                 var isPrimary = indexName.EndsWith("_PK", StringComparison.OrdinalIgnoreCase) ||
@@ -175,13 +176,13 @@ internal sealed class OracleSchemaReader : ISchemaReader
         return indexColumnsData
             .AsEnumerable()
             .Where(row =>
-                (ownerCol == null || string.Equals(row[ownerCol]?.ToString(), schemaName, StringComparison.OrdinalIgnoreCase)) &&
-                (tableNameCol == null || string.Equals(row[tableNameCol]?.ToString(), tableName, StringComparison.OrdinalIgnoreCase)) &&
-                (indexNameCol == null || string.Equals(row[indexNameCol]?.ToString(), indexName, StringComparison.OrdinalIgnoreCase)))
+                (ownerCol == null || (row[ownerCol]?.ToString()).EqualsIgnoreCase(schemaName)) &&
+                (tableNameCol == null || (row[tableNameCol]?.ToString()).EqualsIgnoreCase(tableName)) &&
+                (indexNameCol == null || (row[indexNameCol]?.ToString()).EqualsIgnoreCase(indexName)))
             .Select(row => new IndexColumnModel(
                 ColumnName: columnNameCol != null ? row[columnNameCol]?.ToString() ?? "" : "",
                 OrdinalPosition: positionCol != null && !row.IsNull(positionCol) ? Convert.ToInt32(row[positionCol]) : 1,
-                IsDescending: descendCol != null && string.Equals(row[descendCol]?.ToString(), "DESC", StringComparison.OrdinalIgnoreCase)));
+                IsDescending: descendCol != null && (row[descendCol]?.ToString()).EqualsIgnoreCase("DESC")));
     }
 
     private static string? GetExistingColumn(DataTable table, params string[] possibleNames)

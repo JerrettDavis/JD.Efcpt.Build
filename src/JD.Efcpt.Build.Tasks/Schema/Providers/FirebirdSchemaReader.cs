@@ -1,5 +1,6 @@
 using System.Data;
 using FirebirdSql.Data.FirebirdClient;
+using JD.Efcpt.Build.Tasks.Extensions;
 
 namespace JD.Efcpt.Build.Tasks.Schema.Providers;
 
@@ -52,7 +53,7 @@ internal sealed class FirebirdSchemaReader : ISchemaReader
                     var isSystem = row[systemCol];
                     if (isSystem is bool b && b) return false;
                     if (isSystem is int i && i != 0) return false;
-                    if (string.Equals(isSystem?.ToString(), "true", StringComparison.OrdinalIgnoreCase)) return false;
+                    if ((isSystem?.ToString()).EqualsIgnoreCase("true")) return false;
                 }
 
                 // Filter to base tables if type column exists
@@ -99,7 +100,7 @@ internal sealed class FirebirdSchemaReader : ISchemaReader
         return columnsData
             .AsEnumerable()
             .Where(row => tableNameCol == null ||
-                string.Equals((row[tableNameCol]?.ToString() ?? "").Trim(), tableName.Trim(), StringComparison.OrdinalIgnoreCase))
+                (row[tableNameCol]?.ToString() ?? "").Trim().EqualsIgnoreCase(tableName.Trim()))
             .OrderBy(row => ordinalCol != null && !row.IsNull(ordinalCol) ? Convert.ToInt32(row[ordinalCol]) : ordinal++)
             .Select((row, index) => new ColumnModel(
                 Name: (columnNameCol != null ? row[columnNameCol]?.ToString() ?? "" : "").Trim(),
@@ -107,7 +108,7 @@ internal sealed class FirebirdSchemaReader : ISchemaReader
                 MaxLength: sizeCol != null && !row.IsNull(sizeCol) ? Convert.ToInt32(row[sizeCol]) : 0,
                 Precision: precisionCol != null && !row.IsNull(precisionCol) ? Convert.ToInt32(row[precisionCol]) : 0,
                 Scale: scaleCol != null && !row.IsNull(scaleCol) ? Convert.ToInt32(row[scaleCol]) : 0,
-                IsNullable: nullableCol != null && (row[nullableCol]?.ToString() == "YES" || row[nullableCol]?.ToString() == "true"),
+                IsNullable: nullableCol != null && ((row[nullableCol]?.ToString()).EqualsIgnoreCase("YES") || (row[nullableCol]?.ToString()).EqualsIgnoreCase("true")),
                 OrdinalPosition: ordinalCol != null && !row.IsNull(ordinalCol) ? Convert.ToInt32(row[ordinalCol]) : index + 1,
                 DefaultValue: defaultCol != null && !row.IsNull(defaultCol) ? row[defaultCol]?.ToString()?.Trim() : null
             ));
@@ -126,7 +127,7 @@ internal sealed class FirebirdSchemaReader : ISchemaReader
         return indexesData
             .AsEnumerable()
             .Where(row => tableNameCol == null ||
-                string.Equals((row[tableNameCol]?.ToString() ?? "").Trim(), tableName.Trim(), StringComparison.OrdinalIgnoreCase))
+                (row[tableNameCol]?.ToString() ?? "").Trim().EqualsIgnoreCase(tableName.Trim()))
             .Where(row =>
             {
                 var indexName = indexNameCol != null ? (row[indexNameCol]?.ToString() ?? "").Trim() : "";
@@ -139,7 +140,7 @@ internal sealed class FirebirdSchemaReader : ISchemaReader
             .Select(indexName =>
             {
                 var indexRow = indexesData.AsEnumerable()
-                    .FirstOrDefault(r => indexNameCol != null && string.Equals((r[indexNameCol]?.ToString() ?? "").Trim(), indexName, StringComparison.OrdinalIgnoreCase));
+                    .FirstOrDefault(r => indexNameCol != null && (r[indexNameCol]?.ToString() ?? "").Trim().EqualsIgnoreCase(indexName));
 
                 bool isUnique = false, isPrimary = false;
 
@@ -185,8 +186,8 @@ internal sealed class FirebirdSchemaReader : ISchemaReader
         return indexColumnsData
             .AsEnumerable()
             .Where(row =>
-                (tableNameCol == null || string.Equals((row[tableNameCol]?.ToString() ?? "").Trim(), tableName.Trim(), StringComparison.OrdinalIgnoreCase)) &&
-                (indexNameCol == null || string.Equals((row[indexNameCol]?.ToString() ?? "").Trim(), indexName.Trim(), StringComparison.OrdinalIgnoreCase)))
+                (tableNameCol == null || (row[tableNameCol]?.ToString() ?? "").Trim().EqualsIgnoreCase(tableName.Trim())) &&
+                (indexNameCol == null || (row[indexNameCol]?.ToString() ?? "").Trim().EqualsIgnoreCase(indexName.Trim())))
             .Select(row => new IndexColumnModel(
                 ColumnName: (columnNameCol != null ? row[columnNameCol]?.ToString() ?? "" : "").Trim(),
                 OrdinalPosition: ordinalCol != null && !row.IsNull(ordinalCol) ? Convert.ToInt32(row[ordinalCol]) : 1,

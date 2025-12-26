@@ -51,8 +51,8 @@ internal sealed class SqlServerSchemaReader : ISchemaReader
             .Select(row => (
                 Schema: row.GetString("TABLE_SCHEMA"),
                 Name: row.GetString("TABLE_NAME")))
-            .Where(t => !string.Equals(t.Schema, "sys", StringComparison.OrdinalIgnoreCase))
-            .Where(t => !string.Equals(t.Schema, "INFORMATION_SCHEMA", StringComparison.OrdinalIgnoreCase))
+            .Where(t => !t.Schema.EqualsIgnoreCase("sys"))
+            .Where(t => !t.Schema.EqualsIgnoreCase("INFORMATION_SCHEMA"))
             .OrderBy(t => t.Schema)
             .ThenBy(t => t.Name)
             .ToList();
@@ -70,9 +70,9 @@ internal sealed class SqlServerSchemaReader : ISchemaReader
                 MaxLength: row.IsNull("CHARACTER_MAXIMUM_LENGTH") ? 0 : Convert.ToInt32(row["CHARACTER_MAXIMUM_LENGTH"]),
                 Precision: row.IsNull("NUMERIC_PRECISION") ? 0 : Convert.ToInt32(row["NUMERIC_PRECISION"]),
                 Scale: row.IsNull("NUMERIC_SCALE") ? 0 : Convert.ToInt32(row["NUMERIC_SCALE"]),
-                IsNullable: row["IS_NULLABLE"].ToString() == "YES",
+                IsNullable: row.GetString("IS_NULLABLE").EqualsIgnoreCase("YES"),
                 OrdinalPosition: Convert.ToInt32(row["ORDINAL_POSITION"]),
-                DefaultValue: row.IsNull("COLUMN_DEFAULT") ? null : row["COLUMN_DEFAULT"].ToString()
+                DefaultValue: row.IsNull("COLUMN_DEFAULT") ? null : row.GetString("COLUMN_DEFAULT")
             ));
 
     private static DataTable GetIndexes(SqlConnection connection)

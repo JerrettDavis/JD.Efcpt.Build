@@ -44,8 +44,8 @@ internal sealed class MySqlSchemaReader : ISchemaReader
         // MySQL uses TABLE_SCHEMA (database name) and TABLE_NAME
         return tablesData
             .AsEnumerable()
-            .Where(row => string.Equals(row.GetString("TABLE_SCHEMA"), databaseName, StringComparison.OrdinalIgnoreCase))
-            .Where(row => row.GetString("TABLE_TYPE") == "BASE TABLE")
+            .Where(row => row.GetString("TABLE_SCHEMA").EqualsIgnoreCase(databaseName))
+            .Where(row => row.GetString("TABLE_TYPE").EqualsIgnoreCase("BASE TABLE"))
             .Select(row => (
                 Schema: row.GetString("TABLE_SCHEMA"),
                 Name: row.GetString("TABLE_NAME")))
@@ -60,8 +60,8 @@ internal sealed class MySqlSchemaReader : ISchemaReader
         string tableName)
         => columnsData
             .AsEnumerable()
-            .Where(row => string.Equals(row.GetString("TABLE_SCHEMA"), schemaName, StringComparison.OrdinalIgnoreCase) &&
-                          string.Equals(row.GetString("TABLE_NAME"), tableName, StringComparison.OrdinalIgnoreCase))
+            .Where(row => row.GetString("TABLE_SCHEMA").EqualsIgnoreCase(schemaName) &&
+                          row.GetString("TABLE_NAME").EqualsIgnoreCase(tableName))
             .OrderBy(row => Convert.ToInt32(row["ORDINAL_POSITION"]))
             .Select(row => new ColumnModel(
                 Name: row.GetString("COLUMN_NAME"),
@@ -69,9 +69,9 @@ internal sealed class MySqlSchemaReader : ISchemaReader
                 MaxLength: row.IsNull("CHARACTER_MAXIMUM_LENGTH") ? 0 : Convert.ToInt32(row["CHARACTER_MAXIMUM_LENGTH"]),
                 Precision: row.IsNull("NUMERIC_PRECISION") ? 0 : Convert.ToInt32(row["NUMERIC_PRECISION"]),
                 Scale: row.IsNull("NUMERIC_SCALE") ? 0 : Convert.ToInt32(row["NUMERIC_SCALE"]),
-                IsNullable: row.GetString("IS_NULLABLE") == "YES",
+                IsNullable: row.GetString("IS_NULLABLE").EqualsIgnoreCase("YES"),
                 OrdinalPosition: Convert.ToInt32(row["ORDINAL_POSITION"]),
-                DefaultValue: row.IsNull("COLUMN_DEFAULT") ? null : row["COLUMN_DEFAULT"]?.ToString()
+                DefaultValue: row.IsNull("COLUMN_DEFAULT") ? null : row.GetString("COLUMN_DEFAULT")
             ));
 
     private static IEnumerable<IndexModel> ReadIndexesForTable(
@@ -88,17 +88,17 @@ internal sealed class MySqlSchemaReader : ISchemaReader
 
         return indexesData
             .AsEnumerable()
-            .Where(row => (schemaCol == null || string.Equals(row[schemaCol].ToString(), schemaName, StringComparison.OrdinalIgnoreCase)) &&
-                          (tableCol == null || string.Equals(row[tableCol].ToString(), tableName, StringComparison.OrdinalIgnoreCase)))
+            .Where(row => (schemaCol == null || (row[schemaCol]?.ToString()).EqualsIgnoreCase(schemaName)) &&
+                          (tableCol == null || (row[tableCol]?.ToString()).EqualsIgnoreCase(tableName)))
             .Select(row => indexNameCol != null ? row[indexNameCol].ToString() ?? "" : "")
             .Where(name => !string.IsNullOrEmpty(name))
             .Distinct()
             .Select(indexName =>
             {
                 var indexRow = indexesData.AsEnumerable()
-                    .FirstOrDefault(r => indexNameCol != null && string.Equals(r[indexNameCol].ToString(), indexName, StringComparison.OrdinalIgnoreCase));
+                    .FirstOrDefault(r => indexNameCol != null && (r[indexNameCol]?.ToString()).EqualsIgnoreCase(indexName));
 
-                var isPrimary = indexName.Equals("PRIMARY", StringComparison.OrdinalIgnoreCase);
+                var isPrimary = indexName.EqualsIgnoreCase("PRIMARY");
                 var isUnique = isPrimary;
 
                 if (indexRow != null && uniqueCol != null && !indexRow.IsNull(uniqueCol))
@@ -131,9 +131,9 @@ internal sealed class MySqlSchemaReader : ISchemaReader
 
         return indexColumnsData
             .AsEnumerable()
-            .Where(row => (schemaCol == null || string.Equals(row[schemaCol].ToString(), schemaName, StringComparison.OrdinalIgnoreCase)) &&
-                          (tableCol == null || string.Equals(row[tableCol].ToString(), tableName, StringComparison.OrdinalIgnoreCase)) &&
-                          (indexNameCol == null || string.Equals(row[indexNameCol].ToString(), indexName, StringComparison.OrdinalIgnoreCase)))
+            .Where(row => (schemaCol == null || (row[schemaCol]?.ToString()).EqualsIgnoreCase(schemaName)) &&
+                          (tableCol == null || (row[tableCol]?.ToString()).EqualsIgnoreCase(tableName)) &&
+                          (indexNameCol == null || (row[indexNameCol]?.ToString()).EqualsIgnoreCase(indexName)))
             .Select(row => new IndexColumnModel(
                 ColumnName: columnNameCol != null ? row[columnNameCol]?.ToString() ?? "" : "",
                 OrdinalPosition: ordinalCol != null && !row.IsNull(ordinalCol)

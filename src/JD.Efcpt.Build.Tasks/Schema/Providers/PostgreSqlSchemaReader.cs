@@ -47,7 +47,7 @@ internal sealed class PostgreSqlSchemaReader : ISchemaReader
                 Schema: row.GetString("table_schema"),
                 Name: row.GetString("table_name")))
             .Where(t => !t.Schema.StartsWith("pg_", StringComparison.OrdinalIgnoreCase))
-            .Where(t => !string.Equals(t.Schema, "information_schema", StringComparison.OrdinalIgnoreCase))
+            .Where(t => !t.Schema.EqualsIgnoreCase("information_schema"))
             .OrderBy(t => t.Schema)
             .ThenBy(t => t.Name)
             .ToList();
@@ -72,8 +72,8 @@ internal sealed class PostgreSqlSchemaReader : ISchemaReader
 
         return columnsData
             .AsEnumerable()
-            .Where(row => string.Equals(row[schemaCol]?.ToString(), schemaName, StringComparison.OrdinalIgnoreCase) &&
-                          string.Equals(row[tableCol]?.ToString(), tableName, StringComparison.OrdinalIgnoreCase))
+            .Where(row => (row[schemaCol]?.ToString()).EqualsIgnoreCase(schemaName) &&
+                          (row[tableCol]?.ToString()).EqualsIgnoreCase(tableName))
             .OrderBy(row => Convert.ToInt32(row[ordinalCol]))
             .Select(row => new ColumnModel(
                 Name: row[colNameCol]?.ToString() ?? "",
@@ -81,7 +81,7 @@ internal sealed class PostgreSqlSchemaReader : ISchemaReader
                 MaxLength: row.IsNull(maxLengthCol) ? 0 : Convert.ToInt32(row[maxLengthCol]),
                 Precision: row.IsNull(precisionCol) ? 0 : Convert.ToInt32(row[precisionCol]),
                 Scale: row.IsNull(scaleCol) ? 0 : Convert.ToInt32(row[scaleCol]),
-                IsNullable: string.Equals(row[nullableCol]?.ToString(), "YES", StringComparison.OrdinalIgnoreCase),
+                IsNullable: (row[nullableCol]?.ToString()).EqualsIgnoreCase("YES"),
                 OrdinalPosition: Convert.ToInt32(row[ordinalCol]),
                 DefaultValue: row.IsNull(defaultCol) ? null : row[defaultCol]?.ToString()
             ));
@@ -99,8 +99,8 @@ internal sealed class PostgreSqlSchemaReader : ISchemaReader
 
         return indexesData
             .AsEnumerable()
-            .Where(row => string.Equals(row[schemaCol]?.ToString(), schemaName, StringComparison.OrdinalIgnoreCase) &&
-                          string.Equals(row[tableCol]?.ToString(), tableName, StringComparison.OrdinalIgnoreCase))
+            .Where(row => (row[schemaCol]?.ToString()).EqualsIgnoreCase(schemaName) &&
+                          (row[tableCol]?.ToString()).EqualsIgnoreCase(tableName))
             .Select(row => row[indexNameCol]?.ToString() ?? "")
             .Where(name => !string.IsNullOrEmpty(name))
             .Distinct()
@@ -128,9 +128,9 @@ internal sealed class PostgreSqlSchemaReader : ISchemaReader
         var ordinal = 1;
         return indexColumnsData
             .AsEnumerable()
-            .Where(row => string.Equals(row[schemaCol]?.ToString(), schemaName, StringComparison.OrdinalIgnoreCase) &&
-                          string.Equals(row[tableCol]?.ToString(), tableName, StringComparison.OrdinalIgnoreCase) &&
-                          string.Equals(row[indexNameCol]?.ToString(), indexName, StringComparison.OrdinalIgnoreCase))
+            .Where(row => (row[schemaCol]?.ToString()).EqualsIgnoreCase(schemaName) &&
+                          (row[tableCol]?.ToString()).EqualsIgnoreCase(tableName) &&
+                          (row[indexNameCol]?.ToString()).EqualsIgnoreCase(indexName))
             .Select(row => new IndexColumnModel(
                 ColumnName: row[columnNameCol]?.ToString() ?? "",
                 OrdinalPosition: indexColumnsData.Columns.Contains(ordinalCol)
