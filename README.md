@@ -57,13 +57,13 @@ dotnet tool install --global ErikEJ.EFCorePowerTools.Cli --version "9.*"
 
 `JD.Efcpt.Build` transforms EF Core Power Tools into a **fully automated build step**. Instead of manually regenerating your EF Core models in Visual Studio, this package:
 
-✅ **Automatically builds** your SQL Server Database Project to a DACPAC
-✅ **OR connects directly** to your database via connection string
-✅ **Runs EF Core Power Tools** CLI during `dotnet build`
-✅ **Generates DbContext and entities** from your database schema
-✅ **Intelligently caches** - only regenerates when schema or config changes
-✅ **Works everywhere** - local dev, CI/CD, Docker, anywhere .NET runs
-✅ **Zero manual steps** - true database-first development automation  
+- ✅ **Automatically builds** your SQL Server Database Project to a DACPAC
+- ✅ **OR connects directly** to your database via connection string
+- ✅ **Runs EF Core Power Tools** CLI during `dotnet build`
+- ✅ **Generates DbContext and entities** from your database schema
+- ✅ **Intelligently caches** - only regenerates when schema or config changes
+- ✅ **Works everywhere** - local dev, CI/CD, Docker, anywhere .NET runs
+- ✅ **Zero manual steps** - true database-first development automation  
 
 ### Architecture
 
