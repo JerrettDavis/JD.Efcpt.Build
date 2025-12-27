@@ -54,6 +54,16 @@
     <EfcptDumpResolvedInputs Condition="'$(EfcptDumpResolvedInputs)'==''">false</EfcptDumpResolvedInputs>
 
     <!--
+      SDK Version Check: Opt-in feature to check for newer SDK versions on NuGet.
+      Enable with EfcptCheckForUpdates=true. Results are cached to avoid network
+      calls on every build. This helps SDK users stay up-to-date since NuGet's
+      SDK resolver doesn't support floating versions or automatic update notifications.
+    -->
+    <EfcptCheckForUpdates Condition="'$(EfcptCheckForUpdates)'==''">false</EfcptCheckForUpdates>
+    <EfcptUpdateCheckCacheHours Condition="'$(EfcptUpdateCheckCacheHours)'==''">24</EfcptUpdateCheckCacheHours>
+    <EfcptForceUpdateCheck Condition="'$(EfcptForceUpdateCheck)'==''">false</EfcptForceUpdateCheck>
+
+    <!--
       Split Outputs: separate a primary Models project from a secondary Data project.
       Enable EfcptSplitOutputs in the Models project (with EfcptEnabled=true) and
       set EfcptDataProject to the target Data project that should receive DbContext

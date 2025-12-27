@@ -221,6 +221,49 @@ Then your project files can omit the version:
 </Project>
 ```
 
+## Staying Up-to-Date
+
+Unlike regular NuGet PackageReferences, MSBuild SDKs don't have built-in support for update notifications. Here are strategies to keep your SDK version current:
+
+### Opt-in Update Check
+
+Enable automatic version checking by setting `EfcptCheckForUpdates` in your project:
+
+```xml
+<PropertyGroup>
+    <EfcptCheckForUpdates>true</EfcptCheckForUpdates>
+</PropertyGroup>
+```
+
+When enabled, the build will check NuGet for newer versions (cached for 24 hours) and emit a warning if an update is available:
+
+```
+warning EFCPT002: A newer version of JD.Efcpt.Sdk is available: 1.1.0 (current: 1.0.0).
+```
+
+Configuration options:
+- `EfcptCheckForUpdates` - Enable/disable version checking (default: `false`)
+- `EfcptUpdateCheckCacheHours` - Hours to cache the result (default: `24`)
+- `EfcptForceUpdateCheck` - Bypass cache and always check (default: `false`)
+
+### Use global.json for Centralized Management
+
+When you have multiple projects, use `global.json` to manage SDK versions in one place:
+
+```json
+{
+  "msbuild-sdks": {
+    "JD.Efcpt.Sdk": "1.0.0"
+  }
+}
+```
+
+Then update the version in `global.json` when you want to upgrade all projects at once.
+
+### Consider PackageReference for Update Tools
+
+If you prefer using tools like `dotnet outdated` for version management, use `JD.Efcpt.Build` via PackageReference instead of the SDK approach. Both provide identical functionality.
+
 ## Troubleshooting
 
 ### SDK not found

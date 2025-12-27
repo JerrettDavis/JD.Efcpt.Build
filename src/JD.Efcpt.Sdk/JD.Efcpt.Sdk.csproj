@@ -63,6 +63,26 @@
     <None Include="..\..\README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
+  <!--
+    Generate version file for SDK version check feature.
+    This creates a props file that sets EfcptSdkVersion to the package version.
+  -->
+  <Target Name="GenerateSdkVersionFile" BeforeTargets="_GetPackageFiles">
+    <PropertyGroup>
+      <_SdkVersionPropsContent><![CDATA[<Project>
+  <PropertyGroup>
+    <EfcptSdkVersion>$(PackageVersion)</EfcptSdkVersion>
+  </PropertyGroup>
+</Project>]]></_SdkVersionPropsContent>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(IntermediateOutputPath)JD.Efcpt.Sdk.Version.props"
+                      Lines="$(_SdkVersionPropsContent)"
+                      Overwrite="true" />
+    <ItemGroup>
+      <None Include="$(IntermediateOutputPath)JD.Efcpt.Sdk.Version.props" Pack="true" PackagePath="build" />
+    </ItemGroup>
+  </Target>
+
   <!-- Collect task assemblies from the referenced project after build -->
   <Target Name="IncludeTaskAssembliesInPack" BeforeTargets="_GetPackageFiles">
     <ItemGroup>

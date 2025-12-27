@@ -98,6 +98,26 @@
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.SerializeConfigProperties"
              AssemblyFile="$(_EfcptTaskAssembly)" />
 
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.CheckSdkVersion"
+             AssemblyFile="$(_EfcptTaskAssembly)" />
+
+  <!--
+    SDK Version Check: Warns users when a newer SDK version is available.
+    Opt-in via EfcptCheckForUpdates=true. Results are cached for 24 hours.
+  -->
+  <Target Name="_EfcptCheckForUpdates"
+          BeforeTargets="Build"
+          Condition="'$(EfcptCheckForUpdates)' == 'true' and '$(EfcptSdkVersion)' != ''">
+    <CheckSdkVersion
+        CurrentVersion="$(EfcptSdkVersion)"
+        PackageId="JD.Efcpt.Sdk"
+        CacheHours="$(EfcptUpdateCheckCacheHours)"
+        ForceCheck="$(EfcptForceUpdateCheck)">
+      <Output TaskParameter="LatestVersion" PropertyName="_EfcptLatestVersion" />
+      <Output TaskParameter="UpdateAvailable" PropertyName="_EfcptUpdateAvailable" />
+    </CheckSdkVersion>
+  </Target>
+
   <!-- Main pipeline -->
   <Target Name="EfcptResolveInputs"
           Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptDacpac)' == ''">
