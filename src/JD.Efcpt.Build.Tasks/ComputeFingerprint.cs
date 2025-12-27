@@ -189,7 +189,7 @@ public sealed class ComputeFingerprint : Task
                     .Append(data.h).Append('\n'));
 
         // Generated files (optional, off by default to avoid overwriting manual edits)
-        if (DetectGeneratedFileChanges.IsTrue() && !string.IsNullOrWhiteSpace(GeneratedDir) && Directory.Exists(GeneratedDir))
+        if (!string.IsNullOrWhiteSpace(GeneratedDir) && Directory.Exists(GeneratedDir) && DetectGeneratedFileChanges.IsTrue())
         {
             log.Detail("Detecting generated file changes (EfcptDetectGeneratedFileChanges=true)");
             manifest = Directory

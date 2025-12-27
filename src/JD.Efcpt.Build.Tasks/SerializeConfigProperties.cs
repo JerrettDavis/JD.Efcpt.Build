@@ -217,7 +217,7 @@ public sealed class SerializeConfigProperties : Task
 
     private bool ExecuteCore(TaskExecutionContext ctx)
     {
-        var properties = new Dictionary<string, string>(StringComparer.Ordinal);
+        var properties = new Dictionary<string, string>(35, StringComparer.Ordinal);
 
         // Only include properties that have non-empty values
         AddIfNotEmpty(properties, nameof(RootNamespace), RootNamespace);
@@ -259,14 +259,15 @@ public sealed class SerializeConfigProperties : Task
         AddIfNotEmpty(properties, nameof(PreserveCasingWithRegex), PreserveCasingWithRegex);
 
         // Serialize to JSON with sorted keys for deterministic output
-        var sorted = properties.OrderBy(kvp => kvp.Key, StringComparer.Ordinal);
-        SerializedProperties = JsonSerializer.Serialize(sorted, new JsonSerializerOptions
-        {
-            WriteIndented = false
-        });
+        SerializedProperties = JsonSerializer.Serialize(properties.OrderBy(kvp => kvp.Key, StringComparer.Ordinal), JsonOptions);
 
         return true;
     }
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = false
+    };
 
     private static void AddIfNotEmpty(Dictionary<string, string> dict, string key, string value)
     {
