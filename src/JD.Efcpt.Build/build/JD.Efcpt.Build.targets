@@ -132,8 +132,9 @@
     Build the SQL project using MSBuild's native task to ensure proper dependency ordering.
     This prevents race conditions when MSBuild runs in parallel mode - the SQL project
     build will complete before any targets that depend on this one can proceed.
-    Note: Condition is on the task, not the target, because target conditions evaluate
-    before DependsOnTargets complete.
+    Note: The mode-specific condition (checking connection string vs dacpac mode) is on the
+    MSBuild task, not the target, because target conditions evaluate before DependsOnTargets
+    complete. The target's EfcptEnabled condition is a simple enable/disable check.
   -->
   <Target Name="EfcptBuildSqlProj"
           DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac"
