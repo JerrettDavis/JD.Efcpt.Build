@@ -380,4 +380,330 @@ public sealed class ComputeFingerprintTests(ITestOutputHelper output) : TinyBddX
             .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
+
+    [Scenario("HasChanged is true when tool version changes")]
+    [Fact]
+    public async Task Tool_version_change_triggers_fingerprint_change()
+    {
+        await Given("inputs with existing fingerprint", () =>
+            {
+                var setup = SetupWithExistingFingerprintFile();
+                // First run with tool version
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = setup.Engine,
+                    DacpacPath = setup.DacpacPath,
+                    ConfigPath = setup.ConfigPath,
+                    RenamingPath = setup.RenamingPath,
+                    TemplateDir = setup.TemplateDir,
+                    FingerprintFile = setup.FingerprintFile,
+                    ToolVersion = "10.0.0"
+                };
+                task.Execute();
+                return setup;
+            })
+            .When("task executes with different tool version", s =>
+            {
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = s.Engine,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    FingerprintFile = s.FingerprintFile,
+                    ToolVersion = "10.1.0"
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("HasChanged is true", r => r.Task.HasChanged == "true")
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("HasChanged is true when config property overrides change")]
+    [Fact]
+    public async Task Config_property_overrides_change_triggers_fingerprint_change()
+    {
+        await Given("inputs with existing fingerprint", () =>
+            {
+                var setup = SetupWithExistingFingerprintFile();
+                // First run with config overrides
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = setup.Engine,
+                    DacpacPath = setup.DacpacPath,
+                    ConfigPath = setup.ConfigPath,
+                    RenamingPath = setup.RenamingPath,
+                    TemplateDir = setup.TemplateDir,
+                    FingerprintFile = setup.FingerprintFile,
+                    ConfigPropertyOverrides = "{\"UseDataAnnotations\":\"true\"}"
+                };
+                task.Execute();
+                return setup;
+            })
+            .When("task executes with different config overrides", s =>
+            {
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = s.Engine,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    FingerprintFile = s.FingerprintFile,
+                    ConfigPropertyOverrides = "{\"UseDataAnnotations\":\"false\"}"
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("HasChanged is true", r => r.Task.HasChanged == "true")
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("HasChanged is true when generated files change and detection is enabled")]
+    [Fact]
+    public async Task Generated_file_change_triggers_fingerprint_change()
+    {
+        await Given("inputs with existing fingerprint and generated files", () =>
+            {
+                var setup = SetupWithExistingFingerprintFile();
+                var generatedDir = setup.Folder.CreateDir("Generated");
+                setup.Folder.WriteFile("Generated/Model.g.cs", "public class Model { }");
+                
+                // First run with generated file detection
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = setup.Engine,
+                    DacpacPath = setup.DacpacPath,
+                    ConfigPath = setup.ConfigPath,
+                    RenamingPath = setup.RenamingPath,
+                    TemplateDir = setup.TemplateDir,
+                    FingerprintFile = setup.FingerprintFile,
+                    GeneratedDir = generatedDir,
+                    DetectGeneratedFileChanges = "true"
+                };
+                task.Execute();
+                return (setup, generatedDir);
+            })
+            .When("generated file is modified and task executes", ctx =>
+            {
+                var (s, generatedDir) = ctx;
+                File.WriteAllText(Path.Combine(generatedDir, "Model.g.cs"), "public class Model { public int Id { get; set; } }");
+                
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = s.Engine,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    FingerprintFile = s.FingerprintFile,
+                    GeneratedDir = generatedDir,
+                    DetectGeneratedFileChanges = "true"
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("HasChanged is true", r => r.Task.HasChanged == "true")
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("HasChanged is false when generated files change but detection is disabled")]
+    [Fact]
+    public async Task Generated_file_change_ignored_when_detection_disabled()
+    {
+        await Given("inputs with existing fingerprint and generated files", () =>
+            {
+                var setup = SetupWithExistingFingerprintFile();
+                var generatedDir = setup.Folder.CreateDir("Generated");
+                setup.Folder.WriteFile("Generated/Model.g.cs", "public class Model { }");
+                
+                // First run without generated file detection
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = setup.Engine,
+                    DacpacPath = setup.DacpacPath,
+                    ConfigPath = setup.ConfigPath,
+                    RenamingPath = setup.RenamingPath,
+                    TemplateDir = setup.TemplateDir,
+                    FingerprintFile = setup.FingerprintFile,
+                    GeneratedDir = generatedDir,
+                    DetectGeneratedFileChanges = "false"
+                };
+                task.Execute();
+                return (setup, generatedDir);
+            })
+            .When("generated file is modified and task executes", ctx =>
+            {
+                var (s, generatedDir) = ctx;
+                File.WriteAllText(Path.Combine(generatedDir, "Model.g.cs"), "public class Model { public int Id { get; set; } }");
+                
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = s.Engine,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    FingerprintFile = s.FingerprintFile,
+                    GeneratedDir = generatedDir,
+                    DetectGeneratedFileChanges = "false"
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("HasChanged is false", r => r.Task.HasChanged == "false")
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Includes library version in fingerprint")]
+    [Fact]
+    public async Task Includes_library_version_in_fingerprint()
+    {
+        await Given("inputs for fingerprinting", SetupWithAllInputs)
+            .When("task executes with detailed logging", s =>
+            {
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = s.Engine,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    FingerprintFile = s.FingerprintFile,
+                    LogVerbosity = "detailed"
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("fingerprint is computed", r => !string.IsNullOrEmpty(r.Task.Fingerprint))
+            .And("logs library version", r =>
+                r.Setup.Engine.Messages.Any(m => m.Message?.Contains("Library version:") == true))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Handles empty generated directory when detection is enabled")]
+    [Fact]
+    public async Task Empty_generated_directory_when_detection_enabled()
+    {
+        await Given("inputs with empty generated directory", () =>
+            {
+                var setup = SetupWithExistingFingerprintFile();
+                var generatedDir = setup.Folder.CreateDir("Generated");
+                // Directory exists but is empty
+                return (setup, generatedDir);
+            })
+            .When("task executes with detection enabled", ctx =>
+            {
+                var (s, generatedDir) = ctx;
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = s.Engine,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    FingerprintFile = s.FingerprintFile,
+                    GeneratedDir = generatedDir,
+                    DetectGeneratedFileChanges = "true"
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("fingerprint is computed", r => !string.IsNullOrEmpty(r.Task.Fingerprint))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Handles non-existent generated directory when detection is enabled")]
+    [Fact]
+    public async Task Nonexistent_generated_directory_when_detection_enabled()
+    {
+        await Given("inputs with non-existent generated directory", SetupWithExistingFingerprintFile)
+            .When("task executes with detection enabled", s =>
+            {
+                var nonExistentDir = Path.Combine(s.Folder.Root, "DoesNotExist");
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = s.Engine,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    FingerprintFile = s.FingerprintFile,
+                    GeneratedDir = nonExistentDir,
+                    DetectGeneratedFileChanges = "true"
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("fingerprint is computed", r => !string.IsNullOrEmpty(r.Task.Fingerprint))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Handles empty tool version")]
+    [Fact]
+    public async Task Empty_tool_version_handled()
+    {
+        await Given("inputs with empty tool version", SetupWithExistingFingerprintFile)
+            .When("task executes", s =>
+            {
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = s.Engine,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    FingerprintFile = s.FingerprintFile,
+                    ToolVersion = ""
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("fingerprint is computed", r => !string.IsNullOrEmpty(r.Task.Fingerprint))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Handles empty config property overrides")]
+    [Fact]
+    public async Task Empty_config_property_overrides_handled()
+    {
+        await Given("inputs with empty config overrides", SetupWithExistingFingerprintFile)
+            .When("task executes", s =>
+            {
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = s.Engine,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    FingerprintFile = s.FingerprintFile,
+                    ConfigPropertyOverrides = ""
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("fingerprint is computed", r => !string.IsNullOrEmpty(r.Task.Fingerprint))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
 }

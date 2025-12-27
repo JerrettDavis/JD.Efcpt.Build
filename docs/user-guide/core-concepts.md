@@ -134,12 +134,18 @@ Fingerprinting is a key optimization that prevents unnecessary code regeneration
 
 ### What's Included in the Fingerprint
 
+The fingerprint includes multiple sources to ensure regeneration when any relevant input changes:
+
+- **Library version** - Version of JD.Efcpt.Build.Tasks assembly
+- **Tool version** - EF Core Power Tools CLI version (`EfcptToolVersion`)
 - **DACPAC content** (in .sqlproj mode) or **schema metadata** (in connection string mode)
-- **efcpt-config.json** - Generation options, namespaces, table selection (including MSBuild overrides)
+- **efcpt-config.json** - Generation options, namespaces, table selection
+- **MSBuild property overrides** - All `EfcptConfig*` properties set in the .csproj
 - **efcpt.renaming.json** - Custom naming rules
 - **T4 templates** - All template files and their contents
+- **Generated files** (optional) - When `EfcptDetectGeneratedFileChanges=true`, includes fingerprints of generated `.g.cs` files
 
-Note: The fingerprint is computed after MSBuild property overrides are applied, so changing an override property (like `EfcptConfigRootNamespace`) will trigger regeneration.
+**Important**: The fingerprint is computed after MSBuild property overrides are applied, so changing any `EfcptConfig*` property (like `EfcptConfigRootNamespace`) will automatically trigger regeneration.
 
 All hashing uses XxHash64, a fast non-cryptographic hash algorithm.
 
@@ -147,22 +153,54 @@ All hashing uses XxHash64, a fast non-cryptographic hash algorithm.
 
 ```
 Build 1 (first run):
-  Fingerprint = Hash(DACPAC/Schema + config + renaming + templates)
+  Fingerprint = Hash(library + tool + DACPAC/Schema + config + overrides + renaming + templates)
   → No previous fingerprint exists
   → Generate models
   → Store fingerprint
 
 Build 2 (no changes):
-  Fingerprint = Hash(DACPAC/Schema + config + renaming + templates)
+  Fingerprint = Hash(library + tool + DACPAC/Schema + config + overrides + renaming + templates)
   → Same as stored fingerprint
   → Skip generation (fast build)
 
 Build 3 (schema changed):
-  Fingerprint = Hash(new DACPAC/Schema + config + renaming + templates)
+  Fingerprint = Hash(library + tool + new DACPAC/Schema + config + overrides + renaming + templates)
   → Different from stored fingerprint
   → Regenerate models
   → Store new fingerprint
+
+Build 4 (config property changed):
+  Fingerprint = Hash(library + tool + DACPAC/Schema + config + new overrides + renaming + templates)
+  → Different from stored fingerprint (overrides changed)
+  → Regenerate models
+  → Store new fingerprint
 ```
+
+### Regeneration Triggers
+
+The following changes will automatically trigger model regeneration:
+
+1. **Library upgrade** - When you update the JD.Efcpt.Build NuGet package
+2. **Tool version change** - When you change `<EfcptToolVersion>` in your .csproj
+3. **Database schema change** - Tables, columns, or relationships modified
+4. **Config file change** - efcpt-config.json or efcpt.renaming.json modified
+5. **MSBuild property change** - Any `<EfcptConfig*>` property changed in .csproj
+6. **Template change** - T4 template files added, removed, or modified
+7. **Generated file change** (optional) - When `<EfcptDetectGeneratedFileChanges>true</EfcptDetectGeneratedFileChanges>` is set
+
+### Detecting Manual Edits (Optional)
+
+By default, the system **does not** detect changes to generated files. This prevents accidentally overwriting manual edits you might make to generated code.
+
+To enable detection of changes to generated files (useful in some workflows):
+
+```xml
+<PropertyGroup>
+  <EfcptDetectGeneratedFileChanges>true</EfcptDetectGeneratedFileChanges>
+</PropertyGroup>
+```
+
+**Warning**: When enabled, any manual edits to `.g.cs` files will trigger regeneration, overwriting your changes. Only enable this if your workflow never involves manual edits to generated code.
 
 ### Forcing Regeneration
 

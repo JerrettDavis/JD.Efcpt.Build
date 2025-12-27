@@ -43,6 +43,9 @@
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.ResolveDbContextName"
              AssemblyFile="$(_EfcptTaskAssembly)" />
 
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.SerializeConfigProperties"
+             AssemblyFile="$(_EfcptTaskAssembly)" />
+
   <!-- Main pipeline -->
   <Target Name="EfcptResolveInputs"
           Condition="'$(EfcptEnabled)' == 'true'">
@@ -243,8 +246,57 @@
         PreserveCasingWithRegex="$(EfcptConfigPreserveCasingWithRegex)" />
   </Target>
 
-  <Target Name="EfcptComputeFingerprint"
+  <!--
+    Serialize MSBuild config property overrides to a JSON string for fingerprinting.
+    This ensures that changes to EfcptConfig* properties trigger regeneration.
+  -->
+  <Target Name="EfcptSerializeConfigProperties"
           DependsOnTargets="EfcptApplyConfigOverrides"
+          Condition="'$(EfcptEnabled)' == 'true'">
+    <SerializeConfigProperties
+        RootNamespace="$(EfcptConfigRootNamespace)"
+        DbContextName="$(EfcptConfigDbContextName)"
+        DbContextNamespace="$(EfcptConfigDbContextNamespace)"
+        ModelNamespace="$(EfcptConfigModelNamespace)"
+        OutputPath="$(EfcptConfigOutputPath)"
+        DbContextOutputPath="$(EfcptConfigDbContextOutputPath)"
+        SplitDbContext="$(EfcptConfigSplitDbContext)"
+        UseSchemaFolders="$(EfcptConfigUseSchemaFolders)"
+        UseSchemaNamespaces="$(EfcptConfigUseSchemaNamespaces)"
+        EnableOnConfiguring="$(EfcptConfigEnableOnConfiguring)"
+        GenerationType="$(EfcptConfigGenerationType)"
+        UseDatabaseNames="$(EfcptConfigUseDatabaseNames)"
+        UseDataAnnotations="$(EfcptConfigUseDataAnnotations)"
+        UseNullableReferenceTypes="$(EfcptConfigUseNullableReferenceTypes)"
+        UseInflector="$(EfcptConfigUseInflector)"
+        UseLegacyInflector="$(EfcptConfigUseLegacyInflector)"
+        UseManyToManyEntity="$(EfcptConfigUseManyToManyEntity)"
+        UseT4="$(EfcptConfigUseT4)"
+        UseT4Split="$(EfcptConfigUseT4Split)"
+        RemoveDefaultSqlFromBool="$(EfcptConfigRemoveDefaultSqlFromBool)"
+        SoftDeleteObsoleteFiles="$(EfcptConfigSoftDeleteObsoleteFiles)"
+        DiscoverMultipleResultSets="$(EfcptConfigDiscoverMultipleResultSets)"
+        UseAlternateResultSetDiscovery="$(EfcptConfigUseAlternateResultSetDiscovery)"
+        T4TemplatePath="$(EfcptConfigT4TemplatePath)"
+        UseNoNavigations="$(EfcptConfigUseNoNavigations)"
+        MergeDacpacs="$(EfcptConfigMergeDacpacs)"
+        RefreshObjectLists="$(EfcptConfigRefreshObjectLists)"
+        GenerateMermaidDiagram="$(EfcptConfigGenerateMermaidDiagram)"
+        UseDecimalAnnotationForSprocs="$(EfcptConfigUseDecimalAnnotationForSprocs)"
+        UsePrefixNavigationNaming="$(EfcptConfigUsePrefixNavigationNaming)"
+        UseDatabaseNamesForRoutines="$(EfcptConfigUseDatabaseNamesForRoutines)"
+        UseInternalAccessForRoutines="$(EfcptConfigUseInternalAccessForRoutines)"
+        UseDateOnlyTimeOnly="$(EfcptConfigUseDateOnlyTimeOnly)"
+        UseHierarchyId="$(EfcptConfigUseHierarchyId)"
+        UseSpatial="$(EfcptConfigUseSpatial)"
+        UseNodaTime="$(EfcptConfigUseNodaTime)"
+        PreserveCasingWithRegex="$(EfcptConfigPreserveCasingWithRegex)">
+      <Output TaskParameter="SerializedProperties" PropertyName="_EfcptSerializedConfigProperties" />
+    </SerializeConfigProperties>
+  </Target>
+
+  <Target Name="EfcptComputeFingerprint"
+          DependsOnTargets="EfcptSerializeConfigProperties"
           Condition="'$(EfcptEnabled)' == 'true'">
     <ComputeFingerprint
         DacpacPath="$(_EfcptDacpacPath)"
@@ -254,6 +306,10 @@
         RenamingPath="$(_EfcptStagedRenaming)"
         TemplateDir="$(_EfcptStagedTemplateDir)"
         FingerprintFile="$(EfcptFingerprintFile)"
+        ToolVersion="$(EfcptToolVersion)"
+        GeneratedDir="$(EfcptGeneratedDir)"
+        DetectGeneratedFileChanges="$(EfcptDetectGeneratedFileChanges)"
+        ConfigPropertyOverrides="$(_EfcptSerializedConfigProperties)"
         LogVerbosity="$(EfcptLogVerbosity)">
       <Output TaskParameter="Fingerprint" PropertyName="_EfcptFingerprint" />
       <Output TaskParameter="HasChanged" PropertyName="_EfcptFingerprintChanged" />
