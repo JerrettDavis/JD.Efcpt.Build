@@ -65,7 +65,7 @@ public sealed class MsBuildPropertyHelpersTests(ITestOutputHelper output) : Tiny
     {
         await Given("the string 'true'", () => "true")
             .When("ParseBoolOrNull is called", MsBuildPropertyHelpers.ParseBoolOrNull)
-            .Then("result is true", r => r == true)
+            .Then("result is true", r => r is true)
             .AssertPassed();
     }
 
@@ -75,7 +75,7 @@ public sealed class MsBuildPropertyHelpersTests(ITestOutputHelper output) : Tiny
     {
         await Given("the string 'True'", () => "True")
             .When("ParseBoolOrNull is called", MsBuildPropertyHelpers.ParseBoolOrNull)
-            .Then("result is true", r => r == true)
+            .Then("result is true", r => r is true)
             .AssertPassed();
     }
 
@@ -85,7 +85,7 @@ public sealed class MsBuildPropertyHelpersTests(ITestOutputHelper output) : Tiny
     {
         await Given("the string 'false'", () => "false")
             .When("ParseBoolOrNull is called", MsBuildPropertyHelpers.ParseBoolOrNull)
-            .Then("result is false", r => r == false)
+            .Then("result is false", r => r is false)
             .AssertPassed();
     }
 
@@ -98,7 +98,7 @@ public sealed class MsBuildPropertyHelpersTests(ITestOutputHelper output) : Tiny
     public async Task HasAnyValue_strings_all_null()
     {
         await Given("an array of nulls", () => new string?[] { null, null, null })
-            .When("HasAnyValue is called", values => MsBuildPropertyHelpers.HasAnyValue(values))
+            .When("HasAnyValue is called", MsBuildPropertyHelpers.HasAnyValue)
             .Then("result is false", r => !r)
             .AssertPassed();
     }
@@ -107,8 +107,8 @@ public sealed class MsBuildPropertyHelpersTests(ITestOutputHelper output) : Tiny
     [Fact]
     public async Task HasAnyValue_strings_one_value()
     {
-        await Given("an array with one value", () => new string?[] { null, "value", null })
-            .When("HasAnyValue is called", values => MsBuildPropertyHelpers.HasAnyValue(values))
+        await Given("an array with one value", () => new[] { null, "value", null })
+            .When("HasAnyValue is called", MsBuildPropertyHelpers.HasAnyValue)
             .Then("result is true", r => r)
             .AssertPassed();
     }
@@ -118,7 +118,7 @@ public sealed class MsBuildPropertyHelpersTests(ITestOutputHelper output) : Tiny
     public async Task HasAnyValue_bools_all_null()
     {
         await Given("an array of nulls", () => new bool?[] { null, null, null })
-            .When("HasAnyValue is called", values => MsBuildPropertyHelpers.HasAnyValue(values))
+            .When("HasAnyValue is called", MsBuildPropertyHelpers.HasAnyValue)
             .Then("result is false", r => !r)
             .AssertPassed();
     }
@@ -128,7 +128,7 @@ public sealed class MsBuildPropertyHelpersTests(ITestOutputHelper output) : Tiny
     public async Task HasAnyValue_bools_one_value()
     {
         await Given("an array with one value", () => new bool?[] { null, true, null })
-            .When("HasAnyValue is called", values => MsBuildPropertyHelpers.HasAnyValue(values))
+            .When("HasAnyValue is called", MsBuildPropertyHelpers.HasAnyValue)
             .Then("result is true", r => r)
             .AssertPassed();
     }

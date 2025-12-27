@@ -77,7 +77,7 @@ YourSolution/
 When you use `JD.Efcpt.Sdk` as your project SDK:
 
 1. **SDK Resolution** - MSBuild resolves the SDK from NuGet using the version in the Sdk attribute
-2. **SDK Import** - The SDK imports `Microsoft.NET.Sdk` first, then adds EF Core Power Tools integration
+2. **SDK Integration** - The SDK extends `Microsoft.NET.Sdk` by importing it and adding EF Core Power Tools integration
 3. **SQL Project Detection** - Any `ProjectReference` to a SQL project is automatically detected
 4. **DACPAC Build** - The SQL project is built to produce a DACPAC
 5. **Model Generation** - EF Core Power Tools generates models from the DACPAC
