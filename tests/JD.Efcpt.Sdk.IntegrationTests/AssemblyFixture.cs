@@ -103,7 +103,7 @@ public static class AssemblyFixture
         var withoutExtension = Path.GetFileNameWithoutExtension(fileName);
         var prefix = packageId + ".";
         if (withoutExtension.StartsWith(prefix))
-            return withoutExtension.Substring(prefix.Length);
+            return withoutExtension[prefix.Length..];
         throw new InvalidOperationException($"Could not extract version from {fileName}");
     }
 

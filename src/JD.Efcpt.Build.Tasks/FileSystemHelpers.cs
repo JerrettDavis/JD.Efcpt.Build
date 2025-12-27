@@ -36,22 +36,22 @@ internal static class FileSystemHelpers
 
         Directory.CreateDirectory(destDir);
 
-        // Create all subdirectories first
-        foreach (var dir in Directory.EnumerateDirectories(sourceDir, "*", SearchOption.AllDirectories))
-        {
-            var relativePath = Path.GetRelativePath(sourceDir, dir);
-            Directory.CreateDirectory(Path.Combine(destDir, relativePath));
-        }
+        // Create all subdirectories first using LINQ projection for clarity
+        var destDirs = Directory.EnumerateDirectories(sourceDir, "*", SearchOption.AllDirectories)
+            .Select(dir => Path.Combine(destDir, Path.GetRelativePath(sourceDir, dir)));
 
-        // Copy all files
-        foreach (var file in Directory.EnumerateFiles(sourceDir, "*", SearchOption.AllDirectories))
-        {
-            var relativePath = Path.GetRelativePath(sourceDir, file);
-            var destFile = Path.Combine(destDir, relativePath);
+        foreach (var dir in destDirs)
+            Directory.CreateDirectory(dir);
 
+        // Copy all files using LINQ projection for clarity
+        var fileMappings = Directory.EnumerateFiles(sourceDir, "*", SearchOption.AllDirectories)
+            .Select(file => (Source: file, Dest: Path.Combine(destDir, Path.GetRelativePath(sourceDir, file))));
+
+        foreach (var (source, dest) in fileMappings)
+        {
             // Ensure parent directory exists (handles edge cases)
-            Directory.CreateDirectory(Path.GetDirectoryName(destFile)!);
-            File.Copy(file, destFile, overwrite: true);
+            Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
+            File.Copy(source, dest, overwrite: true);
         }
     }
 

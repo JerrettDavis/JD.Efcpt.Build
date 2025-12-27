@@ -232,11 +232,21 @@ public class TestProjectBuilder : IDisposable
         };
     }
 
+    /// <summary>
+    /// Gets a compatible EF Core version for the target framework.
+    /// </summary>
+    /// <remarks>
+    /// We use specific versions rather than floating versions (like 8.*) because:
+    /// 1. NuGet PackageReference doesn't support wildcards in the same way as packages.config
+    /// 2. Floating versions can cause non-reproducible builds
+    /// 3. Integration tests need predictable package resolution
+    /// These versions should be updated periodically to match latest stable releases.
+    /// </remarks>
     private static string GetEfCoreVersionForTargetFramework(string targetFramework) =>
         targetFramework switch
         {
             "net8.0" => "8.0.11",
-            "net9.0" => "9.0.0",
+            "net9.0" => "9.0.1",
             "net10.0" => "10.0.1",
             _ => throw new ArgumentException($"Unknown target framework: {targetFramework}")
         };

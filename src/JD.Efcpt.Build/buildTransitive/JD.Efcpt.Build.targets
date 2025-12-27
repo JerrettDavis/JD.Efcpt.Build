@@ -48,9 +48,13 @@
     <_EfcptTaskAssembly Condition="!Exists('$(_EfcptTaskAssembly)') and '$(Configuration)' == ''">$(MSBuildThisFileDirectory)..\..\JD.Efcpt.Build.Tasks\bin\Debug\$(_EfcptTasksFolder)\JD.Efcpt.Build.Tasks.dll</_EfcptTaskAssembly>
   </PropertyGroup>
 
-  <!-- Warn if running on .NET Framework MSBuild (not fully supported) -->
+  <!--
+    Error if running on .NET Framework MSBuild (not supported).
+    JD.Efcpt.Build requires .NET Core MSBuild because task assemblies target net8.0+.
+    .NET Framework MSBuild cannot load .NET Core assemblies at runtime.
+  -->
   <Target Name="_EfcptCheckMsBuildRuntime" BeforeTargets="EfcptResolveInputs;EfcptResolveInputsForDirectDacpac" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsFrameworkMsBuild)' == 'true'">
-    <Warning Text="JD.Efcpt.Build is running on .NET Framework MSBuild (MSBuildRuntimeType='$(MSBuildRuntimeType)'). This may cause assembly loading errors. For best results, use Visual Studio 2019+ with SDK-style projects, or build from command line with 'dotnet build'." />
+    <Error Text="EFCPT001: JD.Efcpt.Build requires .NET Core MSBuild but detected .NET Framework MSBuild (MSBuildRuntimeType='$(MSBuildRuntimeType)'). Solutions: (1) Use Visual Studio 2019+ with SDK-style projects, (2) Build from command line with 'dotnet build', or (3) Set EfcptEnabled=false to disable code generation." />
   </Target>
 
   <!-- Diagnostic output for task assembly selection (when EfcptLogVerbosity=detailed) -->
