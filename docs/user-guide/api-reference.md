@@ -328,7 +328,7 @@ These properties override values in `efcpt-config.json` without editing the JSON
 
 | Property | JSON Property | Description |
 |----------|---------------|-------------|
-| `EfcptConfigRootNamespace` | `root-namespace` | Root namespace for generated code |
+| `EfcptConfigRootNamespace` | `root-namespace` | Root namespace for generated code (defaults to `$(RootNamespace)` if not specified) |
 | `EfcptConfigDbContextName` | `dbcontext-name` | Name of the DbContext class |
 | `EfcptConfigDbContextNamespace` | `dbcontext-namespace` | Namespace for the DbContext class |
 | `EfcptConfigModelNamespace` | `model-namespace` | Namespace for entity model classes |

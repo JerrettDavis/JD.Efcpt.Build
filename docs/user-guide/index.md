@@ -10,14 +10,14 @@ JD.Efcpt.Build eliminates this manual step by:
 
 - **Automating code generation** during `dotnet build`
 - **Detecting schema changes** using fingerprinting to avoid unnecessary regeneration
-- **Supporting multiple input sources** including SQL Server Database Projects (.sqlproj) and live database connections
+- **Supporting multiple input sources** including SQL Projects and live database connections
 - **Enabling CI/CD workflows** where models are generated consistently on any build machine
 
 ## When to Use JD.Efcpt.Build
 
 Use this package when:
 
-- You have a SQL Server database described by a Database Project (`.sqlproj`) and want EF Core models generated automatically
+- You have a SQL Server database described by a SQL Project and want EF Core models generated automatically
 - You want EF Core Power Tools generation to run as part of `dotnet build` instead of being a manual step
 - You need deterministic, source-controlled model generation that works identically on developer machines and in CI/CD
 - You're working in a team environment and need consistent code generation across developers
@@ -74,13 +74,13 @@ Models are only regenerated when this fingerprint changes, making subsequent bui
 
 ### Dual Input Modes
 
-**DACPAC Mode** (Default): Works with SQL Server Database Projects
-- Automatically builds your .sqlproj to a DACPAC
+**DACPAC Mode** (Default): Works with SQL Projects
+- Automatically builds your SQL Project to a DACPAC
 - Generates models from the DACPAC schema
 
 **Connection String Mode**: Works with live databases
 - Connects directly to a database server
-- No .sqlproj required
+- No SQL Project required
 - Ideal for cloud databases or existing production systems
 
 ### Smart Discovery

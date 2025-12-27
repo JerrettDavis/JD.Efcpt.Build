@@ -19,8 +19,8 @@ Set these properties in your `.csproj` file or `Directory.Build.props`.
 | Property | Default | Description |
 |----------|---------|-------------|
 | `EfcptEnabled` | `true` | Master switch for the entire pipeline |
-| `EfcptSqlProj` | *(auto-discovered)* | Path to `.sqlproj` file |
-| `EfcptDacpac` | *(empty)* | Path to pre-built `.dacpac` file (skips .sqlproj build) |
+| `EfcptSqlProj` | *(auto-discovered)* | Path to SQL Project file (`.sqlproj` for Microsoft.Build.Sql, `.csproj`/`.fsproj` for MSBuild.Sdk.SqlProj) |
+| `EfcptDacpac` | *(empty)* | Path to pre-built `.dacpac` file (skips SQL Project build) |
 | `EfcptConfig` | `efcpt-config.json` | EF Core Power Tools configuration file |
 | `EfcptRenaming` | `efcpt.renaming.json` | Renaming rules file |
 | `EfcptTemplateDir` | `Template` | T4 template directory |
@@ -83,7 +83,7 @@ These properties override values in `efcpt-config.json` without editing the JSON
 
 | Property | JSON Property | Description |
 |----------|---------------|-------------|
-| `EfcptConfigRootNamespace` | `root-namespace` | Root namespace for generated code |
+| `EfcptConfigRootNamespace` | `root-namespace` | Root namespace for generated code (defaults to `$(RootNamespace)` if not specified) |
 | `EfcptConfigDbContextName` | `dbcontext-name` | Name of the DbContext class |
 | `EfcptConfigDbContextNamespace` | `dbcontext-namespace` | Namespace for the DbContext class |
 | `EfcptConfigModelNamespace` | `model-namespace` | Namespace for entity model classes |
