@@ -8,7 +8,7 @@ Instead of reverse engineering from a DACPAC, this sample connects directly to a
 
 ## Prerequisites
 
-- .NET 9.0 SDK
+- .NET 8.0 SDK
 - Docker Desktop (for SQL Server container)
 - SQL Server client tools (optional, for running init.sql)
 
