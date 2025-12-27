@@ -2,6 +2,8 @@
   href: index.md
 - name: Getting Started
   href: getting-started.md
+- name: Using JD.Efcpt.Sdk
+  href: sdk.md
 - name: Core Concepts
   href: core-concepts.md
 - name: Configuration

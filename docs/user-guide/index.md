@@ -102,5 +102,6 @@ Generated files are:
 ## Next Steps
 
 - [Getting Started](getting-started.md) - Install and configure JD.Efcpt.Build
+- [Using JD.Efcpt.Sdk](sdk.md) - SDK integration for the cleanest setup
 - [Core Concepts](core-concepts.md) - Deep dive into the pipeline architecture
 - [Configuration](configuration.md) - Customize generation behavior

@@ -337,7 +337,7 @@ When `EfcptDumpResolvedInputs` is `true`, check `obj/efcpt/resolved-inputs.json`
 
 ### "The database provider 'X' is not supported"
 
-Currently only SQL Server (`mssql`) is supported. PostgreSQL, MySQL, and other providers are planned for future releases.
+Verify the provider value is one of the supported options: `mssql`, `postgres`, `mysql`, `sqlite`, `oracle`, `firebird`, or `snowflake`. See [Connection String Mode](connection-string-mode.md) for provider-specific configuration.
 
 ### "Could not find configuration file"
 

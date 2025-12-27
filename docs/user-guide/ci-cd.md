@@ -424,10 +424,19 @@ steps:
 
 ### DACPAC Mode Requirements
 
-Building `.sqlproj` to DACPAC typically requires Windows agents with SQL Server Data Tools installed.
+**Modern SDK-style SQL Projects** (`Microsoft.Build.Sql` or `MSBuild.Sdk.SqlProj`) build cross-platform:
 
 ```yaml
-# GitHub Actions - Windows for DACPAC
+# GitHub Actions - Linux works with modern SQL SDKs
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Works with Microsoft.Build.Sql and MSBuild.Sdk.SqlProj
+```
+
+**Traditional SQL Projects** (legacy `.sqlproj` format) require Windows with SQL Server Data Tools:
+
+```yaml
+# GitHub Actions - Windows required for traditional .sqlproj
 jobs:
   build:
     runs-on: windows-latest
@@ -438,7 +447,7 @@ jobs:
 Connection string mode works on both Windows and Linux:
 
 ```yaml
-# GitHub Actions - Linux is fine for connection string mode
+# GitHub Actions - Any platform works
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -457,12 +466,14 @@ For .NET 8-9, ensure tool restore runs before build:
 
 ### DACPAC build fails
 
-Ensure Windows agent with SQL Server Data Tools:
+For **traditional SQL Projects**, use Windows with SQL Server Data Tools:
 
 ```yaml
 pool:
   vmImage: 'windows-latest'
 ```
+
+For **modern SDK-style projects** (`Microsoft.Build.Sql` or `MSBuild.Sdk.SqlProj`), Linux works fine - verify your project SDK is configured correctly.
 
 ### Inconsistent generated code
 
@@ -482,7 +493,7 @@ Enable caching for the efcpt intermediate directory to skip regeneration when sc
 1. **Use .NET 10+** when possible to eliminate tool installation steps
 2. **Use local tool manifests** (.NET 8-9) for version consistency
 3. **Cache intermediate directories** to speed up incremental builds
-4. **Use Windows agents** for DACPAC mode
+4. **Use modern SQL SDKs** (`Microsoft.Build.Sql` or `MSBuild.Sdk.SqlProj`) for cross-platform DACPAC builds
 5. **Use environment variables** for connection strings
 6. **Never commit credentials** to source control
 

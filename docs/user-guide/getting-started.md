@@ -14,7 +14,43 @@ Before you begin, ensure you have:
 
 ## Installation
 
-### Step 1: Add the NuGet Package
+Choose your integration approach:
+
+| Approach | Best For |
+|----------|----------|
+| **JD.Efcpt.Sdk** | New projects, cleanest setup |
+| **JD.Efcpt.Build** | Existing projects, projects with custom SDKs |
+
+### Option A: SDK Approach (Recommended for new projects)
+
+The SDK approach provides the cleanest project files.
+
+Use the SDK in your project file with the version specified inline:
+
+```xml
+<Project Sdk="JD.Efcpt.Sdk/1.0.0">
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\DatabaseProject\DatabaseProject.sqlproj">
+            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+            <OutputItemType>None</OutputItemType>
+        </ProjectReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.11" />
+    </ItemGroup>
+</Project>
+```
+
+See [Using JD.Efcpt.Sdk](sdk.md) for complete SDK documentation.
+
+### Option B: PackageReference Approach
 
 Add JD.Efcpt.Build to your application project (the project that should contain the generated DbContext and entities):
 

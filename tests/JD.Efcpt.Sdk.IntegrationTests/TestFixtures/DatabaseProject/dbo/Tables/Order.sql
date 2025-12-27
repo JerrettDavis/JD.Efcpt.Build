@@ -1,0 +1,9 @@
+CREATE TABLE [dbo].[Order]
+(
+    [OrderId] INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
+    [OrderDate] DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+    [CustomerId] INT NOT NULL,
+    [TotalAmount] DECIMAL(18,2) NOT NULL,
+    [Status] NVARCHAR(50) NOT NULL DEFAULT 'Pending'
+)
+GO

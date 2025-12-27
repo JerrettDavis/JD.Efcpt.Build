@@ -8,3 +8,5 @@ obj/
 docs/api
 docs/_site
 coverage.cobertura.xml
+pkg/
+artifacts/

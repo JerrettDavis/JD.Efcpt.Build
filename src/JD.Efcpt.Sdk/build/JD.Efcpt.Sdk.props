@@ -1,0 +1,11 @@
+<Project>
+  <!--
+    JD.Efcpt.Sdk Props
+
+    This file imports the shared property definitions from buildTransitive.
+    The buildTransitive folder contains the actual EFCPT configuration properties.
+  -->
+
+  <!-- Import the shared props (same as JD.Efcpt.Build uses) -->
+  <Import Project="$(MSBuildThisFileDirectory)..\buildTransitive\JD.Efcpt.Build.props" />
+</Project>
