@@ -269,11 +269,6 @@ public sealed class SerializeConfigProperties : Task
         WriteIndented = false
     };
 
-    private static void AddIfNotEmpty(Dictionary<string, string> dict, string key, string value)
-    {
-        if (!string.IsNullOrWhiteSpace(value))
-        {
-            dict[key] = value;
-        }
-    }
+    private static void AddIfNotEmpty(Dictionary<string, string> dict, string key, string value) =>
+        MsBuildPropertyHelpers.AddIfNotEmpty(dict, key, value);
 }
