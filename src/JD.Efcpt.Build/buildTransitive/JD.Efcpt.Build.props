@@ -1,7 +1,15 @@
 <Project>
   <PropertyGroup>
-    <!-- Enablement -->
-    <EfcptEnabled Condition="'$(EfcptEnabled)'==''">true</EfcptEnabled>
+    <!--
+      Enablement: Only enable by default for DIRECT package references.
+      Transitive consumers (projects that reference a project using JD.Efcpt.Build)
+      will NOT have generation enabled by default to avoid duplicate generation.
+
+      To enable generation in a transitive consumer, explicitly set:
+        <EfcptEnabled>true</EfcptEnabled>
+    -->
+    <EfcptEnabled Condition="'$(EfcptEnabled)'=='' and '$(_EfcptIsDirectReference)'=='true'">true</EfcptEnabled>
+    <EfcptEnabled Condition="'$(EfcptEnabled)'==''">false</EfcptEnabled>
 
     <!-- Output -->
     <EfcptOutput Condition="'$(EfcptOutput)'==''">$(BaseIntermediateOutputPath)efcpt\</EfcptOutput>

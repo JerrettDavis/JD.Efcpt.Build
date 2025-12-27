@@ -6,11 +6,27 @@
     <RootNamespace>JD.Efcpt.Build.Tasks</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+
+    <!--
+      Enable dynamic loading to ensure the task assembly can load its dependencies
+      from its own directory, regardless of the MSBuild host's runtime.
+    -->
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+
+    <!--
+      Generate a .deps.json file that describes the assembly's dependencies.
+      This is critical for MSBuild task loading in Visual Studio.
+    -->
+    <GenerateDependencyFile>true</GenerateDependencyFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Build.Framework" Version="18.0.2" />
-    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="18.0.2" />
+    <!--
+      MSBuild packages: Use ExcludeAssets="runtime" to prevent copying to output.
+      These assemblies are provided by the MSBuild host (Visual Studio/dotnet).
+    -->
+    <PackageReference Include="Microsoft.Build.Framework" Version="18.0.2" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="18.0.2" ExcludeAssets="runtime" />
     <PackageReference Include="PatternKit.Core" Version="0.17.3" />
     <PackageReference Include="System.IO.Hashing" Version="10.0.1" />
   </ItemGroup>

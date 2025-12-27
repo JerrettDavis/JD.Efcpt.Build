@@ -12,12 +12,33 @@
     <EfcptConfigUseNullableReferenceTypes Condition="'$(EfcptConfigUseNullableReferenceTypes)'=='' and '$(Nullable)'!=''">false</EfcptConfigUseNullableReferenceTypes>
   </PropertyGroup>
 
-  <!-- Determine the correct task assembly path based on MSBuild version -->
+  <!--
+    Determine the correct task assembly path based on MSBuild version.
+
+    IMPORTANT: JD.Efcpt.Build requires .NET Core MSBuild (MSBuildRuntimeType='Core').
+    Visual Studio 2019+ uses .NET Core MSBuild by default for SDK-style projects.
+    If you see assembly loading errors, ensure:
+    1. You're using Visual Studio 2019 or later
+    2. Your project uses SDK-style format (<Project Sdk="...">)
+    3. You have the appropriate .NET SDK installed
+  -->
   <PropertyGroup>
-    <!-- Use the appropriate .NET version for the task assembly -->
+    <!--
+      Select task assembly based on MSBuild version (which correlates with .NET SDK version):
+      - MSBuild 17.12+ (VS 17.12+, .NET 10 SDK) -> net10.0
+      - MSBuild 17.10+ (VS 17.10+, .NET 9 SDK) -> net9.0
+      - MSBuild 17.8+ (VS 17.8+, .NET 8 SDK) -> net8.0
+
+      Note: MSBuildRuntimeType='Core' indicates .NET Core MSBuild (required).
+      MSBuildRuntimeType='Full' indicates .NET Framework MSBuild (not supported).
+    -->
     <_EfcptTasksFolder Condition="'$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.12'))">net10.0</_EfcptTasksFolder>
     <_EfcptTasksFolder Condition="'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.10'))">net9.0</_EfcptTasksFolder>
+    <_EfcptTasksFolder Condition="'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core'">net8.0</_EfcptTasksFolder>
+
+    <!-- Fallback for .NET Framework MSBuild - use net8.0 but may fail at runtime -->
     <_EfcptTasksFolder Condition="'$(_EfcptTasksFolder)' == ''">net8.0</_EfcptTasksFolder>
+    <_EfcptIsFrameworkMsBuild Condition="'$(MSBuildRuntimeType)' != 'Core'">true</_EfcptIsFrameworkMsBuild>
 
     <!-- Primary path: NuGet package location -->
     <_EfcptTaskAssembly>$(MSBuildThisFileDirectory)..\tasks\$(_EfcptTasksFolder)\JD.Efcpt.Build.Tasks.dll</_EfcptTaskAssembly>
@@ -26,6 +47,21 @@
     <_EfcptTaskAssembly Condition="!Exists('$(_EfcptTaskAssembly)')">$(MSBuildThisFileDirectory)..\..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\$(_EfcptTasksFolder)\JD.Efcpt.Build.Tasks.dll</_EfcptTaskAssembly>
     <_EfcptTaskAssembly Condition="!Exists('$(_EfcptTaskAssembly)') and '$(Configuration)' == ''">$(MSBuildThisFileDirectory)..\..\JD.Efcpt.Build.Tasks\bin\Debug\$(_EfcptTasksFolder)\JD.Efcpt.Build.Tasks.dll</_EfcptTaskAssembly>
   </PropertyGroup>
+
+  <!-- Warn if running on .NET Framework MSBuild (not fully supported) -->
+  <Target Name="_EfcptCheckMsBuildRuntime" BeforeTargets="EfcptResolveInputs;EfcptResolveInputsForDirectDacpac" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsFrameworkMsBuild)' == 'true'">
+    <Warning Text="JD.Efcpt.Build is running on .NET Framework MSBuild (MSBuildRuntimeType='$(MSBuildRuntimeType)'). This may cause assembly loading errors. For best results, use Visual Studio 2019+ with SDK-style projects, or build from command line with 'dotnet build'." />
+  </Target>
+
+  <!-- Diagnostic output for task assembly selection (when EfcptLogVerbosity=detailed) -->
+  <Target Name="_EfcptLogTaskAssemblyInfo" BeforeTargets="EfcptResolveInputs;EfcptResolveInputsForDirectDacpac" Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptLogVerbosity)' == 'detailed'">
+    <Message Text="EFCPT Task Assembly Selection:" Importance="high" />
+    <Message Text="  MSBuildRuntimeType: $(MSBuildRuntimeType)" Importance="high" />
+    <Message Text="  MSBuildVersion: $(MSBuildVersion)" Importance="high" />
+    <Message Text="  Selected TasksFolder: $(_EfcptTasksFolder)" Importance="high" />
+    <Message Text="  TaskAssembly Path: $(_EfcptTaskAssembly)" Importance="high" />
+    <Message Text="  TaskAssembly Exists: $([System.IO.File]::Exists('$(_EfcptTaskAssembly)'))" Importance="high" />
+  </Target>
 
   <!-- Register MSBuild tasks - use AssemblyFile to avoid NuGet copying/locking the DLL -->
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs"

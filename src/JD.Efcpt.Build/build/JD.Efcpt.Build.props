@@ -1,5 +1,14 @@
 <Project>
   <!--
+    Mark this as a direct package reference.
+    This marker is used by buildTransitive to only enable generation
+    for direct consumers, not transitive ones.
+  -->
+  <PropertyGroup>
+    <_EfcptIsDirectReference>true</_EfcptIsDirectReference>
+  </PropertyGroup>
+
+  <!--
     Import shared props from buildTransitive.
     This eliminates duplication between build/ and buildTransitive/ folders.
     The buildTransitive/ version is the canonical source.

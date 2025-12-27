@@ -6,6 +6,15 @@
     The buildTransitive folder contains the actual EFCPT configuration properties.
   -->
 
+  <!--
+    Mark this as a direct SDK reference.
+    This marker is used by buildTransitive to only enable generation
+    for direct consumers, not transitive ones.
+  -->
+  <PropertyGroup>
+    <_EfcptIsDirectReference>true</_EfcptIsDirectReference>
+  </PropertyGroup>
+
   <!-- Import the shared props (same as JD.Efcpt.Build uses) -->
   <Import Project="$(MSBuildThisFileDirectory)..\buildTransitive\JD.Efcpt.Build.props" />
 </Project>
