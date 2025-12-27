@@ -135,13 +135,17 @@ Computes a composite fingerprint to detect when regeneration is needed.
 | `RenamingPath` | Yes | Path to renaming file |
 | `TemplateDir` | Yes | Path to templates |
 | `FingerprintFile` | Yes | Path to fingerprint cache file |
+| `ToolVersion` | No | EF Core Power Tools CLI version |
+| `GeneratedDir` | No | Directory containing generated files |
+| `DetectGeneratedFileChanges` | No | Whether to detect changes to generated files (default: false) |
+| `ConfigPropertyOverrides` | No | JSON string of MSBuild property overrides |
 | `LogVerbosity` | No | Logging level |
 
 **Outputs:**
 
 | Output | Description |
 |--------|-------------|
-| `Fingerprint` | Computed XxHash64 hash |
+| `Fingerprint` | Computed XxHash64 hash including library version, tool version, schema, config, overrides, templates, and optionally generated files |
 | `HasChanged` | Whether fingerprint changed |
 
 ### RunEfcpt
@@ -315,6 +319,7 @@ Applies MSBuild property overrides to the staged `efcpt-config.json` file. This 
 | `EfcptDumpResolvedInputs` | `false` | Write resolved inputs to JSON |
 | `EfcptFingerprintFile` | `$(EfcptOutput)fingerprint.txt` | Fingerprint cache location |
 | `EfcptStampFile` | `$(EfcptOutput).efcpt.stamp` | Generation stamp file |
+| `EfcptDetectGeneratedFileChanges` | `false` | Detect changes to generated `.g.cs` files and trigger regeneration. **Warning**: When enabled, manual edits to generated files will be overwritten. |
 
 ### Config Override Properties
 
