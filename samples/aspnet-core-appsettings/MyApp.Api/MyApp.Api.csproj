@@ -23,7 +23,7 @@
 
   <ItemGroup>
     <!-- JD.Efcpt.Build for automatic code generation -->
-    <PackageReference Include="JD.Efcpt.Build" Version="1.0.4" />
+    <PackageReference Include="JD.Efcpt.Build" Version="*" />
 
     <!-- EF Core SQL Server provider -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />

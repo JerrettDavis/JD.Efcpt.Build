@@ -23,7 +23,7 @@
 
   <ItemGroup>
     <!-- JD.Efcpt.Build for automatic code generation -->
-    <PackageReference Include="JD.Efcpt.Build" Version="1.0.4" />
+    <PackageReference Include="JD.Efcpt.Build" Version="*" />
 
     <!-- EF Core SQL Server provider -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
@@ -37,10 +37,11 @@
       Connection string to Aspire-managed SQL Server container.
       - Port 11433: Fixed port configured in AppHost
       - Database: Northwind (created by Aspire, schema from init.sql)
-      - Password: Default Aspire SQL Server password (can be overridden via secrets)
 
-      For CI/CD, override via environment variable:
-        <EfcptConnectionString>$(EFCPT_CONNECTION_STRING)</EfcptConnectionString>
+      SECURITY WARNING: The password below is for LOCAL DEVELOPMENT ONLY.
+      Never commit real credentials to source control. For CI/CD or production:
+      - Use environment variables: <EfcptConnectionString>$(EFCPT_CONNECTION_STRING)</EfcptConnectionString>
+      - Use user secrets: dotnet user-secrets set "EfcptConnectionString" "..."
     -->
     <EfcptConnectionString>Server=localhost,11433;Database=Northwind;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True</EfcptConnectionString>
 
