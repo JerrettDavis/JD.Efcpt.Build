@@ -38,12 +38,12 @@
       - Port 11433: Fixed port configured in AppHost
       - Database: Northwind (created by Aspire, schema from init.sql)
 
-      SECURITY WARNING: The password below is for LOCAL DEVELOPMENT ONLY.
+      SECURITY WARNING: The password below is a PLACEHOLDER for LOCAL DEVELOPMENT ONLY.
       Never commit real credentials to source control. For CI/CD or production:
       - Use environment variables: <EfcptConnectionString>$(EFCPT_CONNECTION_STRING)</EfcptConnectionString>
       - Use user secrets: dotnet user-secrets set "EfcptConnectionString" "..."
     -->
-    <EfcptConnectionString>Server=localhost,11433;Database=Northwind;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True</EfcptConnectionString>
+    <EfcptConnectionString>Server=localhost,11433;Database=Northwind;User Id=sa;Password=YOUR_PASSWORD_HERE;TrustServerCertificate=True</EfcptConnectionString>
 
     <!-- Enable detailed logging -->
     <EfcptLogVerbosity>detailed</EfcptLogVerbosity>

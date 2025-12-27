@@ -36,9 +36,9 @@ internal static class NativeLibraryLoader
                 var sqlClientAssembly = typeof(Microsoft.Data.SqlClient.SqlConnection).Assembly;
                 NativeLibrary.SetDllImportResolver(sqlClientAssembly, ResolveNativeLibrary);
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException ex) when (ex.Message.Contains("resolver", StringComparison.OrdinalIgnoreCase))
             {
-                // A resolver is already set - that's fine
+                // A resolver is already set for this assembly - that's expected and fine
             }
 
             _initialized = true;
@@ -67,19 +67,22 @@ internal static class NativeLibraryLoader
         // Determine the runtime identifier
         var rid = GetRuntimeIdentifier();
 
-        // Try to load from runtimes/{rid}/native
-        var nativePath = Path.Combine(tasksDir, "runtimes", rid, "native", fileName);
-        if (File.Exists(nativePath) && NativeLibrary.TryLoad(nativePath, out var handle))
+        // Try to load from runtimes/{rid}/native (if we have a valid RID)
+        if (!string.IsNullOrEmpty(rid))
         {
-            return handle;
+            var nativePath = Path.Combine(tasksDir, "runtimes", rid, "native", fileName);
+            if (File.Exists(nativePath) && NativeLibrary.TryLoad(nativePath, out var handle))
+            {
+                return handle;
+            }
         }
 
         // Fallback: try platform-generic path (e.g., runtimes/win/native)
         var genericRid = GetGenericRuntimeIdentifier();
-        if (genericRid != rid)
+        if (!string.IsNullOrEmpty(genericRid) && genericRid != rid)
         {
-            nativePath = Path.Combine(tasksDir, "runtimes", genericRid, "native", fileName);
-            if (File.Exists(nativePath) && NativeLibrary.TryLoad(nativePath, out handle))
+            var nativePath = Path.Combine(tasksDir, "runtimes", genericRid, "native", fileName);
+            if (File.Exists(nativePath) && NativeLibrary.TryLoad(nativePath, out var handle))
             {
                 return handle;
             }
@@ -106,7 +109,9 @@ internal static class NativeLibraryLoader
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             return $"osx-{arch}";
 
-        return $"win-{arch}"; // Fallback
+        // Unknown platform - return empty string to indicate no native library path available
+        // This makes debugging easier when running on unsupported platforms
+        return string.Empty;
     }
 
     private static string GetGenericRuntimeIdentifier()
@@ -118,6 +123,7 @@ internal static class NativeLibraryLoader
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             return "osx";
 
-        return "win"; // Fallback
+        // Unknown platform - return empty string to indicate no native library path available
+        return string.Empty;
     }
 }
