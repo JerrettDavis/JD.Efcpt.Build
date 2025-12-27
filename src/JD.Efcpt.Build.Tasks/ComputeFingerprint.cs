@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text;
 using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Extensions;
@@ -11,10 +12,19 @@ namespace JD.Efcpt.Build.Tasks;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The fingerprint is derived from the contents of the DACPAC, configuration JSON, renaming JSON, and
-/// every file under the template directory. For each input, an XxHash64 hash is computed and written into
-/// an internal manifest string, which is itself hashed using XxHash64 to produce the final
-/// <see cref="Fingerprint"/>.
+/// The fingerprint is derived from multiple sources to ensure regeneration when any relevant input changes:
+/// <list type="bullet">
+///   <item><description>Library version (JD.Efcpt.Build.Tasks assembly)</description></item>
+///   <item><description>Tool version (EF Core Power Tools CLI version)</description></item>
+///   <item><description>Database schema (DACPAC or connection string schema fingerprint)</description></item>
+///   <item><description>Configuration JSON file contents</description></item>
+///   <item><description>Renaming JSON file contents</description></item>
+///   <item><description>MSBuild config property overrides (EfcptConfig* properties)</description></item>
+///   <item><description>All template files under the template directory</description></item>
+///   <item><description>Generated files (optional, via <c>EfcptDetectGeneratedFileChanges</c>)</description></item>
+/// </list>
+/// For each input, an XxHash64 hash is computed and written into an internal manifest string,
+/// which is itself hashed using XxHash64 to produce the final <see cref="Fingerprint"/>.
 /// </para>
 /// <para>
 /// The computed fingerprint is compared to the existing value stored in <see cref="FingerprintFile"/>.
@@ -71,6 +81,26 @@ public sealed class ComputeFingerprint : Task
     public string LogVerbosity { get; set; } = "minimal";
 
     /// <summary>
+    /// Version of the EF Core Power Tools CLI tool package being used.
+    /// </summary>
+    public string ToolVersion { get; set; } = "";
+
+    /// <summary>
+    /// Directory containing generated files to optionally include in the fingerprint.
+    /// </summary>
+    public string GeneratedDir { get; set; } = "";
+
+    /// <summary>
+    /// Indicates whether to detect changes to generated files (default: false to avoid overwriting manual edits).
+    /// </summary>
+    public string DetectGeneratedFileChanges { get; set; } = "false";
+
+    /// <summary>
+    /// Serialized JSON string containing MSBuild config property overrides.
+    /// </summary>
+    public string ConfigPropertyOverrides { get; set; } = "";
+
+    /// <summary>
     /// Newly computed fingerprint value for the current inputs.
     /// </summary>
     [Output]
@@ -99,6 +129,21 @@ public sealed class ComputeFingerprint : Task
         var log = new BuildLog(ctx.Logger, LogVerbosity);
         var manifest = new StringBuilder();
 
+        // Library version (JD.Efcpt.Build.Tasks assembly)
+        var libraryVersion = GetLibraryVersion();
+        if (!string.IsNullOrWhiteSpace(libraryVersion))
+        {
+            manifest.Append("library\0").Append(libraryVersion).Append('\n');
+            log.Detail($"Library version: {libraryVersion}");
+        }
+
+        // Tool version (EF Core Power Tools CLI)
+        if (!string.IsNullOrWhiteSpace(ToolVersion))
+        {
+            manifest.Append("tool\0").Append(ToolVersion).Append('\n');
+            log.Detail($"Tool version: {ToolVersion}");
+        }
+
         // Source fingerprint (DACPAC OR schema fingerprint)
         if (UseConnectionStringMode.IsTrue())
         {
@@ -124,6 +169,13 @@ public sealed class ComputeFingerprint : Task
         Append(manifest, ConfigPath, "config");
         Append(manifest, RenamingPath, "renaming");
 
+        // Config property overrides (MSBuild properties that override efcpt-config.json)
+        if (!string.IsNullOrWhiteSpace(ConfigPropertyOverrides))
+        {
+            manifest.Append("config-overrides\0").Append(ConfigPropertyOverrides).Append('\n');
+            log.Detail("Including MSBuild config property overrides in fingerprint");
+        }
+
         manifest = Directory
             .EnumerateFiles(TemplateDir, "*", SearchOption.AllDirectories)
             .Select(p => p.Replace('\u005C', '/'))
@@ -135,6 +187,23 @@ public sealed class ComputeFingerprint : Task
                 => builder.Append("template/")
                     .Append(data.rel).Append('\0')
                     .Append(data.h).Append('\n'));
+
+        // Generated files (optional, off by default to avoid overwriting manual edits)
+        if (DetectGeneratedFileChanges.IsTrue() && !string.IsNullOrWhiteSpace(GeneratedDir) && Directory.Exists(GeneratedDir))
+        {
+            log.Detail("Detecting generated file changes (EfcptDetectGeneratedFileChanges=true)");
+            manifest = Directory
+                .EnumerateFiles(GeneratedDir, "*.g.cs", SearchOption.AllDirectories)
+                .Select(p => p.Replace('\u005C', '/'))
+                .OrderBy(p => p, StringComparer.Ordinal)
+                .Select(file => (
+                    rel: Path.GetRelativePath(GeneratedDir, file).Replace('\u005C', '/'),
+                    h: FileHash.HashFile(file)))
+                .Aggregate(manifest, (builder, data)
+                    => builder.Append("generated/")
+                        .Append(data.rel).Append('\0')
+                        .Append(data.h).Append('\n'));
+        }
 
         Fingerprint = FileHash.HashString(manifest.ToString());
 
@@ -153,6 +222,22 @@ public sealed class ComputeFingerprint : Task
         }
 
         return true;
+    }
+
+    private static string GetLibraryVersion()
+    {
+        try
+        {
+            var assembly = typeof(ComputeFingerprint).Assembly;
+            var version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+                          ?? assembly.GetName().Version?.ToString()
+                          ?? "";
+            return version;
+        }
+        catch
+        {
+            return "";
+        }
     }
 
     private static void Append(StringBuilder manifest, string path, string label)

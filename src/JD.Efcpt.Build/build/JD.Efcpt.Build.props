@@ -39,6 +39,7 @@
     <!-- Fingerprinting -->
     <EfcptFingerprintFile Condition="'$(EfcptFingerprintFile)'==''">$(EfcptOutput)fingerprint.txt</EfcptFingerprintFile>
     <EfcptStampFile Condition="'$(EfcptStampFile)'==''">$(EfcptOutput).efcpt.stamp</EfcptStampFile>
+    <EfcptDetectGeneratedFileChanges Condition="'$(EfcptDetectGeneratedFileChanges)'==''">false</EfcptDetectGeneratedFileChanges>
 
     <!-- Diagnostics -->
     <EfcptLogVerbosity Condition="'$(EfcptLogVerbosity)'==''">minimal</EfcptLogVerbosity>
