@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!--
+    ============================================================================
+    JD.Efcpt.Build - Custom Renaming Rules
+    ============================================================================
+    This sample demonstrates using efcpt.renaming.json to rename legacy database
+    objects (tables and columns with prefixes, Hungarian notation, etc.) to
+    clean, modern C# naming conventions.
+
+    Before renaming:
+      tblCustomers.cust_first_name -> Customer.FirstName
+
+    The renaming rules file is automatically detected from the project directory.
+    ============================================================================
+  -->
+
+  <ItemGroup>
+    <!-- Reference the local development package -->
+    <PackageReference Include="JD.Efcpt.Build" Version="*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- Enable detailed logging to see renaming in action -->
+    <EfcptLogVerbosity>detailed</EfcptLogVerbosity>
+  </PropertyGroup>
+
+  <!-- Reference the SQL project -->
+  <ItemGroup>
+    <ProjectReference Include="..\DatabaseProject\DatabaseProject.sqlproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+
+  <!-- NuGet package source for local development -->
+  <ItemGroup>
+    <None Include="..\nuget.config" Link="nuget.config" />
+  </ItemGroup>
+
+</Project>

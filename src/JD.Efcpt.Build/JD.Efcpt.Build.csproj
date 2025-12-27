@@ -66,6 +66,11 @@
       <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net9.0\*.deps.json" Pack="true" PackagePath="tasks\net9.0\" Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net9.0\JD.Efcpt.Build.Tasks.dll')" />
       <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net10.0\*.dll" Pack="true" PackagePath="tasks\net10.0\" Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net10.0\JD.Efcpt.Build.Tasks.dll')" />
       <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net10.0\*.deps.json" Pack="true" PackagePath="tasks\net10.0\" Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net10.0\JD.Efcpt.Build.Tasks.dll')" />
+
+      <!-- Include native library runtimes folder for database providers -->
+      <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net8.0\runtimes\**\*" Pack="true" PackagePath="tasks\net8.0\runtimes\" Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net8.0\runtimes')" />
+      <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net9.0\runtimes\**\*" Pack="true" PackagePath="tasks\net9.0\runtimes\" Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net9.0\runtimes')" />
+      <None Include="..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net10.0\runtimes\**\*" Pack="true" PackagePath="tasks\net10.0\runtimes\" Condition="Exists('..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\net10.0\runtimes')" />
     </ItemGroup>
   </Target>
 

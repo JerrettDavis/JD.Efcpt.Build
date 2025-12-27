@@ -44,7 +44,7 @@ internal static class DatabaseProviderFactory
 
         return normalized switch
         {
-            "mssql" => new SqlConnection(connectionString),
+            "mssql" => CreateSqlServerConnection(connectionString),
             "postgres" => new NpgsqlConnection(connectionString),
             "mysql" => new MySqlConnection(connectionString),
             "sqlite" => new SqliteConnection(connectionString),
@@ -93,5 +93,15 @@ internal static class DatabaseProviderFactory
             "snowflake" => "Snowflake",
             _ => provider
         };
+    }
+
+    /// <summary>
+    /// Creates a SQL Server connection with native library initialization.
+    /// </summary>
+    private static SqlConnection CreateSqlServerConnection(string connectionString)
+    {
+        // Ensure native library resolver is set up before creating SqlConnection
+        NativeLibraryLoader.EnsureInitialized();
+        return new SqlConnection(connectionString);
     }
 }
