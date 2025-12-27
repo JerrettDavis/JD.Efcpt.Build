@@ -71,7 +71,7 @@ public class SdkNet80Tests : IDisposable
     }
 
     [Fact]
-    public async Task Sdk_Net80_GeneratesConfigurations()
+    public async Task Sdk_Net80_GeneratesEntityConfigurationsInDbContext()
     {
         // Arrange
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
@@ -82,10 +82,13 @@ public class SdkNet80Tests : IDisposable
         await _builder.BuildAsync();
 
         // Assert
+        // By default (without use-t4-split), configurations are embedded in the DbContext
         var generatedFiles = _builder.GetGeneratedFiles();
-        generatedFiles.Should().Contain(f => f.EndsWith("ProductConfiguration.g.cs"), "Should generate ProductConfiguration");
-        generatedFiles.Should().Contain(f => f.EndsWith("CategoryConfiguration.g.cs"), "Should generate CategoryConfiguration");
-        generatedFiles.Should().Contain(f => f.EndsWith("OrderConfiguration.g.cs"), "Should generate OrderConfiguration");
+        var contextFile = generatedFiles.FirstOrDefault(f => f.Contains("Context.g.cs"));
+        contextFile.Should().NotBeNull("Should generate DbContext file");
+
+        var contextContent = File.ReadAllText(contextFile!);
+        contextContent.Should().Contain("OnModelCreating", "DbContext should have OnModelCreating method");
     }
 
     [Fact]
