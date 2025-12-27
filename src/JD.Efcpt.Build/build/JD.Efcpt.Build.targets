@@ -1,5 +1,17 @@
 <Project>
 
+  <!--
+    Late-evaluated property overrides.
+    These are set here in the targets file (not props) because the targets file
+    is imported AFTER the project file, allowing us to see the final property values.
+    Props files are imported BEFORE the project file, so they see SDK defaults instead.
+  -->
+  <PropertyGroup>
+    <!-- Derive UseNullableReferenceTypes from project's Nullable setting for zero-config scenarios -->
+    <EfcptConfigUseNullableReferenceTypes Condition="'$(EfcptConfigUseNullableReferenceTypes)'=='' and ('$(Nullable)'=='enable' or '$(Nullable)'=='Enable')">true</EfcptConfigUseNullableReferenceTypes>
+    <EfcptConfigUseNullableReferenceTypes Condition="'$(EfcptConfigUseNullableReferenceTypes)'=='' and '$(Nullable)'!=''">false</EfcptConfigUseNullableReferenceTypes>
+  </PropertyGroup>
+
   <!-- Determine the correct task assembly path based on MSBuild version -->
   <PropertyGroup>
     <!-- Use the appropriate .NET version for the task assembly -->
