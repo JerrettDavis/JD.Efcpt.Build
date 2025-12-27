@@ -15,7 +15,7 @@
 
     <ItemGroup>
         <!-- Reference the Database Project -->
-        <ProjectReference Include="..\DatabaseProject\DatabaseProject\DatabaseProject.sqlproj">
+        <ProjectReference Include="..\DatabaseProject\DatabaseProject.sqlproj">
             <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
             <OutputItemType>None</OutputItemType>
         </ProjectReference>

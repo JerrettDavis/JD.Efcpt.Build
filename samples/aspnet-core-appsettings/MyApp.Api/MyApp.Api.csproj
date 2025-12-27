@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!--
+    ============================================================================
+    JD.Efcpt.Build - ASP.NET Core with appsettings.json + Aspire
+    ============================================================================
+    This sample demonstrates:
+    1. Reading connection string from appsettings.json using EfcptAppSettings
+    2. Using .NET Aspire to manage a SQL Server container
+    3. Build-time code generation from the containerized database
+
+    The connection string in appsettings.json points to the Aspire container
+    for build-time code generation. At runtime, Aspire injects the actual
+    connection string.
+    ============================================================================
+  -->
+
+  <ItemGroup>
+    <!-- JD.Efcpt.Build for automatic code generation -->
+    <PackageReference Include="JD.Efcpt.Build" Version="*" />
+
+    <!-- EF Core SQL Server provider -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!--
+      Read connection string from appsettings.json
+      The file must contain a ConnectionStrings section with the specified key.
+    -->
+    <EfcptAppSettings>appsettings.json</EfcptAppSettings>
+    <EfcptConnectionStringName>DefaultConnection</EfcptConnectionStringName>
+
+    <!-- Database provider -->
+    <EfcptProvider>mssql</EfcptProvider>
+
+    <!-- Enable detailed logging -->
+    <EfcptLogVerbosity>detailed</EfcptLogVerbosity>
+  </PropertyGroup>
+
+  <!-- NuGet package source for local development -->
+  <ItemGroup>
+    <None Include="..\nuget.config" Link="nuget.config" />
+  </ItemGroup>
+
+</Project>

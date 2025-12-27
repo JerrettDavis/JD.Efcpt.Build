@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!--
+    ============================================================================
+    JD.Efcpt.Build - Schema-Based Organization
+    ============================================================================
+    This sample demonstrates organizing generated entities by database schema
+    using the use-schema-folders-preview and use-schema-namespaces-preview
+    options.
+
+    Database structure:
+      - dbo.Customer           -> Models/dbo/Customer.cs
+      - sales.Order            -> Models/sales/Order.cs
+      - inventory.Product      -> Models/inventory/Product.cs
+
+    This is useful for large databases with many schemas, keeping related
+    entities grouped together in the file system and namespace hierarchy.
+    ============================================================================
+  -->
+
+  <ItemGroup>
+    <!-- Reference the local development package -->
+    <PackageReference Include="JD.Efcpt.Build" Version="*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- Enable detailed logging to see schema organization -->
+    <EfcptLogVerbosity>detailed</EfcptLogVerbosity>
+  </PropertyGroup>
+
+  <!-- Reference the SQL project -->
+  <ItemGroup>
+    <ProjectReference Include="..\DatabaseProject\DatabaseProject.sqlproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+
+  <!-- NuGet package source for local development -->
+  <ItemGroup>
+    <None Include="..\nuget.config" Link="nuget.config" />
+  </ItemGroup>
+
+</Project>

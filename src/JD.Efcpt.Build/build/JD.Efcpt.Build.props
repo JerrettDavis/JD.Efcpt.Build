@@ -74,7 +74,9 @@
     <EfcptApplyMsBuildOverrides Condition="'$(EfcptApplyMsBuildOverrides)'==''">true</EfcptApplyMsBuildOverrides>
 
     <!-- Names section overrides -->
-    <EfcptConfigRootNamespace Condition="'$(EfcptConfigRootNamespace)'==''">$(RootNamespace)</EfcptConfigRootNamespace>
+    <!-- Use RootNamespace if defined, otherwise fall back to project name for zero-config scenarios -->
+    <EfcptConfigRootNamespace Condition="'$(EfcptConfigRootNamespace)'=='' and '$(RootNamespace)'!=''">$(RootNamespace)</EfcptConfigRootNamespace>
+    <EfcptConfigRootNamespace Condition="'$(EfcptConfigRootNamespace)'==''">$(MSBuildProjectName)</EfcptConfigRootNamespace>
     <EfcptConfigDbContextName Condition="'$(EfcptConfigDbContextName)'==''"></EfcptConfigDbContextName>
     <EfcptConfigDbContextNamespace Condition="'$(EfcptConfigDbContextNamespace)'==''"></EfcptConfigDbContextNamespace>
     <EfcptConfigModelNamespace Condition="'$(EfcptConfigModelNamespace)'==''"></EfcptConfigModelNamespace>
@@ -91,7 +93,7 @@
     <EfcptConfigGenerationType Condition="'$(EfcptConfigGenerationType)'==''"></EfcptConfigGenerationType>
     <EfcptConfigUseDatabaseNames Condition="'$(EfcptConfigUseDatabaseNames)'==''"></EfcptConfigUseDatabaseNames>
     <EfcptConfigUseDataAnnotations Condition="'$(EfcptConfigUseDataAnnotations)'==''"></EfcptConfigUseDataAnnotations>
-    <EfcptConfigUseNullableReferenceTypes Condition="'$(EfcptConfigUseNullableReferenceTypes)'==''"></EfcptConfigUseNullableReferenceTypes>
+    <!-- NOTE: UseNullableReferenceTypes is set in the targets file (not here) for proper property evaluation order -->
     <EfcptConfigUseInflector Condition="'$(EfcptConfigUseInflector)'==''"></EfcptConfigUseInflector>
     <EfcptConfigUseLegacyInflector Condition="'$(EfcptConfigUseLegacyInflector)'==''"></EfcptConfigUseLegacyInflector>
     <EfcptConfigUseManyToManyEntity Condition="'$(EfcptConfigUseManyToManyEntity)'==''"></EfcptConfigUseManyToManyEntity>

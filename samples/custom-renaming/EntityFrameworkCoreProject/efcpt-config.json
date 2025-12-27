@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/master/samples/efcpt-config.schema.json",
+  "names": {
+    "dbcontext-name": "LegacyDbContext",
+    "root-namespace": "EntityFrameworkCoreProject"
+  },
+  "code-generation": {
+    "enable-on-configuring": false,
+    "use-nullable-reference-types": true,
+    "use-inflector": true,
+    "use-t4": false
+  },
+  "file-layout": {
+    "output-path": "Models",
+    "use-schema-folders-preview": false
+  },
+  "tables": [
+    { "name": "[dbo].[tblCustomers]" },
+    { "name": "[dbo].[tblOrders]" },
+    { "name": "[dbo].[tblOrderItems]" }
+  ]
+}
