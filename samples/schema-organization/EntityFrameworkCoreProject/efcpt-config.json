@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/master/samples/efcpt-config.schema.json",
+  "names": {
+    "dbcontext-name": "MultiSchemaContext",
+    "root-namespace": "EntityFrameworkCoreProject"
+  },
+  "code-generation": {
+    "enable-on-configuring": false,
+    "use-nullable-reference-types": true,
+    "use-inflector": true,
+    "use-t4": false
+  },
+  "file-layout": {
+    "output-path": "Models",
+    "use-schema-folders-preview": true,
+    "use-schema-namespaces-preview": true
+  },
+  "tables": [
+    { "name": "[dbo].[Customer]" },
+    { "name": "[sales].[Order]" },
+    { "name": "[sales].[OrderItem]" },
+    { "name": "[inventory].[Product]" },
+    { "name": "[inventory].[Warehouse]" }
+  ]
+}

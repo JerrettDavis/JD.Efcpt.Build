@@ -1,5 +1,17 @@
 <Project>
 
+  <!--
+    Late-evaluated property overrides.
+    These are set here in the targets file (not props) because the targets file
+    is imported AFTER the project file, allowing us to see the final property values.
+    Props files are imported BEFORE the project file, so they see SDK defaults instead.
+  -->
+  <PropertyGroup>
+    <!-- Derive UseNullableReferenceTypes from project's Nullable setting for zero-config scenarios -->
+    <EfcptConfigUseNullableReferenceTypes Condition="'$(EfcptConfigUseNullableReferenceTypes)'=='' and ('$(Nullable)'=='enable' or '$(Nullable)'=='Enable')">true</EfcptConfigUseNullableReferenceTypes>
+    <EfcptConfigUseNullableReferenceTypes Condition="'$(EfcptConfigUseNullableReferenceTypes)'=='' and '$(Nullable)'!=''">false</EfcptConfigUseNullableReferenceTypes>
+  </PropertyGroup>
+
   <!-- Determine the correct task assembly path based on MSBuild version -->
   <PropertyGroup>
     <!-- Use the appropriate .NET version for the task assembly -->
@@ -48,7 +60,7 @@
 
   <!-- Main pipeline -->
   <Target Name="EfcptResolveInputs"
-          Condition="'$(EfcptEnabled)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptDacpac)' == ''">
     <ResolveSqlProjAndInputs
         ProjectFullPath="$(MSBuildProjectFullPath)"
         ProjectDirectory="$(MSBuildProjectDirectory)"
@@ -78,6 +90,22 @@
     </ResolveSqlProjAndInputs>
   </Target>
 
+  <!-- Simplified resolution for direct DACPAC mode (bypass SQL project detection) -->
+  <Target Name="EfcptResolveInputsForDirectDacpac"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptDacpac)' != ''">
+    <PropertyGroup>
+      <_EfcptResolvedConfig Condition="Exists('$(MSBuildProjectDirectory)\$(EfcptConfig)')">$(MSBuildProjectDirectory)\$(EfcptConfig)</_EfcptResolvedConfig>
+      <_EfcptResolvedConfig Condition="'$(_EfcptResolvedConfig)' == ''">$(MSBuildThisFileDirectory)Defaults\efcpt-config.json</_EfcptResolvedConfig>
+      <_EfcptResolvedRenaming Condition="Exists('$(MSBuildProjectDirectory)\$(EfcptRenaming)')">$(MSBuildProjectDirectory)\$(EfcptRenaming)</_EfcptResolvedRenaming>
+      <_EfcptResolvedRenaming Condition="'$(_EfcptResolvedRenaming)' == ''">$(MSBuildThisFileDirectory)Defaults\efcpt.renaming.json</_EfcptResolvedRenaming>
+      <_EfcptResolvedTemplateDir Condition="Exists('$(MSBuildProjectDirectory)\$(EfcptTemplateDir)')">$(MSBuildProjectDirectory)\$(EfcptTemplateDir)</_EfcptResolvedTemplateDir>
+      <_EfcptResolvedTemplateDir Condition="'$(_EfcptResolvedTemplateDir)' == ''">$(MSBuildThisFileDirectory)Defaults\Template</_EfcptResolvedTemplateDir>
+      <_EfcptIsUsingDefaultConfig>true</_EfcptIsUsingDefaultConfig>
+      <_EfcptUseConnectionString>false</_EfcptUseConnectionString>
+    </PropertyGroup>
+    <MakeDir Directories="$(EfcptOutput)" />
+  </Target>
+
   <Target Name="EfcptQuerySchemaMetadata"
           AfterTargets="EfcptResolveInputs"
           BeforeTargets="EfcptStageInputs"
@@ -92,7 +120,7 @@
   </Target>
 
   <Target Name="EfcptUseDirectDacpac"
-          DependsOnTargets="EfcptResolveInputs"
+          DependsOnTargets="EfcptResolveInputs;EfcptResolveInputsForDirectDacpac"
           Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(EfcptDacpac)' != ''">
     <PropertyGroup>
       <_EfcptDacpacPath>$([System.IO.Path]::GetFullPath('$(EfcptDacpac)', '$(MSBuildProjectDirectory)'))</_EfcptDacpacPath>
@@ -104,47 +132,36 @@
   </Target>
 
   <!--
-    Stage 2b-1: build the SQL project using MSBuild's native task.
-
-    This target uses MSBuild's <MSBuild> task to build the SQL project, which ensures
-    proper dependency ordering and prevents race conditions when MSBuild runs in parallel
-    mode. The SQL project build will complete before any targets that depend on this one
-    can proceed.
-
-    Note: This stage is skipped when using connection string mode, direct DACPAC mode,
-    or when no SQL project is resolved.
+    Build the SQL project using MSBuild's native task to ensure proper dependency ordering.
+    This prevents race conditions when MSBuild runs in parallel mode - the SQL project
+    build will complete before any targets that depend on this one can proceed.
+    Note: The mode-specific condition (checking connection string vs dacpac mode) is on the
+    MSBuild task, not the target, because target conditions evaluate before DependsOnTargets
+    complete. The target's EfcptEnabled condition is a simple enable/disable check.
   -->
   <Target Name="EfcptBuildSqlProj"
           DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptSqlProj)' != ''">
-    <Message Text="Building SQL project: $(_EfcptSqlProj)" Importance="normal" />
-    <MSBuild Projects="$(_EfcptSqlProj)"
+          Condition="'$(EfcptEnabled)' == 'true'">
+    <Message Condition="'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptSqlProj)' != ''"
+             Text="Building SQL project: $(_EfcptSqlProj)" Importance="normal" />
+    <MSBuild Condition="'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptSqlProj)' != ''"
+             Projects="$(_EfcptSqlProj)"
              Targets="Build"
              Properties="Configuration=$(Configuration)"
              BuildInParallel="false" />
   </Target>
 
   <!--
-    Stage 2b-2: ensure a DACPAC exists and is up to date for the resolved SQL project.
-
-    Inputs:
-      - _EfcptSqlProj     : sqlproj path resolved by EfcptResolveInputs
-      - Configuration     : build configuration used for the sqlproj
-      - MSBuildBinPath    : used to derive MsBuildExe on Windows
-      - EfcptDotNetExe    : optional path to dotnet for cross-platform builds
-      - EfcptLogVerbosity : controls logging verbosity for the task
-
-    Outputs:
-      - _EfcptDacpacPath  : full path to the resulting DACPAC
-
-    Note: This stage is skipped when using connection string mode or when EfcptDacpac is specified.
-    The EfcptBuildSqlProj target ensures the SQL project is built before this target runs,
-    so EnsureDacpacBuilt will typically just locate the existing DACPAC.
+    EfcptEnsureDacpac: Build dacpac if needed (not in connection string mode).
+    Note: The condition check happens INSIDE the target (not on the target itself)
+    because target conditions are evaluated before DependsOnTargets run.
   -->
   <Target Name="EfcptEnsureDacpac"
           DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptBuildSqlProj"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true'">
+          Condition="'$(EfcptEnabled)' == 'true'">
+    <!-- Only run the dacpac task when NOT in connection string mode and NOT using direct dacpac -->
     <EnsureDacpacBuilt
+        Condition="'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true'"
         SqlProjPath="$(_EfcptSqlProj)"
         Configuration="$(Configuration)"
         MsBuildExe="$(MSBuildBinPath)msbuild.exe"
@@ -178,7 +195,7 @@
   </Target>
 
   <Target Name="EfcptStageInputs"
-          DependsOnTargets="EfcptEnsureDacpac;EfcptUseDirectDacpac;EfcptResolveDbContextName"
+          DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpac;EfcptUseDirectDacpac;EfcptResolveDbContextName"
           Condition="'$(EfcptEnabled)' == 'true'">
     <StageEfcptInputs
         OutputDir="$(EfcptOutput)"
@@ -335,6 +352,7 @@
         DacpacPath="$(_EfcptDacpacPath)"
         ConnectionString="$(_EfcptResolvedConnectionString)"
         UseConnectionStringMode="$(_EfcptUseConnectionString)"
+        Provider="$(EfcptProvider)"
         ConfigPath="$(_EfcptStagedConfig)"
         RenamingPath="$(_EfcptStagedRenaming)"
         TemplateDir="$(_EfcptStagedTemplateDir)"

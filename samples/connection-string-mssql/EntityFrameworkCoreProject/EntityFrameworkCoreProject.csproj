@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!--
+    JD.Efcpt.Build: Connection String Mode with Aspire (SQL Server)
+
+    This sample demonstrates reverse engineering from a SQL Server container
+    managed by .NET Aspire.
+
+    Workflow:
+    1. Start Aspire: dotnet run (project: ConnectionStringMssql.AppHost)
+    2. Initialize DB: Run Database/init.sql against the container
+    3. Build this project: dotnet build EntityFrameworkCoreProject
+    4. Generated models appear in obj/efcpt/Generated/
+
+    The SQL Server container runs on port 11433 with database "Northwind".
+  -->
+
+  <ItemGroup>
+    <!-- JD.Efcpt.Build for automatic code generation -->
+    <PackageReference Include="JD.Efcpt.Build" Version="*" />
+
+    <!-- EF Core SQL Server provider -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- Database provider -->
+    <EfcptProvider>mssql</EfcptProvider>
+
+    <!--
+      Connection string to Aspire-managed SQL Server container.
+      - Port 11433: Fixed port configured in AppHost
+      - Database: Northwind (created by Aspire, schema from init.sql)
+
+      SECURITY WARNING: The password below is a PLACEHOLDER for LOCAL DEVELOPMENT ONLY.
+      Never commit real credentials to source control. For CI/CD or production:
+      - Use environment variables: <EfcptConnectionString>$(EFCPT_CONNECTION_STRING)</EfcptConnectionString>
+      - Use user secrets: dotnet user-secrets set "EfcptConnectionString" "..."
+    -->
+    <EfcptConnectionString>Server=localhost,11433;Database=Northwind;User Id=sa;Password=YOUR_PASSWORD_HERE;TrustServerCertificate=True</EfcptConnectionString>
+
+    <!-- Enable detailed logging -->
+    <EfcptLogVerbosity>detailed</EfcptLogVerbosity>
+  </PropertyGroup>
+
+  <!-- NuGet package source for local development -->
+  <ItemGroup>
+    <None Include="..\nuget.config" Link="nuget.config" />
+  </ItemGroup>
+
+</Project>

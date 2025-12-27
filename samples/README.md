@@ -4,12 +4,25 @@ This directory contains sample projects demonstrating various usage patterns of 
 
 ## Sample Overview
 
-| Sample | Input Mode | SQL SDK / Provider | Key Features |
-|--------|------------|-------------------|--------------|
-| [simple-generation](#simple-generation) | DACPAC | Traditional SQL Project (.sqlproj) | Basic usage, direct source import |
-| [msbuild-sdk-sql-proj-generation](#msbuild-sdk-sql-proj-generation) | DACPAC | MSBuild.Sdk.SqlProj (.csproj) | Modern cross-platform SQL SDK |
-| [split-data-and-models-between-multiple-projects](#split-outputs) | DACPAC | Traditional SQL Project (.sqlproj) | Clean architecture, split outputs |
-| [connection-string-sqlite](#connection-string-sqlite) | Connection String | SQLite | Direct database reverse engineering |
+### DACPAC Mode Samples
+
+| Sample | SQL SDK / Provider | Key Features |
+|--------|-------------------|--------------|
+| [microsoft-build-sql-zero-config](#microsoft-build-sql-zero-config) | Microsoft.Build.Sql | **Zero-config** with official MS SDK |
+| [dacpac-zero-config](#dacpac-zero-config) | Pre-built .dacpac | **Zero-config** direct DACPAC |
+| [simple-generation](#simple-generation) | Traditional SQL Project (.sqlproj) | Basic usage, direct source import |
+| [msbuild-sdk-sql-proj-generation](#msbuild-sdk-sql-proj-generation) | MSBuild.Sdk.SqlProj (.csproj) | Modern cross-platform SQL SDK |
+| [split-data-and-models-between-multiple-projects](#split-outputs) | Traditional SQL Project (.sqlproj) | Clean architecture, split outputs |
+| [custom-renaming](#custom-renaming) | Microsoft.Build.Sql | Entity/property renaming rules |
+| [schema-organization](#schema-organization) | Microsoft.Build.Sql | Schema-based folders and namespaces |
+
+### Connection String Mode Samples
+
+| Sample | Database Provider | Key Features |
+|--------|------------------|--------------|
+| [connection-string-sqlite](#connection-string-sqlite) | SQLite | Direct database reverse engineering |
+| [connection-string-mssql](#connection-string-mssql) | SQL Server + Aspire | SQL Server container with .NET Aspire |
+| [aspnet-core-appsettings](#aspnet-core-appsettings) | SQL Server + Aspire | appsettings.json + Aspire container |
 
 ## Input Modes
 
@@ -44,28 +57,47 @@ JD.Efcpt.Build supports multiple SQL Project SDKs:
 ### 2. Connection String Mode
 Reverse engineers directly from a live database connection.
 
-```xml
-<PropertyGroup>
-  <EfcptConnectionString>Data Source=./database.db</EfcptConnectionString>
-  <EfcptProvider>sqlite</EfcptProvider>
-</PropertyGroup>
-```
-
-#### Supported Providers
-
-| Provider | Value | NuGet Package Used |
-|----------|-------|-------------------|
-| SQL Server | `mssql` | Microsoft.Data.SqlClient |
-| PostgreSQL | `postgres` | Npgsql |
-| MySQL/MariaDB | `mysql` | MySqlConnector |
-| SQLite | `sqlite` | Microsoft.Data.Sqlite |
-| Oracle | `oracle` | Oracle.ManagedDataAccess.Core |
-| Firebird | `firebird` | FirebirdSql.Data.FirebirdClient |
-| Snowflake | `snowflake` | Snowflake.Data |
-
 ---
 
 ## Sample Details
+
+### microsoft-build-sql-zero-config
+
+**Location:** `microsoft-build-sql-zero-config/`
+
+Demonstrates true **zero-configuration** usage with Microsoft's official `Microsoft.Build.Sql` SDK. Just add JD.Efcpt.Build to your project - no efcpt-config.json, no templates, no project references needed.
+
+**Key Features:**
+- **Zero configuration** - no efcpt-config.json, templates, or project references
+- Uses Microsoft's official `Microsoft.Build.Sql` SDK (cross-platform)
+- Automatic SQL project discovery from solution
+- Default sensible configuration applied automatically
+
+**Build:**
+```bash
+dotnet build microsoft-build-sql-zero-config/ZeroConfigMsBuildSql.sln
+```
+
+---
+
+### dacpac-zero-config
+
+**Location:** `dacpac-zero-config/`
+
+Demonstrates **zero-configuration** reverse engineering directly from a pre-built `.dacpac` file. Ideal when you receive a DACPAC from a DBA or CI/CD pipeline.
+
+**Key Features:**
+- **Zero configuration** - no efcpt-config.json or templates
+- Uses pre-built DACPAC file (no SQL project in solution)
+- Simply set `EfcptDacpac` property to point to the .dacpac file
+- No build step for SQL project - just reverse engineering
+
+**Build:**
+```bash
+dotnet build dacpac-zero-config/ZeroConfigDacpac.sln
+```
+
+---
 
 ### simple-generation
 
@@ -136,12 +168,113 @@ split-data-and-models-between-multiple-projects/
 - DbContext and configurations go to Data project
 - Automatic file distribution during build
 
-**Configuration (Models project):**
-```xml
-<PropertyGroup>
-  <EfcptSplitOutputs>true</EfcptSplitOutputs>
-  <EfcptDataProject>..\SampleApp.Data\SampleApp.Data.csproj</EfcptDataProject>
-</PropertyGroup>
+---
+
+### custom-renaming
+
+**Location:** `custom-renaming/`
+
+Demonstrates using `efcpt.renaming.json` to rename database objects to clean C# names. Useful for legacy databases with naming conventions like `tbl` prefixes or `snake_case` columns.
+
+```
+custom-renaming/
+├── DatabaseProject/          # SQL Project with legacy-named tables
+│   └── dbo/Tables/
+│       ├── tblCustomers.sql     # Legacy tbl prefix
+│       ├── tblOrders.sql
+│       └── tblOrderItems.sql
+├── EntityFrameworkCoreProject/
+│   ├── EntityFrameworkCoreProject.csproj
+│   ├── efcpt-config.json
+│   └── efcpt.renaming.json      # Renaming rules
+└── CustomRenaming.sln
+```
+
+**Key Features:**
+- Renames tables: `tblCustomers` → `Customer`
+- Renames columns: `cust_id` → `Id`, `cust_first_name` → `FirstName`
+- Renaming file is auto-discovered by convention
+- Schema-level `UseSchemaName` setting
+
+**Configuration (efcpt.renaming.json):**
+```json
+[
+  {
+    "SchemaName": "dbo",
+    "UseSchemaName": false,
+    "Tables": [
+      {
+        "Name": "tblCustomers",
+        "NewName": "Customer",
+        "Columns": [
+          { "Name": "cust_id", "NewName": "Id" },
+          { "Name": "cust_first_name", "NewName": "FirstName" }
+        ]
+      }
+    ]
+  }
+]
+```
+
+**Build:**
+```bash
+dotnet build custom-renaming/CustomRenaming.sln
+```
+
+---
+
+### schema-organization
+
+**Location:** `schema-organization/`
+
+Demonstrates organizing generated entities by database schema using folder and namespace organization.
+
+```
+schema-organization/
+├── DatabaseProject/
+│   ├── dbo/Tables/Customer.sql
+│   ├── sales/Tables/Order.sql
+│   ├── sales/Tables/OrderItem.sql
+│   ├── inventory/Tables/Product.sql
+│   └── inventory/Tables/Warehouse.sql
+├── EntityFrameworkCoreProject/
+│   ├── EntityFrameworkCoreProject.csproj
+│   └── efcpt-config.json
+└── SchemaOrganization.sln
+```
+
+**Key Features:**
+- `use-schema-folders-preview`: Creates subdirectories per schema (`Models/dbo/`, `Models/sales/`)
+- `use-schema-namespaces-preview`: Adds schema to namespace (`EntityFrameworkCoreProject.Models.Sales`)
+- Useful for large databases with multiple schemas
+
+**Generated Output:**
+```
+obj/efcpt/Generated/Models/
+├── dbo/
+│   └── Customer.g.cs       # namespace: *.Models.Dbo
+├── sales/
+│   ├── Order.g.cs          # namespace: *.Models.Sales
+│   └── OrderItem.g.cs
+└── inventory/
+    ├── Product.g.cs        # namespace: *.Models.Inventory
+    └── Warehouse.g.cs
+```
+
+**Configuration (efcpt-config.json):**
+```json
+{
+  "file-layout": {
+    "output-path": "Models",
+    "use-schema-folders-preview": true,
+    "use-schema-namespaces-preview": true
+  }
+}
+```
+
+**Build:**
+```bash
+dotnet build schema-organization/SchemaOrganization.sln
 ```
 
 ---
@@ -152,32 +285,89 @@ split-data-and-models-between-multiple-projects/
 
 Demonstrates connection string mode with SQLite - no SQL Project needed, reverse engineers directly from a database.
 
+---
+
+### connection-string-mssql
+
+**Location:** `connection-string-mssql/`
+
+Demonstrates connection string mode with SQL Server using .NET Aspire to manage a SQL Server container.
+
 ```
-connection-string-sqlite/
+connection-string-mssql/
+├── ConnectionStringMssql.AppHost/    # Aspire orchestrator
+├── EntityFrameworkCoreProject/       # EF Core project with JD.Efcpt.Build
 ├── Database/
-│   ├── sample.db            # SQLite database file
-│   └── schema.sql           # Schema documentation
-├── EntityFrameworkCoreProject/
-│   ├── EntityFrameworkCoreProject.csproj
-│   ├── efcpt-config.json
-│   └── Template/
-├── setup-database.ps1       # Creates sample database
-└── README.md
+│   └── init.sql                      # Database initialization
+└── ConnectionStringMssql.sln
 ```
 
-**Setup:**
-```powershell
-./setup-database.ps1         # Creates Database/sample.db
+**Key Features:**
+- SQL Server runs in Docker, managed by Aspire
+- No external database dependencies
+- Uses `EfcptProvider` and `EfcptConnectionString` properties
+
+**Quick Start:**
+```bash
+# 1. Start the SQL Server container
+dotnet run --project ConnectionStringMssql.AppHost
+
+# 2. Initialize the database
+sqlcmd -S localhost,11433 -U sa -P "YourStrong@Passw0rd" -i Database/init.sql
+
+# 3. Build the EF Core project
 dotnet build EntityFrameworkCoreProject
 ```
 
-**Key Configuration:**
+**Prerequisites:** Docker Desktop, .NET 9.0 SDK
+
+---
+
+### aspnet-core-appsettings
+
+**Location:** `aspnet-core-appsettings/`
+
+Demonstrates reading connection strings from `appsettings.json` with .NET Aspire managing the SQL Server container.
+
+```
+aspnet-core-appsettings/
+├── AspNetCoreAppSettings.AppHost/    # Aspire orchestrator
+├── MyApp.Api/
+│   ├── MyApp.Api.csproj
+│   ├── appsettings.json              # Connection string for build
+│   └── Program.cs
+├── Database/
+│   └── init.sql                      # Database initialization
+└── AspNetCoreAppSettings.sln
+```
+
+**Key Features:**
+- Uses `EfcptAppSettings` to read connection string from appsettings.json
+- SQL Server runs in Docker, managed by Aspire
+- Works with ASP.NET Core configuration patterns
+
+**Configuration (csproj):**
 ```xml
 <PropertyGroup>
-  <EfcptConnectionString>Data Source=$(MSBuildProjectDirectory)\..\Database\sample.db</EfcptConnectionString>
-  <EfcptProvider>sqlite</EfcptProvider>
+  <EfcptAppSettings>appsettings.json</EfcptAppSettings>
+  <EfcptConnectionStringName>DefaultConnection</EfcptConnectionStringName>
+  <EfcptProvider>mssql</EfcptProvider>
 </PropertyGroup>
 ```
+
+**Quick Start:**
+```bash
+# 1. Start the SQL Server container
+dotnet run --project AspNetCoreAppSettings.AppHost
+
+# 2. Initialize the database
+sqlcmd -S localhost,11434 -U sa -P "YourStrong@Passw0rd" -i Database/init.sql
+
+# 3. Build the API project
+dotnet build MyApp.Api
+```
+
+**Prerequisites:** Docker Desktop, .NET 9.0 SDK
 
 ---
 
@@ -188,6 +378,8 @@ All samples use:
 - **efcpt-config.json** for EF Core Power Tools configuration
 - **efcpt.renaming.json** for entity/property renaming rules (optional)
 - **Fingerprint-based incremental builds** - only regenerates when schema changes
+
+> **Note:** The zero-config samples (`microsoft-build-sql-zero-config` and `dacpac-zero-config`) use sensible defaults and don't require any configuration files.
 
 ## Getting Started
 

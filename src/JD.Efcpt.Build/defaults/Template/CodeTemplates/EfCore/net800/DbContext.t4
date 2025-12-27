@@ -358,5 +358,13 @@ using <#= ns #>;
 
     WriteLine("");
 
+    if (Options.UseNullableReferenceTypes)
+    {
+#>
+#nullable enable
+
+<#
+    }
+
     GenerationEnvironment.Append(mainEnvironment);
 #>

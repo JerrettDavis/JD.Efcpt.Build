@@ -1,0 +1,45 @@
+[
+  {
+    "SchemaName": "dbo",
+    "UseSchemaName": false,
+    "Tables": [
+      {
+        "Name": "tblCustomers",
+        "NewName": "Customer",
+        "Columns": [
+          { "Name": "cust_id", "NewName": "Id" },
+          { "Name": "cust_first_name", "NewName": "FirstName" },
+          { "Name": "cust_last_name", "NewName": "LastName" },
+          { "Name": "cust_email", "NewName": "Email" },
+          { "Name": "cust_phone", "NewName": "Phone" },
+          { "Name": "cust_created_date", "NewName": "CreatedDate" },
+          { "Name": "cust_is_active", "NewName": "IsActive" }
+        ]
+      },
+      {
+        "Name": "tblOrders",
+        "NewName": "Order",
+        "Columns": [
+          { "Name": "ord_id", "NewName": "Id" },
+          { "Name": "ord_cust_id", "NewName": "CustomerId" },
+          { "Name": "ord_date", "NewName": "OrderDate" },
+          { "Name": "ord_total_amount", "NewName": "TotalAmount" },
+          { "Name": "ord_status", "NewName": "Status" },
+          { "Name": "ord_notes", "NewName": "Notes" }
+        ]
+      },
+      {
+        "Name": "tblOrderItems",
+        "NewName": "OrderItem",
+        "Columns": [
+          { "Name": "item_id", "NewName": "Id" },
+          { "Name": "item_ord_id", "NewName": "OrderId" },
+          { "Name": "item_product_name", "NewName": "ProductName" },
+          { "Name": "item_qty", "NewName": "Quantity" },
+          { "Name": "item_unit_price", "NewName": "UnitPrice" },
+          { "Name": "item_discount", "NewName": "Discount" }
+        ]
+      }
+    ]
+  }
+]
