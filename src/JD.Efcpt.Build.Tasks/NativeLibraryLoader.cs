@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -13,7 +14,13 @@ namespace JD.Efcpt.Build.Tasks;
 /// a custom resolver to find native libraries (like Microsoft.Data.SqlClient.SNI.dll)
 /// in the correct location.
 /// </para>
+/// <para>
+/// This class is excluded from code coverage because it's MSBuild infrastructure code
+/// that requires actual native library resolution scenarios which are platform-specific
+/// and only occur during MSBuild task execution.
+/// </para>
 /// </remarks>
+[ExcludeFromCodeCoverage]
 internal static class NativeLibraryLoader
 {
     private static bool _initialized;
