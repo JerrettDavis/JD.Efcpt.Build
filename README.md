@@ -82,10 +82,16 @@ The package orchestrates a MSBuild pipeline with these stages:
 
 ### Core Capabilities
 
-- **🔄 Incremental Builds** - Only regenerates when database schema or configuration changes
+- **🔄 Incremental Builds** - Smart fingerprinting detects when regeneration is needed based on:
+  - Library or tool version changes
+  - Database schema modifications
+  - Configuration file changes
+  - MSBuild property overrides (`EfcptConfig*`)
+  - Template file changes
+  - Generated file changes (optional)
 - **🎨 T4 Template Support** - Customize code generation with your own templates
 - **📁 Smart File Organization** - Schema-based folders and namespaces
-- **🔧 Highly Configurable** - Override namespaces, output paths, and generation options
+- **🔧 Highly Configurable** - Override namespaces, output paths, and generation options via MSBuild properties
 - **🌐 Multi-Schema Support** - Generate models across multiple database schemas
 - **📦 NuGet Ready** - Enterprise-ready package for production use
 
