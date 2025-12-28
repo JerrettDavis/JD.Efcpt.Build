@@ -4,6 +4,9 @@ using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Extensions;
 using Microsoft.Build.Framework;
 using Task = Microsoft.Build.Utilities.Task;
+#if NETFRAMEWORK
+using JD.Efcpt.Build.Tasks.Compatibility;
+#endif
 
 namespace JD.Efcpt.Build.Tasks;
 
@@ -181,7 +184,11 @@ public sealed class ComputeFingerprint : Task
             .Select(p => p.Replace('\u005C', '/'))
             .OrderBy(p => p, StringComparer.Ordinal)
             .Select(file => (
+#if NETFRAMEWORK
+                rel: NetFrameworkPolyfills.GetRelativePath(TemplateDir, file).Replace('\u005C', '/'),
+#else
                 rel: Path.GetRelativePath(TemplateDir, file).Replace('\u005C', '/'),
+#endif
                 h: FileHash.HashFile(file)))
             .Aggregate(manifest, (builder, data)
                 => builder.Append("template/")
@@ -197,7 +204,11 @@ public sealed class ComputeFingerprint : Task
                 .Select(p => p.Replace('\u005C', '/'))
                 .OrderBy(p => p, StringComparer.Ordinal)
                 .Select(file => (
+#if NETFRAMEWORK
+                    rel: NetFrameworkPolyfills.GetRelativePath(GeneratedDir, file).Replace('\u005C', '/'),
+#else
                     rel: Path.GetRelativePath(GeneratedDir, file).Replace('\u005C', '/'),
+#endif
                     h: FileHash.HashFile(file)))
                 .Aggregate(manifest, (builder, data)
                     => builder.Append("generated/")

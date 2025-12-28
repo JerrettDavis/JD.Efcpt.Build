@@ -2,6 +2,9 @@ using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using JD.Efcpt.Build.Tasks.Extensions;
 using Snowflake.Data.Client;
+#if NETFRAMEWORK
+using JD.Efcpt.Build.Tasks.Compatibility;
+#endif
 
 namespace JD.Efcpt.Build.Tasks.Schema.Providers;
 

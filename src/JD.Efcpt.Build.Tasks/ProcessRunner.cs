@@ -1,5 +1,8 @@
 using System.Diagnostics;
 using JD.Efcpt.Build.Tasks.Strategies;
+#if NETFRAMEWORK
+using JD.Efcpt.Build.Tasks.Compatibility;
+#endif
 
 namespace JD.Efcpt.Build.Tasks;
 

@@ -1,11 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <!-- Multi-target for Framework MSBuild (net472) and .NET Core MSBuild (net8.0+) -->
+    <TargetFrameworks>net472;net8.0;net9.0;net10.0</TargetFrameworks>
     <IsPackable>false</IsPackable>
     <AssemblyName>JD.Efcpt.Build.Tasks</AssemblyName>
     <RootNamespace>JD.Efcpt.Build.Tasks</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+
+    <!-- Use latest C# for all targets; polyfills handle missing features on net472 -->
+    <LangVersion>latest</LangVersion>
+
+    <!-- Disable nullable and some warnings for net472 -->
+    <Nullable Condition="'$(TargetFramework)' == 'net472'">annotations</Nullable>
+    <NoWarn Condition="'$(TargetFramework)' == 'net472'">$(NoWarn);CS8632</NoWarn>
 
     <!--
       Enable dynamic loading to ensure the task assembly can load its dependencies
@@ -31,15 +39,50 @@
     <PackageReference Include="System.IO.Hashing" Version="10.0.1" />
   </ItemGroup>
 
-  <!-- Database Provider Packages (build-time only, not runtime dependencies for consumers) -->
+  <!--
+    Database Provider Packages (build-time only, not runtime dependencies for consumers).
+    These packages work across all target frameworks.
+  -->
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.3" />
-    <PackageReference Include="Npgsql" Version="9.0.3" />
     <PackageReference Include="MySqlConnector" Version="2.4.0" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.1" />
-    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.7.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="9.0.1" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="10.3.2" />
     <PackageReference Include="Snowflake.Data" Version="5.2.1" />
+  </ItemGroup>
+
+  <!--
+    Framework-specific database providers.
+    Npgsql 9.x dropped netstandard2.0; use 8.x for net472.
+    Oracle.ManagedDataAccess.Core is .NET Core only; use full framework package for net472.
+  -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <PackageReference Include="Npgsql" Version="8.0.5" />
+    <PackageReference Include="Oracle.ManagedDataAccess" Version="23.7.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' != 'net472'">
+    <PackageReference Include="Npgsql" Version="9.0.3" />
+    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.7.0" />
+  </ItemGroup>
+
+  <!--
+    Polyfills for net472: provides IsExternalInit, init accessors, etc.
+  -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <PackageReference Include="PolySharp" Version="1.15.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <!--
+    Framework assemblies needed for net472.
+    System.IO.Compression is required for ZipArchive/ZipArchiveEntry.
+  -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
   </ItemGroup>
 
 </Project>

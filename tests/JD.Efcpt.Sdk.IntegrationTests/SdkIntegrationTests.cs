@@ -279,6 +279,114 @@ public class BuildPackageTests : IDisposable
         // Assert
         buildResult.Success.Should().BeTrue($"Build should succeed.\n{buildResult}");
     }
+
+    /// <summary>
+    /// CRITICAL REGRESSION TEST: Verifies that models are actually generated when using PackageReference.
+    /// This test prevents the issue where build tasks don't execute and no models are generated.
+    /// </summary>
+    [Fact]
+    public async Task BuildPackage_Net80_GeneratesEntityModels()
+    {
+        // Arrange
+        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        _builder.CreateBuildPackageProject("TestEfProject_net80_models", "net8.0");
+        await _builder.RestoreAsync();
+
+        // Act
+        var buildResult = await _builder.BuildAsync();
+
+        // Assert
+        buildResult.Success.Should().BeTrue($"Build should succeed.\n{buildResult}");
+        var generatedFiles = _builder.GetGeneratedFiles();
+        generatedFiles.Should().NotBeEmpty("PackageReference should trigger model generation");
+        generatedFiles.Should().Contain(f => f.EndsWith("Product.g.cs"), "Should generate Product entity");
+        generatedFiles.Should().Contain(f => f.EndsWith("Category.g.cs"), "Should generate Category entity");
+        generatedFiles.Should().Contain(f => f.EndsWith("Order.g.cs"), "Should generate Order entity");
+    }
+
+    /// <summary>
+    /// CRITICAL REGRESSION TEST: Verifies that DbContext is generated when using PackageReference.
+    /// </summary>
+    [Fact]
+    public async Task BuildPackage_Net80_GeneratesDbContext()
+    {
+        // Arrange
+        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        _builder.CreateBuildPackageProject("TestEfProject_net80_ctx", "net8.0");
+        await _builder.RestoreAsync();
+
+        // Act
+        var buildResult = await _builder.BuildAsync();
+
+        // Assert
+        buildResult.Success.Should().BeTrue($"Build should succeed.\n{buildResult}");
+        var generatedFiles = _builder.GetGeneratedFiles();
+        generatedFiles.Should().Contain(f => f.Contains("Context.g.cs"), "Should generate DbContext");
+    }
+
+    /// <summary>
+    /// CRITICAL REGRESSION TEST: Verifies that EfcptEnabled defaults to true for PackageReference consumers.
+    /// NuGet 5.0+ imports buildTransitive/ for ALL consumers, so we enable by default.
+    /// </summary>
+    [Fact]
+    public async Task BuildPackage_DefaultEnablesEfcpt()
+    {
+        // Arrange - Create project WITHOUT explicitly setting EfcptEnabled
+        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        _builder.CreateBuildPackageProject("TestEfProject_autoenable", "net8.0");
+        await _builder.RestoreAsync();
+
+        // Act
+        var buildResult = await _builder.BuildAsync("-p:EfcptLogVerbosity=detailed");
+
+        // Assert - Build should succeed and generate files (proving EfcptEnabled=true by default)
+        buildResult.Success.Should().BeTrue($"Build should succeed.\n{buildResult}");
+        var generatedFiles = _builder.GetGeneratedFiles();
+        generatedFiles.Should().NotBeEmpty(
+            "PackageReference should have EfcptEnabled=true by default");
+    }
+
+    /// <summary>
+    /// CRITICAL REGRESSION TEST: Verifies models are generated across all target frameworks.
+    /// </summary>
+    [Fact]
+    public async Task BuildPackage_Net90_GeneratesEntityModels()
+    {
+        // Arrange
+        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        _builder.CreateBuildPackageProject("TestEfProject_net90_models", "net9.0");
+        await _builder.RestoreAsync();
+
+        // Act
+        var buildResult = await _builder.BuildAsync();
+
+        // Assert
+        buildResult.Success.Should().BeTrue($"Build should succeed.\n{buildResult}");
+        var generatedFiles = _builder.GetGeneratedFiles();
+        generatedFiles.Should().NotBeEmpty("PackageReference should trigger model generation");
+        generatedFiles.Should().Contain(f => f.EndsWith("Product.g.cs"), "Should generate Product entity");
+    }
+
+    /// <summary>
+    /// CRITICAL REGRESSION TEST: Verifies models are generated across all target frameworks.
+    /// </summary>
+    [Fact]
+    public async Task BuildPackage_Net100_GeneratesEntityModels()
+    {
+        // Arrange
+        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        _builder.CreateBuildPackageProject("TestEfProject_net100_models", "net10.0");
+        await _builder.RestoreAsync();
+
+        // Act
+        var buildResult = await _builder.BuildAsync();
+
+        // Assert
+        buildResult.Success.Should().BeTrue($"Build should succeed.\n{buildResult}");
+        var generatedFiles = _builder.GetGeneratedFiles();
+        generatedFiles.Should().NotBeEmpty("PackageReference should trigger model generation");
+        generatedFiles.Should().Contain(f => f.EndsWith("Product.g.cs"), "Should generate Product entity");
+    }
 }
 
 #endregion

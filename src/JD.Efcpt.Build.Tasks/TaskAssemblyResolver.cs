@@ -1,6 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+#if !NETFRAMEWORK
 using System.Runtime.Loader;
+#endif
 
 namespace JD.Efcpt.Build.Tasks;
 
@@ -29,9 +31,35 @@ internal static class TaskAssemblyResolver
             return;
 
         _initialized = true;
+
+#if NETFRAMEWORK
+        AppDomain.CurrentDomain.AssemblyResolve += OnResolvingFramework;
+#else
         AssemblyLoadContext.Default.Resolving += OnResolving;
+#endif
     }
 
+#if NETFRAMEWORK
+    private static Assembly? OnResolvingFramework(object? sender, ResolveEventArgs args)
+    {
+        var assemblyName = new AssemblyName(args.Name);
+        var assemblyPath = Path.Combine(TaskDirectory, $"{assemblyName.Name}.dll");
+
+        if (File.Exists(assemblyPath))
+        {
+            try
+            {
+                return Assembly.LoadFrom(assemblyPath);
+            }
+            catch
+            {
+                // If loading fails, let other resolvers try
+            }
+        }
+
+        return null;
+    }
+#else
     private static Assembly? OnResolving(AssemblyLoadContext context, AssemblyName name)
     {
         // Try to find the assembly in the task's directory
@@ -51,4 +79,5 @@ internal static class TaskAssemblyResolver
 
         return null;
     }
+#endif
 }

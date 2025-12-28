@@ -37,7 +37,11 @@ namespace JD.Efcpt.Build.Tasks;
 /// debugging and diagnostics.
 /// </para>
 /// </remarks>
+#if NET7_0_OR_GREATER
 public sealed partial class ResolveSqlProjAndInputs : Task
+#else
+public sealed class ResolveSqlProjAndInputs : Task
+#endif
 {
     /// <summary>
     /// Full path to the consuming project file.
@@ -677,7 +681,14 @@ public sealed partial class ResolveSqlProjAndInputs : Task
         File.WriteAllText(Path.Combine(OutputDir, "resolved-inputs.json"), dump);
     }
 
+#if NET7_0_OR_GREATER
     [GeneratedRegex("^\\s*Project\\(\"(?<typeGuid>[^\"]+)\"\\)\\s*=\\s*\"(?<name>[^\"]+)\",\\s*\"(?<path>[^\"]+)\",\\s*\"(?<guid>[^\"]+)\"",
         RegexOptions.Compiled)]
     private static partial Regex SolutionProjectLineRegex();
+#else
+    private static readonly Regex _solutionProjectLineRegex = new(
+        "^\\s*Project\\(\"(?<typeGuid>[^\"]+)\"\\)\\s*=\\s*\"(?<name>[^\"]+)\",\\s*\"(?<path>[^\"]+)\",\\s*\"(?<guid>[^\"]+)\"",
+        RegexOptions.Compiled);
+    private static Regex SolutionProjectLineRegex() => _solutionProjectLineRegex;
+#endif
 }

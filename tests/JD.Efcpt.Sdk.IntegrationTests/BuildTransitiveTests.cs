@@ -118,11 +118,17 @@ public class BuildTransitiveTests
         entries.Should().Contain(e => e.EndsWith(".t4"), "SDK package should contain T4 templates");
     }
 
+    /// <summary>
+    /// Verifies that the Build package does NOT have a build/ folder.
+    /// NuGet 5.0+ imports buildTransitive/ for all consumers (direct and transitive),
+    /// so there's no point having a separate build/ folder.
+    /// </summary>
     [Fact]
-    public void BuildPackage_ContainsBuildFolder()
+    public void BuildPackage_DoesNotContainBuildFolder()
     {
         var entries = GetPackageEntries(_fixture.BuildPackagePath);
-        entries.Should().Contain(e => e.StartsWith("build/"), "Build package should contain build folder");
+        entries.Should().NotContain(e => e.StartsWith("build/"),
+            "Build package should not contain build folder - only buildTransitive is needed");
     }
 
     [Fact]
@@ -150,9 +156,69 @@ public class BuildTransitiveTests
             "SDK and Build packages should have matching buildTransitive content");
     }
 
+    /// <summary>
+    /// CRITICAL REGRESSION TEST: Verifies buildTransitive/JD.Efcpt.Build.props enables by default.
+    /// NuGet 5.0+ imports buildTransitive/ for ALL consumers (direct and transitive),
+    /// so we enable by default and let users disable if needed.
+    /// </summary>
+    [Fact]
+    public void BuildPackage_BuildTransitivePropsEnablesByDefault()
+    {
+        // Arrange & Act
+        var propsContent = GetFileContentFromPackage(_fixture.BuildPackagePath, "buildTransitive/JD.Efcpt.Build.props");
+
+        // Assert - Must enable EfcptEnabled by default
+        propsContent.Should().Contain("EfcptEnabled",
+            "buildTransitive/*.props must define EfcptEnabled property");
+        // The pattern should enable by default: <EfcptEnabled Condition="'$(EfcptEnabled)'==''">true</EfcptEnabled>
+        propsContent.Should().Contain(">true</EfcptEnabled>",
+            "EfcptEnabled should default to true for all consumers");
+    }
+
+    /// <summary>
+    /// CRITICAL REGRESSION TEST: Verifies buildTransitive/JD.Efcpt.Build.targets has task registrations.
+    /// </summary>
+    [Fact]
+    public void BuildPackage_BuildTransitiveTargetsHasTaskRegistrations()
+    {
+        // Arrange & Act
+        var targetsContent = GetFileContentFromPackage(_fixture.BuildPackagePath, "buildTransitive/JD.Efcpt.Build.targets");
+
+        // Assert - Must have UsingTask elements
+        targetsContent.Should().Contain("UsingTask",
+            "buildTransitive/*.targets must register tasks with UsingTask");
+        targetsContent.Should().Contain("JD.Efcpt.Build.Tasks",
+            "buildTransitive/*.targets must reference JD.Efcpt.Build.Tasks assembly");
+    }
+
+    /// <summary>
+    /// CRITICAL REGRESSION TEST: Verifies the task assembly path uses MSBuildThisFileDirectory.
+    /// </summary>
+    [Fact]
+    public void BuildPackage_TaskAssemblyPathUsesMSBuildThisFileDirectory()
+    {
+        // Arrange & Act
+        var targetsContent = GetFileContentFromPackage(_fixture.BuildPackagePath, "buildTransitive/JD.Efcpt.Build.targets");
+
+        // Assert - Task assembly path must be relative to the targets file
+        targetsContent.Should().Contain("$(MSBuildThisFileDirectory)",
+            "Task assembly path must use $(MSBuildThisFileDirectory) for correct resolution in NuGet package");
+    }
+
     private static List<string> GetPackageEntries(string packagePath)
     {
         using var archive = ZipFile.OpenRead(packagePath);
         return archive.Entries.Select(e => e.FullName).ToList();
+    }
+
+    private static string GetFileContentFromPackage(string packagePath, string entryPath)
+    {
+        using var archive = ZipFile.OpenRead(packagePath);
+        var entry = archive.GetEntry(entryPath);
+        entry.Should().NotBeNull($"Package should contain {entryPath}");
+
+        using var stream = entry!.Open();
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
     }
 }

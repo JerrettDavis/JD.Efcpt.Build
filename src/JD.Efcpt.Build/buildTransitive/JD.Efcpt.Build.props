@@ -1,15 +1,19 @@
 <Project>
   <PropertyGroup>
     <!--
-      Enablement: Only enable by default for DIRECT package references.
-      Transitive consumers (projects that reference a project using JD.Efcpt.Build)
-      will NOT have generation enabled by default to avoid duplicate generation.
+      Enablement: Enable by default for all PackageReference consumers.
 
-      To enable generation in a transitive consumer, explicitly set:
-        <EfcptEnabled>true</EfcptEnabled>
+      NOTE: NuGet 5.0+ imports buildTransitive/ for ALL consumers (direct and transitive),
+      so we cannot distinguish between direct and transitive references using the build/ folder.
+
+      To disable generation in projects that don't need it (e.g., transitive consumers
+      that only need the types from another project), explicitly set:
+        <EfcptEnabled>false</EfcptEnabled>
+
+      The generation will only actually run if a SQL project reference or DACPAC is found,
+      so having this enabled on projects without database references is harmless.
     -->
-    <EfcptEnabled Condition="'$(EfcptEnabled)'=='' and '$(_EfcptIsDirectReference)'=='true'">true</EfcptEnabled>
-    <EfcptEnabled Condition="'$(EfcptEnabled)'==''">false</EfcptEnabled>
+    <EfcptEnabled Condition="'$(EfcptEnabled)'==''">true</EfcptEnabled>
 
     <!-- Output -->
     <EfcptOutput Condition="'$(EfcptOutput)'==''">$(BaseIntermediateOutputPath)efcpt\</EfcptOutput>
