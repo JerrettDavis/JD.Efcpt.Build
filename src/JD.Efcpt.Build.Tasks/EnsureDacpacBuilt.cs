@@ -3,6 +3,9 @@ using JD.Efcpt.Build.Tasks.Strategies;
 using Microsoft.Build.Framework;
 using PatternKit.Behavioral.Strategy;
 using Task = Microsoft.Build.Utilities.Task;
+#if NETFRAMEWORK
+using JD.Efcpt.Build.Tasks.Compatibility;
+#endif
 
 namespace JD.Efcpt.Build.Tasks;
 
@@ -260,7 +263,7 @@ public sealed class EnsureDacpacBuilt : Task
 
     #region Helper Methods
 
-    private static readonly IReadOnlySet<string> ExcludedDirs = new HashSet<string>(
+    private static readonly HashSet<string> ExcludedDirs = new HashSet<string>(
         ["bin", "obj"],
         StringComparer.OrdinalIgnoreCase);
 
@@ -286,7 +289,11 @@ public sealed class EnsureDacpacBuilt : Task
 
     private static bool IsUnderExcludedDir(string filePath, string root)
     {
+#if NETFRAMEWORK
+        var relativePath = NetFrameworkPolyfills.GetRelativePath(root, filePath);
+#else
         var relativePath = Path.GetRelativePath(root, filePath);
+#endif
         var segments = relativePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
         return segments.Any(segment => ExcludedDirs.Contains(segment));

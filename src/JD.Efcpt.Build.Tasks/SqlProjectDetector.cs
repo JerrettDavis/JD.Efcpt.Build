@@ -5,7 +5,7 @@ namespace JD.Efcpt.Build.Tasks;
 
 internal static class SqlProjectDetector
 {
-    private static readonly IReadOnlySet<string> SupportedSdkNames = new HashSet<string>(
+    private static readonly HashSet<string> SupportedSdkNames = new HashSet<string>(
         ["Microsoft.Build.Sql", "MSBuild.Sdk.SqlProj"],
         StringComparer.OrdinalIgnoreCase);
 
@@ -66,7 +66,7 @@ internal static class SqlProjectDetector
 
     private static IEnumerable<string> ParseSdkNames(string raw)
         => raw
-            .Split(';', StringSplitOptions.RemoveEmptyEntries)
+            .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
             .Select(entry => entry.Trim())
             .Where(entry => entry.Length > 0)
             .Select(entry =>

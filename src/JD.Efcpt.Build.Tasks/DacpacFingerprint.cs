@@ -26,7 +26,11 @@ namespace JD.Efcpt.Build.Tasks;
 /// The implementation is based on the approach from ErikEJ/DacDeploySkip.
 /// </para>
 /// </remarks>
+#if NET7_0_OR_GREATER
 internal static partial class DacpacFingerprint
+#else
+internal static class DacpacFingerprint
+#endif
 {
     private const string ModelXmlEntry = "model.xml";
     private const string PreDeployEntry = "predeploy.sql";
@@ -144,7 +148,8 @@ internal static partial class DacpacFingerprint
         "AssemblySymbolsName" => AssemblySymbolsMetadataRegex(),
         _ => new Regex($"""(<Metadata\s+Name="{metadataName}"\s+Value=")([^"]+)(")""", RegexOptions.Compiled)
     };
-    
+
+#if NET7_0_OR_GREATER
     /// <summary>
     /// Regex for matching Metadata elements with specific Name attributes.
     /// </summary>
@@ -153,5 +158,12 @@ internal static partial class DacpacFingerprint
 
     [GeneratedRegex("""(<Metadata\s+Name="AssemblySymbolsName"\s+Value=")([^"]+)(")""", RegexOptions.Compiled)]
     private static partial Regex AssemblySymbolsMetadataRegex();
-    
+#else
+    private static readonly Regex _fileNameMetadataRegex = new(@"(<Metadata\s+Name=""FileName""\s+Value="")([^""]+)("")", RegexOptions.Compiled);
+    private static Regex FileNameMetadataRegex() => _fileNameMetadataRegex;
+
+    private static readonly Regex _assemblySymbolsMetadataRegex = new(@"(<Metadata\s+Name=""AssemblySymbolsName""\s+Value="")([^""]+)("")", RegexOptions.Compiled);
+    private static Regex AssemblySymbolsMetadataRegex() => _assemblySymbolsMetadataRegex;
+#endif
+
 }

@@ -4,6 +4,9 @@ using JD.Efcpt.Build.Tasks.Extensions;
 using Microsoft.Build.Framework;
 using PatternKit.Behavioral.Strategy;
 using Task = Microsoft.Build.Utilities.Task;
+#if NETFRAMEWORK
+using JD.Efcpt.Build.Tasks.Compatibility;
+#endif
 
 namespace JD.Efcpt.Build.Tasks;
 
@@ -380,7 +383,11 @@ public sealed class RunEfcpt : Task
         // via ToolPath. To avoid fragile PATH assumptions on CI agents, treat "auto" as
         // "tool-manifest" whenever a manifest is present *or* when running on non-Windows and
         // no explicit ToolPath was supplied.
+#if NETFRAMEWORK
+        var forceManifestOnNonWindows = !OperatingSystemPolyfill.IsWindows() && !PathUtils.HasExplicitPath(ToolPath);
+#else
         var forceManifestOnNonWindows = !OperatingSystem.IsWindows() && !PathUtils.HasExplicitPath(ToolPath);
+#endif
 
         // Use the Strategy pattern to resolve tool invocation
         var context = new ToolResolutionContext(
@@ -505,7 +512,11 @@ public sealed class RunEfcpt : Task
             // If the path is under the base directory, make it relative
             if (fullPath.StartsWith(fullBase, StringComparison.OrdinalIgnoreCase))
             {
+#if NETFRAMEWORK
+                var relative = NetFrameworkPolyfills.GetRelativePath(fullBase, fullPath);
+#else
                 var relative = Path.GetRelativePath(fullBase, fullPath);
+#endif
                 return relative;
             }
         }
