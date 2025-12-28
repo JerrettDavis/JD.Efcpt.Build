@@ -3,7 +3,7 @@
     <!--
       Enablement: Enabled by default for all consumers.
 
-      NOTE: NuGet 5.0+ imports buildTransitive/ for ALL consumers (direct and transitive).
+      NOTE: This props file is imported from NuGet's build/ folder and therefore only applies to direct consumers of this package.
       However, the actual code generation will only run if valid inputs are found:
       - A SQL project reference (*.sqlproj or MSBuild.Sdk.SqlProj), OR
       - An explicit DACPAC path (EfcptDacpac), OR
