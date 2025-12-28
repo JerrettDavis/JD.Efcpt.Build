@@ -1,0 +1,26 @@
+{
+  "names": {
+    "root-namespace": "EfcptProject",
+    "dbcontext-name": "ApplicationDbContext",
+    "dbcontext-namespace": "EfcptProject.Data",
+    "entity-namespace": "EfcptProject.Data.Entities"
+  },
+  "code-generation": {
+    "use-nullable-reference-types": true,
+    "use-date-only-time-only": true,
+    "enable-on-configuring": false,
+    "use-t4": false
+  },
+  "file-layout": {
+    "output-path": "Models",
+    "output-dbcontext-path": ".",
+    "use-schema-folders-preview": true,
+    "use-schema-namespaces-preview": true
+  },
+  "table-selection": [
+    {
+      "schema": "dbo",
+      "include": true
+    }
+  ]
+}

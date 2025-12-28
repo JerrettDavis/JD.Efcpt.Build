@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Jerrett Davis",
+  "classifications": [ "Database", "EntityFramework", "EFCore" ],
+  "identity": "JD.Efcpt.Build.Project",
+  "name": "EF Core Power Tools Project",
+  "description": "A project that uses JD.Efcpt.Build to automatically generate EF Core models from a database project during build",
+  "shortName": "efcptbuild",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "EfcptProject",
+  "preferNameDirectory": true,
+  "sources": [
+    {
+      "source": "./",
+      "target": "./",
+      "exclude": [ 
+        ".template.config/**/*",
+        "**/*.filelist",
+        "**/*.user",
+        "**/*.lock.json",
+        "**/.vs/**/*"
+      ]
+    }
+  ],
+  "primaryOutputs": [
+    {
+      "path": "EfcptProject.csproj"
+    }
+  ]
+}

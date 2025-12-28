@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- JD.Efcpt.Build - Automate EF Core model generation from database projects -->
+    <PackageReference Include="JD.Efcpt.Build" Version="*" />
+    
+    <!-- EF Core dependencies -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.*">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.*" />
+  </ItemGroup>
+
+  <!--
+    Optional: Reference your SQL Server Database Project
+    
+    <ItemGroup>
+      <ProjectReference Include="..\YourDatabase\YourDatabase.sqlproj">
+        <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+        <OutputItemType>None</OutputItemType>
+      </ProjectReference>
+    </ItemGroup>
+    
+    Or for MSBuild.Sdk.SqlProj:
+    
+    <ItemGroup>
+      <ProjectReference Include="..\YourDatabase\YourDatabase.csproj">
+        <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+        <OutputItemType>None</OutputItemType>
+      </ProjectReference>
+    </ItemGroup>
+  -->
+
+  <!--
+    Optional: Override EF Core Power Tools settings
+    
+    <PropertyGroup>
+      <EfcptSqlProj>..\YourDatabase\YourDatabase.sqlproj</EfcptSqlProj>
+      <EfcptConfig>efcpt-config.json</EfcptConfig>
+      <EfcptLogVerbosity>detailed</EfcptLogVerbosity>
+    </PropertyGroup>
+  -->
+
+</Project>
