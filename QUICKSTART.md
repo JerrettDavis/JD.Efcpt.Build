@@ -2,6 +2,17 @@
 
 ## Installation
 
+### Option 0: Use Template (Easiest!)
+```bash
+# Install template (one-time)
+dotnet new install JD.Efcpt.Build.Templates
+
+# Create new project
+dotnet new efcptbuild --name MyDataProject
+cd MyDataProject
+dotnet build
+```
+
 ### Option 1: Quick Start (Global Tool)
 ```bash
 dotnet add package JD.Efcpt.Build
