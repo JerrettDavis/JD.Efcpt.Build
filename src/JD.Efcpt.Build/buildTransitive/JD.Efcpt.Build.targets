@@ -49,16 +49,76 @@
   </PropertyGroup>
 
   <!--
-    Error if running on .NET Framework MSBuild (not supported).
-    JD.Efcpt.Build requires .NET Core MSBuild because task assemblies target net8.0+.
-    .NET Framework MSBuild cannot load .NET Core assemblies at runtime.
+    ========================================================================
+    .NET Framework MSBuild Fallback
+    ========================================================================
+    JD.Efcpt.Build task assemblies target net8.0+ and cannot be loaded by
+    .NET Framework MSBuild (MSBuildRuntimeType='Full').
+
+    When Framework MSBuild is detected:
+    1. We invoke 'dotnet msbuild' with a special target to run generation
+    2. This runs under .NET Core MSBuild which CAN load our task assemblies
+    3. The generated files are written to obj/efcpt/Generated
+    4. The Framework MSBuild build then continues and compiles these files
+
+    This allows Visual Studio and other Framework MSBuild hosts to work
+    seamlessly with JD.Efcpt.Build.
   -->
-  <Target Name="_EfcptCheckMsBuildRuntime" BeforeTargets="EfcptResolveInputs;EfcptResolveInputsForDirectDacpac" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsFrameworkMsBuild)' == 'true'">
-    <Error Text="EFCPT001: JD.Efcpt.Build requires .NET Core MSBuild but detected .NET Framework MSBuild (MSBuildRuntimeType='$(MSBuildRuntimeType)'). Solutions: (1) Use Visual Studio 2019+ with SDK-style projects, (2) Build from command line with 'dotnet build', or (3) Set EfcptEnabled=false to disable code generation." />
+
+  <!-- Flag to prevent infinite recursion when invoking dotnet msbuild -->
+  <PropertyGroup>
+    <_EfcptFrameworkFallbackInvoked Condition="'$(_EfcptFrameworkFallbackInvoked)' == ''">false</_EfcptFrameworkFallbackInvoked>
+  </PropertyGroup>
+
+  <!--
+    Framework MSBuild Fallback: Invoke dotnet msbuild to run generation.
+    This target runs ONLY on Framework MSBuild and invokes dotnet msbuild
+    to run the actual generation targets under .NET Core MSBuild.
+  -->
+  <Target Name="_EfcptFrameworkMsBuildFallback"
+          BeforeTargets="CoreCompile"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(MSBuildRuntimeType)' != 'Core' and '$(_EfcptFrameworkFallbackInvoked)' != 'true'">
+
+    <PropertyGroup>
+      <_EfcptDotNetExe Condition="'$(EfcptDotNetExe)' != ''">$(EfcptDotNetExe)</_EfcptDotNetExe>
+      <_EfcptDotNetExe Condition="'$(_EfcptDotNetExe)' == ''">dotnet</_EfcptDotNetExe>
+    </PropertyGroup>
+
+    <Message Text="EFCPT: Running code generation via dotnet (Framework MSBuild detected)..." Importance="high" />
+
+    <!--
+      Invoke dotnet msbuild with the internal generation target.
+      Pass _EfcptFrameworkFallbackInvoked=true to prevent infinite recursion.
+      Pass Configuration and TargetFramework to ensure the same build context.
+    -->
+    <Exec Command="&quot;$(_EfcptDotNetExe)&quot; msbuild &quot;$(MSBuildProjectFullPath)&quot; -t:_EfcptRunGenerationInternal -p:_EfcptFrameworkFallbackInvoked=true -p:Configuration=$(Configuration) -p:TargetFramework=$(TargetFramework) -nologo -v:m"
+          IgnoreExitCode="false"
+          ConsoleToMSBuild="true"
+          StandardOutputImportance="normal"
+          StandardErrorImportance="high">
+      <Output TaskParameter="ExitCode" PropertyName="_EfcptFallbackExitCode" />
+    </Exec>
+
+    <Error Condition="'$(_EfcptFallbackExitCode)' != '0'"
+           Text="EFCPT: Code generation failed. See output above for details." />
+
+    <Message Text="EFCPT: Code generation completed successfully." Importance="high" />
+  </Target>
+
+  <!--
+    Internal generation target: Called by the Framework MSBuild fallback.
+    This target is designed to run under dotnet msbuild (.NET Core MSBuild)
+    and performs the actual code generation work.
+  -->
+  <Target Name="_EfcptRunGenerationInternal"
+          DependsOnTargets="EfcptGenerateModels;EfcptAddToCompile"
+          Condition="'$(MSBuildRuntimeType)' == 'Core'">
+    <!-- This target just chains to the actual generation targets -->
+    <Message Text="EFCPT: Internal generation complete." Importance="normal" Condition="'$(EfcptLogVerbosity)' == 'detailed'" />
   </Target>
 
   <!-- Diagnostic output for task assembly selection (when EfcptLogVerbosity=detailed) -->
-  <Target Name="_EfcptLogTaskAssemblyInfo" BeforeTargets="EfcptResolveInputs;EfcptResolveInputsForDirectDacpac" Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptLogVerbosity)' == 'detailed'">
+  <Target Name="_EfcptLogTaskAssemblyInfo" BeforeTargets="EfcptResolveInputs;EfcptResolveInputsForDirectDacpac" Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptLogVerbosity)' == 'detailed' and '$(MSBuildRuntimeType)' == 'Core'">
     <Message Text="EFCPT Task Assembly Selection:" Importance="high" />
     <Message Text="  MSBuildRuntimeType: $(MSBuildRuntimeType)" Importance="high" />
     <Message Text="  MSBuildVersion: $(MSBuildVersion)" Importance="high" />
@@ -67,39 +127,54 @@
     <Message Text="  TaskAssembly Exists: $([System.IO.File]::Exists('$(_EfcptTaskAssembly)'))" Importance="high" />
   </Target>
 
-  <!-- Register MSBuild tasks - use AssemblyFile to avoid NuGet copying/locking the DLL -->
+  <!--
+    Register MSBuild tasks - only when running on .NET Core MSBuild.
+    .NET Framework MSBuild cannot load these assemblies (they target net8.0+).
+    The Condition prevents assembly loading errors on Framework MSBuild.
+  -->
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs"
-             AssemblyFile="$(_EfcptTaskAssembly)" />
+             AssemblyFile="$(_EfcptTaskAssembly)"
+             Condition="'$(MSBuildRuntimeType)' == 'Core'" />
 
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.EnsureDacpacBuilt"
-             AssemblyFile="$(_EfcptTaskAssembly)" />
+             AssemblyFile="$(_EfcptTaskAssembly)"
+             Condition="'$(MSBuildRuntimeType)' == 'Core'" />
 
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.StageEfcptInputs"
-             AssemblyFile="$(_EfcptTaskAssembly)" />
+             AssemblyFile="$(_EfcptTaskAssembly)"
+             Condition="'$(MSBuildRuntimeType)' == 'Core'" />
 
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.ComputeFingerprint"
-             AssemblyFile="$(_EfcptTaskAssembly)" />
+             AssemblyFile="$(_EfcptTaskAssembly)"
+             Condition="'$(MSBuildRuntimeType)' == 'Core'" />
 
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.RunEfcpt"
-             AssemblyFile="$(_EfcptTaskAssembly)" />
+             AssemblyFile="$(_EfcptTaskAssembly)"
+             Condition="'$(MSBuildRuntimeType)' == 'Core'" />
 
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.RenameGeneratedFiles"
-             AssemblyFile="$(_EfcptTaskAssembly)" />
+             AssemblyFile="$(_EfcptTaskAssembly)"
+             Condition="'$(MSBuildRuntimeType)' == 'Core'" />
 
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.QuerySchemaMetadata"
-             AssemblyFile="$(_EfcptTaskAssembly)" />
+             AssemblyFile="$(_EfcptTaskAssembly)"
+             Condition="'$(MSBuildRuntimeType)' == 'Core'" />
 
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.ApplyConfigOverrides"
-             AssemblyFile="$(_EfcptTaskAssembly)" />
+             AssemblyFile="$(_EfcptTaskAssembly)"
+             Condition="'$(MSBuildRuntimeType)' == 'Core'" />
 
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.ResolveDbContextName"
-             AssemblyFile="$(_EfcptTaskAssembly)" />
+             AssemblyFile="$(_EfcptTaskAssembly)"
+             Condition="'$(MSBuildRuntimeType)' == 'Core'" />
 
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.SerializeConfigProperties"
-             AssemblyFile="$(_EfcptTaskAssembly)" />
+             AssemblyFile="$(_EfcptTaskAssembly)"
+             Condition="'$(MSBuildRuntimeType)' == 'Core'" />
 
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.CheckSdkVersion"
-             AssemblyFile="$(_EfcptTaskAssembly)" />
+             AssemblyFile="$(_EfcptTaskAssembly)"
+             Condition="'$(MSBuildRuntimeType)' == 'Core'" />
 
   <!--
     SDK Version Check: Warns users when a newer SDK version is available.
@@ -107,7 +182,7 @@
   -->
   <Target Name="_EfcptCheckForUpdates"
           BeforeTargets="Build"
-          Condition="'$(EfcptCheckForUpdates)' == 'true' and '$(EfcptSdkVersion)' != ''">
+          Condition="'$(EfcptCheckForUpdates)' == 'true' and '$(EfcptSdkVersion)' != '' and '$(MSBuildRuntimeType)' == 'Core'">
     <CheckSdkVersion
         CurrentVersion="$(EfcptSdkVersion)"
         PackageId="JD.Efcpt.Sdk"
@@ -120,7 +195,7 @@
 
   <!-- Main pipeline -->
   <Target Name="EfcptResolveInputs"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptDacpac)' == ''">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptDacpac)' == '' and '$(MSBuildRuntimeType)' == 'Core'">
     <ResolveSqlProjAndInputs
         ProjectFullPath="$(MSBuildProjectFullPath)"
         ProjectDirectory="$(MSBuildProjectDirectory)"
@@ -152,7 +227,7 @@
 
   <!-- Simplified resolution for direct DACPAC mode (bypass SQL project detection) -->
   <Target Name="EfcptResolveInputsForDirectDacpac"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptDacpac)' != ''">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptDacpac)' != '' and '$(MSBuildRuntimeType)' == 'Core'">
     <PropertyGroup>
       <_EfcptResolvedConfig Condition="Exists('$(MSBuildProjectDirectory)\$(EfcptConfig)')">$(MSBuildProjectDirectory)\$(EfcptConfig)</_EfcptResolvedConfig>
       <_EfcptResolvedConfig Condition="'$(_EfcptResolvedConfig)' == ''">$(MSBuildThisFileDirectory)Defaults\efcpt-config.json</_EfcptResolvedConfig>
@@ -169,7 +244,7 @@
   <Target Name="EfcptQuerySchemaMetadata"
           AfterTargets="EfcptResolveInputs"
           BeforeTargets="EfcptStageInputs"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' == 'true' and '$(MSBuildRuntimeType)' == 'Core'">
     <QuerySchemaMetadata
         ConnectionString="$(_EfcptResolvedConnectionString)"
         OutputDir="$(EfcptOutput)"
@@ -181,7 +256,7 @@
 
   <Target Name="EfcptUseDirectDacpac"
           DependsOnTargets="EfcptResolveInputs;EfcptResolveInputsForDirectDacpac"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(EfcptDacpac)' != ''">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(EfcptDacpac)' != '' and '$(MSBuildRuntimeType)' == 'Core'">
     <PropertyGroup>
       <_EfcptDacpacPath>$([System.IO.Path]::GetFullPath('$(EfcptDacpac)', '$(MSBuildProjectDirectory)'))</_EfcptDacpacPath>
       <_EfcptUseDirectDacpac>true</_EfcptUseDirectDacpac>
@@ -201,7 +276,7 @@
   -->
   <Target Name="EfcptBuildSqlProj"
           DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac"
-          Condition="'$(EfcptEnabled)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(MSBuildRuntimeType)' == 'Core'">
     <Message Condition="'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptSqlProj)' != ''"
              Text="Building SQL project: $(_EfcptSqlProj)" Importance="normal" />
     <MSBuild Condition="'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptSqlProj)' != ''"
@@ -218,7 +293,7 @@
   -->
   <Target Name="EfcptEnsureDacpac"
           DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptBuildSqlProj"
-          Condition="'$(EfcptEnabled)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(MSBuildRuntimeType)' == 'Core'">
     <!-- Only run the dacpac task when NOT in connection string mode and NOT using direct dacpac -->
     <EnsureDacpacBuilt
         Condition="'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true'"
@@ -238,7 +313,7 @@
   -->
   <Target Name="EfcptResolveDbContextName"
           DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpac;EfcptUseDirectDacpac"
-          Condition="'$(EfcptEnabled)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(MSBuildRuntimeType)' == 'Core'">
     <ResolveDbContextName
         ExplicitDbContextName="$(EfcptConfigDbContextName)"
         SqlProjPath="$(_EfcptSqlProj)"
@@ -256,7 +331,7 @@
 
   <Target Name="EfcptStageInputs"
           DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpac;EfcptUseDirectDacpac;EfcptResolveDbContextName"
-          Condition="'$(EfcptEnabled)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(MSBuildRuntimeType)' == 'Core'">
     <StageEfcptInputs
         OutputDir="$(EfcptOutput)"
         ProjectDirectory="$(MSBuildProjectDirectory)"
@@ -278,7 +353,7 @@
   -->
   <Target Name="EfcptApplyConfigOverrides"
           DependsOnTargets="EfcptStageInputs"
-          Condition="'$(EfcptEnabled)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(MSBuildRuntimeType)' == 'Core'">
     <ApplyConfigOverrides
         StagedConfigPath="$(_EfcptStagedConfig)"
         ApplyOverrides="$(EfcptApplyMsBuildOverrides)"
@@ -329,7 +404,7 @@
   -->
   <Target Name="EfcptSerializeConfigProperties"
           DependsOnTargets="EfcptApplyConfigOverrides"
-          Condition="'$(EfcptEnabled)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(MSBuildRuntimeType)' == 'Core'">
     <SerializeConfigProperties
         RootNamespace="$(EfcptConfigRootNamespace)"
         DbContextName="$(EfcptConfigDbContextName)"
@@ -374,7 +449,7 @@
 
   <Target Name="EfcptComputeFingerprint"
           DependsOnTargets="EfcptSerializeConfigProperties"
-          Condition="'$(EfcptEnabled)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(MSBuildRuntimeType)' == 'Core'">
     <ComputeFingerprint
         DacpacPath="$(_EfcptDacpacPath)"
         SchemaFingerprint="$(_EfcptSchemaFingerprint)"
@@ -398,7 +473,7 @@
           BeforeTargets="CoreCompile"
           Inputs="$(_EfcptDacpacPath);$(_EfcptStagedConfig);$(_EfcptStagedRenaming)"
           Outputs="$(EfcptStampFile)"
-          Condition="'$(EfcptEnabled)' == 'true' and ('$(_EfcptFingerprintChanged)' == 'true' or !Exists('$(EfcptStampFile)'))">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(MSBuildRuntimeType)' == 'Core' and ('$(_EfcptFingerprintChanged)' == 'true' or !Exists('$(EfcptStampFile)'))">
     <MakeDir Directories="$(EfcptGeneratedDir)" />
     <RunEfcpt
         ToolMode="$(EfcptToolMode)"
@@ -442,7 +517,7 @@
   -->
   <Target Name="EfcptValidateSplitOutputs"
           DependsOnTargets="EfcptGenerateModels"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptSplitOutputs)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptSplitOutputs)' == 'true' and '$(MSBuildRuntimeType)' == 'Core'">
 
     <!-- Resolve Data project path -->
     <PropertyGroup>
@@ -475,7 +550,7 @@
   -->
   <Target Name="EfcptCopyDataToDataProject"
           DependsOnTargets="EfcptValidateSplitOutputs"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptSplitOutputs)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptSplitOutputs)' == 'true' and '$(MSBuildRuntimeType)' == 'Core'">
 
     <!-- Find DbContext files (root-level .g.cs files that are NOT configurations) -->
     <ItemGroup>
@@ -538,7 +613,7 @@
   <Target Name="EfcptAddToCompile"
           BeforeTargets="CoreCompile"
           DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpac;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels;EfcptCopyDataToDataProject"
-          Condition="'$(EfcptEnabled)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(MSBuildRuntimeType)' == 'Core'">
     <ItemGroup>
       <!-- In split outputs mode (Models project is primary), only include model files -->
       <Compile Include="$(EfcptGeneratedDir)Models\**\*.g.cs"
@@ -563,6 +638,29 @@
       <Compile Include="$(EfcptExternalDataDir)**\*.g.cs" Visible="false" />
     </ItemGroup>
     <Message Text="Including external data files from: $(EfcptExternalDataDir)" Importance="normal" />
+  </Target>
+
+  <!--
+    Include generated files in compilation for Framework MSBuild.
+    This target runs AFTER the Framework fallback has generated the files,
+    and includes them in the compilation. It's the Framework MSBuild equivalent
+    of EfcptAddToCompile.
+  -->
+  <Target Name="_EfcptAddToCompileFrameworkFallback"
+          BeforeTargets="CoreCompile"
+          AfterTargets="_EfcptFrameworkMsBuildFallback"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(MSBuildRuntimeType)' != 'Core'">
+    <ItemGroup>
+      <!-- In split outputs mode (Models project is primary), only include model files -->
+      <Compile Include="$(EfcptGeneratedDir)Models\**\*.g.cs"
+               Visible="false"
+               Condition="'$(EfcptSplitOutputs)' == 'true'" />
+
+      <!-- In normal mode, include all generated files -->
+      <Compile Include="$(EfcptGeneratedDir)**\*.g.cs"
+               Visible="false"
+               Condition="'$(EfcptSplitOutputs)' != 'true'" />
+    </ItemGroup>
   </Target>
 
   <!-- Clean target: remove efcpt output directory when 'dotnet clean' is run -->

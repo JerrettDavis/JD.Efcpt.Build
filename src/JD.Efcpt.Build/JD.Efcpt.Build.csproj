@@ -34,9 +34,13 @@
                       IncludeAssets="None" />
   </ItemGroup>
 
+  <!--
+    NOTE: We only use buildTransitive/ for the package.
+    NuGet 5.0+ imports buildTransitive/ for ALL consumers (direct and transitive),
+    so there's no point having separate build/ files. The build/ folder is kept in
+    the source for historical reference but is not included in the package.
+  -->
   <ItemGroup>
-    <Content Include="build/JD.Efcpt.Build.props" Pack="true" PackagePath="build" />
-    <Content Include="build/JD.Efcpt.Build.targets" Pack="true" PackagePath="build" />
     <Content Include="buildTransitive/JD.Efcpt.Build.props" Pack="true" PackagePath="buildTransitive" />
     <Content Include="buildTransitive/JD.Efcpt.Build.targets" Pack="true" PackagePath="buildTransitive" />
 
