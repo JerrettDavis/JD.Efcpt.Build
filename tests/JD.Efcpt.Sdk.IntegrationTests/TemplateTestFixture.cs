@@ -17,7 +17,7 @@ public class TemplateTestFixture : IDisposable
     public string SdkVersion => AssemblyFixture.SdkVersion;
     public string BuildVersion => AssemblyFixture.BuildVersion;
 
-    private static readonly string RepoRoot = FindRepoRoot();
+    private static readonly string RepoRoot = TestUtilities.FindRepoRoot();
 
     public string GetTestFixturesPath() => AssemblyFixture.TestFixturesPath;
 
@@ -116,7 +116,7 @@ public class TemplateTestFixture : IDisposable
     /// <summary>
     /// Installs the template package using dotnet new install.
     /// </summary>
-    public async Task<CommandResult> InstallTemplateAsync(string workingDirectory)
+    public async Task<TestUtilities.CommandResult> InstallTemplateAsync(string workingDirectory)
     {
         return await RunDotnetNewCommandAsync(workingDirectory, $"install \"{TemplatePackagePath}\"");
     }
@@ -124,7 +124,7 @@ public class TemplateTestFixture : IDisposable
     /// <summary>
     /// Uninstalls the template package using dotnet new uninstall.
     /// </summary>
-    public async Task<CommandResult> UninstallTemplateAsync(string workingDirectory)
+    public async Task<TestUtilities.CommandResult> UninstallTemplateAsync(string workingDirectory)
     {
         return await RunDotnetNewCommandAsync(workingDirectory, "uninstall JD.Efcpt.Build.Templates");
     }
@@ -132,12 +132,12 @@ public class TemplateTestFixture : IDisposable
     /// <summary>
     /// Creates a project from the template using dotnet new efcptbuild.
     /// </summary>
-    public async Task<CommandResult> CreateProjectFromTemplateAsync(string workingDirectory, string projectName)
+    public async Task<TestUtilities.CommandResult> CreateProjectFromTemplateAsync(string workingDirectory, string projectName)
     {
         return await RunDotnetNewCommandAsync(workingDirectory, $"efcptbuild --name {projectName}");
     }
 
-    private static async Task<CommandResult> RunDotnetNewCommandAsync(string workingDirectory, string arguments)
+    private static async Task<TestUtilities.CommandResult> RunDotnetNewCommandAsync(string workingDirectory, string arguments)
     {
         var psi = new ProcessStartInfo
         {
@@ -168,7 +168,7 @@ public class TemplateTestFixture : IDisposable
         var output = await outputTask;
         var error = await errorTask;
 
-        return new CommandResult(
+        return new TestUtilities.CommandResult(
             process.ExitCode == 0,
             output,
             error,
@@ -176,38 +176,10 @@ public class TemplateTestFixture : IDisposable
         );
     }
 
-    private static string FindRepoRoot()
-    {
-        var current = Directory.GetCurrentDirectory();
-        while (current != null)
-        {
-            if (File.Exists(Path.Combine(current, "JD.Efcpt.Build.sln")))
-                return current;
-            current = Directory.GetParent(current)?.FullName;
-        }
-
-        var assemblyLocation = typeof(TemplateTestFixture).Assembly.Location;
-        current = Path.GetDirectoryName(assemblyLocation);
-        while (current != null)
-        {
-            if (File.Exists(Path.Combine(current, "JD.Efcpt.Build.sln")))
-                return current;
-            current = Directory.GetParent(current)?.FullName;
-        }
-
-        throw new InvalidOperationException("Could not find repository root");
-    }
-
     public void Dispose()
     {
         // Cleanup is handled by AppDomain.ProcessExit
         GC.SuppressFinalize(this);
-    }
-
-    public record CommandResult(bool Success, string Output, string Error, int ExitCode)
-    {
-        public override string ToString() =>
-            $"Exit Code: {ExitCode}\nOutput:\n{Output}\nError:\n{Error}";
     }
 }
 

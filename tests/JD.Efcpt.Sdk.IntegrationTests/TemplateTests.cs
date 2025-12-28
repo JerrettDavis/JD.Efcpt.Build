@@ -212,7 +212,7 @@ public class TemplateTests : IDisposable
         }
     }
 
-    private static async Task<CommandResult> RunDotnetCommandAsync(string workingDirectory, string projectName, string arguments)
+    private static async Task<TestUtilities.CommandResult> RunDotnetCommandAsync(string workingDirectory, string projectName, string arguments)
     {
         var psi = new System.Diagnostics.ProcessStartInfo
         {
@@ -229,22 +229,26 @@ public class TemplateTests : IDisposable
         var outputTask = process.StandardOutput.ReadToEndAsync();
         var errorTask = process.StandardError.ReadToEndAsync();
 
-        await process.WaitForExitAsync();
+        using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+        try
+        {
+            await process.WaitForExitAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            try { process.Kill(entireProcessTree: true); } catch { /* best effort */ }
+            throw new InvalidOperationException(
+                $"dotnet {arguments} timed out after 5 minutes.");
+        }
 
         var output = await outputTask;
         var error = await errorTask;
 
-        return new CommandResult(
+        return new TestUtilities.CommandResult(
             process.ExitCode == 0,
             output,
             error,
             process.ExitCode
         );
-    }
-
-    private record CommandResult(bool Success, string Output, string Error, int ExitCode)
-    {
-        public override string ToString() =>
-            $"Exit Code: {ExitCode}\nOutput:\n{Output}\nError:\n{Error}";
     }
 }
