@@ -14,4 +14,11 @@ public static class AssemblySetup
             MSBuildLocator.RegisterDefaults();
         }
     }
+
+    [ModuleInitializer]
+    public static void InitializeSqlite()
+    {
+        // Initialize SQLitePCL for Microsoft.Data.Sqlite tests
+        SQLitePCL.Batteries.Init();
+    }
 }

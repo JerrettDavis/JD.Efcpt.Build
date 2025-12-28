@@ -225,7 +225,7 @@ public class TestProjectBuilder : IDisposable
         return null;
     }
 
-    private async Task<BuildResult> RunProcessAsync(string fileName, string args, string workingDirectory)
+    private async Task<BuildResult> RunProcessAsync(string fileName, string args, string workingDirectory, int timeoutMs = 300000)
     {
         var psi = new ProcessStartInfo
         {
@@ -258,7 +258,21 @@ public class TestProjectBuilder : IDisposable
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
 
-        await process.WaitForExitAsync();
+        using var cts = new CancellationTokenSource(timeoutMs);
+        try
+        {
+            await process.WaitForExitAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            try { process.Kill(entireProcessTree: true); } catch { /* best effort */ }
+            return new BuildResult
+            {
+                ExitCode = -1,
+                Output = outputBuilder.ToString(),
+                Error = errorBuilder + $"\n[TIMEOUT] Process exceeded {timeoutMs / 1000}s timeout and was killed."
+            };
+        }
 
         return new BuildResult
         {
@@ -318,7 +332,7 @@ public class TestProjectBuilder : IDisposable
         return File.ReadAllText(Path.Combine(GeneratedDirectory, relativePath));
     }
 
-    private async Task<BuildResult> RunDotnetAsync(string args, string workingDirectory)
+    private async Task<BuildResult> RunDotnetAsync(string args, string workingDirectory, int timeoutMs = 300000)
     {
         var psi = new ProcessStartInfo
         {
@@ -351,7 +365,21 @@ public class TestProjectBuilder : IDisposable
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
 
-        await process.WaitForExitAsync();
+        using var cts = new CancellationTokenSource(timeoutMs);
+        try
+        {
+            await process.WaitForExitAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            try { process.Kill(entireProcessTree: true); } catch { /* best effort */ }
+            return new BuildResult
+            {
+                ExitCode = -1,
+                Output = outputBuilder.ToString(),
+                Error = errorBuilder + $"\n[TIMEOUT] Process exceeded {timeoutMs / 1000}s timeout and was killed."
+            };
+        }
 
         return new BuildResult
         {
