@@ -20,6 +20,22 @@ JD.Efcpt.Build transforms EF Core Power Tools into a fully automated build step.
 
 ## Quick Start
 
+Choose your preferred integration approach:
+
+### Option A: SDK Approach (Cleanest Setup)
+
+Use the SDK in your project:
+
+```xml
+<Project Sdk="JD.Efcpt.Sdk/1.0.0">
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+    </PropertyGroup>
+</Project>
+```
+
+### Option B: PackageReference Approach
+
 **Step 1:** Add the NuGet package:
 
 ```xml
@@ -34,7 +50,7 @@ JD.Efcpt.Build transforms EF Core Power Tools into a fully automated build step.
 dotnet tool install --global ErikEJ.EFCorePowerTools.Cli --version "10.*"
 ```
 
-**Step 3:** Build your project:
+### Build Your Project
 
 ```bash
 dotnet build
@@ -62,6 +78,7 @@ The package orchestrates a six-stage MSBuild pipeline:
 ## Next Steps
 
 - [Getting Started](user-guide/getting-started.md) - Complete installation and setup guide
+- [Using JD.Efcpt.Sdk](user-guide/sdk.md) - SDK integration approach
 - [Core Concepts](user-guide/core-concepts.md) - Understanding the build pipeline
 - [Configuration](user-guide/configuration.md) - Customize generation behavior
 

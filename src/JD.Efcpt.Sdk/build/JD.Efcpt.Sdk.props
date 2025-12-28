@@ -1,0 +1,23 @@
+<Project>
+  <!--
+    JD.Efcpt.Sdk Props
+
+    This file imports the shared property definitions from buildTransitive.
+    The buildTransitive folder contains the actual EFCPT configuration properties.
+  -->
+
+  <!--
+    Mark this as a direct SDK reference.
+    This marker is used by buildTransitive to only enable generation
+    for direct consumers, not transitive ones.
+  -->
+  <PropertyGroup>
+    <_EfcptIsDirectReference>true</_EfcptIsDirectReference>
+  </PropertyGroup>
+
+  <!-- Import SDK version for update check feature -->
+  <Import Project="$(MSBuildThisFileDirectory)JD.Efcpt.Sdk.Version.props" Condition="Exists('$(MSBuildThisFileDirectory)JD.Efcpt.Sdk.Version.props')" />
+
+  <!-- Import the shared props (same as JD.Efcpt.Build uses) -->
+  <Import Project="$(MSBuildThisFileDirectory)..\buildTransitive\JD.Efcpt.Build.props" />
+</Project>

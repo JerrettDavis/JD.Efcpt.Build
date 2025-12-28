@@ -1,7 +1,15 @@
 <Project>
   <PropertyGroup>
-    <!-- Enablement -->
-    <EfcptEnabled Condition="'$(EfcptEnabled)'==''">true</EfcptEnabled>
+    <!--
+      Enablement: Only enable by default for DIRECT package references.
+      Transitive consumers (projects that reference a project using JD.Efcpt.Build)
+      will NOT have generation enabled by default to avoid duplicate generation.
+
+      To enable generation in a transitive consumer, explicitly set:
+        <EfcptEnabled>true</EfcptEnabled>
+    -->
+    <EfcptEnabled Condition="'$(EfcptEnabled)'=='' and '$(_EfcptIsDirectReference)'=='true'">true</EfcptEnabled>
+    <EfcptEnabled Condition="'$(EfcptEnabled)'==''">false</EfcptEnabled>
 
     <!-- Output -->
     <EfcptOutput Condition="'$(EfcptOutput)'==''">$(BaseIntermediateOutputPath)efcpt\</EfcptOutput>
@@ -46,12 +54,24 @@
     <EfcptDumpResolvedInputs Condition="'$(EfcptDumpResolvedInputs)'==''">false</EfcptDumpResolvedInputs>
 
     <!--
-      Split Outputs: separate Models project (primary) from Data project.
-      The Models project runs efcpt, generates all files, then copies
-      DbContext and configurations to the Data project.
+      SDK Version Check: Opt-in feature to check for newer SDK versions on NuGet.
+      Enable with EfcptCheckForUpdates=true. Results are cached to avoid network
+      calls on every build. This helps SDK users stay up-to-date since NuGet's
+      SDK resolver doesn't support floating versions or automatic update notifications.
+    -->
+    <EfcptCheckForUpdates Condition="'$(EfcptCheckForUpdates)'==''">false</EfcptCheckForUpdates>
+    <EfcptUpdateCheckCacheHours Condition="'$(EfcptUpdateCheckCacheHours)'==''">24</EfcptUpdateCheckCacheHours>
+    <EfcptForceUpdateCheck Condition="'$(EfcptForceUpdateCheck)'==''">false</EfcptForceUpdateCheck>
 
-      Models project keeps: entity model classes (in Models/ subdirectory)
-      Data project receives: DbContext and configuration classes
+    <!--
+      Split Outputs: separate a primary Models project from a secondary Data project.
+      Enable EfcptSplitOutputs in the Models project (with EfcptEnabled=true) and
+      set EfcptDataProject to the target Data project that should receive DbContext
+      and configuration classes.
+
+      The Models project runs efcpt and generates all files. It keeps the entity
+      model classes (for example, in a Models/ subdirectory), and copies DbContext
+      and configuration classes to the configured Data project.
     -->
     <EfcptSplitOutputs Condition="'$(EfcptSplitOutputs)'==''">false</EfcptSplitOutputs>
     <EfcptDataProject Condition="'$(EfcptDataProject)'==''"></EfcptDataProject>
@@ -72,6 +92,7 @@
     <EfcptApplyMsBuildOverrides Condition="'$(EfcptApplyMsBuildOverrides)'==''">true</EfcptApplyMsBuildOverrides>
 
     <!-- Names section overrides -->
+    <!-- Use RootNamespace if defined, otherwise fall back to project name for zero-config scenarios -->
     <EfcptConfigRootNamespace Condition="'$(EfcptConfigRootNamespace)'=='' and '$(RootNamespace)'!=''">$(RootNamespace)</EfcptConfigRootNamespace>
     <EfcptConfigRootNamespace Condition="'$(EfcptConfigRootNamespace)'==''">$(MSBuildProjectName)</EfcptConfigRootNamespace>
     <EfcptConfigDbContextName Condition="'$(EfcptConfigDbContextName)'==''"></EfcptConfigDbContextName>

@@ -1,0 +1,21 @@
+<Project>
+  <!--
+    JD.Efcpt.Sdk - MSBuild SDK for EF Core Power Tools Build Integration
+
+    This SDK extends Microsoft.NET.Sdk to provide automatic EF Core code generation
+    from DACPAC files, SQL projects, or database connections during build.
+
+    Usage:
+      <Project Sdk="JD.Efcpt.Sdk/1.0.0">
+        <PropertyGroup>
+          <TargetFramework>net8.0</TargetFramework>
+        </PropertyGroup>
+      </Project>
+  -->
+
+  <!-- Import Microsoft.NET.Sdk props first (base .NET SDK) -->
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+
+  <!-- Import our SDK-specific props -->
+  <Import Project="$(MSBuildThisFileDirectory)..\build\JD.Efcpt.Sdk.props" />
+</Project>

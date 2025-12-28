@@ -4,6 +4,12 @@ This directory contains sample projects demonstrating various usage patterns of 
 
 ## Sample Overview
 
+### SDK Mode Samples
+
+| Sample | Description | Key Features |
+|--------|-------------|--------------|
+| [sdk-zero-config](#sdk-zero-config) | JD.Efcpt.Sdk as MSBuild SDK | **Cleanest setup**, SDK-style project |
+
 ### DACPAC Mode Samples
 
 | Sample | SQL SDK / Provider | Key Features |
@@ -60,6 +66,55 @@ Reverse engineers directly from a live database connection.
 ---
 
 ## Sample Details
+
+### sdk-zero-config
+
+**Location:** `sdk-zero-config/`
+
+Demonstrates the **cleanest possible setup** using `JD.Efcpt.Sdk` as an MSBuild SDK instead of a PackageReference. This is the recommended approach for dedicated EF Core model generation projects.
+
+```
+sdk-zero-config/
+├── SdkZeroConfigSample.sln
+├── DatabaseProject/
+│   ├── DatabaseProject.csproj         # Microsoft.Build.Sql project
+│   └── dbo/Tables/*.sql
+└── EntityFrameworkCoreProject/
+    └── EntityFrameworkCoreProject.csproj  # Uses JD.Efcpt.Sdk/1.0.0
+```
+
+**Key Features:**
+- Uses `JD.Efcpt.Sdk` as project SDK (not PackageReference)
+- Extends `Microsoft.NET.Sdk` with EF Core Power Tools integration
+- Automatic SQL project detection via `ProjectReference`
+- Zero configuration required
+
+**Project File:**
+```xml
+<Project Sdk="JD.Efcpt.Sdk/1.0.0">
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\DatabaseProject\DatabaseProject.csproj">
+            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+            <OutputItemType>None</OutputItemType>
+        </ProjectReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.11" />
+    </ItemGroup>
+</Project>
+```
+
+**Build:**
+```bash
+dotnet build sdk-zero-config/SdkZeroConfigSample.sln
+```
+
+---
 
 ### microsoft-build-sql-zero-config
 

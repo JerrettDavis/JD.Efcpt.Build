@@ -1,4 +1,5 @@
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using JD.Efcpt.Build.Tasks.Extensions;
 using Snowflake.Data.Client;
 
@@ -8,9 +9,17 @@ namespace JD.Efcpt.Build.Tasks.Schema.Providers;
 /// Reads schema metadata from Snowflake databases using GetSchema() for standard metadata.
 /// </summary>
 /// <remarks>
+/// <para>
 /// Snowflake's GetSchema() support is limited. This implementation uses what's available
 /// and falls back to INFORMATION_SCHEMA queries when necessary.
+/// </para>
+/// <para>
+/// This class is excluded from code coverage because integration tests require a
+/// LocalStack Pro account with LOCALSTACK_AUTH_TOKEN for Snowflake emulation.
+/// The implementation follows the same patterns as other tested schema readers.
+/// </para>
 /// </remarks>
+[ExcludeFromCodeCoverage]
 internal sealed class SnowflakeSchemaReader : ISchemaReader
 {
     /// <summary>

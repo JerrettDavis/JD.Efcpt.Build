@@ -1,0 +1,14 @@
+<Project>
+  <!--
+    JD.Efcpt.Sdk - MSBuild SDK Targets
+
+    Imports Microsoft.NET.Sdk targets first, then our SDK-specific targets.
+    This ensures our targets run after the standard .NET SDK targets are defined.
+  -->
+
+  <!-- Import Microsoft.NET.Sdk targets first (base .NET SDK) -->
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+
+  <!-- Import our SDK-specific targets -->
+  <Import Project="$(MSBuildThisFileDirectory)..\build\JD.Efcpt.Sdk.targets" />
+</Project>

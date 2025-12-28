@@ -1,3 +1,5 @@
+using JD.Efcpt.Build.Tasks;
+
 namespace JD.Efcpt.Build.Tests.Infrastructure;
 
 internal sealed class TestFolder : IDisposable
@@ -55,22 +57,11 @@ internal static class TestPaths
 
 internal static class TestFileSystem
 {
+    /// <summary>
+    /// Copies an entire directory tree. Delegates to production FileSystemHelpers.
+    /// </summary>
     public static void CopyDirectory(string sourceDir, string destDir)
-    {
-        foreach (var dir in Directory.EnumerateDirectories(sourceDir, "*", SearchOption.AllDirectories))
-        {
-            var rel = Path.GetRelativePath(sourceDir, dir);
-            Directory.CreateDirectory(Path.Combine(destDir, rel));
-        }
-
-        foreach (var file in Directory.EnumerateFiles(sourceDir, "*", SearchOption.AllDirectories))
-        {
-            var rel = Path.GetRelativePath(sourceDir, file);
-            var dest = Path.Combine(destDir, rel);
-            Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
-            File.Copy(file, dest, overwrite: true);
-        }
-    }
+        => FileSystemHelpers.CopyDirectory(sourceDir, destDir);
 
     public static void MakeExecutable(string path)
     {
