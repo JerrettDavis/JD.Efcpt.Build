@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <!-- JD.Efcpt.Build - Automate EF Core model generation from database projects -->
-    <PackageReference Include="JD.Efcpt.Build" Version="*" />
+    <PackageReference Include="JD.Efcpt.Build" Version="[0.1.0,)" />
     
     <!-- EF Core dependencies -->
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.*" />
