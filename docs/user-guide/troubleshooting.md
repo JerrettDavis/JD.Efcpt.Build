@@ -333,6 +333,53 @@ When `EfcptDumpResolvedInputs` is `true`, check `obj/efcpt/resolved-inputs.json`
 3. **Check efcpt-config.json T4 Template Path:**
    - Check `"code-generation": { "t4-template-path": "..." }` setting for a correct path. At generation time, it is relative to Generation output directory.
 
+## Warning and Error Codes
+
+JD.Efcpt.Build uses specific codes for warnings and errors to help identify issues quickly.
+
+### EFCPT001: .NET Framework MSBuild Not Supported
+
+**Type:** Error
+
+**Message:**
+```
+EFCPT001: JD.Efcpt.Build requires .NET Core MSBuild but detected .NET Framework MSBuild
+```
+
+**Cause:**
+JD.Efcpt.Build task assemblies target .NET 8.0+ and cannot run on the .NET Framework MSBuild runtime. This typically occurs when building from older versions of Visual Studio or using legacy build tools.
+
+**Solutions:**
+1. Use Visual Studio 2019 or later with SDK-style projects
+2. Build from command line with `dotnet build`
+3. Set `EfcptEnabled=false` to disable code generation if you only need to compile the project
+
+### EFCPT002: Newer SDK Version Available
+
+**Type:** Warning (opt-in)
+
+**Message:**
+```
+EFCPT002: A newer version of JD.Efcpt.Sdk is available: X.Y.Z (current: A.B.C)
+```
+
+**Cause:**
+When `EfcptCheckForUpdates` is enabled, the build checks NuGet for newer SDK versions. This warning indicates an update is available.
+
+**Solutions:**
+1. Update your project's `Sdk` attribute: `Sdk="JD.Efcpt.Sdk/X.Y.Z"`
+2. Or update `global.json` if using centralized version management:
+   ```json
+   {
+     "msbuild-sdks": {
+       "JD.Efcpt.Sdk": "X.Y.Z"
+     }
+   }
+   ```
+3. To suppress this warning, set `EfcptCheckForUpdates=false`
+
+**Note:** This check is opt-in and disabled by default. Results are cached for 24 hours to minimize network calls.
+
 ## Error Messages
 
 ### "The database provider 'X' is not supported"
