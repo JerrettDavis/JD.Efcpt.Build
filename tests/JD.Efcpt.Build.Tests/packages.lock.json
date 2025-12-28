@@ -49,6 +49,16 @@
           "Microsoft.TestPlatform.TestHost": "18.0.1"
         }
       },
+      "SQLitePCLRaw.bundle_e_sqlite3": {
+        "type": "Direct",
+        "requested": "[2.1.10, )",
+        "resolved": "2.1.10",
+        "contentHash": "UxWuisvZ3uVcVOLJQv7urM/JiQH+v3TmaJc1BLKl5Dxfm/nTzTUrqswCqg/INiYLi61AXnHo1M1JPmPqqLnAdg==",
+        "dependencies": {
+          "SQLitePCLRaw.lib.e_sqlite3": "2.1.10",
+          "SQLitePCLRaw.provider.e_sqlite3": "2.1.10"
+        }
+      },
       "Testcontainers.FirebirdSql": {
         "type": "Direct",
         "requested": "[4.4.0, )",
@@ -310,16 +320,6 @@
         "resolved": "6.0.2",
         "contentHash": "f+pRODTWX7Y67jXO3T5S2dIPZ9qMJNySjlZT/TKmWVNWe19N8jcWmHaqHnnchaq3gxEKv1SWVY5EFzOD06l41w=="
       },
-      "Microsoft.Data.Sqlite": {
-        "type": "Transitive",
-        "resolved": "9.0.1",
-        "contentHash": "9QC3t5ye9eA4y2oX1HR7Dq/dyAIGfQkNWnjy6+IBRCtHibh7zIq2etv8jvYHXMJRy+pbwtD3EVtvnpxfuiYVRA==",
-        "dependencies": {
-          "Microsoft.Data.Sqlite.Core": "9.0.1",
-          "SQLitePCLRaw.bundle_e_sqlite3": "2.1.10",
-          "SQLitePCLRaw.core": "2.1.10"
-        }
-      },
       "Microsoft.Data.Sqlite.Core": {
         "type": "Transitive",
         "resolved": "9.0.1",
@@ -540,15 +540,6 @@
           "Tomlyn.Signed": "0.17.0"
         }
       },
-      "SQLitePCLRaw.bundle_e_sqlite3": {
-        "type": "Transitive",
-        "resolved": "2.1.10",
-        "contentHash": "UxWuisvZ3uVcVOLJQv7urM/JiQH+v3TmaJc1BLKl5Dxfm/nTzTUrqswCqg/INiYLi61AXnHo1M1JPmPqqLnAdg==",
-        "dependencies": {
-          "SQLitePCLRaw.lib.e_sqlite3": "2.1.10",
-          "SQLitePCLRaw.provider.e_sqlite3": "2.1.10"
-        }
-      },
       "SQLitePCLRaw.core": {
         "type": "Transitive",
         "resolved": "2.1.10",
@@ -727,7 +718,7 @@
           "Microsoft.Build.Framework": "[18.0.2, )",
           "Microsoft.Build.Utilities.Core": "[18.0.2, )",
           "Microsoft.Data.SqlClient": "[6.1.3, )",
-          "Microsoft.Data.Sqlite": "[9.0.1, )",
+          "Microsoft.Data.Sqlite.Core": "[9.0.1, )",
           "MySqlConnector": "[2.4.0, )",
           "Npgsql": "[9.0.3, )",
           "Oracle.ManagedDataAccess.Core": "[23.7.0, )",

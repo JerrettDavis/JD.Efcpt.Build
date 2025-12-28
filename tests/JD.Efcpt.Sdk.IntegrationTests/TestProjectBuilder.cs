@@ -163,6 +163,126 @@ public class TestProjectBuilder : IDisposable
     }
 
     /// <summary>
+    /// Runs MSBuild.exe (Framework MSBuild) on the project.
+    /// This tests the Framework MSBuild fallback mechanism.
+    /// </summary>
+    public async Task<BuildResult> BuildWithMSBuildExeAsync(string? additionalArgs = null)
+    {
+        var msbuildPath = FindMSBuildExe();
+        if (msbuildPath == null)
+            throw new InvalidOperationException("MSBuild.exe not found. Visual Studio must be installed.");
+
+        // Find the actual project file
+        var projectFiles = Directory.GetFiles(ProjectDirectory, "*.csproj");
+        if (projectFiles.Length == 0)
+            throw new InvalidOperationException($"No .csproj file found in {ProjectDirectory}");
+
+        var projectFile = projectFiles[0];
+        var args = $"\"{projectFile}\" -restore";
+        if (!string.IsNullOrEmpty(additionalArgs))
+            args += " " + additionalArgs;
+
+        return await RunProcessAsync(msbuildPath, args, ProjectDirectory);
+    }
+
+    /// <summary>
+    /// Checks if MSBuild.exe is available on this machine.
+    /// </summary>
+    public static bool IsMSBuildExeAvailable() => FindMSBuildExe() != null;
+
+    private static string? FindMSBuildExe()
+    {
+        // Common Visual Studio installation paths
+        var vsBasePaths = new[]
+        {
+            @"C:\Program Files\Microsoft Visual Studio",
+            @"C:\Program Files (x86)\Microsoft Visual Studio"
+        };
+
+        var editions = new[] { "Enterprise", "Professional", "Community", "BuildTools" };
+        var years = new[] { "2022", "2019", "18" }; // 18 is VS 2022 preview naming
+
+        foreach (var basePath in vsBasePaths)
+        {
+            if (!Directory.Exists(basePath)) continue;
+
+            foreach (var year in years)
+            {
+                foreach (var edition in editions)
+                {
+                    var msbuildPath = Path.Combine(basePath, year, edition, "MSBuild", "Current", "Bin", "MSBuild.exe");
+                    if (File.Exists(msbuildPath))
+                        return msbuildPath;
+
+                    // Also check amd64 folder
+                    msbuildPath = Path.Combine(basePath, year, edition, "MSBuild", "Current", "Bin", "amd64", "MSBuild.exe");
+                    if (File.Exists(msbuildPath))
+                        return msbuildPath;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private async Task<BuildResult> RunProcessAsync(string fileName, string args, string workingDirectory, int timeoutMs = 300000)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = fileName,
+            Arguments = args,
+            WorkingDirectory = workingDirectory,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        var outputBuilder = new StringBuilder();
+        var errorBuilder = new StringBuilder();
+
+        using var process = new Process { StartInfo = psi };
+
+        process.OutputDataReceived += (_, e) =>
+        {
+            if (e.Data != null)
+                outputBuilder.AppendLine(e.Data);
+        };
+        process.ErrorDataReceived += (_, e) =>
+        {
+            if (e.Data != null)
+                errorBuilder.AppendLine(e.Data);
+        };
+
+        process.Start();
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+
+        using var cts = new CancellationTokenSource(timeoutMs);
+        try
+        {
+            await process.WaitForExitAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            try { process.Kill(entireProcessTree: true); } catch { /* best effort */ }
+            return new BuildResult
+            {
+                ExitCode = -1,
+                Output = outputBuilder.ToString(),
+                Error = errorBuilder + $"\n[TIMEOUT] Process exceeded {timeoutMs / 1000}s timeout and was killed."
+            };
+        }
+
+        return new BuildResult
+        {
+            ExitCode = process.ExitCode,
+            Output = outputBuilder.ToString(),
+            Error = errorBuilder.ToString()
+        };
+    }
+
+    /// <summary>
     /// Gets the list of generated files.
     /// </summary>
     public string[] GetGeneratedFiles()
@@ -182,6 +302,29 @@ public class TestProjectBuilder : IDisposable
     }
 
     /// <summary>
+    /// Adds a property to the project file's PropertyGroup.
+    /// </summary>
+    public void AddProjectProperty(string propertyName, string propertyValue)
+    {
+        var projectFiles = Directory.GetFiles(ProjectDirectory, "*.csproj");
+        if (projectFiles.Length == 0)
+            throw new InvalidOperationException($"No .csproj file found in {ProjectDirectory}");
+
+        var projectFile = projectFiles[0];
+        var content = File.ReadAllText(projectFile);
+
+        // Find the first PropertyGroup and add the property inside it
+        var propertyGroupEnd = content.IndexOf("</PropertyGroup>", StringComparison.OrdinalIgnoreCase);
+        if (propertyGroupEnd < 0)
+            throw new InvalidOperationException("No PropertyGroup found in project file");
+
+        var propertyElement = $"        <{propertyName}>{propertyValue}</{propertyName}>\n    ";
+        content = content.Insert(propertyGroupEnd, propertyElement);
+
+        File.WriteAllText(projectFile, content);
+    }
+
+    /// <summary>
     /// Reads the content of a generated file.
     /// </summary>
     public string ReadGeneratedFile(string relativePath)
@@ -189,7 +332,7 @@ public class TestProjectBuilder : IDisposable
         return File.ReadAllText(Path.Combine(GeneratedDirectory, relativePath));
     }
 
-    private async Task<BuildResult> RunDotnetAsync(string args, string workingDirectory)
+    private async Task<BuildResult> RunDotnetAsync(string args, string workingDirectory, int timeoutMs = 300000)
     {
         var psi = new ProcessStartInfo
         {
@@ -222,7 +365,21 @@ public class TestProjectBuilder : IDisposable
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
 
-        await process.WaitForExitAsync();
+        using var cts = new CancellationTokenSource(timeoutMs);
+        try
+        {
+            await process.WaitForExitAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            try { process.Kill(entireProcessTree: true); } catch { /* best effort */ }
+            return new BuildResult
+            {
+                ExitCode = -1,
+                Output = outputBuilder.ToString(),
+                Error = errorBuilder + $"\n[TIMEOUT] Process exceeded {timeoutMs / 1000}s timeout and was killed."
+            };
+        }
 
         return new BuildResult
         {

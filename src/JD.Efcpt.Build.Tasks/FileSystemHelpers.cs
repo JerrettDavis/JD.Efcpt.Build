@@ -1,3 +1,7 @@
+#if NETFRAMEWORK
+using JD.Efcpt.Build.Tasks.Compatibility;
+#endif
+
 namespace JD.Efcpt.Build.Tasks;
 
 /// <summary>
@@ -25,8 +29,13 @@ internal static class FileSystemHelpers
     /// </remarks>
     public static void CopyDirectory(string sourceDir, string destDir, bool overwrite = true)
     {
+#if NETFRAMEWORK
+        NetFrameworkPolyfills.ThrowIfNull(sourceDir, nameof(sourceDir));
+        NetFrameworkPolyfills.ThrowIfNull(destDir, nameof(destDir));
+#else
         ArgumentNullException.ThrowIfNull(sourceDir);
         ArgumentNullException.ThrowIfNull(destDir);
+#endif
 
         if (!Directory.Exists(sourceDir))
             throw new DirectoryNotFoundException($"Source directory not found: {sourceDir}");
@@ -38,14 +47,22 @@ internal static class FileSystemHelpers
 
         // Create all subdirectories first using LINQ projection for clarity
         var destDirs = Directory.EnumerateDirectories(sourceDir, "*", SearchOption.AllDirectories)
+#if NETFRAMEWORK
+            .Select(dir => Path.Combine(destDir, NetFrameworkPolyfills.GetRelativePath(sourceDir, dir)));
+#else
             .Select(dir => Path.Combine(destDir, Path.GetRelativePath(sourceDir, dir)));
+#endif
 
         foreach (var dir in destDirs)
             Directory.CreateDirectory(dir);
 
         // Copy all files using LINQ projection for clarity
         var fileMappings = Directory.EnumerateFiles(sourceDir, "*", SearchOption.AllDirectories)
+#if NETFRAMEWORK
+            .Select(file => (Source: file, Dest: Path.Combine(destDir, NetFrameworkPolyfills.GetRelativePath(sourceDir, file))));
+#else
             .Select(file => (Source: file, Dest: Path.Combine(destDir, Path.GetRelativePath(sourceDir, file))));
+#endif
 
         foreach (var (source, dest) in fileMappings)
         {

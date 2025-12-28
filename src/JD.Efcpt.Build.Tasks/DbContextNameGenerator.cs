@@ -25,7 +25,11 @@ namespace JD.Efcpt.Build.Tasks;
 /// </list>
 /// </para>
 /// </remarks>
+#if NET7_0_OR_GREATER
 public static partial class DbContextNameGenerator
+#else
+public static class DbContextNameGenerator
+#endif
 {
     private const string DefaultContextName = "MyDbContext";
     private const string ContextSuffix = "Context";
@@ -205,7 +209,7 @@ public static partial class DbContextNameGenerator
             return DefaultContextName;
 
         // Handle dotted namespaces (e.g., "Org.Unit.SystemData" → "SystemData")
-        var dotParts = rawName.Split('.', StringSplitOptions.RemoveEmptyEntries);
+        var dotParts = rawName.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
         var baseName = dotParts.Length > 0 ? dotParts[^1] : rawName;
 
         // Remove digits at the end (common in DACPAC names like "MyDb20251225.dacpac")
@@ -327,6 +331,7 @@ public static partial class DbContextNameGenerator
         return null;
     }
 
+#if NET7_0_OR_GREATER
     [GeneratedRegex(@"[^a-zA-Z]", RegexOptions.Compiled)]
     private static partial Regex NonLetterRegex();
 
@@ -341,4 +346,20 @@ public static partial class DbContextNameGenerator
 
     [GeneratedRegex(@"Data\s+Source\s*=\s*(?<name>[^;]+)", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     private static partial Regex DataSourceKeywordRegex();
+#else
+    private static readonly Regex _nonLetterRegex = new(@"[^a-zA-Z]", RegexOptions.Compiled);
+    private static Regex NonLetterRegex() => _nonLetterRegex;
+
+    private static readonly Regex _trailingDigitsRegex = new(@"\d+$", RegexOptions.Compiled);
+    private static Regex TrailingDigitsRegex() => _trailingDigitsRegex;
+
+    private static readonly Regex _databaseKeywordRegex = new(@"(?:Database|Db)\s*=\s*(?<name>[^;]+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static Regex DatabaseKeywordRegex() => _databaseKeywordRegex;
+
+    private static readonly Regex _initialCatalogKeywordRegex = new(@"Initial\s+Catalog\s*=\s*(?<name>[^;]+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static Regex InitialCatalogKeywordRegex() => _initialCatalogKeywordRegex;
+
+    private static readonly Regex _dataSourceKeywordRegex = new(@"Data\s+Source\s*=\s*(?<name>[^;]+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static Regex DataSourceKeywordRegex() => _dataSourceKeywordRegex;
+#endif
 }

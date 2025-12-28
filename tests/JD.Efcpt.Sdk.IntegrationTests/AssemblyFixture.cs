@@ -79,7 +79,7 @@ public static class AssemblyFixture
         var psi = new ProcessStartInfo
         {
             FileName = "dotnet",
-            Arguments = $"pack \"{projectPath}\" -c Release -o \"{outputPath}\" --no-restore",
+            Arguments = $"pack \"{projectPath}\" -c Release -o \"{outputPath}\"",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
@@ -87,9 +87,23 @@ public static class AssemblyFixture
         };
 
         using var process = Process.Start(psi)!;
-        var output = await process.StandardOutput.ReadToEndAsync();
-        var error = await process.StandardError.ReadToEndAsync();
-        await process.WaitForExitAsync();
+        var outputTask = process.StandardOutput.ReadToEndAsync();
+        var errorTask = process.StandardError.ReadToEndAsync();
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+        try
+        {
+            await process.WaitForExitAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            try { process.Kill(entireProcessTree: true); } catch { /* best effort */ }
+            throw new InvalidOperationException(
+                $"Pack of {Path.GetFileName(projectPath)} timed out after 5 minutes.");
+        }
+
+        var output = await outputTask;
+        var error = await errorTask;
 
         if (process.ExitCode != 0)
         {

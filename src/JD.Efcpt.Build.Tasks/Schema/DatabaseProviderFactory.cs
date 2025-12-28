@@ -6,6 +6,9 @@ using MySqlConnector;
 using Npgsql;
 using Oracle.ManagedDataAccess.Client;
 using Snowflake.Data.Client;
+#if NETFRAMEWORK
+using JD.Efcpt.Build.Tasks.Compatibility;
+#endif
 
 namespace JD.Efcpt.Build.Tasks.Schema;
 
@@ -19,7 +22,11 @@ internal static class DatabaseProviderFactory
     /// </summary>
     public static string NormalizeProvider(string provider)
     {
+#if NETFRAMEWORK
+        NetFrameworkPolyfills.ThrowIfNullOrWhiteSpace(provider, nameof(provider));
+#else
         ArgumentException.ThrowIfNullOrWhiteSpace(provider);
+#endif
 
         return provider.ToLowerInvariant() switch
         {

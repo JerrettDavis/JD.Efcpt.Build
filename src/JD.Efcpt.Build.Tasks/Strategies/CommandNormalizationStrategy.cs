@@ -1,4 +1,7 @@
 using PatternKit.Behavioral.Strategy;
+#if NETFRAMEWORK
+using JD.Efcpt.Build.Tasks.Compatibility;
+#endif
 
 namespace JD.Efcpt.Build.Tasks.Strategies;
 
@@ -21,7 +24,11 @@ internal static class CommandNormalizationStrategy
         Strategy<ProcessCommand, ProcessCommand>.Create()
             // Windows: Wrap .cmd and .bat files with cmd.exe
             .When(static (in cmd)
+#if NETFRAMEWORK
+                => OperatingSystemPolyfill.IsWindows() &&
+#else
                 => OperatingSystem.IsWindows() &&
+#endif
                    (cmd.FileName.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase) ||
                     cmd.FileName.EndsWith(".bat", StringComparison.OrdinalIgnoreCase)))
             .Then(static (in cmd)

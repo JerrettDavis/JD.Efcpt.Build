@@ -34,9 +34,13 @@
                       IncludeAssets="None" />
   </ItemGroup>
 
+  <!--
+    NOTE: We only use buildTransitive/ for the package.
+    NuGet 5.0+ imports buildTransitive/ for ALL consumers (direct and transitive),
+    so there's no point having separate build/ files. The build/ folder is kept in
+    the source for historical reference but is not included in the package.
+  -->
   <ItemGroup>
-    <Content Include="build/JD.Efcpt.Build.props" Pack="true" PackagePath="build" />
-    <Content Include="build/JD.Efcpt.Build.targets" Pack="true" PackagePath="build" />
     <Content Include="buildTransitive/JD.Efcpt.Build.props" Pack="true" PackagePath="buildTransitive" />
     <Content Include="buildTransitive/JD.Efcpt.Build.targets" Pack="true" PackagePath="buildTransitive" />
 
@@ -60,6 +64,10 @@
   <Target Name="IncludeTaskAssembliesInPack" BeforeTargets="_GetPackageFiles">
     <ItemGroup>
       <!-- Include task assemblies in tasks folder to avoid file locking during restore -->
+      <!-- net472 for .NET Framework MSBuild -->
+      <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net472/*.dll" Pack="true" PackagePath="tasks/net472" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net472/JD.Efcpt.Build.Tasks.dll')" />
+      <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net472/*.deps.json" Pack="true" PackagePath="tasks/net472" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net472/JD.Efcpt.Build.Tasks.dll')" />
+      <!-- .NET Core MSBuild targets -->
       <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net8.0/*.dll" Pack="true" PackagePath="tasks/net8.0" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net8.0/JD.Efcpt.Build.Tasks.dll')" />
       <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net8.0/*.deps.json" Pack="true" PackagePath="tasks/net8.0" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net8.0/JD.Efcpt.Build.Tasks.dll')" />
       <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net9.0/*.dll" Pack="true" PackagePath="tasks/net9.0" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net9.0/JD.Efcpt.Build.Tasks.dll')" />
@@ -68,6 +76,7 @@
       <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net10.0/*.deps.json" Pack="true" PackagePath="tasks/net10.0" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net10.0/JD.Efcpt.Build.Tasks.dll')" />
 
       <!-- Include native library runtimes folder for database providers -->
+      <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net472/runtimes/**/*" Pack="true" PackagePath="tasks/net472/runtimes" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net472/runtimes')" />
       <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net8.0/runtimes/**/*" Pack="true" PackagePath="tasks/net8.0/runtimes" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net8.0/runtimes')" />
       <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net9.0/runtimes/**/*" Pack="true" PackagePath="tasks/net9.0/runtimes" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net9.0/runtimes')" />
       <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net10.0/runtimes/**/*" Pack="true" PackagePath="tasks/net10.0/runtimes" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net10.0/runtimes')" />

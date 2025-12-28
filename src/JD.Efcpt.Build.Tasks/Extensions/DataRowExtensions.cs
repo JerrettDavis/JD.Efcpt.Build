@@ -1,4 +1,7 @@
 using System.Data;
+#if NETFRAMEWORK
+using JD.Efcpt.Build.Tasks.Compatibility;
+#endif
 
 namespace JD.Efcpt.Build.Tasks.Extensions;
 
@@ -14,8 +17,12 @@ public static class DataRowExtensions
     /// </summary>
     public static string GetString(this DataRow row, string columnName)
     {
+#if NETFRAMEWORK
+        NetFrameworkPolyfills.ThrowIfNull(row, nameof(row));
+#else
         ArgumentNullException.ThrowIfNull(row);
-        
+#endif
+
         if (string.IsNullOrWhiteSpace(columnName)) throw new ArgumentException("Column name is required.", nameof(columnName));
 
         if (!row.Table.Columns.Contains(columnName))

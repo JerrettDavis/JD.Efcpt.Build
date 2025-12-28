@@ -1,5 +1,8 @@
 using System.IO.Hashing;
 using System.Text;
+#if NETFRAMEWORK
+using JD.Efcpt.Build.Tasks.Compatibility;
+#endif
 
 namespace JD.Efcpt.Build.Tasks.Schema;
 
@@ -65,7 +68,11 @@ internal sealed class SchemaFingerprinter
         }
 
         var hashBytes = hash.GetCurrentHash();
+#if NETFRAMEWORK
+        return NetFrameworkPolyfills.ToHexString(hashBytes);
+#else
         return Convert.ToHexString(hashBytes);
+#endif
     }
 
     private sealed class SchemaHashWriter

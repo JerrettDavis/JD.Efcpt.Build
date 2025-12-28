@@ -1,6 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
+#if !NETFRAMEWORK
 using System.Reflection;
 using System.Runtime.InteropServices;
+#endif
 
 namespace JD.Efcpt.Build.Tasks;
 
@@ -19,18 +21,28 @@ namespace JD.Efcpt.Build.Tasks;
 /// that requires actual native library resolution scenarios which are platform-specific
 /// and only occur during MSBuild task execution.
 /// </para>
+/// <para>
+/// On .NET Framework, native library resolution is handled by the CLR's standard DLL
+/// search order, so this helper is not needed.
+/// </para>
 /// </remarks>
 [ExcludeFromCodeCoverage]
 internal static class NativeLibraryLoader
 {
+#if !NETFRAMEWORK
     private static bool _initialized;
     private static readonly object _lock = new();
+#endif
 
     /// <summary>
     /// Ensures native library resolution is configured for the task assembly.
     /// </summary>
     public static void EnsureInitialized()
     {
+#if NETFRAMEWORK
+        // On .NET Framework, native library resolution is handled by the CLR's standard
+        // DLL search order. The SqlClient SNI.dll is loaded from the GAC or app directory.
+#else
         if (_initialized) return;
 
         lock (_lock)
@@ -50,8 +62,10 @@ internal static class NativeLibraryLoader
 
             _initialized = true;
         }
+#endif
     }
 
+#if !NETFRAMEWORK
     private static IntPtr ResolveNativeLibrary(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
     {
         // Handle SNI library for SQL Server
@@ -133,4 +147,5 @@ internal static class NativeLibraryLoader
         // Unknown platform - return empty string to indicate no native library path available
         return string.Empty;
     }
+#endif
 }
