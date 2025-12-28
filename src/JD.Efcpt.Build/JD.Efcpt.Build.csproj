@@ -35,28 +35,31 @@
   </ItemGroup>
 
   <!--
-    NOTE: We only use buildTransitive/ for the package.
-    NuGet 5.0+ imports buildTransitive/ for ALL consumers (direct and transitive),
-    so there's no point having separate build/ files. The build/ folder is kept in
-    the source for historical reference but is not included in the package.
+    NOTE: We use build/ (not buildTransitive/) so that targets only apply to
+    projects that DIRECTLY reference this package. This prevents transitive
+    consumers (e.g., WebApi referencing DataAccess) from triggering model generation.
+
+    NuGet folder behavior:
+    - build/       -> Only direct PackageReference consumers
+    - buildTransitive/ -> ALL consumers (direct and transitive)
   -->
   <ItemGroup>
-    <Content Include="buildTransitive/JD.Efcpt.Build.props" Pack="true" PackagePath="buildTransitive" />
-    <Content Include="buildTransitive/JD.Efcpt.Build.targets" Pack="true" PackagePath="buildTransitive" />
+    <Content Include="buildTransitive/JD.Efcpt.Build.props" Pack="true" PackagePath="build" />
+    <Content Include="buildTransitive/JD.Efcpt.Build.targets" Pack="true" PackagePath="build" />
 
     <None Include="../../README.md" Pack="true" PackagePath="" />
     <None Include="../../QUICKSTART.md" Pack="true" PackagePath="" />
     <None Update="defaults/Template/CodeTemplates/EfCore/net1000/DbContext.t4">
       <Pack>true</Pack>
-      <PackagePath>buildTransitive/Defaults</PackagePath>
+      <PackagePath>build/Defaults</PackagePath>
     </None>
     <None Update="defaults/Template/CodeTemplates/EfCore/net1000/EntityType.t4">
       <Pack>true</Pack>
-      <PackagePath>buildTransitive/Defaults</PackagePath>
+      <PackagePath>build/Defaults</PackagePath>
     </None>
     <None Update="defaults/Template/CodeTemplates/EfCore/net1000/EntityTypeConfiguration.t4">
       <Pack>true</Pack>
-      <PackagePath>buildTransitive/Defaults</PackagePath>
+      <PackagePath>build/Defaults</PackagePath>
     </None>
   </ItemGroup>
 
@@ -84,7 +87,7 @@
   </Target>
 
   <ItemGroup>
-    <None Include="defaults/**/*.*" Pack="true" PackagePath="buildTransitive/Defaults" />
+    <None Include="defaults/**/*.*" Pack="true" PackagePath="build/Defaults" />
   </ItemGroup>
 
 </Project>
