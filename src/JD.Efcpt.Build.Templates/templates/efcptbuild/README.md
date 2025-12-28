@@ -61,7 +61,7 @@ For more information, see:
 - EF Core Power Tools CLI (installed automatically on .NET 10+)
 - A SQL Server Database Project (Microsoft.Build.Sql or MSBuild.Sdk.SqlProj)
 
-For .NET 8-9, install the EF Core Power Tools CLI:
+For .NET 8.0-9.0, install the EF Core Power Tools CLI:
 
 ```bash
 dotnet tool install --global ErikEJ.EFCorePowerTools.Cli --version "10.*"
