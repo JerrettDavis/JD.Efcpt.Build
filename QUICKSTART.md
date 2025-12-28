@@ -7,11 +7,13 @@
 # Install template (one-time)
 dotnet new install JD.Efcpt.Build.Templates
 
-# Create new project
+# Create new SDK project
 dotnet new efcptbuild --name MyDataProject
 cd MyDataProject
 dotnet build
 ```
+
+The template creates a project using JD.Efcpt.Sdk for the simplest setup.
 
 ### Option 1: Quick Start (Global Tool)
 ```bash

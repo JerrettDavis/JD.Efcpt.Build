@@ -1,24 +1,24 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<!--
+  JD.Efcpt.Sdk Project Template
+  
+  This project uses JD.Efcpt.Sdk to automatically generate EF Core models from a database project.
+  
+  The SDK:
+  - Extends Microsoft.NET.Sdk with EF Core Power Tools integration
+  - Automatically detects the SQL project via ProjectReference
+  - Builds the SQL project to DACPAC and generates EF Core models
+  
+  No JD.Efcpt.Build PackageReference needed - the SDK handles everything!
+-->
+<Project Sdk="JD.Efcpt.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <!-- JD.Efcpt.Build - Automate EF Core model generation from database projects -->
-    <PackageReference Include="JD.Efcpt.Build" Version="[0.1.0,)" />
-    
-    <!-- EF Core dependencies -->
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.*" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.*">
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.*" />
-  </ItemGroup>
-
   <!--
-    Optional: Reference your SQL Server Database Project
+    Reference your SQL Server Database Project for automatic DACPAC generation
     
     <ItemGroup>
       <ProjectReference Include="..\YourDatabase\YourDatabase.sqlproj">
@@ -36,6 +36,12 @@
       </ProjectReference>
     </ItemGroup>
   -->
+
+  <!-- EF Core packages for runtime -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.*" />
+  </ItemGroup>
 
   <!--
     Optional: Override EF Core Power Tools settings

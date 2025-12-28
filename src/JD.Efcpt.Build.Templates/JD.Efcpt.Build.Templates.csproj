@@ -8,8 +8,8 @@
     
     <!-- Package Description -->
     <Title>JD.Efcpt.Build Templates</Title>
-    <Description>Templates for creating projects that use JD.Efcpt.Build to automatically generate EF Core models from database projects. Use 'dotnet new efcptbuild' to create a new project, or select "EF Core Power Tools Project" in Visual Studio's File > New Project dialog.</Description>
-    <PackageTags>dotnet-new;templates;efcore;entity-framework;ef-core-power-tools;efcpt;database-first;code-generation</PackageTags>
+    <Description>Templates for creating projects that use JD.Efcpt.Sdk to automatically generate EF Core models from database projects. Use 'dotnet new efcptbuild' to create a new SDK-based project, or select "EF Core Power Tools SDK Project" in Visual Studio's File > New Project dialog.</Description>
+    <PackageTags>dotnet-new;templates;efcore;entity-framework;ef-core-power-tools;efcpt;database-first;code-generation;sdk</PackageTags>
     <PackageProjectUrl>https://github.com/jerrettdavis/JD.Efcpt.Build</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jerrettdavis/JD.Efcpt.Build</RepositoryUrl>
     <RepositoryType>git</RepositoryType>

@@ -1,6 +1,6 @@
 # Template Usage Sample
 
-This directory demonstrates how to use the JD.Efcpt.Build.Templates package to create new projects.
+This directory demonstrates how to use the JD.Efcpt.Build.Templates package to create new SDK-based projects.
 
 ## Installation
 
@@ -14,14 +14,14 @@ dotnet new install JD.Efcpt.Build.Templates
 
 ### Command Line
 
-Create a new EF Core Power Tools project:
+Create a new EF Core Power Tools SDK project:
 
 ```bash
 dotnet new efcptbuild --name MyDataProject
 ```
 
 This creates a new project with:
-- Pre-configured JD.Efcpt.Build package reference
+- JD.Efcpt.Sdk as the project SDK
 - EF Core dependencies
 - Sample efcpt-config.json with best practices
 - README with next steps
@@ -30,7 +30,7 @@ This creates a new project with:
 
 1. Open Visual Studio
 2. Go to **File > New > Project**
-3. Search for **"EF Core Power Tools Project"**
+3. Search for **"EF Core Power Tools SDK Project"**
 4. Select the template and configure your project name and location
 5. Click **Create**
 
@@ -38,7 +38,7 @@ This creates a new project with:
 
 The template creates a project with:
 
-- ✅ **JD.Efcpt.Build** package reference for automatic model generation
+- ✅ **JD.Efcpt.Sdk** as the project SDK for cleanest setup
 - ✅ **Entity Framework Core** dependencies (SQL Server provider)
 - ✅ **Sample configuration** (`efcpt-config.json`) with sensible defaults
 - ✅ **Nullable reference types** enabled

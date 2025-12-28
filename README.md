@@ -17,17 +17,19 @@ Choose your integration approach:
 
 ### Option A: Use Project Template (Easiest!)
 
-Create a new project with the template:
+Create a new SDK-based project with the template:
 
 ```bash
 # Install the template package (one-time setup)
 dotnet new install JD.Efcpt.Build.Templates
 
-# Create a new EF Core Power Tools project
+# Create a new EF Core Power Tools SDK project
 dotnet new efcptbuild --name MyEfCoreProject
 ```
 
-Or use Visual Studio: **File > New > Project** and search for **"EF Core Power Tools Project"**
+Or use Visual Studio: **File > New > Project** and search for **"EF Core Power Tools SDK Project"**
+
+The template creates a project using `JD.Efcpt.Sdk` for the simplest, cleanest setup.
 
 ### Option B: SDK Approach (Recommended for new projects)
 
@@ -75,7 +77,7 @@ This project provides three NuGet packages:
 |---------|---------|-------|
 | **[JD.Efcpt.Build](https://www.nuget.org/packages/JD.Efcpt.Build/)** | Main package for MSBuild integration | Add as `PackageReference` to existing projects |
 | **[JD.Efcpt.Sdk](https://www.nuget.org/packages/JD.Efcpt.Sdk/)** | SDK package for cleanest setup | Use as project SDK: `<Project Sdk="JD.Efcpt.Sdk">` |
-| **[JD.Efcpt.Build.Templates](https://www.nuget.org/packages/JD.Efcpt.Build.Templates/)** | Project templates for `dotnet new` | Install once: `dotnet new install JD.Efcpt.Build.Templates` |
+| **[JD.Efcpt.Build.Templates](https://www.nuget.org/packages/JD.Efcpt.Build.Templates/)** | Project templates for `dotnet new` | Install once: `dotnet new install JD.Efcpt.Build.Templates` <br/> Creates SDK-based projects |
 
 ---
 
@@ -211,13 +213,13 @@ dotnet new install JD.Efcpt.Build.Templates
 dotnet new efcptbuild --name MyDataProject
 ```
 
-This creates a fully configured project with:
-- JD.Efcpt.Build package reference
+This creates a fully configured SDK project with:
+- JD.Efcpt.Sdk as the project SDK (cleanest setup)
 - EF Core dependencies
 - Sample `efcpt-config.json` with best practices
 - Helpful README with next steps
 
-**Visual Studio users:** After installing the templates, you can create new projects via **File > New > Project** and search for **"EF Core Power Tools Project"**.
+**Visual Studio users:** After installing the templates, you can create new projects via **File > New > Project** and search for **"EF Core Power Tools SDK Project"**.
 
 ### Manual Installation
 

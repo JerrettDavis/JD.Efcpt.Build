@@ -3,8 +3,8 @@
   "author": "Jerrett Davis",
   "classifications": [ "Database", "EntityFramework", "EFCore" ],
   "identity": "JD.Efcpt.Build.Project",
-  "name": "EF Core Power Tools Project",
-  "description": "A project that uses JD.Efcpt.Build to automatically generate EF Core models from a database project during build",
+  "name": "EF Core Power Tools SDK Project",
+  "description": "A project that uses JD.Efcpt.Sdk to automatically generate EF Core models from a database project during build",
   "shortName": "efcptbuild",
   "tags": {
     "language": "C#",

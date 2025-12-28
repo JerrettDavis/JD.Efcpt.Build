@@ -1,6 +1,14 @@
 # EfcptProject
 
-This project uses **JD.Efcpt.Build** to automatically generate Entity Framework Core models from a database project during build.
+This project uses **JD.Efcpt.Sdk** to automatically generate Entity Framework Core models from a database project during build.
+
+## What is JD.Efcpt.Sdk?
+
+JD.Efcpt.Sdk is an MSBuild SDK that:
+- Extends Microsoft.NET.Sdk with EF Core Power Tools integration
+- Automatically detects your SQL project via ProjectReference
+- Builds the SQL project to DACPAC and generates EF Core models
+- Requires minimal configuration for a clean, simple setup
 
 ## Getting Started
 
@@ -52,6 +60,7 @@ Edit `efcpt-config.json` to customize:
 
 For more information, see:
 - [JD.Efcpt.Build Documentation](https://github.com/jerrettdavis/JD.Efcpt.Build)
+- [SDK Documentation](https://github.com/jerrettdavis/JD.Efcpt.Build/blob/main/docs/user-guide/sdk.md)
 - [Quick Start Guide](https://github.com/jerrettdavis/JD.Efcpt.Build#-quick-start)
 - [Configuration Options](https://github.com/jerrettdavis/JD.Efcpt.Build#%EF%B8%8F-configuration)
 
