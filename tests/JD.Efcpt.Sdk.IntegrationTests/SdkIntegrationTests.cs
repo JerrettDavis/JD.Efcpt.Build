@@ -326,7 +326,7 @@ public class BuildPackageTests : IDisposable
 
     /// <summary>
     /// CRITICAL REGRESSION TEST: Verifies that EfcptEnabled defaults to true for PackageReference consumers.
-    /// NuGet 5.0+ imports buildTransitive/ for ALL consumers, so we enable by default.
+    /// We use build/ (not buildTransitive/) so targets only apply to direct consumers.
     /// </summary>
     [Fact]
     public async Task BuildPackage_DefaultEnablesEfcpt()

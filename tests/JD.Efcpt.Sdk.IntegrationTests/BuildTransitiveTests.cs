@@ -5,7 +5,8 @@ using Xunit;
 namespace JD.Efcpt.Sdk.IntegrationTests;
 
 /// <summary>
-/// Tests that verify the buildTransitive content is correctly packaged in the SDK.
+/// Tests that verify the build folder content is correctly packaged in the SDK.
+/// We use build/ (not buildTransitive/) so targets only apply to direct consumers.
 /// </summary>
 [Collection("Package Content Tests")]
 public class BuildTransitiveTests
@@ -46,24 +47,25 @@ public class BuildTransitiveTests
     }
 
     [Fact]
-    public void SdkPackage_ContainsBuildTransitiveFolder()
+    public void SdkPackage_ContainsSharedBuildProps()
     {
         var entries = GetPackageEntries(_fixture.SdkPackagePath);
-        entries.Should().Contain(e => e.StartsWith("buildTransitive/"), "SDK package should contain buildTransitive folder");
+        entries.Should().Contain("build/JD.Efcpt.Build.props", "SDK package should contain shared build props in build folder");
     }
 
     [Fact]
-    public void SdkPackage_ContainsBuildTransitiveProps()
+    public void SdkPackage_ContainsSharedBuildTargets()
     {
         var entries = GetPackageEntries(_fixture.SdkPackagePath);
-        entries.Should().Contain("buildTransitive/JD.Efcpt.Build.props", "SDK package should contain buildTransitive props");
+        entries.Should().Contain("build/JD.Efcpt.Build.targets", "SDK package should contain shared build targets in build folder");
     }
 
     [Fact]
-    public void SdkPackage_ContainsBuildTransitiveTargets()
+    public void SdkPackage_DoesNotContainBuildTransitiveFolder()
     {
         var entries = GetPackageEntries(_fixture.SdkPackagePath);
-        entries.Should().Contain("buildTransitive/JD.Efcpt.Build.targets", "SDK package should contain buildTransitive targets");
+        entries.Should().NotContain(e => e.StartsWith("buildTransitive/"),
+            "SDK package should NOT contain buildTransitive folder - we use build/ to prevent transitive propagation");
     }
 
     [Fact]
@@ -119,76 +121,77 @@ public class BuildTransitiveTests
     }
 
     /// <summary>
-    /// Verifies that the Build package does NOT have a build/ folder.
-    /// NuGet 5.0+ imports buildTransitive/ for all consumers (direct and transitive),
-    /// so there's no point having a separate build/ folder.
+    /// Verifies that the Build package has a build/ folder.
+    /// We use build/ (not buildTransitive/) so targets only apply to direct consumers,
+    /// preventing transitive propagation to projects that reference our consumers.
     /// </summary>
     [Fact]
-    public void BuildPackage_DoesNotContainBuildFolder()
+    public void BuildPackage_ContainsBuildFolder()
     {
         var entries = GetPackageEntries(_fixture.BuildPackagePath);
-        entries.Should().NotContain(e => e.StartsWith("build/"),
-            "Build package should not contain build folder - only buildTransitive is needed");
+        entries.Should().Contain(e => e.StartsWith("build/"),
+            "Build package should contain build folder for direct consumers only");
     }
 
     [Fact]
-    public void BuildPackage_ContainsBuildTransitiveFolder()
+    public void BuildPackage_DoesNotContainBuildTransitiveFolder()
     {
         var entries = GetPackageEntries(_fixture.BuildPackagePath);
-        entries.Should().Contain(e => e.StartsWith("buildTransitive/"), "Build package should contain buildTransitive folder");
+        entries.Should().NotContain(e => e.StartsWith("buildTransitive/"),
+            "Build package should NOT contain buildTransitive folder - we use build/ to prevent transitive propagation");
     }
 
     [Fact]
-    public void SdkAndBuildPackages_HaveMatchingBuildTransitiveContent()
+    public void SdkAndBuildPackages_HaveMatchingSharedBuildContent()
     {
-        var sdkEntries = GetPackageEntries(_fixture.SdkPackagePath)
-            .Where(e => e.StartsWith("buildTransitive/") && !e.EndsWith("/"))
-            .Select(e => e.Replace("buildTransitive/", ""))
+        // Get shared build content from SDK (JD.Efcpt.Build.props and JD.Efcpt.Build.targets)
+        var sdkSharedEntries = GetPackageEntries(_fixture.SdkPackagePath)
+            .Where(e => e.StartsWith("build/JD.Efcpt.Build.") && !e.EndsWith("/"))
+            .Select(e => e.Replace("build/", ""))
             .ToHashSet();
 
         var buildEntries = GetPackageEntries(_fixture.BuildPackagePath)
-            .Where(e => e.StartsWith("buildTransitive/") && !e.EndsWith("/"))
-            .Select(e => e.Replace("buildTransitive/", ""))
+            .Where(e => e.StartsWith("build/JD.Efcpt.Build.") && !e.EndsWith("/"))
+            .Select(e => e.Replace("build/", ""))
             .ToHashSet();
 
-        // SDK and Build should have matching buildTransitive content
-        sdkEntries.Should().BeEquivalentTo(buildEntries,
-            "SDK and Build packages should have matching buildTransitive content");
+        // SDK and Build should have matching shared build content
+        sdkSharedEntries.Should().BeEquivalentTo(buildEntries,
+            "SDK and Build packages should have matching shared build content (JD.Efcpt.Build.props/targets)");
     }
 
     /// <summary>
-    /// CRITICAL REGRESSION TEST: Verifies buildTransitive/JD.Efcpt.Build.props enables by default.
-    /// NuGet 5.0+ imports buildTransitive/ for ALL consumers (direct and transitive),
-    /// so we enable by default and let users disable if needed.
+    /// CRITICAL REGRESSION TEST: Verifies build/JD.Efcpt.Build.props enables by default.
+    /// We enable by default for direct consumers and let users disable if needed.
     /// </summary>
     [Fact]
-    public void BuildPackage_BuildTransitivePropsEnablesByDefault()
+    public void BuildPackage_BuildPropsEnablesByDefault()
     {
         // Arrange & Act
-        var propsContent = GetFileContentFromPackage(_fixture.BuildPackagePath, "buildTransitive/JD.Efcpt.Build.props");
+        var propsContent = GetFileContentFromPackage(_fixture.BuildPackagePath, "build/JD.Efcpt.Build.props");
 
         // Assert - Must enable EfcptEnabled by default
         propsContent.Should().Contain("EfcptEnabled",
-            "buildTransitive/*.props must define EfcptEnabled property");
+            "build/*.props must define EfcptEnabled property");
         // The pattern should enable by default: <EfcptEnabled Condition="'$(EfcptEnabled)'==''">true</EfcptEnabled>
         propsContent.Should().Contain(">true</EfcptEnabled>",
-            "EfcptEnabled should default to true for all consumers");
+            "EfcptEnabled should default to true for direct consumers");
     }
 
     /// <summary>
-    /// CRITICAL REGRESSION TEST: Verifies buildTransitive/JD.Efcpt.Build.targets has task registrations.
+    /// CRITICAL REGRESSION TEST: Verifies build/JD.Efcpt.Build.targets has task registrations.
     /// </summary>
     [Fact]
-    public void BuildPackage_BuildTransitiveTargetsHasTaskRegistrations()
+    public void BuildPackage_BuildTargetsHasTaskRegistrations()
     {
         // Arrange & Act
-        var targetsContent = GetFileContentFromPackage(_fixture.BuildPackagePath, "buildTransitive/JD.Efcpt.Build.targets");
+        var targetsContent = GetFileContentFromPackage(_fixture.BuildPackagePath, "build/JD.Efcpt.Build.targets");
 
         // Assert - Must have UsingTask elements
         targetsContent.Should().Contain("UsingTask",
-            "buildTransitive/*.targets must register tasks with UsingTask");
+            "build/*.targets must register tasks with UsingTask");
         targetsContent.Should().Contain("JD.Efcpt.Build.Tasks",
-            "buildTransitive/*.targets must reference JD.Efcpt.Build.Tasks assembly");
+            "build/*.targets must reference JD.Efcpt.Build.Tasks assembly");
     }
 
     /// <summary>
@@ -198,7 +201,7 @@ public class BuildTransitiveTests
     public void BuildPackage_TaskAssemblyPathUsesMSBuildThisFileDirectory()
     {
         // Arrange & Act
-        var targetsContent = GetFileContentFromPackage(_fixture.BuildPackagePath, "buildTransitive/JD.Efcpt.Build.targets");
+        var targetsContent = GetFileContentFromPackage(_fixture.BuildPackagePath, "build/JD.Efcpt.Build.targets");
 
         // Assert - Task assembly path must be relative to the targets file
         targetsContent.Should().Contain("$(MSBuildThisFileDirectory)",
