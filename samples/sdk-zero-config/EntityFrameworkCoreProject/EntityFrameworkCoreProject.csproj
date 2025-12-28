@@ -1,0 +1,34 @@
+<!--
+  JD.Efcpt.Sdk Sample: Zero-Configuration with MSBuild SDK
+
+  This sample demonstrates the simplest possible setup using JD.Efcpt.Sdk.
+  Just set the Sdk attribute on the Project element and you're done!
+
+  The SDK:
+  - Extends Microsoft.NET.Sdk with EF Core Power Tools integration
+  - Automatically detects the SQL project via ProjectReference
+  - Builds the SQL project to DACPAC and generates EF Core models
+
+  No PackageReference needed - the SDK handles everything!
+-->
+<Project Sdk="JD.Efcpt.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <!-- Reference the SQL project for automatic DACPAC generation -->
+    <ItemGroup>
+        <ProjectReference Include="..\DatabaseProject\DatabaseProject.csproj">
+            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+            <OutputItemType>None</OutputItemType>
+        </ProjectReference>
+    </ItemGroup>
+
+    <!-- EF Core packages for runtime -->
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.11" />
+    </ItemGroup>
+</Project>

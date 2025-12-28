@@ -178,26 +178,7 @@ public sealed class StageEfcptInputs : Task
     }
 
     private static void CopyDirectory(string sourceDir, string destDir)
-    {
-        if (Directory.Exists(destDir))
-            Directory.Delete(destDir, recursive: true);
-
-        Directory.CreateDirectory(destDir);
-
-        foreach (var dir in Directory.EnumerateDirectories(sourceDir, "*", SearchOption.AllDirectories))
-        {
-            var rel = Path.GetRelativePath(sourceDir, dir);
-            Directory.CreateDirectory(Path.Combine(destDir, rel));
-        }
-
-        foreach (var file in Directory.EnumerateFiles(sourceDir, "*", SearchOption.AllDirectories))
-        {
-            var rel = Path.GetRelativePath(sourceDir, file);
-            var dest = Path.Combine(destDir, rel);
-            Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
-            File.Copy(file, dest, overwrite: true);
-        }
-    }
+        => FileSystemHelpers.CopyDirectory(sourceDir, destDir);
 
     private static string Full(string p) => Path.GetFullPath(p.Trim());
 

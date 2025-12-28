@@ -334,16 +334,16 @@ public sealed class ApplyConfigOverrides : Task
     #region Helpers
 
     private static string? NullIfEmpty(string value) =>
-        string.IsNullOrWhiteSpace(value) ? null : value;
+        MsBuildPropertyHelpers.NullIfEmpty(value);
 
     private static bool? ParseBoolOrNull(string value) =>
-        string.IsNullOrWhiteSpace(value) ? null : value.IsTrue();
+        MsBuildPropertyHelpers.ParseBoolOrNull(value);
 
     private static bool HasAnyValue(params string?[] values) =>
-        values.Any(v => v is not null);
+        MsBuildPropertyHelpers.HasAnyValue(values);
 
     private static bool HasAnyValue(params bool?[] values) =>
-        values.Any(v => v.HasValue);
+        MsBuildPropertyHelpers.HasAnyValue(values);
 
     #endregion
 }

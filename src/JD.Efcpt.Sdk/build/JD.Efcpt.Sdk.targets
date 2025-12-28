@@ -1,0 +1,11 @@
+<Project>
+  <!--
+    JD.Efcpt.Sdk Targets
+
+    This file imports the shared target definitions from buildTransitive.
+    The buildTransitive folder contains the actual EFCPT build targets and tasks.
+  -->
+
+  <!-- Import the shared targets (same as JD.Efcpt.Build uses) -->
+  <Import Project="$(MSBuildThisFileDirectory)..\buildTransitive\JD.Efcpt.Build.targets" />
+</Project>

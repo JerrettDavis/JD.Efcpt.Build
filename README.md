@@ -13,7 +13,22 @@ Automate database-first EF Core model generation as part of your build pipeline.
 
 ## 🚀 Quick Start
 
-### Install (2 steps, 30 seconds)
+Choose your integration approach:
+
+### Option A: SDK Approach (Recommended for new projects)
+
+Use the SDK in your project file:
+
+```xml
+<Project Sdk="JD.Efcpt.Sdk/1.0.0">
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+    </PropertyGroup>
+    <!-- ProjectReference to your SQL project -->
+</Project>
+```
+
+### Option B: PackageReference Approach
 
 **Step 1:** Add the NuGet package to your application project / class library:
 
@@ -29,7 +44,7 @@ dotnet build
 
 **That's it!** Your EF Core DbContext and entities are now automatically generated from your database project during every build.
 
-> **✨ .NET 8 and 9 Users must install the `ErikEJ.EFCorePowerTools.Cli` tool in advance:** 
+> **✨ .NET 8 and 9 Users must install the `ErikEJ.EFCorePowerTools.Cli` tool in advance:**
 
 ```bash
 dotnet tool install --global ErikEJ.EFCorePowerTools.Cli --version "8.*"
@@ -42,6 +57,7 @@ dotnet tool install --global ErikEJ.EFCorePowerTools.Cli --version "9.*"
 
 - [Overview](#-overview)
 - [Quick Start](#-quick-start)
+- [SDK vs PackageReference](#-sdk-vs-packagereference)
 - [Features](#-features)
 - [Installation](#-installation)
 - [Minimal Usage Example](#-minimal-usage-example)
@@ -75,6 +91,47 @@ The package orchestrates a MSBuild pipeline with these stages:
 4. **Fingerprint** - Detect if regeneration is needed
 5. **Generate** - Run `efcpt` to create EF Core models
 6. **Compile** - Add generated `.g.cs` files to build
+
+---
+
+## 📦 SDK vs PackageReference
+
+JD.Efcpt.Build offers two integration approaches:
+
+### JD.Efcpt.Sdk (SDK Approach)
+
+Use the SDK when you want the **cleanest possible setup**:
+
+```xml
+<Project Sdk="JD.Efcpt.Sdk/1.0.0">
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+    </PropertyGroup>
+</Project>
+```
+
+**Best for:**
+- Dedicated EF Core model generation projects
+- The simplest, cleanest project files
+
+### JD.Efcpt.Build (PackageReference Approach)
+
+Use the PackageReference when adding to an **existing project**:
+
+```xml
+<ItemGroup>
+  <PackageReference Include="JD.Efcpt.Build" Version="1.0.0" />
+</ItemGroup>
+```
+
+**Best for:**
+- Adding EF Core generation to existing projects
+- Projects already using custom SDKs
+- Version management via Directory.Build.props
+
+Both approaches provide **identical features** - choose based on your project structure.
+
+See the [SDK documentation](docs/user-guide/sdk.md) for detailed guidance.
 
 ---
 

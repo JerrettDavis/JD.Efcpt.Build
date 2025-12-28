@@ -1,0 +1,104 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <IsPackable>true</IsPackable>
+
+    <!-- Package Identity -->
+    <PackageId>JD.Efcpt.Sdk</PackageId>
+    <Authors>Jerrett Davis</Authors>
+    <Company>JDH Productions</Company>
+
+    <!-- Package Description -->
+    <Title>MSBuild SDK for EF Core Power Tools</Title>
+    <Description>MSBuild SDK for EF Core Power Tools CLI integration. Use as a project SDK for the simplest setup: &lt;Project Sdk="JD.Efcpt.Sdk/1.0.0"&gt;. Automate database-first EF Core model generation as part of your build pipeline with zero configuration.</Description>
+    <PackageTags>efcore;entity-framework;ef-core-power-tools;efcpt;msbuild;msbuild-sdk;sdk;database-first;code-generation;dacpac;sqlproj;ci-cd</PackageTags>
+    <PackageProjectUrl>https://github.com/jerrettdavis/JD.Efcpt.Build</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jerrettdavis/JD.Efcpt.Build</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+
+    <!-- Build Configuration -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <NoWarn>$(NoWarn);NU5128;NU5100;NU5129</NoWarn>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!-- Reference JD.Efcpt.Build.Tasks to ensure it's built before packing -->
+  <ItemGroup>
+    <ProjectReference Include="../JD.Efcpt.Build.Tasks/JD.Efcpt.Build.Tasks.csproj"
+                      ReferenceOutputAssembly="false"
+                      PrivateAssets="All"
+                      IncludeAssets="None" />
+  </ItemGroup>
+
+  <!-- SDK entry points (required for MSBuild SDK resolution) -->
+  <ItemGroup>
+    <Content Include="Sdk/Sdk.props" Pack="true" PackagePath="Sdk" />
+    <Content Include="Sdk/Sdk.targets" Pack="true" PackagePath="Sdk" />
+  </ItemGroup>
+
+  <!-- Build folder (SDK-specific wrappers) -->
+  <ItemGroup>
+    <Content Include="build/JD.Efcpt.Sdk.props" Pack="true" PackagePath="build" />
+    <Content Include="build/JD.Efcpt.Sdk.targets" Pack="true" PackagePath="build" />
+  </ItemGroup>
+
+  <!-- Include buildTransitive from JD.Efcpt.Build (shared implementation) -->
+  <ItemGroup>
+    <Content Include="../JD.Efcpt.Build/buildTransitive/JD.Efcpt.Build.props" Pack="true" PackagePath="buildTransitive" />
+    <Content Include="../JD.Efcpt.Build/buildTransitive/JD.Efcpt.Build.targets" Pack="true" PackagePath="buildTransitive" />
+  </ItemGroup>
+
+  <!-- Include defaults folder from JD.Efcpt.Build (shared configs and templates) -->
+  <ItemGroup>
+    <None Include="../JD.Efcpt.Build/defaults/**/*.*" Pack="true" PackagePath="buildTransitive/Defaults" />
+  </ItemGroup>
+
+  <!-- Include README -->
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <!--
+    Generate version file for SDK version check feature.
+    This creates a props file that sets EfcptSdkVersion to the package version.
+  -->
+  <Target Name="GenerateSdkVersionFile" BeforeTargets="_GetPackageFiles">
+    <PropertyGroup>
+      <_SdkVersionPropsContent><![CDATA[<Project>
+  <PropertyGroup>
+    <EfcptSdkVersion>$(PackageVersion)</EfcptSdkVersion>
+  </PropertyGroup>
+</Project>]]></_SdkVersionPropsContent>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(IntermediateOutputPath)JD.Efcpt.Sdk.Version.props"
+                      Lines="$(_SdkVersionPropsContent)"
+                      Overwrite="true" />
+    <ItemGroup>
+      <None Include="$(IntermediateOutputPath)JD.Efcpt.Sdk.Version.props" Pack="true" PackagePath="build" />
+    </ItemGroup>
+  </Target>
+
+  <!-- Collect task assemblies from the referenced project after build -->
+  <Target Name="IncludeTaskAssembliesInPack" BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <!-- Include task assemblies in tasks folder to avoid file locking during restore -->
+      <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net8.0/*.dll" Pack="true" PackagePath="tasks/net8.0" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net8.0/JD.Efcpt.Build.Tasks.dll')" />
+      <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net8.0/*.deps.json" Pack="true" PackagePath="tasks/net8.0" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net8.0/JD.Efcpt.Build.Tasks.dll')" />
+      <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net9.0/*.dll" Pack="true" PackagePath="tasks/net9.0" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net9.0/JD.Efcpt.Build.Tasks.dll')" />
+      <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net9.0/*.deps.json" Pack="true" PackagePath="tasks/net9.0" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net9.0/JD.Efcpt.Build.Tasks.dll')" />
+      <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net10.0/*.dll" Pack="true" PackagePath="tasks/net10.0" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net10.0/JD.Efcpt.Build.Tasks.dll')" />
+      <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net10.0/*.deps.json" Pack="true" PackagePath="tasks/net10.0" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net10.0/JD.Efcpt.Build.Tasks.dll')" />
+
+      <!-- Include native library runtimes folder for database providers -->
+      <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net8.0/runtimes/**/*" Pack="true" PackagePath="tasks/net8.0/runtimes" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net8.0/runtimes')" />
+      <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net9.0/runtimes/**/*" Pack="true" PackagePath="tasks/net9.0/runtimes" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net9.0/runtimes')" />
+      <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net10.0/runtimes/**/*" Pack="true" PackagePath="tasks/net10.0/runtimes" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net10.0/runtimes')" />
+    </ItemGroup>
+  </Target>
+
+</Project>

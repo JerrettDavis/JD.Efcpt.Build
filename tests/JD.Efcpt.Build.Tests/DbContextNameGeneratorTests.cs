@@ -224,4 +224,85 @@ public sealed class DbContextNameGeneratorTests(ITestOutputHelper output) : Tiny
             .Then("ensures Context suffix", result => result == expectedName)
             .AssertPassed();
     }
+
+    [Scenario("Handles names with hyphens")]
+    [Theory]
+    [InlineData("/path/to/my-database.sqlproj", "MyDatabaseContext")]
+    [InlineData("/path/to/test-project-name.csproj", "TestProjectNameContext")]
+    [InlineData("/path/to/sample-db.dacpac", "SampleDbContext")]
+    public async Task Handles_hyphens(string path, string expectedName)
+    {
+        await Given("a path with hyphens", () => path)
+            .When("generating context name from SQL project", DbContextNameGenerator.FromSqlProject)
+            .Then("converts hyphens to PascalCase", result => result == expectedName)
+            .AssertPassed();
+    }
+
+    [Scenario("Handles single character name")]
+    [Theory]
+    [InlineData("/path/to/A.sqlproj", "AContext")]
+    [InlineData("/path/to/x.dacpac", "XContext")]
+    public async Task Handles_single_character_name(string path, string expectedName)
+    {
+        await Given("a path with single character name", () => path)
+            .When("generating context name from SQL project", DbContextNameGenerator.FromSqlProject)
+            .Then("generates valid context name", result => result == expectedName)
+            .AssertPassed();
+    }
+
+    [Scenario("Handles name with only digits")]
+    [Theory]
+    [InlineData("/path/to/12345.sqlproj", "MyDbContext")]
+    [InlineData("/path/to/2024.dacpac", "MyDbContext")]
+    public async Task Handles_only_digits_name(string path, string expectedName)
+    {
+        await Given("a path with only digits", () => path)
+            .When("generating context name from SQL project", DbContextNameGenerator.FromSqlProject)
+            .Then("returns default context name", result => result == expectedName)
+            .AssertPassed();
+    }
+
+    [Scenario("Handles name with special characters only")]
+    [Fact]
+    public async Task Handles_special_characters_only()
+    {
+        await Given("a path with only special characters", () => "/path/to/###.sqlproj")
+            .When("generating context name from SQL project", DbContextNameGenerator.FromSqlProject)
+            .Then("returns default context name", result => result == "MyDbContext")
+            .AssertPassed();
+    }
+
+    [Scenario("Handles mixed underscores and hyphens")]
+    [Theory]
+    [InlineData("/path/to/my_test-database.sqlproj", "MyTestDatabaseContext")]
+    [InlineData("/path/to/sample-db_v2.dacpac", "SampleDbVContext")]
+    public async Task Handles_mixed_separators(string path, string expectedName)
+    {
+        await Given("a path with mixed separators", () => path)
+            .When("generating context name from SQL project", DbContextNameGenerator.FromSqlProject)
+            .Then("converts all to PascalCase", result => result == expectedName)
+            .AssertPassed();
+    }
+
+    [Scenario("Handles Data Source with plain database name")]
+    [Fact]
+    public async Task Handles_data_source_plain_name()
+    {
+        await Given("a connection string with Data Source as plain name", () => "Data Source=mydatabase")
+            .When("generating context name from connection string", DbContextNameGenerator.FromConnectionString)
+            .Then("returns humanized context name", result => result == "MydatabaseContext")
+            .AssertPassed();
+    }
+
+    [Scenario("Handles empty segment in dotted namespace")]
+    [Theory]
+    [InlineData("/path/to/..Database.sqlproj", "DatabaseContext")]
+    [InlineData("/path/to/Org..Database.sqlproj", "DatabaseContext")]
+    public async Task Handles_empty_dotted_segments(string path, string expectedName)
+    {
+        await Given("a path with empty dotted segments", () => path)
+            .When("generating context name from SQL project", DbContextNameGenerator.FromSqlProject)
+            .Then("handles empty segments gracefully", result => result == expectedName)
+            .AssertPassed();
+    }
 }
