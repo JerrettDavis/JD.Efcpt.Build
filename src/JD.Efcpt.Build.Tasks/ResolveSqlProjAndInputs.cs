@@ -301,7 +301,8 @@ public sealed class ResolveSqlProjAndInputs : Task
         var log = new BuildLog(ctx.Logger, "");
 
         // Log runtime context for troubleshooting
-        log.Detail($"MSBuild Runtime: {(Type.GetType("Mono.Runtime") != null ? "Mono" : "Full Framework or Core")}");
+        var runtime = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
+        log.Detail($"MSBuild Runtime: {runtime}");
         log.Detail($"ProjectReferences Count: {ProjectReferences?.Length ?? 0}");
         log.Detail($"SolutionPath: {SolutionPath}");
 
@@ -363,6 +364,9 @@ public sealed class ResolveSqlProjAndInputs : Task
         }
         catch (Exception ex)
         {
+            // Log detailed exception information to help users diagnose SQL project resolution issues.
+            // This is intentionally more verbose than other catch blocks in this file because this
+            // specific failure point is commonly reported by users and requires diagnostic context.
             log.Warn($"SQL project detection failed: {ex.Message}");
             log.Detail($"Exception details: {ex}");
             return null;
