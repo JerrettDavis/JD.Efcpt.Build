@@ -11,6 +11,9 @@ public class TemplateTestFixture : IDisposable
     private static readonly Lazy<Task<string>> _templatePackageTask = new(PackTemplatePackageAsync);
     private static string? _templatePackagePath;
     private static string? _packageOutputPath;
+    private static bool _templateInstalled = false;
+    private static readonly object _installLock = new();
+    private static int _instanceCount = 0;
 
     public string TemplatePackagePath => GetTemplatePackagePath();
     public string PackageOutputPath => GetPackageOutputPath();
@@ -21,8 +24,18 @@ public class TemplateTestFixture : IDisposable
 
     public TemplateTestFixture()
     {
+        var instanceNum = System.Threading.Interlocked.Increment(ref _instanceCount);
+        Console.WriteLine($"TemplateTestFixture instance #{instanceNum} created");
+        
         // Cleanup any previously installed templates to avoid conflicts
-        CleanupInstalledTemplates();
+        // Only do this for the first instance
+        if (instanceNum == 1)
+        {
+            CleanupInstalledTemplates();
+        }
+        
+        // Install the template once for all tests in the collection
+        EnsureTemplateInstalled();
     }
 
     public string GetTestFixturesPath() => AssemblyFixture.TestFixturesPath;
@@ -110,7 +123,38 @@ public class TemplateTestFixture : IDisposable
     }
 
     /// <summary>
+    /// Ensures the template is installed once for all tests.
+    /// </summary>
+    private void EnsureTemplateInstalled()
+    {
+        lock (_installLock)
+        {
+            if (!_templateInstalled)
+            {
+                try
+                {
+                    var result = InstallTemplateAsync(Path.GetTempPath()).GetAwaiter().GetResult();
+                    if (!result.Success)
+                    {
+                        var errorMessage = $"Failed to install template in fixture setup.\nExit Code: {result.ExitCode}\nOutput: {result.Output}\nError: {result.Error}";
+                        Console.WriteLine(errorMessage); // Log to console for debugging
+                        throw new InvalidOperationException(errorMessage);
+                    }
+                    _templateInstalled = true;
+                    Console.WriteLine("Template installed successfully in fixture setup");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Exception during template installation: {ex}");
+                    throw;
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Installs the template package using dotnet new install.
+    /// This is called automatically by the fixture, but can be called directly for testing.
     /// </summary>
     public async Task<TestUtilities.CommandResult> InstallTemplateAsync(string workingDirectory)
     {
@@ -222,6 +266,36 @@ public class TemplateTestFixture : IDisposable
                 foreach (var file in packageFiles)
                 {
                     try { File.Delete(file); } catch { /* best effort */ }
+                }
+            }
+        }
+        catch
+        {
+            // Best effort cleanup
+        }
+
+        // Clear template engine cache to avoid "Sequence contains more than one matching element" errors
+        try
+        {
+            var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var templateCacheDir = Path.Combine(userProfile, ".templateengine");
+            
+            // Delete the template cache content file which can have stale entries
+            var contentFile = Path.Combine(templateCacheDir, "content");
+            if (File.Exists(contentFile))
+            {
+                try { File.Delete(contentFile); } catch { /* best effort */ }
+            }
+
+            // Also try to delete the entire cache directory for a clean slate
+            // This is more aggressive but ensures no stale template registrations
+            var cacheFiles = new[] { "templatecache.json", "settings.json" };
+            foreach (var file in cacheFiles)
+            {
+                var filePath = Path.Combine(templateCacheDir, file);
+                if (File.Exists(filePath))
+                {
+                    try { File.Delete(filePath); } catch { /* best effort */ }
                 }
             }
         }

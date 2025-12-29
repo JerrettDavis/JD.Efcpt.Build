@@ -47,8 +47,7 @@ public class TemplateTests : IDisposable
     [Fact]
     public async Task Template_CreatesProjectWithCorrectStructure()
     {
-        // Arrange
-        await _fixture.InstallTemplateAsync(_testDirectory);
+        // Arrange - template is already installed by fixture
         var projectName = "TestEfcptProject";
 
         // Act
@@ -69,8 +68,7 @@ public class TemplateTests : IDisposable
     [Fact]
     public async Task Template_CreatesProjectUsingSdkApproach()
     {
-        // Arrange
-        await _fixture.InstallTemplateAsync(_testDirectory);
+        // Arrange - template is already installed by fixture
         var projectName = "TestSdkProject";
         await _fixture.CreateProjectFromTemplateAsync(_testDirectory, projectName);
 
@@ -90,8 +88,7 @@ public class TemplateTests : IDisposable
     [Fact]
     public async Task Template_ConfigFileContainsCorrectProjectName()
     {
-        // Arrange
-        await _fixture.InstallTemplateAsync(_testDirectory);
+        // Arrange - template is already installed by fixture
         var projectName = "MyCustomProject";
         await _fixture.CreateProjectFromTemplateAsync(_testDirectory, projectName);
 
@@ -109,8 +106,7 @@ public class TemplateTests : IDisposable
     [Fact]
     public async Task Template_CreatedProjectBuildsSuccessfully()
     {
-        // Arrange
-        await _fixture.InstallTemplateAsync(_testDirectory);
+        // Arrange - template is already installed by fixture
         var projectName = "BuildableProject";
         await _fixture.CreateProjectFromTemplateAsync(_testDirectory, projectName);
 
@@ -176,8 +172,7 @@ public class TemplateTests : IDisposable
     [Fact]
     public async Task Template_ReadmeContainsSdkInformation()
     {
-        // Arrange
-        await _fixture.InstallTemplateAsync(_testDirectory);
+        // Arrange - template is already installed by fixture
         var projectName = "ReadmeTestProject";
         await _fixture.CreateProjectFromTemplateAsync(_testDirectory, projectName);
 
@@ -195,7 +190,7 @@ public class TemplateTests : IDisposable
     [Fact]
     public async Task Template_UninstallsSuccessfully()
     {
-        // Arrange
+        // Arrange - reinstall to test uninstall
         await _fixture.InstallTemplateAsync(_testDirectory);
 
         // Act
@@ -203,6 +198,10 @@ public class TemplateTests : IDisposable
 
         // Assert
         result.Success.Should().BeTrue($"Template uninstallation should succeed.\n{result}");
+        
+        // Reinstall the template so subsequent tests can use it
+        var reinstallResult = await _fixture.InstallTemplateAsync(_testDirectory);
+        reinstallResult.Success.Should().BeTrue("Template should be reinstalled after uninstall test");
     }
 
     private static void CopyDirectory(string sourceDir, string destDir)
