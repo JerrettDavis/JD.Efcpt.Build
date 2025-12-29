@@ -70,7 +70,7 @@ For more information, see:
 
 ## Prerequisites
 
-- .NET SDK net8.0 or later  
+- .NET 8.0 SDK or later  
 - A SQL Server Database Project (Microsoft.Build.Sql, MSBuild.Sdk.SqlProj, or classic SSDT-style)
 - EF Core Power Tools CLI (version 8.* for .NET 8, 9.* for .NET 9, not required for .NET 10+)
 

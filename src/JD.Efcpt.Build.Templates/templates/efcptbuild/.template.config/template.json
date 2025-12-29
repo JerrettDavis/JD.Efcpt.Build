@@ -65,7 +65,7 @@
           },
           {
             "condition": "(Framework == 'net8.0')",
-            "value": "9.0.*"
+            "value": "8.0.*"
           }
         ]
       }
