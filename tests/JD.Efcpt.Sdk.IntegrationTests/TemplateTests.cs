@@ -232,7 +232,7 @@ public class TemplateTests : IDisposable
         using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
         try
         {
-            await process.WaitForExitAsync(cts.Token);
+            await process.WaitForExitAsync(cts.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -241,8 +241,8 @@ public class TemplateTests : IDisposable
                 $"dotnet {arguments} timed out after 5 minutes.");
         }
 
-        var output = await outputTask;
-        var error = await errorTask;
+        var output = await outputTask.ConfigureAwait(false);
+        var error = await errorTask.ConfigureAwait(false);
 
         return new TestUtilities.CommandResult(
             process.ExitCode == 0,

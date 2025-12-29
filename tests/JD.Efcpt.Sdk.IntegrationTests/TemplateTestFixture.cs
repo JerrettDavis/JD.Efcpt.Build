@@ -47,7 +47,7 @@ public class TemplateTestFixture : IDisposable
 
         var templateProject = Path.Combine(RepoRoot, "src", "JD.Efcpt.Build.Templates", "JD.Efcpt.Build.Templates.csproj");
 
-        await PackProjectAsync(templateProject, _packageOutputPath);
+        await PackProjectAsync(templateProject, _packageOutputPath).ConfigureAwait(false);
 
         // Find packaged file
         var templatePackages = Directory.GetFiles(_packageOutputPath, "JD.Efcpt.Build.Templates.*.nupkg");
@@ -64,7 +64,7 @@ public class TemplateTestFixture : IDisposable
         await Task.WhenAll(
             PackProjectAsync(sdkProject, _packageOutputPath),
             PackProjectAsync(buildProject, _packageOutputPath)
-        );
+        ).ConfigureAwait(false);
 
         // Register cleanup on process exit
         AppDomain.CurrentDomain.ProcessExit += (_, _) =>
@@ -94,7 +94,7 @@ public class TemplateTestFixture : IDisposable
         using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
         try
         {
-            await process.WaitForExitAsync(cts.Token);
+            await process.WaitForExitAsync(cts.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -103,8 +103,8 @@ public class TemplateTestFixture : IDisposable
                 $"Pack of {Path.GetFileName(projectPath)} timed out after 5 minutes.");
         }
 
-        var output = await outputTask;
-        var error = await errorTask;
+        var output = await outputTask.ConfigureAwait(false);
+        var error = await errorTask.ConfigureAwait(false);
 
         if (process.ExitCode != 0)
         {
@@ -157,7 +157,7 @@ public class TemplateTestFixture : IDisposable
         using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
         try
         {
-            await process.WaitForExitAsync(cts.Token);
+            await process.WaitForExitAsync(cts.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -165,8 +165,8 @@ public class TemplateTestFixture : IDisposable
             throw new InvalidOperationException($"dotnet new {arguments} timed out after 2 minutes.");
         }
 
-        var output = await outputTask;
-        var error = await errorTask;
+        var output = await outputTask.ConfigureAwait(false);
+        var error = await errorTask.ConfigureAwait(false);
 
         return new TestUtilities.CommandResult(
             process.ExitCode == 0,
@@ -183,5 +183,5 @@ public class TemplateTestFixture : IDisposable
     }
 }
 
-[CollectionDefinition("Template Tests")]
+[CollectionDefinition("Template Tests", DisableParallelization = true)]
 public class TemplateTestCollection : ICollectionFixture<TemplateTestFixture> { }
