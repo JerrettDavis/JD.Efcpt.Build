@@ -6,15 +6,16 @@ This project uses **JD.Efcpt.Sdk** to automatically generate Entity Framework Co
 
 JD.Efcpt.Sdk is an MSBuild SDK that:
 - Extends Microsoft.NET.Sdk with EF Core Power Tools integration
-- Automatically detects your SQL project via ProjectReference
+- Automatically discovers SQL projects in your solution
+- Can use an optional ProjectReference to explicitly specify which database to use
 - Builds the SQL project to DACPAC and generates EF Core models
 - Requires minimal configuration for a clean, simple setup
 
 ## Getting Started
 
-### 1. Add a Database Project Reference
+### 1. (Optional) Add a Database Project Reference
 
-Add a reference to your SQL Server Database Project:
+If you have multiple SQL projects in your solution, or want to be explicit about which database to use, add a reference to your SQL Server Database Project:
 
 ```xml
 <ItemGroup>
@@ -36,6 +37,8 @@ Or for MSBuild.Sdk.SqlProj projects:
 </ItemGroup>
 ```
 
+**Note:** If you have only a single SQL project in your solution, the SDK will automatically discover and use it without requiring an explicit ProjectReference.
+
 ### 2. Build Your Project
 
 ```bash
@@ -43,6 +46,7 @@ dotnet build
 ```
 
 The build process will:
+- Discover SQL projects in your solution
 - Build your database project to a DACPAC
 - Run EF Core Power Tools to generate models
 - Include the generated models in your compilation
@@ -66,12 +70,18 @@ For more information, see:
 
 ## Prerequisites
 
-- .NET 8.0 SDK or later
-- EF Core Power Tools CLI (installed automatically on .NET 10+)
-- A SQL Server Database Project (Microsoft.Build.Sql or MSBuild.Sdk.SqlProj)
+- .NET SDK net8.0 or later
+- A SQL Server Database Project (Microsoft.Build.Sql, MSBuild.Sdk.SqlProj, or classic SSDT-style)
+#if (IsNet8OrNet9)
+- EF Core Power Tools CLI (version 8.*)
 
-For .NET 8.0-9.0, install the EF Core Power Tools CLI:
+Install the EF Core Power Tools CLI:
 
 ```bash
-dotnet tool install --global ErikEJ.EFCorePowerTools.Cli --version "10.*"
+dotnet tool install --global ErikEJ.EFCorePowerTools.Cli --version "8.*"
 ```
+#endif
+#if (IsNet10)
+
+**Note:** EF Core Power Tools CLI is included with .NET 10.0 SDK and does not need to be installed separately.
+#endif

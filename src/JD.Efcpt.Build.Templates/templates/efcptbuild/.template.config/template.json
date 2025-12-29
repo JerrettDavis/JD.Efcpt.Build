@@ -48,12 +48,58 @@
       "defaultValue": "net8.0"
     },
     "EFCoreVersion": {
-      "type": "computed",
-      "value": "(Framework == \"net10.0\" ? \"10.0.*\" : \"9.0.*\")"
+      "type": "generated",
+      "generator": "switch",
+      "replaces": "9.0.*",
+      "parameters": {
+        "evaluator": "C++",
+        "datatype": "string",
+        "cases": [
+          {
+            "condition": "(Framework == 'net10.0')",
+            "value": "10.0.*"
+          },
+          {
+            "condition": "(Framework == 'net9.0')",
+            "value": "9.0.*"
+          },
+          {
+            "condition": "(Framework == 'net8.0')",
+            "value": "9.0.*"
+          }
+        ]
+      }
     },
-    "ToolVersion": {
+    "ToolVersionInfo": {
+      "type": "generated",
+      "generator": "switch",
+      "replaces": "8.*",
+      "parameters": {
+        "evaluator": "C++",
+        "datatype": "string",
+        "cases": [
+          {
+            "condition": "(Framework == 'net10.0')",
+            "value": ""
+          },
+          {
+            "condition": "(Framework == 'net9.0')",
+            "value": "9.*"
+          },
+          {
+            "condition": "(Framework == 'net8.0')",
+            "value": "8.*"
+          }
+        ]
+      }
+    },
+    "IsNet10": {
       "type": "computed",
-      "value": "(Framework == \"net10.0\" ? \"not required\" : (Framework == \"net9.0\" ? \"9.*\" : \"8.*\"))"
+      "value": "(Framework == \"net10.0\")"
+    },
+    "IsNet8OrNet9": {
+      "type": "computed",
+      "value": "(Framework == \"net8.0\" || Framework == \"net9.0\")"
     }
   },
   "primaryOutputs": [
