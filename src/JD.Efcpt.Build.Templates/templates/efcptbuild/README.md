@@ -70,18 +70,18 @@ For more information, see:
 
 ## Prerequisites
 
-- .NET SDK net8.0 or later
+- .NET SDK net8.0 or later  
 - A SQL Server Database Project (Microsoft.Build.Sql, MSBuild.Sdk.SqlProj, or classic SSDT-style)
-#if (IsNet8OrNet9)
-- EF Core Power Tools CLI (version 8.*)
+- EF Core Power Tools CLI (version 8.* for .NET 8, 9.* for .NET 9, not required for .NET 10+)
 
-Install the EF Core Power Tools CLI:
+For .NET 8 or 9, install the EF Core Power Tools CLI:
 
 ```bash
+# For .NET 8
 dotnet tool install --global ErikEJ.EFCorePowerTools.Cli --version "8.*"
-```
-#endif
-#if (IsNet10)
 
-**Note:** EF Core Power Tools CLI is included with .NET 10.0 SDK and does not need to be installed separately.
-#endif
+# For .NET 9
+dotnet tool install --global ErikEJ.EFCorePowerTools.Cli --version "9.*"
+```
+
+**Note:** EF Core Power Tools CLI is included with .NET 10.0 SDK and later.
