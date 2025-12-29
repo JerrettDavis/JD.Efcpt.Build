@@ -26,12 +26,17 @@
   <PropertyGroup>
     <!--
       For .NET Core MSBuild, select task assembly based on MSBuild version:
-      - MSBuild 17.12+ (VS 17.12+, .NET 10 SDK) -> net10.0
-      - MSBuild 17.10+ (VS 17.10+, .NET 9 SDK) -> net9.0
-      - MSBuild 17.8+ (VS 17.8+, .NET 8 SDK) -> net8.0
+      - MSBuild 18.0+ (VS 2026, .NET 10.0.1xx SDK) -> net10.0
+      - MSBuild 17.14+ (VS 2022 17.14+, min VS for .NET 10 SDK) -> net10.0
+      - MSBuild 17.12+ (VS 2022 17.12+, .NET 9.0.1xx SDK) -> net9.0
+      - MSBuild 17.8+ (VS 2022 17.8+, .NET 8.0.1xx SDK) -> net8.0
+      
+      Version mapping reference:
+      https://learn.microsoft.com/en-us/dotnet/core/porting/versioning-sdk-msbuild-vs
     -->
-    <_EfcptTasksFolder Condition="'$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.12'))">net10.0</_EfcptTasksFolder>
-    <_EfcptTasksFolder Condition="'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.10'))">net9.0</_EfcptTasksFolder>
+    <_EfcptTasksFolder Condition="'$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '18.0'))">net10.0</_EfcptTasksFolder>
+    <_EfcptTasksFolder Condition="'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.14'))">net10.0</_EfcptTasksFolder>
+    <_EfcptTasksFolder Condition="'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.12'))">net9.0</_EfcptTasksFolder>
     <_EfcptTasksFolder Condition="'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core'">net8.0</_EfcptTasksFolder>
 
     <!-- For .NET Framework MSBuild (Visual Studio with Framework MSBuild), use net472 -->
