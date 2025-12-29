@@ -25,10 +25,8 @@ public class SdkNet80Tests : IDisposable
         // Arrange
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateSdkProject("TestEfProject_net80", "net8.0");
-        var restoreResult = await _builder.RestoreAsync();
-        restoreResult.Success.Should().BeTrue($"Restore should succeed.\n{restoreResult}");
 
-        // Act
+        // Act - BuildAsync handles restore automatically
         var buildResult = await _builder.BuildAsync();
 
         // Assert
@@ -41,12 +39,12 @@ public class SdkNet80Tests : IDisposable
         // Arrange
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateSdkProject("TestEfProject_net80", "net8.0");
-        await _builder.RestoreAsync();
 
-        // Act
-        await _builder.BuildAsync();
+        // Act - BuildAsync handles restore automatically
+        var buildResult = await _builder.BuildAsync();
 
         // Assert
+        buildResult.Success.Should().BeTrue($"Build should succeed.\n{buildResult}");
         var generatedFiles = _builder.GetGeneratedFiles();
         generatedFiles.Should().NotBeEmpty("Should generate at least one file");
         generatedFiles.Should().Contain(f => f.EndsWith("Product.g.cs"), "Should generate Product entity");
@@ -60,12 +58,12 @@ public class SdkNet80Tests : IDisposable
         // Arrange
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateSdkProject("TestEfProject_net80", "net8.0");
-        await _builder.RestoreAsync();
 
-        // Act
-        await _builder.BuildAsync();
+        // Act - BuildAsync handles restore automatically
+        var buildResult = await _builder.BuildAsync();
 
         // Assert
+        buildResult.Success.Should().BeTrue($"Build should succeed.\n{buildResult}");
         var generatedFiles = _builder.GetGeneratedFiles();
         generatedFiles.Should().Contain(f => f.Contains("Context.g.cs"), "Should generate DbContext");
     }
@@ -76,12 +74,12 @@ public class SdkNet80Tests : IDisposable
         // Arrange
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateSdkProject("TestEfProject_net80", "net8.0");
-        await _builder.RestoreAsync();
 
-        // Act
-        await _builder.BuildAsync();
+        // Act - BuildAsync handles restore automatically
+        var buildResult = await _builder.BuildAsync();
 
         // Assert
+        buildResult.Success.Should().BeTrue($"Build should succeed.\n{buildResult}");
         // By default (without use-t4-split), configurations are embedded in the DbContext
         var generatedFiles = _builder.GetGeneratedFiles();
         var contextFile = generatedFiles.FirstOrDefault(f => f.Contains("Context.g.cs"));
@@ -97,8 +95,8 @@ public class SdkNet80Tests : IDisposable
         // Arrange
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateSdkProject("TestEfProject_clean_net80", "net8.0");
-        await _builder.RestoreAsync();
-        await _builder.BuildAsync();
+        var buildResult = await _builder.BuildAsync();
+        buildResult.Success.Should().BeTrue($"Build should succeed.\n{buildResult}");
 
         // Act
         var cleanResult = await _builder.CleanAsync();
@@ -134,10 +132,8 @@ public class SdkNet90Tests : IDisposable
         // Arrange
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateSdkProject("TestEfProject_net90", "net9.0");
-        var restoreResult = await _builder.RestoreAsync();
-        restoreResult.Success.Should().BeTrue($"Restore should succeed.\n{restoreResult}");
 
-        // Act
+        // Act - BuildAsync handles restore automatically
         var buildResult = await _builder.BuildAsync();
 
         // Assert
@@ -150,12 +146,12 @@ public class SdkNet90Tests : IDisposable
         // Arrange
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateSdkProject("TestEfProject_net90", "net9.0");
-        await _builder.RestoreAsync();
 
-        // Act
-        await _builder.BuildAsync();
+        // Act - BuildAsync handles restore automatically
+        var buildResult = await _builder.BuildAsync();
 
         // Assert
+        buildResult.Success.Should().BeTrue($"Build should succeed.\n{buildResult}");
         var generatedFiles = _builder.GetGeneratedFiles();
         generatedFiles.Should().NotBeEmpty("Should generate at least one file");
         generatedFiles.Should().Contain(f => f.EndsWith("Product.g.cs"), "Should generate Product entity");
@@ -186,10 +182,8 @@ public class SdkNet100Tests : IDisposable
         // Arrange
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateSdkProject("TestEfProject_net100", "net10.0");
-        var restoreResult = await _builder.RestoreAsync();
-        restoreResult.Success.Should().BeTrue($"Restore should succeed.\n{restoreResult}");
 
-        // Act
+        // Act - BuildAsync handles restore automatically
         var buildResult = await _builder.BuildAsync();
 
         // Assert
@@ -202,12 +196,12 @@ public class SdkNet100Tests : IDisposable
         // Arrange
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateSdkProject("TestEfProject_net100", "net10.0");
-        await _builder.RestoreAsync();
 
-        // Act
-        await _builder.BuildAsync();
+        // Act - BuildAsync handles restore automatically
+        var buildResult = await _builder.BuildAsync();
 
         // Assert
+        buildResult.Success.Should().BeTrue($"Build should succeed.\n{buildResult}");
         var generatedFiles = _builder.GetGeneratedFiles();
         generatedFiles.Should().NotBeEmpty("Should generate at least one file");
         generatedFiles.Should().Contain(f => f.EndsWith("Product.g.cs"), "Should generate Product entity");
@@ -238,10 +232,8 @@ public class BuildPackageTests : IDisposable
         // Arrange
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_net80_pkg", "net8.0");
-        var restoreResult = await _builder.RestoreAsync();
-        restoreResult.Success.Should().BeTrue($"Restore should succeed.\n{restoreResult}");
 
-        // Act
+        // Act - BuildAsync handles restore automatically
         var buildResult = await _builder.BuildAsync();
 
         // Assert
@@ -254,10 +246,8 @@ public class BuildPackageTests : IDisposable
         // Arrange
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_net90_pkg", "net9.0");
-        var restoreResult = await _builder.RestoreAsync();
-        restoreResult.Success.Should().BeTrue($"Restore should succeed.\n{restoreResult}");
 
-        // Act
+        // Act - BuildAsync handles restore automatically
         var buildResult = await _builder.BuildAsync();
 
         // Assert
@@ -270,10 +260,8 @@ public class BuildPackageTests : IDisposable
         // Arrange
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_net100_pkg", "net10.0");
-        var restoreResult = await _builder.RestoreAsync();
-        restoreResult.Success.Should().BeTrue($"Restore should succeed.\n{restoreResult}");
 
-        // Act
+        // Act - BuildAsync handles restore automatically
         var buildResult = await _builder.BuildAsync();
 
         // Assert
@@ -290,9 +278,8 @@ public class BuildPackageTests : IDisposable
         // Arrange
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_net80_models", "net8.0");
-        await _builder.RestoreAsync();
 
-        // Act
+        // Act - BuildAsync handles restore automatically
         var buildResult = await _builder.BuildAsync();
 
         // Assert
@@ -313,9 +300,8 @@ public class BuildPackageTests : IDisposable
         // Arrange
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_net80_ctx", "net8.0");
-        await _builder.RestoreAsync();
 
-        // Act
+        // Act - BuildAsync handles restore automatically
         var buildResult = await _builder.BuildAsync();
 
         // Assert
@@ -326,7 +312,7 @@ public class BuildPackageTests : IDisposable
 
     /// <summary>
     /// CRITICAL REGRESSION TEST: Verifies that EfcptEnabled defaults to true for PackageReference consumers.
-    /// NuGet 5.0+ imports buildTransitive/ for ALL consumers, so we enable by default.
+    /// We use build/ (not buildTransitive/) so targets only apply to direct consumers.
     /// </summary>
     [Fact]
     public async Task BuildPackage_DefaultEnablesEfcpt()
@@ -334,9 +320,8 @@ public class BuildPackageTests : IDisposable
         // Arrange - Create project WITHOUT explicitly setting EfcptEnabled
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_autoenable", "net8.0");
-        await _builder.RestoreAsync();
 
-        // Act
+        // Act - BuildAsync handles restore automatically
         var buildResult = await _builder.BuildAsync("-p:EfcptLogVerbosity=detailed");
 
         // Assert - Build should succeed and generate files (proving EfcptEnabled=true by default)
@@ -355,9 +340,8 @@ public class BuildPackageTests : IDisposable
         // Arrange
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_net90_models", "net9.0");
-        await _builder.RestoreAsync();
 
-        // Act
+        // Act - BuildAsync handles restore automatically
         var buildResult = await _builder.BuildAsync();
 
         // Assert
@@ -376,9 +360,8 @@ public class BuildPackageTests : IDisposable
         // Arrange
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_net100_models", "net10.0");
-        await _builder.RestoreAsync();
 
-        // Act
+        // Act - BuildAsync handles restore automatically
         var buildResult = await _builder.BuildAsync();
 
         // Assert

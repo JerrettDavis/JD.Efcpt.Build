@@ -13,6 +13,7 @@ public class SdkPackageTestFixture
     public string BuildPackagePath => AssemblyFixture.BuildPackagePath;
     public string SdkVersion => AssemblyFixture.SdkVersion;
     public string BuildVersion => AssemblyFixture.BuildVersion;
+    public string SharedDatabaseProjectPath => AssemblyFixture.SharedDatabaseProjectPath;
 
     public string GetTestFixturesPath() => AssemblyFixture.TestFixturesPath;
 }

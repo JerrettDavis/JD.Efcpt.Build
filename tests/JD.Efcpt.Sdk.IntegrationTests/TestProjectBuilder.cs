@@ -12,6 +12,7 @@ public class TestProjectBuilder : IDisposable
     private readonly string _packageSource;
     private readonly string _sdkVersion;
     private readonly string _buildVersion;
+    private readonly string _sharedDatabaseProjectPath;
 
     public string TestDirectory => _testDirectory;
     public string ProjectDirectory { get; private set; } = null!;
@@ -22,6 +23,7 @@ public class TestProjectBuilder : IDisposable
         _packageSource = fixture.PackageOutputPath;
         _sdkVersion = fixture.SdkVersion;
         _buildVersion = fixture.BuildVersion;
+        _sharedDatabaseProjectPath = fixture.SharedDatabaseProjectPath;
         _testDirectory = Path.Combine(Path.GetTempPath(), "SdkTests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_testDirectory);
     }
@@ -34,7 +36,8 @@ public class TestProjectBuilder : IDisposable
         ProjectDirectory = Path.Combine(_testDirectory, projectName);
         Directory.CreateDirectory(ProjectDirectory);
 
-        // Create nuget.config
+        // Create nuget.config with shared global packages folder for caching
+        var globalPackagesFolder = GetSharedGlobalPackagesFolder();
         var nugetConfig = $@"<?xml version=""1.0"" encoding=""utf-8""?>
 <configuration>
   <packageSources>
@@ -42,6 +45,9 @@ public class TestProjectBuilder : IDisposable
     <add key=""TestPackages"" value=""{_packageSource}"" />
     <add key=""nuget.org"" value=""https://api.nuget.org/v3/index.json"" />
   </packageSources>
+  <config>
+    <add key=""globalPackagesFolder"" value=""{globalPackagesFolder}"" />
+  </config>
 </configuration>";
         File.WriteAllText(Path.Combine(_testDirectory, "nuget.config"), nugetConfig);
 
@@ -53,8 +59,9 @@ public class TestProjectBuilder : IDisposable
 }}";
         File.WriteAllText(Path.Combine(_testDirectory, "global.json"), globalJson);
 
-        // Create project file
+        // Create project file using shared database project (absolute path)
         var efCoreVersion = GetEfCoreVersionForTargetFramework(targetFramework);
+        var dbProjectPath = Path.Combine(_sharedDatabaseProjectPath, "DatabaseProject.csproj").Replace("\\", "/");
         var projectContent = $@"<Project Sdk=""JD.Efcpt.Sdk"">
     <PropertyGroup>
         <TargetFramework>{targetFramework}</TargetFramework>
@@ -63,7 +70,7 @@ public class TestProjectBuilder : IDisposable
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include=""..\DatabaseProject\DatabaseProject.csproj"">
+        <ProjectReference Include=""{dbProjectPath}"">
             <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
             <OutputItemType>None</OutputItemType>
         </ProjectReference>
@@ -86,7 +93,8 @@ public class TestProjectBuilder : IDisposable
         ProjectDirectory = Path.Combine(_testDirectory, projectName);
         Directory.CreateDirectory(ProjectDirectory);
 
-        // Create nuget.config
+        // Create nuget.config with shared global packages folder for caching
+        var globalPackagesFolder = GetSharedGlobalPackagesFolder();
         var nugetConfig = $@"<?xml version=""1.0"" encoding=""utf-8""?>
 <configuration>
   <packageSources>
@@ -94,11 +102,15 @@ public class TestProjectBuilder : IDisposable
     <add key=""TestPackages"" value=""{_packageSource}"" />
     <add key=""nuget.org"" value=""https://api.nuget.org/v3/index.json"" />
   </packageSources>
+  <config>
+    <add key=""globalPackagesFolder"" value=""{globalPackagesFolder}"" />
+  </config>
 </configuration>";
         File.WriteAllText(Path.Combine(_testDirectory, "nuget.config"), nugetConfig);
 
-        // Create project file using PackageReference
+        // Create project file using shared database project (absolute path)
         var efCoreVersion = GetEfCoreVersionForTargetFramework(targetFramework);
+        var dbProjectPath = Path.Combine(_sharedDatabaseProjectPath, "DatabaseProject.csproj").Replace("\\", "/");
         var projectContent = $@"<Project Sdk=""Microsoft.NET.Sdk"">
     <PropertyGroup>
         <TargetFramework>{targetFramework}</TargetFramework>
@@ -107,7 +119,7 @@ public class TestProjectBuilder : IDisposable
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include=""..\DatabaseProject\DatabaseProject.csproj"">
+        <ProjectReference Include=""{dbProjectPath}"">
             <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
             <OutputItemType>None</OutputItemType>
         </ProjectReference>
@@ -124,18 +136,19 @@ public class TestProjectBuilder : IDisposable
     }
 
     /// <summary>
-    /// Copies the database project to the test directory.
+    /// No-op: Database project is now shared across all tests via AssemblyFixture.
+    /// This method is kept for backwards compatibility but does nothing.
+    /// The database project is set up once by AssemblyFixture and referenced via absolute path.
     /// </summary>
     public void CopyDatabaseProject(string fixturesPath)
     {
-        var sourceDir = Path.Combine(fixturesPath, "DatabaseProject");
-        var destDir = Path.Combine(_testDirectory, "DatabaseProject");
-
-        CopyDirectory(sourceDir, destDir);
+        // No-op: The database project is now shared across all tests.
     }
 
     /// <summary>
     /// Runs dotnet restore on the project.
+    /// Only call this if you need to restore without building.
+    /// BuildAsync() handles restore automatically.
     /// </summary>
     public async Task<BuildResult> RestoreAsync()
     {
@@ -144,14 +157,28 @@ public class TestProjectBuilder : IDisposable
 
     /// <summary>
     /// Runs dotnet build on the project.
+    /// By default, this includes restore (standard dotnet behavior).
+    /// Set noRestore=true if you've already called RestoreAsync().
     /// </summary>
-    public async Task<BuildResult> BuildAsync(string? additionalArgs = null)
+    public async Task<BuildResult> BuildAsync(string? additionalArgs = null, bool noRestore = false)
     {
         var args = "build";
+        if (noRestore)
+            args += " --no-restore";
         if (!string.IsNullOrEmpty(additionalArgs))
             args += " " + additionalArgs;
 
         return await RunDotnetAsync(args, ProjectDirectory);
+    }
+
+    /// <summary>
+    /// Runs dotnet build with restore in a single operation.
+    /// This is more efficient than calling RestoreAsync() + BuildAsync() separately.
+    /// </summary>
+    public async Task<BuildResult> RestoreAndBuildAsync(string? additionalArgs = null)
+    {
+        // dotnet build already does restore, so just call build
+        return await BuildAsync(additionalArgs, noRestore: false);
     }
 
     /// <summary>
@@ -390,6 +417,18 @@ public class TestProjectBuilder : IDisposable
     }
 
     /// <summary>
+    /// Gets the shared global packages folder path.
+    /// Uses the standard NuGet global packages folder to share cached packages across test runs.
+    /// </summary>
+    private static string GetSharedGlobalPackagesFolder()
+    {
+        // Use the standard NuGet global packages folder
+        // This is typically ~/.nuget/packages or %USERPROFILE%\.nuget\packages on Windows
+        var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        return Path.Combine(userProfile, ".nuget", "packages");
+    }
+
+    /// <summary>
     /// Gets a compatible EF Core version for the target framework.
     /// </summary>
     /// <remarks>
@@ -407,23 +446,6 @@ public class TestProjectBuilder : IDisposable
             "net10.0" => "10.0.1",
             _ => throw new ArgumentException($"Unknown target framework: {targetFramework}")
         };
-
-    private static void CopyDirectory(string sourceDir, string destDir)
-    {
-        Directory.CreateDirectory(destDir);
-
-        foreach (var file in Directory.GetFiles(sourceDir))
-        {
-            var destFile = Path.Combine(destDir, Path.GetFileName(file));
-            File.Copy(file, destFile, overwrite: true);
-        }
-
-        foreach (var dir in Directory.GetDirectories(sourceDir))
-        {
-            var destSubDir = Path.Combine(destDir, Path.GetFileName(dir));
-            CopyDirectory(dir, destSubDir);
-        }
-    }
 
     public void Dispose()
     {

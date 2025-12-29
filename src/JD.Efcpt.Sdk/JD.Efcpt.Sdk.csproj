@@ -47,15 +47,19 @@
     <Content Include="build/JD.Efcpt.Sdk.targets" Pack="true" PackagePath="build" />
   </ItemGroup>
 
-  <!-- Include buildTransitive from JD.Efcpt.Build (shared implementation) -->
+  <!--
+    Include shared implementation from JD.Efcpt.Build in build/ folder.
+    We use build/ (not buildTransitive/) so targets only apply to direct SDK users,
+    not to projects that reference SDK-using projects.
+  -->
   <ItemGroup>
-    <Content Include="../JD.Efcpt.Build/buildTransitive/JD.Efcpt.Build.props" Pack="true" PackagePath="buildTransitive" />
-    <Content Include="../JD.Efcpt.Build/buildTransitive/JD.Efcpt.Build.targets" Pack="true" PackagePath="buildTransitive" />
+    <Content Include="../JD.Efcpt.Build/buildTransitive/JD.Efcpt.Build.props" Pack="true" PackagePath="build" />
+    <Content Include="../JD.Efcpt.Build/buildTransitive/JD.Efcpt.Build.targets" Pack="true" PackagePath="build" />
   </ItemGroup>
 
   <!-- Include defaults folder from JD.Efcpt.Build (shared configs and templates) -->
   <ItemGroup>
-    <None Include="../JD.Efcpt.Build/defaults/**/*.*" Pack="true" PackagePath="buildTransitive/Defaults" />
+    <None Include="../JD.Efcpt.Build/defaults/**/*.*" Pack="true" PackagePath="build/Defaults" />
   </ItemGroup>
 
   <!-- Include README -->

@@ -17,6 +17,7 @@ public static class AssemblyFixture
     public static string BuildPackagePath => GetPackageInfo().BuildPath;
     public static string SdkVersion => GetPackageInfo().SdkVersion;
     public static string BuildVersion => GetPackageInfo().BuildVersion;
+    public static string SharedDatabaseProjectPath => GetPackageInfo().SharedDatabaseProjectPath;
     public static string TestFixturesPath => Path.Combine(
         Path.GetDirectoryName(typeof(AssemblyFixture).Assembly.Location)!, "TestFixtures");
 
@@ -38,14 +39,18 @@ public static class AssemblyFixture
         var outputPath = Path.Combine(Path.GetTempPath(), "JD.Efcpt.Sdk.IntegrationTests", $"pkg_{Guid.NewGuid():N}");
         Directory.CreateDirectory(outputPath);
 
-        // Pack both projects in parallel
         var sdkProject = Path.Combine(RepoRoot, "src", "JD.Efcpt.Sdk", "JD.Efcpt.Sdk.csproj");
         var buildProject = Path.Combine(RepoRoot, "src", "JD.Efcpt.Build", "JD.Efcpt.Build.csproj");
 
-        var sdkTask = PackProjectAsync(sdkProject, outputPath);
-        var buildTask = PackProjectAsync(buildProject, outputPath);
+        // Pack sequentially to avoid file conflicts on shared dependencies (JD.Efcpt.Build.Tasks)
+        // Both projects reference the Tasks project, and parallel pack causes obj/ folder conflicts
+        await PackProjectAsync(buildProject, outputPath);
+        await PackProjectAsync(sdkProject, outputPath);
 
-        await Task.WhenAll(sdkTask, buildTask);
+        // Create shared database project directory (copied once, used by all tests)
+        var sharedDbProjectPath = Path.Combine(outputPath, "SharedDatabaseProject");
+        var sourceDbProject = Path.Combine(TestFixturesPath, "DatabaseProject");
+        CopyDirectory(sourceDbProject, sharedDbProjectPath);
 
         // Find packaged files
         var sdkPackages = Directory.GetFiles(outputPath, "JD.Efcpt.Sdk.*.nupkg");
@@ -70,7 +75,8 @@ public static class AssemblyFixture
             sdkPath,
             buildPath,
             ExtractVersion(Path.GetFileName(sdkPath), "JD.Efcpt.Sdk"),
-            ExtractVersion(Path.GetFileName(buildPath), "JD.Efcpt.Build")
+            ExtractVersion(Path.GetFileName(buildPath), "JD.Efcpt.Build"),
+            sharedDbProjectPath
         );
     }
 
@@ -143,10 +149,28 @@ public static class AssemblyFixture
         throw new InvalidOperationException("Could not find repository root");
     }
 
+    private static void CopyDirectory(string sourceDir, string destDir)
+    {
+        Directory.CreateDirectory(destDir);
+
+        foreach (var file in Directory.GetFiles(sourceDir))
+        {
+            var destFile = Path.Combine(destDir, Path.GetFileName(file));
+            File.Copy(file, destFile, overwrite: true);
+        }
+
+        foreach (var dir in Directory.GetDirectories(sourceDir))
+        {
+            var destSubDir = Path.Combine(destDir, Path.GetFileName(dir));
+            CopyDirectory(dir, destSubDir);
+        }
+    }
+
     private sealed record PackageInfo(
         string OutputPath,
         string SdkPath,
         string BuildPath,
         string SdkVersion,
-        string BuildVersion);
+        string BuildVersion,
+        string SharedDatabaseProjectPath);
 }
