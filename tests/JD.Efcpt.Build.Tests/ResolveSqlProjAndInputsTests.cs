@@ -698,4 +698,91 @@ public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : Tin
         var success = task.Execute();
         return new TaskResult(setup, task, success);
     }
+
+    // ========== Error Reporting Tests ==========
+
+    [Scenario("Provides detailed error message when no SQL project is found")]
+    [Fact]
+    public async Task Provides_detailed_error_message_when_no_sqlproj()
+    {
+        await Given("project with no sqlproj reference", SetupNoSqlProjReference)
+            .When("execute task", ExecuteTaskNoSqlProjReference)
+            .Then("task fails", r => !r.Success)
+            .And("errors are logged", r => r.Setup.Engine.Errors.Count > 0)
+            .And("error contains helpful guidance", r =>
+                r.Setup.Engine.Errors.Any(e => e.Message?.Contains("No SQL project reference found") == true) &&
+                r.Setup.Engine.Errors.Any(e => e.Message?.Contains("Add a .sqlproj ProjectReference") == true ||
+                                              e.Message?.Contains("EfcptConnectionString") == true))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Logs warning with exception details when SQL project detection fails")]
+    [Fact]
+    public async Task Logs_warning_with_exception_details_on_detection_failure()
+    {
+        await Given("project with invalid solution path", SetupInvalidSolutionPath)
+            .When("execute task with solution scan", ExecuteTaskInvalidSolutionPath)
+            .Then("task fails", r => !r.Success)
+            .And("warnings logged about detection failure", r =>
+                r.Setup.Engine.Warnings.Any(w => w.Message?.Contains("SQL project detection failed") == true))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    private static SetupState SetupNoSqlProjReference()
+    {
+        var folder = new TestFolder();
+        var projectDir = folder.CreateDir("src");
+        var csproj = folder.WriteFile("src/App.csproj", "<Project />");
+
+        var engine = new TestBuildEngine();
+        return new SetupState(folder, engine, projectDir, csproj, "", "", "", "", "");
+    }
+
+    private static TaskResult ExecuteTaskNoSqlProjReference(SetupState setup)
+    {
+        var task = new ResolveSqlProjAndInputs
+        {
+            BuildEngine = setup.Engine,
+            ProjectFullPath = Path.Combine(setup.ProjectDir, "App.csproj"),
+            ProjectDirectory = setup.ProjectDir,
+            Configuration = "Debug",
+            ProjectReferences = [], // No SQL project references
+            OutputDir = Path.Combine(setup.ProjectDir, "obj", "efcpt"),
+            DefaultsRoot = TestPaths.DefaultsRoot
+        };
+
+        var success = task.Execute();
+        return new TaskResult(setup, task, success);
+    }
+
+    private static SetupState SetupInvalidSolutionPath()
+    {
+        var folder = new TestFolder();
+        var projectDir = folder.CreateDir("src");
+        var csproj = folder.WriteFile("src/App.csproj", "<Project />");
+
+        var engine = new TestBuildEngine();
+        return new SetupState(folder, engine, projectDir, csproj, "", "", "", "", "");
+    }
+
+    private static TaskResult ExecuteTaskInvalidSolutionPath(SetupState setup)
+    {
+        var task = new ResolveSqlProjAndInputs
+        {
+            BuildEngine = setup.Engine,
+            ProjectFullPath = Path.Combine(setup.ProjectDir, "App.csproj"),
+            ProjectDirectory = setup.ProjectDir,
+            Configuration = "Debug",
+            ProjectReferences = [],
+            OutputDir = Path.Combine(setup.ProjectDir, "obj", "efcpt"),
+            SolutionPath = Path.Combine(setup.ProjectDir, "NonExistent.sln"), // Invalid path
+            ProbeSolutionDir = "true",
+            DefaultsRoot = TestPaths.DefaultsRoot
+        };
+
+        var success = task.Execute();
+        return new TaskResult(setup, task, success);
+    }
 }
