@@ -59,22 +59,17 @@ public class TestProjectBuilder : IDisposable
 }}";
         File.WriteAllText(Path.Combine(_testDirectory, "global.json"), globalJson);
 
-        // Create project file using shared database project (absolute path)
+        // Create project file using shared DACPAC (direct path to avoid ProjectReference issues)
         var efCoreVersion = GetEfCoreVersionForTargetFramework(targetFramework);
-        var dbProjectPath = Path.Combine(_sharedDatabaseProjectPath, "DatabaseProject.csproj").Replace("\\", "/");
+        var dacpacPath = Path.Combine(_sharedDatabaseProjectPath, "bin", "Debug", "DatabaseProject.dacpac").Replace("\\", "/");
         var projectContent = $@"<Project Sdk=""JD.Efcpt.Sdk"">
     <PropertyGroup>
         <TargetFramework>{targetFramework}</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <!-- Use pre-built DACPAC to avoid ProjectReference issues with SQL projects -->
+        <EfcptDacpac>{dacpacPath}</EfcptDacpac>
     </PropertyGroup>
-
-    <ItemGroup>
-        <ProjectReference Include=""{dbProjectPath}"">
-            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-            <OutputItemType>None</OutputItemType>
-        </ProjectReference>
-    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include=""Microsoft.EntityFrameworkCore"" Version=""{efCoreVersion}"" />
@@ -108,22 +103,17 @@ public class TestProjectBuilder : IDisposable
 </configuration>";
         File.WriteAllText(Path.Combine(_testDirectory, "nuget.config"), nugetConfig);
 
-        // Create project file using shared database project (absolute path)
+        // Create project file using shared DACPAC (direct path to avoid ProjectReference issues)
         var efCoreVersion = GetEfCoreVersionForTargetFramework(targetFramework);
-        var dbProjectPath = Path.Combine(_sharedDatabaseProjectPath, "DatabaseProject.csproj").Replace("\\", "/");
+        var dacpacPath = Path.Combine(_sharedDatabaseProjectPath, "bin", "Debug", "DatabaseProject.dacpac").Replace("\\", "/");
         var projectContent = $@"<Project Sdk=""Microsoft.NET.Sdk"">
     <PropertyGroup>
         <TargetFramework>{targetFramework}</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <!-- Use pre-built DACPAC to avoid ProjectReference issues with SQL projects -->
+        <EfcptDacpac>{dacpacPath}</EfcptDacpac>
     </PropertyGroup>
-
-    <ItemGroup>
-        <ProjectReference Include=""{dbProjectPath}"">
-            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-            <OutputItemType>None</OutputItemType>
-        </ProjectReference>
-    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include=""JD.Efcpt.Build"" Version=""{_buildVersion}"" />

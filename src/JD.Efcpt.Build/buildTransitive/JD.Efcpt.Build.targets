@@ -175,7 +175,9 @@
           DependsOnTargets="EfcptResolveInputs;EfcptResolveInputsForDirectDacpac"
           Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(EfcptDacpac)' != ''">
     <PropertyGroup>
-      <_EfcptDacpacPath>$([System.IO.Path]::GetFullPath('$(EfcptDacpac)', '$(MSBuildProjectDirectory)'))</_EfcptDacpacPath>
+      <!-- Use Combine+GetFullPath for .NET Framework compatibility (GetFullPath with basePath is .NET Core only) -->
+      <_EfcptDacpacPath Condition="$([System.IO.Path]::IsPathRooted('$(EfcptDacpac)'))">$(EfcptDacpac)</_EfcptDacpacPath>
+      <_EfcptDacpacPath Condition="!$([System.IO.Path]::IsPathRooted('$(EfcptDacpac)'))">$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(EfcptDacpac)'))))</_EfcptDacpacPath>
       <_EfcptUseDirectDacpac>true</_EfcptUseDirectDacpac>
     </PropertyGroup>
     <Error Condition="!Exists('$(_EfcptDacpacPath)')"
