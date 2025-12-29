@@ -48,11 +48,13 @@ public class TemplateTestFixture : IDisposable
 
     private static async Task<string> PackTemplatePackageAsync()
     {
-        _packageOutputPath = Path.Combine(Path.GetTempPath(), "JD.Efcpt.TemplateTests", $"pkg_{Guid.NewGuid():N}");
-        Directory.CreateDirectory(_packageOutputPath);
+        // Use the same package output path as AssemblyFixture to share SDK/Build packages
+        // This ensures version consistency and avoids packing the same packages twice
+        _packageOutputPath = AssemblyFixture.PackageOutputPath;
 
         var templateProject = Path.Combine(RepoRoot, "src", "JD.Efcpt.Build.Templates", "JD.Efcpt.Build.Templates.csproj");
 
+        // Pack template with the same version as SDK/Build packages from AssemblyFixture
         await PackProjectAsync(templateProject, _packageOutputPath).ConfigureAwait(false);
 
         // Find packaged file
@@ -63,20 +65,8 @@ public class TemplateTestFixture : IDisposable
 
         var templatePath = templatePackages[0];
 
-        // Also pack SDK and Build packages to the same location for testing
-        var sdkProject = Path.Combine(RepoRoot, "src", "JD.Efcpt.Sdk", "JD.Efcpt.Sdk.csproj");
-        var buildProject = Path.Combine(RepoRoot, "src", "JD.Efcpt.Build", "JD.Efcpt.Build.csproj");
-
-        await Task.WhenAll(
-            PackProjectAsync(sdkProject, _packageOutputPath),
-            PackProjectAsync(buildProject, _packageOutputPath)
-        ).ConfigureAwait(false);
-
-        // Register cleanup on process exit
-        AppDomain.CurrentDomain.ProcessExit += (_, _) =>
-        {
-            try { Directory.Delete(_packageOutputPath, true); } catch { /* best effort */ }
-        };
+        // SDK and Build packages are already available from AssemblyFixture
+        // No need to pack them again - this avoids version mismatches and file locking
 
         return templatePath;
     }
@@ -86,7 +76,7 @@ public class TemplateTestFixture : IDisposable
         var psi = new ProcessStartInfo
         {
             FileName = "dotnet",
-            Arguments = $"pack \"{projectPath}\" -c Release -o \"{outputPath}\" /p:PackageVersion=1.0.0-test",
+            Arguments = $"pack \"{projectPath}\" -c Release -o \"{outputPath}\"",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
@@ -124,7 +114,8 @@ public class TemplateTestFixture : IDisposable
     /// </summary>
     public async Task<TestUtilities.CommandResult> InstallTemplateAsync(string workingDirectory)
     {
-        return await RunDotnetNewCommandAsync(workingDirectory, $"install \"{TemplatePackagePath}\"");
+        // Use --force to overwrite existing template package files in ~/.templateengine/packages/
+        return await RunDotnetNewCommandAsync(workingDirectory, $"install \"{TemplatePackagePath}\" --force");
     }
 
     /// <summary>
@@ -198,6 +189,7 @@ public class TemplateTestFixture : IDisposable
     {
         try
         {
+            // Run dotnet new uninstall to remove the template
             var psi = new ProcessStartInfo
             {
                 FileName = "dotnet",
@@ -217,6 +209,25 @@ public class TemplateTestFixture : IDisposable
         catch
         {
             // Best effort cleanup - ignore errors if template wasn't installed
+        }
+
+        // Also remove the cached package file to avoid "File already exists" errors
+        try
+        {
+            var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var templatePackagesDir = Path.Combine(userProfile, ".templateengine", "packages");
+            if (Directory.Exists(templatePackagesDir))
+            {
+                var packageFiles = Directory.GetFiles(templatePackagesDir, "JD.Efcpt.Build.Templates.*.nupkg");
+                foreach (var file in packageFiles)
+                {
+                    try { File.Delete(file); } catch { /* best effort */ }
+                }
+            }
+        }
+        catch
+        {
+            // Best effort cleanup
         }
     }
 }

@@ -122,15 +122,21 @@ public class TemplateTests : IDisposable
         // Add ProjectReference to the generated project
         var projectFile = Path.Combine(_testDirectory, projectName, $"{projectName}.csproj");
         var projectContent = await File.ReadAllTextAsync(projectFile);
+
+        // Insert a ProjectReference before the EF Core packages ItemGroup
+        // This is more robust than trying to uncomment the template example
+        var projectReferenceBlock = @"
+  <ItemGroup>
+    <ProjectReference Include=""..\DatabaseProject\DatabaseProject.csproj"">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>None</OutputItemType>
+    </ProjectReference>
+  </ItemGroup>
+
+  <!-- EF Core packages";
         var modifiedContent = projectContent.Replace(
-            "<!--\n    Reference your SQL Server Database Project for automatic DACPAC generation\n    \n    <ItemGroup>",
-            "<ItemGroup>");
-        modifiedContent = modifiedContent.Replace(
-            "      <ProjectReference Include=\"..\\YourDatabase\\YourDatabase.sqlproj\">",
-            "      <ProjectReference Include=\"..\\DatabaseProject\\DatabaseProject.csproj\">");
-        modifiedContent = modifiedContent.Replace(
-            "    </ItemGroup>\n    \n    Or for MSBuild.Sdk.SqlProj:",
-            "    </ItemGroup>\n    <!--");
+            "<!-- EF Core packages",
+            projectReferenceBlock);
         await File.WriteAllTextAsync(projectFile, modifiedContent);
 
         // Create nuget.config to use local packages
