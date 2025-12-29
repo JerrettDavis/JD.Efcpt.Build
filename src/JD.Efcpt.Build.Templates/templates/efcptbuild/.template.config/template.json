@@ -50,7 +50,7 @@
     "EFCoreVersion": {
       "type": "generated",
       "generator": "switch",
-      "replaces": "9.0.*",
+      "replaces": "8.0.*",
       "parameters": {
         "evaluator": "C++",
         "datatype": "string",
