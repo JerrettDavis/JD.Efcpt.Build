@@ -300,6 +300,12 @@ public sealed class ResolveSqlProjAndInputs : Task
     {
         var log = new BuildLog(ctx.Logger, "");
 
+        // Log runtime context for troubleshooting
+        var runtime = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
+        log.Detail($"MSBuild Runtime: {runtime}");
+        log.Detail($"ProjectReferences Count: {ProjectReferences?.Length ?? 0}");
+        log.Detail($"SolutionPath: {SolutionPath}");
+
         Directory.CreateDirectory(OutputDir);
 
         var resolutionState = BuildResolutionState(log);
@@ -356,8 +362,13 @@ public sealed class ResolveSqlProjAndInputs : Task
             WarnIfAutoDiscoveredConnectionStringExists(log);
             return new(false, "", sqlProjPath);
         }
-        catch
+        catch (Exception ex)
         {
+            // Log detailed exception information to help users diagnose SQL project resolution issues.
+            // This is intentionally more verbose than other catch blocks in this file because this
+            // specific failure point is commonly reported by users and requires diagnostic context.
+            log.Warn($"SQL project detection failed: {ex.Message}");
+            log.Detail($"Exception details: {ex}");
             return null;
         }
     }
@@ -427,10 +438,12 @@ public sealed class ResolveSqlProjAndInputs : Task
             .Require(state
                 => state.UseConnectionStringMode
                     ? string.IsNullOrWhiteSpace(state.ConnectionString)
-                        ? "Connection string resolution failed"
+                        ? "Connection string resolution failed. No connection string could be resolved from configuration."
                         : null
                     : string.IsNullOrWhiteSpace(state.SqlProjPath)
-                        ? "SqlProj resolution failed"
+                        ? "SqlProj resolution failed. No SQL project reference found. " +
+                          "Add a .sqlproj ProjectReference, set EfcptSqlProj property, or provide a connection string via " +
+                          "EfcptConnectionString/appsettings.json/app.config. Check build output for detailed error messages."
                         : null)
             .Build(state => state);
     }
