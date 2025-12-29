@@ -1,17 +1,20 @@
 <Project>
   <PropertyGroup>
     <!--
-      Enablement: Enable by default for all PackageReference consumers.
+      Enablement: Enabled by default for all consumers.
 
-      NOTE: NuGet 5.0+ imports buildTransitive/ for ALL consumers (direct and transitive),
-      so we cannot distinguish between direct and transitive references using the build/ folder.
+      NOTE: This props file is imported from NuGet's build/ folder and therefore only applies to direct consumers of this package.
+      However, the actual code generation will only run if valid inputs are found:
+      - A SQL project reference (*.sqlproj or MSBuild.Sdk.SqlProj), OR
+      - An explicit DACPAC path (EfcptDacpac), OR
+      - Explicit connection string configuration (EfcptConnectionString, EfcptAppSettings, EfcptAppConfig)
 
-      To disable generation in projects that don't need it (e.g., transitive consumers
-      that only need the types from another project), explicitly set:
+      Transitive consumers without SQL project references will NOT auto-discover connection
+      strings from their appsettings.json - this prevents WebApi projects from accidentally
+      triggering model generation.
+
+      To explicitly disable, set:
         <EfcptEnabled>false</EfcptEnabled>
-
-      The generation will only actually run if a SQL project reference or DACPAC is found,
-      so having this enabled on projects without database references is harmless.
     -->
     <EfcptEnabled Condition="'$(EfcptEnabled)'==''">true</EfcptEnabled>
 

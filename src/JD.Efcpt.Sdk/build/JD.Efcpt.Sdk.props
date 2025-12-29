@@ -3,6 +3,7 @@
     JD.Efcpt.Sdk Props
 
     This file imports the shared property definitions from the build folder.
+    The build folder contains the actual EFCPT configuration properties.
 
     NOTE: We use build/ (not buildTransitive/) so targets only apply to
     projects that DIRECTLY use this SDK, not transitive consumers.

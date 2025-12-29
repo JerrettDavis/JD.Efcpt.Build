@@ -49,7 +49,8 @@
 
   <!--
     Include shared implementation from JD.Efcpt.Build in build/ folder.
-    We use build/ (not buildTransitive/) so targets only apply to direct SDK users,
+    We copy the buildTransitive/ source files (not the build/ wrappers) into
+    the SDK's build/ folder. This ensures targets only apply to direct SDK users,
     not to projects that reference SDK-using projects.
   -->
   <ItemGroup>

@@ -5,7 +5,7 @@ using Xunit;
 namespace JD.Efcpt.Sdk.IntegrationTests;
 
 /// <summary>
-/// Tests that verify the build folder content is correctly packaged.
+/// Tests that verify the build folder content is correctly packaged in the SDK.
 /// We use build/ (not buildTransitive/) so targets only apply to direct consumers,
 /// preventing transitive propagation to projects that reference our consumers.
 /// </summary>
@@ -51,14 +51,14 @@ public class BuildTransitiveTests
     public void SdkPackage_ContainsSharedBuildProps()
     {
         var entries = GetPackageEntries(_fixture.SdkPackagePath);
-        entries.Should().Contain("build/JD.Efcpt.Build.props", "SDK package should contain shared build props");
+        entries.Should().Contain("build/JD.Efcpt.Build.props", "SDK package should contain shared build props in build folder");
     }
 
     [Fact]
     public void SdkPackage_ContainsSharedBuildTargets()
     {
         var entries = GetPackageEntries(_fixture.SdkPackagePath);
-        entries.Should().Contain("build/JD.Efcpt.Build.targets", "SDK package should contain shared build targets");
+        entries.Should().Contain("build/JD.Efcpt.Build.targets", "SDK package should contain shared build targets in build folder");
     }
 
     /// <summary>
@@ -127,7 +127,8 @@ public class BuildTransitiveTests
 
     /// <summary>
     /// Verifies that the Build package has a build/ folder.
-    /// We use build/ (not buildTransitive/) so targets only apply to direct consumers.
+    /// We use build/ (not buildTransitive/) so targets only apply to direct consumers,
+    /// preventing transitive propagation to projects that reference our consumers.
     /// </summary>
     [Fact]
     public void BuildPackage_ContainsBuildFolder()
@@ -152,7 +153,7 @@ public class BuildTransitiveTests
     [Fact]
     public void SdkAndBuildPackages_HaveMatchingSharedBuildContent()
     {
-        // Get shared build content (JD.Efcpt.Build.props and JD.Efcpt.Build.targets)
+        // Get shared build content from SDK (JD.Efcpt.Build.props and JD.Efcpt.Build.targets)
         var sdkSharedEntries = GetPackageEntries(_fixture.SdkPackagePath)
             .Where(e => e.StartsWith("build/JD.Efcpt.Build.") && !e.EndsWith("/"))
             .Select(e => e.Replace("build/", ""))
