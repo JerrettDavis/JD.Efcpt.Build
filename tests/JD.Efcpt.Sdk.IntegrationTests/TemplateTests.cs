@@ -81,7 +81,7 @@ public class TemplateTests : IDisposable
         // Assert
         projectContent.Should().Contain("<Project Sdk=\"JD.Efcpt.Sdk\">",
             "Project should use JD.Efcpt.Sdk");
-        projectContent.Should().NotContain("<PackageReference Include=\"JD.Efcpt.Build\"",
+        projectContent.Should().NotMatch("*<PackageReference*Include=\"JD.Efcpt.Build\"*",
             "Project should not reference JD.Efcpt.Build package directly");
         projectContent.Should().Contain("Microsoft.EntityFrameworkCore",
             "Project should include EF Core packages");
