@@ -20,6 +20,14 @@ Create a new EF Core Power Tools SDK project:
 dotnet new efcptbuild --name MyDataProject
 ```
 
+Or create a project using the current folder name:
+
+```bash
+mkdir MyDataProject
+cd MyDataProject
+dotnet new efcptbuild
+```
+
 This creates a new project with:
 - JD.Efcpt.Sdk as the project SDK
 - EF Core dependencies
