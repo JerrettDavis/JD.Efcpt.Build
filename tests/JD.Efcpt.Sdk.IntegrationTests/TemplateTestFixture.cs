@@ -19,6 +19,12 @@ public class TemplateTestFixture : IDisposable
 
     private static readonly string RepoRoot = TestUtilities.FindRepoRoot();
 
+    public TemplateTestFixture()
+    {
+        // Cleanup any previously installed templates to avoid conflicts
+        CleanupInstalledTemplates();
+    }
+
     public string GetTestFixturesPath() => AssemblyFixture.TestFixturesPath;
 
     private static string GetTemplatePackagePath()
@@ -178,8 +184,40 @@ public class TemplateTestFixture : IDisposable
 
     public void Dispose()
     {
+        // Cleanup any installed templates
+        CleanupInstalledTemplates();
+        
         // Cleanup is handled by AppDomain.ProcessExit
         GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Removes any previously installed template packages to avoid conflicts.
+    /// </summary>
+    private static void CleanupInstalledTemplates()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = "new uninstall JD.Efcpt.Build.Templates",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = Process.Start(psi);
+            if (process != null)
+            {
+                process.WaitForExit(10000); // 10 second timeout
+            }
+        }
+        catch
+        {
+            // Best effort cleanup - ignore errors if template wasn't installed
+        }
     }
 }
 
