@@ -99,11 +99,23 @@ internal static class ConnectionStringResolutionChain
     }
 
     private static bool HasAppSettingsFiles(string projectDirectory)
-        => Directory.GetFiles(projectDirectory, "appsettings*.json").Length > 0;
+    {
+        // Guard against null - can occur on .NET Framework MSBuild
+        if (string.IsNullOrWhiteSpace(projectDirectory) || !Directory.Exists(projectDirectory))
+            return false;
+
+        return Directory.GetFiles(projectDirectory, "appsettings*.json").Length > 0;
+    }
 
     private static bool HasAppConfigFiles(string projectDirectory)
-        => File.Exists(Path.Combine(projectDirectory, "app.config")) ||
-           File.Exists(Path.Combine(projectDirectory, "web.config"));
+    {
+        // Guard against null - can occur on .NET Framework MSBuild
+        if (string.IsNullOrWhiteSpace(projectDirectory))
+            return false;
+
+        return File.Exists(Path.Combine(projectDirectory, "app.config")) ||
+               File.Exists(Path.Combine(projectDirectory, "web.config"));
+    }
 
     #endregion
 
@@ -130,6 +142,10 @@ internal static class ConnectionStringResolutionChain
         string connectionStringName,
         BuildLog log)
     {
+        // Guard against null - can occur on .NET Framework MSBuild
+        if (string.IsNullOrWhiteSpace(projectDirectory) || !Directory.Exists(projectDirectory))
+            return null;
+
         var appSettingsFiles = Directory.GetFiles(projectDirectory, "appsettings*.json");
 
         if (appSettingsFiles.Length > 1)
@@ -158,6 +174,10 @@ internal static class ConnectionStringResolutionChain
         string connectionStringName,
         BuildLog log)
     {
+        // Guard against null - can occur on .NET Framework MSBuild
+        if (string.IsNullOrWhiteSpace(projectDirectory))
+            return null;
+
         var configFiles = new[] { "app.config", "web.config" };
         foreach (var configFile in configFiles)
         {

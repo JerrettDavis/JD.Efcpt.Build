@@ -450,7 +450,11 @@ public sealed class ResolveSqlProjAndInputs : Task
 
     private string ResolveSqlProjWithValidation(BuildLog log)
     {
-        var sqlRefs = ProjectReferences
+        // ProjectReferences may be null on some .NET Framework MSBuild hosts
+        var references = ProjectReferences ?? [];
+
+        var sqlRefs = references
+            .Where(x => x?.ItemSpec != null)
             .Select(x => PathUtils.FullPath(x.ItemSpec, ProjectDirectory))
             .Where(SqlProjectDetector.IsSqlProjectReference)
             .Distinct(StringComparer.OrdinalIgnoreCase)
