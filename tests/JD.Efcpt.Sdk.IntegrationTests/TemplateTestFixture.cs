@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Threading;
 using Xunit;
 
 namespace JD.Efcpt.Sdk.IntegrationTests;
@@ -13,6 +14,7 @@ public class TemplateTestFixture : IDisposable
     private static string? _packageOutputPath;
     private static bool _templateInstalled = false;
     private static readonly object _installLock = new();
+    private static readonly object _packLock = new();
     private static int _instanceCount = 0;
 
     public string TemplatePackagePath => GetTemplatePackagePath();
@@ -31,7 +33,7 @@ public class TemplateTestFixture : IDisposable
         // Only do this for the first instance
         if (instanceNum == 1)
         {
-            CleanupInstalledTemplates();
+            CleanupInstalledTemplatesAsync().GetAwaiter().GetResult();
         }
         
         // Install the template once for all tests in the collection
@@ -61,58 +63,46 @@ public class TemplateTestFixture : IDisposable
 
     private static async Task<string> PackTemplatePackageAsync()
     {
-        // Use a named mutex to ensure only one process packs at a time across test runs
-        using var mutex = new System.Threading.Mutex(false, "Global\\JD.Efcpt.Build.Templates.PackMutex");
-        
-        try
+        // Use a simple lock instead of named mutex for cross-platform compatibility
+        // Lock is acquired synchronously, then async work is done inside
+        await Task.Run(() =>
         {
-            // Wait up to 2 minutes for other processes to finish packing
-            if (!mutex.WaitOne(TimeSpan.FromMinutes(2)))
+            lock (_packLock)
             {
-                throw new InvalidOperationException("Timeout waiting for template packing mutex");
+                // Use the same package output path as AssemblyFixture to share SDK/Build packages
+                // This ensures version consistency and avoids packing the same packages twice
+                _packageOutputPath = AssemblyFixture.PackageOutputPath;
+
+                var templateProject = Path.Combine(RepoRoot, "src", "JD.Efcpt.Build.Templates", "JD.Efcpt.Build.Templates.csproj");
+
+                // Check if package already exists to avoid redundant packing
+                var existingPackages = Directory.GetFiles(_packageOutputPath, "JD.Efcpt.Build.Templates.*.nupkg");
+                if (existingPackages.Length > 0)
+                {
+                    Console.WriteLine($"Template package already exists at {existingPackages[0]}, skipping pack");
+                    return existingPackages[0];
+                }
+
+                // Pack template with the same version as SDK/Build packages from AssemblyFixture
+                // Synchronously wait for pack operation inside the lock
+                PackProjectAsync(templateProject, _packageOutputPath).GetAwaiter().GetResult();
+
+                // Find packaged file
+                var templatePackages = Directory.GetFiles(_packageOutputPath, "JD.Efcpt.Build.Templates.*.nupkg");
+
+                if (templatePackages.Length == 0)
+                    throw new InvalidOperationException($"JD.Efcpt.Build.Templates package not found in {_packageOutputPath}");
+
+                // SDK and Build packages are already available from AssemblyFixture
+                // No need to pack them again - this avoids version mismatches and file locking
+
+                return templatePackages[0];
             }
+        }).ConfigureAwait(false);
 
-            // Use the same package output path as AssemblyFixture to share SDK/Build packages
-            // This ensures version consistency and avoids packing the same packages twice
-            _packageOutputPath = AssemblyFixture.PackageOutputPath;
-
-            var templateProject = Path.Combine(RepoRoot, "src", "JD.Efcpt.Build.Templates", "JD.Efcpt.Build.Templates.csproj");
-
-            // Check if package already exists to avoid redundant packing
-            var existingPackages = Directory.GetFiles(_packageOutputPath, "JD.Efcpt.Build.Templates.*.nupkg");
-            if (existingPackages.Length > 0)
-            {
-                Console.WriteLine($"Template package already exists at {existingPackages[0]}, skipping pack");
-                return existingPackages[0];
-            }
-
-            // Pack template with the same version as SDK/Build packages from AssemblyFixture
-            await PackProjectAsync(templateProject, _packageOutputPath).ConfigureAwait(false);
-
-            // Find packaged file
-            var templatePackages = Directory.GetFiles(_packageOutputPath, "JD.Efcpt.Build.Templates.*.nupkg");
-
-            if (templatePackages.Length == 0)
-                throw new InvalidOperationException($"JD.Efcpt.Build.Templates package not found in {_packageOutputPath}");
-
-            var templatePath = templatePackages[0];
-
-            // SDK and Build packages are already available from AssemblyFixture
-            // No need to pack them again - this avoids version mismatches and file locking
-
-            return templatePath;
-        }
-        finally
-        {
-            try
-            {
-                mutex.ReleaseMutex();
-            }
-            catch (ApplicationException)
-            {
-                // Mutex was not owned by this thread - ignore
-            }
-        }
+        // Return the path that was set inside the lock
+        var packages = Directory.GetFiles(_packageOutputPath!, "JD.Efcpt.Build.Templates.*.nupkg");
+        return packages[0];
     }
 
     private static async Task PackProjectAsync(string projectPath, string outputPath)
@@ -187,7 +177,8 @@ public class TemplateTestFixture : IDisposable
         return combinedOutput.Contains("being used by another process", StringComparison.OrdinalIgnoreCase) ||
                combinedOutput.Contains("access denied", StringComparison.OrdinalIgnoreCase) ||
                combinedOutput.Contains("cannot access the file", StringComparison.OrdinalIgnoreCase) ||
-               combinedOutput.Contains("lock", StringComparison.OrdinalIgnoreCase);
+               combinedOutput.Contains("file is locked", StringComparison.OrdinalIgnoreCase) ||
+               combinedOutput.Contains("resource temporarily unavailable", StringComparison.OrdinalIgnoreCase);
     }
     
     private static bool IsTransientError(Exception ex)
@@ -306,7 +297,7 @@ public class TemplateTestFixture : IDisposable
     public void Dispose()
     {
         // Cleanup any installed templates
-        CleanupInstalledTemplates();
+        CleanupInstalledTemplatesAsync().GetAwaiter().GetResult();
         
         // Cleanup is handled by AppDomain.ProcessExit
         GC.SuppressFinalize(this);
@@ -316,7 +307,7 @@ public class TemplateTestFixture : IDisposable
     /// Removes any previously installed template packages to avoid conflicts.
     /// Uses retry logic with exponential backoff for file locking resilience.
     /// </summary>
-    private static void CleanupInstalledTemplates()
+    private static async Task CleanupInstalledTemplatesAsync()
     {
         try
         {
@@ -334,7 +325,7 @@ public class TemplateTestFixture : IDisposable
             using var process = Process.Start(psi);
             if (process != null)
             {
-                process.WaitForExit(10000); // 10 second timeout
+                await Task.Run(() => process.WaitForExit(10000)).ConfigureAwait(false); // 10 second timeout
             }
         }
         catch
@@ -352,7 +343,7 @@ public class TemplateTestFixture : IDisposable
                 var packageFiles = Directory.GetFiles(templatePackagesDir, "JD.Efcpt.Build.Templates.*.nupkg");
                 foreach (var file in packageFiles)
                 {
-                    DeleteFileWithRetry(file);
+                    await DeleteFileWithRetryAsync(file).ConfigureAwait(false);
                 }
             }
         }
@@ -371,7 +362,7 @@ public class TemplateTestFixture : IDisposable
             var contentFile = Path.Combine(templateCacheDir, "content");
             if (File.Exists(contentFile))
             {
-                DeleteFileWithRetry(contentFile);
+                await DeleteFileWithRetryAsync(contentFile).ConfigureAwait(false);
             }
 
             // Also try to delete the entire cache directory for a clean slate
@@ -382,7 +373,7 @@ public class TemplateTestFixture : IDisposable
                 var filePath = Path.Combine(templateCacheDir, file);
                 if (File.Exists(filePath))
                 {
-                    DeleteFileWithRetry(filePath);
+                    await DeleteFileWithRetryAsync(filePath).ConfigureAwait(false);
                 }
             }
         }
@@ -395,7 +386,7 @@ public class TemplateTestFixture : IDisposable
     /// <summary>
     /// Deletes a file with retry logic for file locking resilience.
     /// </summary>
-    private static void DeleteFileWithRetry(string filePath, int maxRetries = 3)
+    private static async Task DeleteFileWithRetryAsync(string filePath, int maxRetries = 3)
     {
         for (int attempt = 0; attempt < maxRetries; attempt++)
         {
@@ -411,13 +402,13 @@ public class TemplateTestFixture : IDisposable
             {
                 // File is locked, wait and retry
                 var delay = 200 * (int)Math.Pow(2, attempt); // 200ms, 400ms, 800ms
-                Thread.Sleep(delay);
+                await Task.Delay(delay).ConfigureAwait(false);
             }
             catch (UnauthorizedAccessException) when (attempt < maxRetries - 1)
             {
                 // Access denied, wait and retry
                 var delay = 200 * (int)Math.Pow(2, attempt);
-                Thread.Sleep(delay);
+                await Task.Delay(delay).ConfigureAwait(false);
             }
             catch
             {
