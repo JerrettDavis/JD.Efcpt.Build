@@ -300,6 +300,12 @@ public sealed class ResolveSqlProjAndInputs : Task
     {
         var log = new BuildLog(ctx.Logger, "");
 
+        // Log runtime context for troubleshooting
+        var runtime = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
+        log.Detail($"MSBuild Runtime: {runtime}");
+        log.Detail($"ProjectReferences Count: {ProjectReferences?.Length ?? 0}");
+        log.Detail($"SolutionPath: {SolutionPath}");
+
         Directory.CreateDirectory(OutputDir);
 
         var resolutionState = BuildResolutionState(log);
@@ -356,8 +362,13 @@ public sealed class ResolveSqlProjAndInputs : Task
             WarnIfAutoDiscoveredConnectionStringExists(log);
             return new(false, "", sqlProjPath);
         }
-        catch
+        catch (Exception ex)
         {
+            // Log detailed exception information to help users diagnose SQL project resolution issues.
+            // This is intentionally more verbose than other catch blocks in this file because this
+            // specific failure point is commonly reported by users and requires diagnostic context.
+            log.Warn($"SQL project detection failed: {ex.Message}");
+            log.Detail($"Exception details: {ex}");
             return null;
         }
     }
@@ -427,10 +438,12 @@ public sealed class ResolveSqlProjAndInputs : Task
             .Require(state
                 => state.UseConnectionStringMode
                     ? string.IsNullOrWhiteSpace(state.ConnectionString)
-                        ? "Connection string resolution failed"
+                        ? "Connection string resolution failed. No connection string could be resolved from configuration."
                         : null
                     : string.IsNullOrWhiteSpace(state.SqlProjPath)
-                        ? "SqlProj resolution failed"
+                        ? "SqlProj resolution failed. No SQL project reference found. " +
+                          "Add a .sqlproj ProjectReference, set EfcptSqlProj property, or provide a connection string via " +
+                          "EfcptConnectionString/appsettings.json/app.config. Check build output for detailed error messages."
                         : null)
             .Build(state => state);
     }
@@ -518,8 +531,17 @@ public sealed class ResolveSqlProjAndInputs : Task
             if (!match.Success)
                 continue;
 
-            var name = match.Groups["name"].Value;
-            var relativePath = match.Groups["path"].Value
+            var nameGroup = match.Groups["name"];
+            var pathGroup = match.Groups["path"];
+
+            // Skip if required groups are missing or empty
+            if (!nameGroup.Success || !pathGroup.Success ||
+                string.IsNullOrWhiteSpace(nameGroup.Value) ||
+                string.IsNullOrWhiteSpace(pathGroup.Value))
+                continue;
+
+            var name = nameGroup.Value;
+            var relativePath = pathGroup.Value
                 .Replace('\\', Path.DirectorySeparatorChar)
                 .Replace('/', Path.DirectorySeparatorChar);
             if (!IsProjectFile(Path.GetExtension(relativePath)))
@@ -683,12 +705,12 @@ public sealed class ResolveSqlProjAndInputs : Task
 
 #if NET7_0_OR_GREATER
     [GeneratedRegex("^\\s*Project\\(\"(?<typeGuid>[^\"]+)\"\\)\\s*=\\s*\"(?<name>[^\"]+)\",\\s*\"(?<path>[^\"]+)\",\\s*\"(?<guid>[^\"]+)\"",
-        RegexOptions.Compiled)]
+        RegexOptions.Compiled | RegexOptions.Multiline)]
     private static partial Regex SolutionProjectLineRegex();
 #else
     private static readonly Regex _solutionProjectLineRegex = new(
         "^\\s*Project\\(\"(?<typeGuid>[^\"]+)\"\\)\\s*=\\s*\"(?<name>[^\"]+)\",\\s*\"(?<path>[^\"]+)\",\\s*\"(?<guid>[^\"]+)\"",
-        RegexOptions.Compiled);
+        RegexOptions.Compiled | RegexOptions.Multiline);
     private static Regex SolutionProjectLineRegex() => _solutionProjectLineRegex;
 #endif
 }
