@@ -298,6 +298,11 @@ public sealed class ResolveSqlProjAndInputs : Task
 
     private bool ExecuteCore(TaskExecutionContext ctx)
     {
+        // Normalize all string properties to empty string if null.
+        // MSBuild on .NET Framework can set properties to null instead of empty string,
+        // which causes NullReferenceExceptions in downstream code.
+        NormalizeProperties();
+
         var log = new BuildLog(ctx.Logger, "");
 
         // Log runtime context for troubleshooting
@@ -705,6 +710,32 @@ public sealed class ResolveSqlProjAndInputs : Task
              """;
 
         File.WriteAllText(Path.Combine(OutputDir, "resolved-inputs.json"), dump);
+    }
+
+    /// <summary>
+    /// Normalizes all string properties to empty string if null.
+    /// MSBuild on .NET Framework can set properties to null instead of empty string.
+    /// </summary>
+    private void NormalizeProperties()
+    {
+        ProjectFullPath ??= "";
+        ProjectDirectory ??= "";
+        Configuration ??= "";
+        ProjectReferences ??= [];
+        SqlProjOverride ??= "";
+        ConfigOverride ??= "";
+        RenamingOverride ??= "";
+        TemplateDirOverride ??= "";
+        EfcptConnectionString ??= "";
+        EfcptAppSettings ??= "";
+        EfcptAppConfig ??= "";
+        EfcptConnectionStringName ??= "DefaultConnection";
+        SolutionDir ??= "";
+        SolutionPath ??= "";
+        ProbeSolutionDir ??= "true";
+        OutputDir ??= "";
+        DefaultsRoot ??= "";
+        DumpResolvedInputs ??= "false";
     }
 
 #if NET7_0_OR_GREATER
