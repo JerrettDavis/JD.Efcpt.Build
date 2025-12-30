@@ -314,15 +314,15 @@ public sealed class RunEfcpt : Task
     private static readonly Lazy<ActionStrategy<ToolRestoreContext>> ToolRestoreStrategy = new(() =>
         ActionStrategy<ToolRestoreContext>.Create()
             // Manifest restore: restore tools from local manifest
-            // Skip on .NET 10+ with SDK installed because dnx handles tool execution without installation
-            .When((in ctx) => ctx is { UseManifest: true, ShouldRestore: true } && !(IsDotNet10OrLater(ctx.TargetFramework) && IsDotNet10SdkInstalled(ctx.DotNetExe)))
+            // Skip only when dnx will be used (all three conditions: .NET 10+ target, SDK installed, dnx available)
+            .When((in ctx) => ctx is { UseManifest: true, ShouldRestore: true } && !(IsDotNet10OrLater(ctx.TargetFramework) && IsDotNet10SdkInstalled(ctx.DotNetExe) && IsDnxAvailable(ctx.DotNetExe)))
             .Then((in ctx) =>
             {
                 var restoreCwd = ctx.ManifestDir ?? ctx.WorkingDir;
                 ProcessRunner.RunOrThrow(ctx.Log, ctx.DotNetExe, "tool restore", restoreCwd);
             })
             // Global restore: update global tool package
-            // Skip on .NET 10+ with SDK installed because dnx handles tool execution without installation
+            // Skip only when dnx will be used (all three conditions: .NET 10+ target, SDK installed, dnx available)
             .When((in ctx)
                 => ctx is
                 {
@@ -330,13 +330,13 @@ public sealed class RunEfcpt : Task
                     ShouldRestore: true,
                     HasExplicitPath: false,
                     HasPackageId: true
-                } && !(IsDotNet10OrLater(ctx.TargetFramework) && IsDotNet10SdkInstalled(ctx.DotNetExe)))
+                } && !(IsDotNet10OrLater(ctx.TargetFramework) && IsDotNet10SdkInstalled(ctx.DotNetExe) && IsDnxAvailable(ctx.DotNetExe)))
             .Then((in ctx) =>
             {
                 var versionArg = string.IsNullOrWhiteSpace(ctx.ToolVersion) ? "" : $" --version \"{ctx.ToolVersion}\"";
                 ProcessRunner.RunOrThrow(ctx.Log, ctx.DotNetExe, $"tool update --global {ctx.ToolPackageId}{versionArg}", ctx.WorkingDir);
             })
-            // Default: no restoration needed (includes .NET 10+ with SDK installed and dnx)
+            // Default: no restoration needed (only when dnx will actually be used)
             .Default(static (in _) => { })
             .Build());
 
