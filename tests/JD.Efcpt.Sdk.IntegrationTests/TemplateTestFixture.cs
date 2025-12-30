@@ -173,9 +173,20 @@ public class TemplateTestFixture : IDisposable
     /// <summary>
     /// Creates a project from the template using dotnet new efcptbuild.
     /// </summary>
-    public async Task<TestUtilities.CommandResult> CreateProjectFromTemplateAsync(string workingDirectory, string projectName)
+    /// <param name="workingDirectory">Directory to create the project in</param>
+    /// <param name="projectName">Name of the project to create</param>
+    /// <param name="framework">Optional target framework (net8.0, net9.0, or net10.0). Defaults to net8.0 if not specified.</param>
+    public async Task<TestUtilities.CommandResult> CreateProjectFromTemplateAsync(
+        string workingDirectory,
+        string projectName,
+        string? framework = null)
     {
-        return await RunDotnetNewCommandAsync(workingDirectory, $"efcptbuild --name {projectName}");
+        var args = $"efcptbuild --name {projectName}";
+        if (!string.IsNullOrEmpty(framework))
+        {
+            args += $" --Framework {framework}";
+        }
+        return await RunDotnetNewCommandAsync(workingDirectory, args);
     }
 
     private static async Task<TestUtilities.CommandResult> RunDotnetNewCommandAsync(string workingDirectory, string arguments)
