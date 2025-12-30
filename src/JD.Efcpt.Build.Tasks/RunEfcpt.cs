@@ -314,8 +314,9 @@ public sealed class RunEfcpt : Task
     private static readonly Lazy<ActionStrategy<ToolRestoreContext>> ToolRestoreStrategy = new(() =>
         ActionStrategy<ToolRestoreContext>.Create()
             // Manifest restore: restore tools from local manifest
-            // Skip only when dnx will be used (all three conditions: .NET 10+ target, SDK installed, dnx available)
-            .When((in ctx) => ctx is { UseManifest: true, ShouldRestore: true } && !(IsDotNet10OrLater(ctx.TargetFramework) && IsDotNet10SdkInstalled(ctx.DotNetExe) && IsDnxAvailable(ctx.DotNetExe)))
+            // Skip when: dnx will be used OR no manifest directory exists
+            .When((in ctx) => ctx is { UseManifest: true, ShouldRestore: true, ManifestDir: not null } 
+                && !(IsDotNet10OrLater(ctx.TargetFramework) && IsDotNet10SdkInstalled(ctx.DotNetExe) && IsDnxAvailable(ctx.DotNetExe)))
             .Then((in ctx) =>
             {
                 var restoreCwd = ctx.ManifestDir ?? ctx.WorkingDir;
@@ -336,7 +337,7 @@ public sealed class RunEfcpt : Task
                 var versionArg = string.IsNullOrWhiteSpace(ctx.ToolVersion) ? "" : $" --version \"{ctx.ToolVersion}\"";
                 ProcessRunner.RunOrThrow(ctx.Log, ctx.DotNetExe, $"tool update --global {ctx.ToolPackageId}{versionArg}", ctx.WorkingDir);
             })
-            // Default: no restoration needed (only when dnx will actually be used)
+            // Default: no restoration needed (dnx will be used OR no manifest for manifest mode)
             .Default(static (in _) => { })
             .Build());
 
