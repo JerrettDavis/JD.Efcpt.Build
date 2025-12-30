@@ -70,8 +70,9 @@ internal static class ResourceResolutionChain
                 : throw overrideNotFound($"Override not found: {path}", path);
         }
 
-        // Branch 2: Search project directory
-        if (TryFindInDirectory(context.ProjectDirectory, context.ResourceNames, exists, out var found))
+        // Branch 2: Search project directory (if provided)
+        if (!string.IsNullOrWhiteSpace(context.ProjectDirectory) &&
+            TryFindInDirectory(context.ProjectDirectory, context.ResourceNames, exists, out var found))
             return found;
 
         // Branch 3: Search solution directory (if enabled)
@@ -99,6 +100,13 @@ internal static class ResourceResolutionChain
         ExistsPredicate exists,
         out string foundPath)
     {
+        // Guard against null inputs - can occur on .NET Framework MSBuild
+        if (string.IsNullOrWhiteSpace(directory) || resourceNames == null || resourceNames.Count == 0)
+        {
+            foundPath = string.Empty;
+            return false;
+        }
+
         var matchingCandidate = resourceNames
             .Select(name => Path.Combine(directory, name))
             .FirstOrDefault(candidate => exists(candidate));
