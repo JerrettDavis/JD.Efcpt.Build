@@ -671,6 +671,15 @@ public sealed class ResolveSqlProjAndInputs : Task
            extension.EqualsIgnoreCase(".csproj") ||
            extension.EqualsIgnoreCase(".fsproj");
 
+    // IMPORTANT: On .NET Framework, the backing field must be declared BEFORE SolutionProjectLine
+    // to ensure proper static initialization order. Static fields are initialized in declaration order,
+    // so _solutionProjectLineRegex must exist before SolutionProjectLineRegex() is called.
+#if !NET7_0_OR_GREATER
+    private static readonly Regex _solutionProjectLineRegex = new(
+        "^\\s*Project\\(\"(?<typeGuid>[^\"]+)\"\\)\\s*=\\s*\"(?<name>[^\"]+)\",\\s*\"(?<path>[^\"]+)\",\\s*\"(?<guid>[^\"]+)\"",
+        RegexOptions.Compiled | RegexOptions.Multiline);
+#endif
+
     private static readonly Regex SolutionProjectLine = SolutionProjectLineRegex();
 
     private string ResolveFile(string overridePath, params string[] fileNames)
@@ -828,9 +837,7 @@ public sealed class ResolveSqlProjAndInputs : Task
         RegexOptions.Compiled | RegexOptions.Multiline)]
     private static partial Regex SolutionProjectLineRegex();
 #else
-    private static readonly Regex _solutionProjectLineRegex = new(
-        "^\\s*Project\\(\"(?<typeGuid>[^\"]+)\"\\)\\s*=\\s*\"(?<name>[^\"]+)\",\\s*\"(?<path>[^\"]+)\",\\s*\"(?<guid>[^\"]+)\"",
-        RegexOptions.Compiled | RegexOptions.Multiline);
+    // Field declaration moved above SolutionProjectLine for proper initialization order
     private static Regex SolutionProjectLineRegex() => _solutionProjectLineRegex;
 #endif
 }
