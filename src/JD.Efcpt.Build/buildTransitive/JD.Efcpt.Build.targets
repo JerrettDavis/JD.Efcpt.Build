@@ -414,6 +414,7 @@
         RenamingPath="$(_EfcptStagedRenaming)"
         TemplateDir="$(_EfcptStagedTemplateDir)"
         OutputDir="$(EfcptGeneratedDir)"
+        TargetFramework="$(TargetFramework)"
         LogVerbosity="$(EfcptLogVerbosity)" />
     <RenameGeneratedFiles
         GeneratedDir="$(EfcptGeneratedDir)"

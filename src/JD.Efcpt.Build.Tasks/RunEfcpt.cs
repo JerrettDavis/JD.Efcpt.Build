@@ -224,6 +224,15 @@ public sealed class RunEfcpt : Task
     /// </value>
     public string Provider { get; set; } = "mssql";
 
+    /// <summary>
+    /// Target framework of the project being built (e.g., "net8.0", "net9.0", "net10.0").
+    /// </summary>
+    /// <value>
+    /// Used to determine whether to use dnx for tool execution on .NET 10+ projects.
+    /// If empty or not specified, falls back to runtime version detection.
+    /// </value>
+    public string TargetFramework { get; set; } = "";
+
     private readonly record struct ToolResolutionContext(
         string ToolPath,
         string ToolMode,
@@ -234,6 +243,7 @@ public sealed class RunEfcpt : Task
         string ToolPackageId,
         string WorkingDir,
         string Args,
+        string TargetFramework,
         BuildLog Log
     );
 
@@ -255,6 +265,7 @@ public sealed class RunEfcpt : Task
         string ToolPath,
         string ToolPackageId,
         string ToolVersion,
+        string TargetFramework,
         BuildLog Log
     );
 
@@ -267,7 +278,7 @@ public sealed class RunEfcpt : Task
                     Args: ctx.Args,
                     Cwd: ctx.WorkingDir,
                     UseManifest: false))
-            .When((in ctx) => IsDotNet10OrLater() && IsDnxAvailable(ctx.DotNetExe))
+            .When((in ctx) => IsDotNet10OrLater(ctx.TargetFramework) && IsDnxAvailable(ctx.DotNetExe))
             .Then((in ctx)
                 => new ToolInvocation(
                     Exe: ctx.DotNetExe,
@@ -298,7 +309,7 @@ public sealed class RunEfcpt : Task
         ActionStrategy<ToolRestoreContext>.Create()
             // Manifest restore: restore tools from local manifest
             // Skip on .NET 10+ because dnx handles tool execution without installation
-            .When(static (in ctx) => ctx is { UseManifest: true, ShouldRestore: true } && !IsDotNet10OrLater())
+            .When((in ctx) => ctx is { UseManifest: true, ShouldRestore: true } && !IsDotNet10OrLater(ctx.TargetFramework))
             .Then((in ctx) =>
             {
                 var restoreCwd = ctx.ManifestDir ?? ctx.WorkingDir;
@@ -306,14 +317,14 @@ public sealed class RunEfcpt : Task
             })
             // Global restore: update global tool package
             // Skip on .NET 10+ because dnx handles tool execution without installation
-            .When(static (in ctx)
+            .When((in ctx)
                 => ctx is
                 {
                     UseManifest: false,
                     ShouldRestore: true,
                     HasExplicitPath: false,
                     HasPackageId: true
-                } && !IsDotNet10OrLater())
+                } && !IsDotNet10OrLater(ctx.TargetFramework))
             .Then((in ctx) =>
             {
                 var versionArg = string.IsNullOrWhiteSpace(ctx.ToolVersion) ? "" : $" --version \"{ctx.ToolVersion}\"";
@@ -392,7 +403,7 @@ public sealed class RunEfcpt : Task
         // Use the Strategy pattern to resolve tool invocation
         var context = new ToolResolutionContext(
             ToolPath, mode, manifestDir, forceManifestOnNonWindows,
-            DotNetExe, ToolCommand, ToolPackageId, workingDir, args, log);
+            DotNetExe, ToolCommand, ToolPackageId, workingDir, args, TargetFramework, log);
 
         var invocation = ToolResolutionStrategy.Value.Execute(in context);
 
@@ -418,6 +429,7 @@ public sealed class RunEfcpt : Task
             ToolPath: ToolPath,
             ToolPackageId: ToolPackageId,
             ToolVersion: ToolVersion,
+            TargetFramework: TargetFramework,
             Log: log
         );
 
@@ -429,12 +441,46 @@ public sealed class RunEfcpt : Task
     }
 
 
-    private static bool IsDotNet10OrLater()
+    /// <summary>
+    /// Checks if the target framework is .NET 10.0 or later.
+    /// </summary>
+    /// <param name="targetFramework">The target framework string (e.g., "net8.0", "net10.0").</param>
+    /// <returns>True if the target framework is .NET 10.0 or later; otherwise false.</returns>
+    private static bool IsDotNet10OrLater(string targetFramework)
     {
+        if (string.IsNullOrWhiteSpace(targetFramework))
+            return false;
+
         try
         {
-            var version = Environment.Version;
-            return version.Major >= 10;
+            // Parse target framework to get major version (e.g., "net8.0" -> 8, "net10.0" -> 10)
+            if (!targetFramework.StartsWith("net", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            var versionPart = targetFramework[3..];
+
+            // Trim at the first '.' or '-' after "net" to handle formats like:
+            // - "net10.0"           -> "10"
+            // - "net10.0-windows"   -> "10"
+            // - "net10-windows"     -> "10"
+            var dotIndex = versionPart.IndexOf('.');
+            var hyphenIndex = versionPart.IndexOf('-');
+
+            var cutIndex = (dotIndex >= 0, hyphenIndex >= 0) switch
+            {
+                (true, true) => Math.Min(dotIndex, hyphenIndex),
+                (true, false) => dotIndex,
+                (false, true) => hyphenIndex,
+                _ => -1
+            };
+
+            if (cutIndex > 0)
+                versionPart = versionPart[..cutIndex];
+
+            if (int.TryParse(versionPart, out var version))
+                return version >= 10;
+
+            return false;
         }
         catch
         {
