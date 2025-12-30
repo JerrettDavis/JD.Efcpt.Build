@@ -23,8 +23,13 @@ Create a new SDK-based project with the template:
 # Install the template package (one-time setup)
 dotnet new install JD.Efcpt.Build.Templates
 
-# Create a new EF Core Power Tools SDK project
+# Create a new EF Core Power Tools SDK project with a specific name
 dotnet new efcptbuild --name MyEfCoreProject
+
+# Or create a project using the current directory name
+mkdir MyEfCoreProject
+cd MyEfCoreProject
+dotnet new efcptbuild
 ```
 
 Or use Visual Studio: **File > New > Project** and search for **"EF Core Power Tools SDK Project"**

@@ -7,9 +7,15 @@
 # Install template (one-time)
 dotnet new install JD.Efcpt.Build.Templates
 
-# Create new SDK project
+# Create new SDK project with specific name
 dotnet new efcptbuild --name MyDataProject
 cd MyDataProject
+dotnet build
+
+# Or create in current directory (uses directory name)
+mkdir MyDataProject
+cd MyDataProject
+dotnet new efcptbuild
 dotnet build
 ```
 

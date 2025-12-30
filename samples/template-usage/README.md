@@ -83,7 +83,10 @@ The template supports the following options:
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--name` | Project name | (required) |
+| `--name` | Project name (optional) | Current directory name |
+| `--Framework` | Target framework (net8.0, net9.0, net10.0) | net8.0 |
+
+**Note:** When `--name` is not specified, the template uses the current directory name as the project name.
 
 ## Uninstalling
 
