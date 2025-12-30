@@ -408,49 +408,110 @@ public sealed class ResolveSqlProjAndInputs : Task
 
     private ResolutionState BuildResolutionState(BuildLog log)
     {
-        // Determine mode using priority-based resolution
-        var (useConnectionStringMode, connectionString, sqlProjPath) = DetermineMode(log);
+        // Step 1: Determine mode using priority-based resolution
+        log.Detail("BuildResolutionState: Step 1 - DetermineMode starting");
+        TargetContext? targetContext = null;
+        try
+        {
+            targetContext = DetermineMode(log);
+        }
+        catch (Exception ex)
+        {
+            log.Warn($"BuildResolutionState: DetermineMode threw: {ex.GetType().Name}: {ex.Message}");
+            throw;
+        }
 
-        return Composer<ResolutionState, ResolutionState>
-            .New(() => default)
-            .With(state => state with
-            {
-                ConnectionString = connectionString,
-                UseConnectionStringMode = useConnectionStringMode,
-                SqlProjPath = sqlProjPath
-            })
-            .With(state => state with
-            {
-                ConfigPath = ResolveFile(ConfigOverride, "efcpt-config.json")
-            })
-            .With(state => state with
-            {
-                RenamingPath = ResolveFile(
-                    RenamingOverride,
-                    "efcpt.renaming.json",
-                    "efcpt-renaming.json",
-                    "efpt.renaming.json")
-            })
-            .With(state => state with
-            {
-                TemplateDir = ResolveDir(
-                    TemplateDirOverride,
-                    "Template",
-                    "CodeTemplates",
-                    "Templates")
-            })
-            // Either connection string or SQL project must be resolved
-            .Require(state
-                => state.UseConnectionStringMode
-                    ? string.IsNullOrWhiteSpace(state.ConnectionString)
-                        ? "Connection string resolution failed. No connection string could be resolved from configuration."
-                        : null
-                    : string.IsNullOrWhiteSpace(state.SqlProjPath)
-                        ? "SqlProj resolution failed. No SQL project reference found. " +
-                          "Add a .sqlproj ProjectReference, set EfcptSqlProj property, or provide a connection string via " +
-                          "EfcptConnectionString/appsettings.json/app.config. Check build output for detailed error messages."
-                        : null)
-            .Build(state => state);
+        var useConnectionStringMode = targetContext?.UseConnectionStringMode ?? false;
+        var connectionString = targetContext?.ConnectionString ?? "";
+        var sqlProjPath = targetContext?.SqlProjPath ?? "";
+
+        log.Detail($"BuildResolutionState: Step 1 complete - UseConnectionStringMode={useConnectionStringMode}, " +
+                   $"ConnectionString={(string.IsNullOrEmpty(connectionString) ? "(empty)" : "(set)")}, " +
+                   $"SqlProjPath={(string.IsNullOrEmpty(sqlProjPath) ? "(empty)" : sqlProjPath)}");
+
+        // Step 2: Resolve config file
+        log.Detail("BuildResolutionState: Step 2 - ResolveFile for config starting");
+        log.Detail($"  ConfigOverride={(ConfigOverride ?? "(null)")}");
+        log.Detail($"  ProjectDirectory={(ProjectDirectory ?? "(null)")}");
+        log.Detail($"  DefaultsRoot={(DefaultsRoot ?? "(null)")}");
+        string configPath;
+        try
+        {
+            configPath = ResolveFile(ConfigOverride ?? "", "efcpt-config.json");
+        }
+        catch (Exception ex)
+        {
+            log.Warn($"BuildResolutionState: ResolveFile(config) threw: {ex.GetType().Name}: {ex.Message}");
+            throw;
+        }
+        log.Detail($"BuildResolutionState: Step 2 complete - ConfigPath={configPath}");
+
+        // Step 3: Resolve renaming file
+        log.Detail("BuildResolutionState: Step 3 - ResolveFile for renaming starting");
+        log.Detail($"  RenamingOverride={(RenamingOverride ?? "(null)")}");
+        string renamingPath;
+        try
+        {
+            renamingPath = ResolveFile(
+                RenamingOverride ?? "",
+                "efcpt.renaming.json",
+                "efcpt-renaming.json",
+                "efpt.renaming.json");
+        }
+        catch (Exception ex)
+        {
+            log.Warn($"BuildResolutionState: ResolveFile(renaming) threw: {ex.GetType().Name}: {ex.Message}");
+            throw;
+        }
+        log.Detail($"BuildResolutionState: Step 3 complete - RenamingPath={renamingPath}");
+
+        // Step 4: Resolve template directory
+        log.Detail("BuildResolutionState: Step 4 - ResolveDir for templates starting");
+        log.Detail($"  TemplateDirOverride={(TemplateDirOverride ?? "(null)")}");
+        string templateDir;
+        try
+        {
+            templateDir = ResolveDir(
+                TemplateDirOverride ?? "",
+                "Template",
+                "CodeTemplates",
+                "Templates");
+        }
+        catch (Exception ex)
+        {
+            log.Warn($"BuildResolutionState: ResolveDir(templates) threw: {ex.GetType().Name}: {ex.Message}");
+            throw;
+        }
+        log.Detail($"BuildResolutionState: Step 4 complete - TemplateDir={templateDir}");
+
+        // Step 5: Validate that either connection string or SQL project was resolved
+        log.Detail("BuildResolutionState: Step 5 - Validation");
+        if (useConnectionStringMode)
+        {
+            if (string.IsNullOrWhiteSpace(connectionString))
+                throw new InvalidOperationException(
+                    "Connection string resolution failed. No connection string could be resolved from configuration.");
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(sqlProjPath))
+                throw new InvalidOperationException(
+                    "SqlProj resolution failed. No SQL project reference found. " +
+                    "Add a .sqlproj ProjectReference, set EfcptSqlProj property, or provide a connection string via " +
+                    "EfcptConnectionString/appsettings.json/app.config. Check build output for detailed error messages.");
+        }
+
+        log.Detail("BuildResolutionState: All steps complete, building ResolutionState");
+
+        // Build the final state
+        return new ResolutionState(
+            SqlProjPath: sqlProjPath,
+            ConfigPath: configPath,
+            RenamingPath: renamingPath,
+            TemplateDir: templateDir,
+            ConnectionString: connectionString,
+            UseConnectionStringMode: useConnectionStringMode
+        );
     }
 
     private string ResolveSqlProjWithValidation(BuildLog log)
@@ -614,15 +675,27 @@ public sealed class ResolveSqlProjAndInputs : Task
 
     private string ResolveFile(string overridePath, params string[] fileNames)
     {
+        // Ensure all inputs are non-null
+        overridePath ??= "";
+        var projectDir = ProjectDirectory ?? "";
+        var solutionDir = SolutionDir ?? "";
+        var defaultsRoot = DefaultsRoot ?? "";
+        var probeSolutionDir = (ProbeSolutionDir ?? "true").IsTrue();
+
         var chain = FileResolutionChain.Build();
+        if (chain == null)
+            throw new InvalidOperationException("FileResolutionChain.Build() returned null");
+
         var candidates = EnumerableExtensions.BuildCandidateNames(overridePath, fileNames);
+        if (candidates == null)
+            throw new InvalidOperationException("BuildCandidateNames returned null");
 
         var context = new FileResolutionContext(
             OverridePath: overridePath,
-            ProjectDirectory: ProjectDirectory,
-            SolutionDir: SolutionDir,
-            ProbeSolutionDir: ProbeSolutionDir.IsTrue(),
-            DefaultsRoot: DefaultsRoot,
+            ProjectDirectory: projectDir,
+            SolutionDir: solutionDir,
+            ProbeSolutionDir: probeSolutionDir,
+            DefaultsRoot: defaultsRoot,
             FileNames: candidates);
 
         return chain.Execute(in context, out var result)
@@ -632,15 +705,27 @@ public sealed class ResolveSqlProjAndInputs : Task
 
     private string ResolveDir(string overridePath, params string[] dirNames)
     {
+        // Ensure all inputs are non-null
+        overridePath ??= "";
+        var projectDir = ProjectDirectory ?? "";
+        var solutionDir = SolutionDir ?? "";
+        var defaultsRoot = DefaultsRoot ?? "";
+        var probeSolutionDir = (ProbeSolutionDir ?? "true").IsTrue();
+
         var chain = DirectoryResolutionChain.Build();
+        if (chain == null)
+            throw new InvalidOperationException("DirectoryResolutionChain.Build() returned null");
+
         var candidates = EnumerableExtensions.BuildCandidateNames(overridePath, dirNames);
+        if (candidates == null)
+            throw new InvalidOperationException("BuildCandidateNames returned null");
 
         var context = new DirectoryResolutionContext(
             OverridePath: overridePath,
-            ProjectDirectory: ProjectDirectory,
-            SolutionDir: SolutionDir,
-            ProbeSolutionDir: ProbeSolutionDir.IsTrue(),
-            DefaultsRoot: DefaultsRoot,
+            ProjectDirectory: projectDir,
+            SolutionDir: solutionDir,
+            ProbeSolutionDir: probeSolutionDir,
+            DefaultsRoot: defaultsRoot,
             DirNames: candidates);
 
         return chain.Execute(in context, out var result)
