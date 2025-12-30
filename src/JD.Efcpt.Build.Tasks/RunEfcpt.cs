@@ -78,6 +78,11 @@ namespace JD.Efcpt.Build.Tasks;
 public sealed class RunEfcpt : Task
 {
     /// <summary>
+    /// Timeout in milliseconds for external process operations (SDK checks, dnx availability).
+    /// </summary>
+    private const int ProcessTimeoutMs = 5000;
+
+    /// <summary>
     /// Controls how the efcpt dotnet tool is resolved.
     /// </summary>
     /// <value>
@@ -512,14 +517,17 @@ public sealed class RunEfcpt : Task
             if (p is null) return false;
 
             var output = p.StandardOutput.ReadToEnd();
-            p.WaitForExit(5000); // 5 second timeout
+            
+            // Check if process completed within timeout
+            if (!p.WaitForExit(ProcessTimeoutMs))
+                return false;
 
             if (p.ExitCode != 0)
                 return false;
 
             // Parse output like "10.0.100 [C:\Program Files\dotnet\sdk]"
             // Check if any line starts with "10." or higher
-            foreach (var line in output.Split('\n'))
+            foreach (var line in output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
             {
                 var trimmed = line.Trim();
                 if (string.IsNullOrEmpty(trimmed))
@@ -527,7 +535,7 @@ public sealed class RunEfcpt : Task
 
                 // Extract version number (first part before space or bracket)
                 var spaceIndex = trimmed.IndexOf(' ');
-                var versionStr = spaceIndex > 0 ? trimmed.Substring(0, spaceIndex) : trimmed;
+                var versionStr = spaceIndex >= 0 ? trimmed.Substring(0, spaceIndex) : trimmed;
 
                 // Parse major version
                 var dotIndex = versionStr.IndexOf('.');
@@ -563,7 +571,9 @@ public sealed class RunEfcpt : Task
             using var p = Process.Start(psi);
             if (p is null) return false;
 
-            p.WaitForExit(5000); // 5 second timeout
+            if (!p.WaitForExit(ProcessTimeoutMs))
+                return false;
+                
             return p.ExitCode == 0;
         }
         catch
