@@ -516,8 +516,6 @@ public sealed class RunEfcpt : Task
             using var p = Process.Start(psi);
             if (p is null) return false;
 
-            var output = p.StandardOutput.ReadToEnd();
-            
             // Check if process completed within timeout
             if (!p.WaitForExit(ProcessTimeoutMs))
                 return false;
@@ -525,9 +523,11 @@ public sealed class RunEfcpt : Task
             if (p.ExitCode != 0)
                 return false;
 
+            var output = p.StandardOutput.ReadToEnd();
+
             // Parse output like "10.0.100 [C:\Program Files\dotnet\sdk]"
             // Check if any line starts with "10." or higher
-            foreach (var line in output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+            foreach (var line in output.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
             {
                 var trimmed = line.Trim();
                 if (string.IsNullOrEmpty(trimmed))
