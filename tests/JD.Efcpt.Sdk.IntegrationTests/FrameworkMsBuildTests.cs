@@ -176,8 +176,9 @@ public class FrameworkMsBuildTests : IDisposable
 /// <summary>
 /// Collection definition for Framework MSBuild tests.
 /// Uses the same fixture as other package tests to share package setup.
+/// DisableParallelization prevents NuGet package file locking conflicts.
 /// </summary>
-[CollectionDefinition("Framework MSBuild Tests")]
+[CollectionDefinition("Framework MSBuild Tests", DisableParallelization = true)]
 public class FrameworkMsBuildTestsCollection : ICollectionFixture<SdkPackageTestFixture>
 {
 }
