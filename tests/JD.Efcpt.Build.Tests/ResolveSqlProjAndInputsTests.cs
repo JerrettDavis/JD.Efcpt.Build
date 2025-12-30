@@ -785,4 +785,178 @@ public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : Tin
         var success = task.Execute();
         return new TaskResult(setup, task, success);
     }
+
+    // ========== Malformed Solution File Tests ==========
+
+    [Scenario("Gracefully handles malformed project lines in .sln file with missing name")]
+    [Fact]
+    public async Task Handles_malformed_sln_missing_name()
+    {
+        await Given("solution file with malformed project line (missing name)", SetupMalformedSlnMissingName)
+            .When("execute task with solution scan", ExecuteTaskSolutionScan)
+            .Then("task succeeds without exception", r => r.Success)
+            .And("sql project path resolved from valid line", r => r.Task.SqlProjPath == Path.GetFullPath(r.Setup.SqlProj))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Gracefully handles malformed project lines in .sln file with missing path")]
+    [Fact]
+    public async Task Handles_malformed_sln_missing_path()
+    {
+        await Given("solution file with malformed project line (missing path)", SetupMalformedSlnMissingPath)
+            .When("execute task with solution scan", ExecuteTaskSolutionScan)
+            .Then("task succeeds without exception", r => r.Success)
+            .And("sql project path resolved from valid line", r => r.Task.SqlProjPath == Path.GetFullPath(r.Setup.SqlProj))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Gracefully handles .sln file with empty project name")]
+    [Fact]
+    public async Task Handles_sln_with_empty_project_name()
+    {
+        await Given("solution file with empty project name", SetupSlnEmptyProjectName)
+            .When("execute task with solution scan", ExecuteTaskSolutionScan)
+            .Then("task succeeds without exception", r => r.Success)
+            .And("sql project path resolved from valid line", r => r.Task.SqlProjPath == Path.GetFullPath(r.Setup.SqlProj))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Gracefully handles .sln file with empty project path")]
+    [Fact]
+    public async Task Handles_sln_with_empty_project_path()
+    {
+        await Given("solution file with empty project path", SetupSlnEmptyProjectPath)
+            .When("execute task with solution scan", ExecuteTaskSolutionScan)
+            .Then("task succeeds without exception", r => r.Success)
+            .And("sql project path resolved from valid line", r => r.Task.SqlProjPath == Path.GetFullPath(r.Setup.SqlProj))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Gracefully handles .sln file with only malformed lines")]
+    [Fact]
+    public async Task Handles_sln_with_only_malformed_lines()
+    {
+        await Given("solution file with only malformed project lines", SetupSlnOnlyMalformedLines)
+            .When("execute task with solution scan", ExecuteTaskSolutionScan)
+            .Then("task fails due to no sql project found", r => !r.Success)
+            .And("no null reference exceptions occur", r => !r.Setup.Engine.Warnings.Any(w => 
+                w.Message?.Contains("Object reference not set") == true))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    private static SolutionScanSetup SetupMalformedSlnMissingName()
+    {
+        var folder = new TestFolder();
+        var projectDir = folder.CreateDir("src");
+        folder.WriteFile("src/App.csproj", "<Project />");
+
+        var sqlproj = folder.WriteFile("db/Db.csproj", "<Project Sdk=\"MSBuild.Sdk.SqlProj/3.0.0\" />");
+        // First line is malformed (missing closing quote for name), second line is valid
+        var solutionPath = folder.WriteFile("Sample.sln",
+            """
+            Microsoft Visual Studio Solution File, Format Version 12.00
+            # Visual Studio Version 17
+            Project("{11111111-1111-1111-1111-111111111111}") = "MalformedApp, "src\App.csproj", "{22222222-2222-2222-2222-222222222222}"
+            EndProject
+            Project("{11111111-1111-1111-1111-111111111111}") = "Db", "db\Db.csproj", "{33333333-3333-3333-3333-333333333333}"
+            EndProject
+            """);
+
+        var engine = new TestBuildEngine();
+        return new SolutionScanSetup(folder, projectDir, sqlproj, solutionPath, engine);
+    }
+
+    private static SolutionScanSetup SetupMalformedSlnMissingPath()
+    {
+        var folder = new TestFolder();
+        var projectDir = folder.CreateDir("src");
+        folder.WriteFile("src/App.csproj", "<Project />");
+
+        var sqlproj = folder.WriteFile("db/Db.csproj", "<Project Sdk=\"MSBuild.Sdk.SqlProj/3.0.0\" />");
+        // First line is malformed (missing closing quote for path), second line is valid
+        var solutionPath = folder.WriteFile("Sample.sln",
+            """
+            Microsoft Visual Studio Solution File, Format Version 12.00
+            # Visual Studio Version 17
+            Project("{11111111-1111-1111-1111-111111111111}") = "App", "src\App.csproj, "{22222222-2222-2222-2222-222222222222}"
+            EndProject
+            Project("{11111111-1111-1111-1111-111111111111}") = "Db", "db\Db.csproj", "{33333333-3333-3333-3333-333333333333}"
+            EndProject
+            """);
+
+        var engine = new TestBuildEngine();
+        return new SolutionScanSetup(folder, projectDir, sqlproj, solutionPath, engine);
+    }
+
+    private static SolutionScanSetup SetupSlnEmptyProjectName()
+    {
+        var folder = new TestFolder();
+        var projectDir = folder.CreateDir("src");
+        folder.WriteFile("src/App.csproj", "<Project />");
+
+        var sqlproj = folder.WriteFile("db/Db.csproj", "<Project Sdk=\"MSBuild.Sdk.SqlProj/3.0.0\" />");
+        // First line has empty name, second line is valid
+        var solutionPath = folder.WriteFile("Sample.sln",
+            """
+            Microsoft Visual Studio Solution File, Format Version 12.00
+            # Visual Studio Version 17
+            Project("{11111111-1111-1111-1111-111111111111}") = "", "src\App.csproj", "{22222222-2222-2222-2222-222222222222}"
+            EndProject
+            Project("{11111111-1111-1111-1111-111111111111}") = "Db", "db\Db.csproj", "{33333333-3333-3333-3333-333333333333}"
+            EndProject
+            """);
+
+        var engine = new TestBuildEngine();
+        return new SolutionScanSetup(folder, projectDir, sqlproj, solutionPath, engine);
+    }
+
+    private static SolutionScanSetup SetupSlnEmptyProjectPath()
+    {
+        var folder = new TestFolder();
+        var projectDir = folder.CreateDir("src");
+        folder.WriteFile("src/App.csproj", "<Project />");
+
+        var sqlproj = folder.WriteFile("db/Db.csproj", "<Project Sdk=\"MSBuild.Sdk.SqlProj/3.0.0\" />");
+        // First line has empty path, second line is valid
+        var solutionPath = folder.WriteFile("Sample.sln",
+            """
+            Microsoft Visual Studio Solution File, Format Version 12.00
+            # Visual Studio Version 17
+            Project("{11111111-1111-1111-1111-111111111111}") = "App", "", "{22222222-2222-2222-2222-222222222222}"
+            EndProject
+            Project("{11111111-1111-1111-1111-111111111111}") = "Db", "db\Db.csproj", "{33333333-3333-3333-3333-333333333333}"
+            EndProject
+            """);
+
+        var engine = new TestBuildEngine();
+        return new SolutionScanSetup(folder, projectDir, sqlproj, solutionPath, engine);
+    }
+
+    private static SolutionScanSetup SetupSlnOnlyMalformedLines()
+    {
+        var folder = new TestFolder();
+        var projectDir = folder.CreateDir("src");
+        folder.WriteFile("src/App.csproj", "<Project />");
+
+        // Create the SQL project file but don't add it to solution properly
+        folder.WriteFile("db/Db.csproj", "<Project Sdk=\"MSBuild.Sdk.SqlProj/3.0.0\" />");
+        // All project lines are malformed or empty
+        var solutionPath = folder.WriteFile("Sample.sln",
+            """
+            Microsoft Visual Studio Solution File, Format Version 12.00
+            # Visual Studio Version 17
+            Project("{11111111-1111-1111-1111-111111111111}") = "", "", "{22222222-2222-2222-2222-222222222222}"
+            EndProject
+            Project("{11111111-1111-1111-1111-111111111111}") = "MissingPath, "src\App.csproj", "{33333333-3333-3333-3333-333333333333}"
+            EndProject
+            """);
+
+        var engine = new TestBuildEngine();
+        return new SolutionScanSetup(folder, projectDir, "", solutionPath, engine);
+    }
 }
