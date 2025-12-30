@@ -25,14 +25,10 @@ public readonly record struct TaskExecutionContext(
 /// </remarks>
 internal static class TaskExecutionDecorator
 {
-    /// <summary>
-    /// Static constructor ensures assembly resolver is initialized before any task runs.
-    /// This is critical for loading dependencies from the task assembly's directory.
-    /// </summary>
-    static TaskExecutionDecorator()
-    {
-        TaskAssemblyResolver.Initialize();
-    }
+    // NOTE: Assembly resolver initialization has been moved to ModuleInitializer.cs
+    // which runs before any code in this assembly, solving the chicken-and-egg problem
+    // where PatternKit types need to be loaded before this static constructor can run.
+
     /// <summary>
     /// Creates a decorator that wraps the given core logic with exception handling.
     /// </summary>

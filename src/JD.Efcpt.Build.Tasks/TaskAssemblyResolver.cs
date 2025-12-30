@@ -12,9 +12,16 @@ namespace JD.Efcpt.Build.Tasks;
 /// which may not have access to the task's dependencies.
 /// </summary>
 /// <remarks>
+/// <para>
+/// This class is initialized by <see cref="ModuleInitializer"/> before any other code runs,
+/// which is critical for .NET Framework MSBuild where dependencies like PatternKit.Core.dll
+/// must be resolvable before any types that reference them are JIT-compiled.
+/// </para>
+/// <para>
 /// This class is excluded from code coverage because it's MSBuild infrastructure code
 /// that only activates during assembly resolution failures in the MSBuild host process.
 /// Testing would require complex integration scenarios with actual assembly loading failures.
+/// </para>
 /// </remarks>
 [ExcludeFromCodeCoverage]
 internal static class TaskAssemblyResolver
