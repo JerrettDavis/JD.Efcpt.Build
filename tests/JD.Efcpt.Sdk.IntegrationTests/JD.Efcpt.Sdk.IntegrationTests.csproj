@@ -30,6 +30,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\JD.Efcpt.Sdk\JD.Efcpt.Sdk.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\..\src\JD.Efcpt.Build\JD.Efcpt.Build.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\src\JD.Efcpt.Build.Templates\JD.Efcpt.Build.Templates.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageType>Template</PackageType>
+    <PackageId>JD.Efcpt.Build.Templates</PackageId>
+    <Authors>Jerrett Davis</Authors>
+    <Company>JDH Productions</Company>
+    
+    <!-- Package Description -->
+    <Title>JD.Efcpt.Build Templates</Title>
+    <Description>Templates for creating projects that use JD.Efcpt.Sdk to automatically generate EF Core models from database projects. Use 'dotnet new efcptbuild' to create a new SDK-based project, or select "EF Core Power Tools SDK Project" in Visual Studio's File > New Project dialog.</Description>
+    <PackageTags>dotnet-new;templates;efcore;entity-framework;ef-core-power-tools;efcpt;database-first;code-generation;sdk</PackageTags>
+    <PackageProjectUrl>https://github.com/jerrettdavis/JD.Efcpt.Build</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jerrettdavis/JD.Efcpt.Build</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="templates\**\*" Exclude="templates\**\bin\**;templates\**\obj\**" PackagePath="content" />
+  </ItemGroup>
+
+  <!-- Include README -->
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="**\*" />
+  </ItemGroup>
+
+</Project>

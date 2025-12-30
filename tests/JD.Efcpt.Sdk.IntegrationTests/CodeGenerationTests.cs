@@ -156,9 +156,8 @@ public class CodeGenerationTests : IDisposable
         <EfcptConfigRootNamespace>MyCustomNamespace</EfcptConfigRootNamespace>
     </PropertyGroup>";
         _builder.CreateSdkProject("TestProject_CustomNs", "net8.0", additionalContent);
-        await _builder.RestoreAsync();
 
-        // Act
+        // Act - BuildAsync handles restore automatically
         var buildResult = await _builder.BuildAsync();
 
         // Assert
@@ -172,7 +171,7 @@ public class CodeGenerationTests : IDisposable
     {
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateSdkProject($"TestProject_{targetFramework.Replace(".", "")}", targetFramework);
-        await _builder.RestoreAsync();
+        // BuildAsync handles restore automatically
         var buildResult = await _builder.BuildAsync();
         buildResult.Success.Should().BeTrue($"Build should succeed for assertions.\n{buildResult}");
     }
