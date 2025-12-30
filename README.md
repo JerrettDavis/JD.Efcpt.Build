@@ -15,7 +15,28 @@ Automate database-first EF Core model generation as part of your build pipeline.
 
 Choose your integration approach:
 
-### Option A: SDK Approach (Recommended for new projects)
+### Option A: Use Project Template (Easiest!)
+
+Create a new SDK-based project with the template:
+
+```bash
+# Install the template package (one-time setup)
+dotnet new install JD.Efcpt.Build.Templates
+
+# Create a new EF Core Power Tools SDK project with a specific name
+dotnet new efcptbuild --name MyEfCoreProject
+
+# Or create a project using the current directory name
+mkdir MyEfCoreProject
+cd MyEfCoreProject
+dotnet new efcptbuild
+```
+
+Or use Visual Studio: **File > New > Project** and search for **"EF Core Power Tools SDK Project"**
+
+The template creates a project using `JD.Efcpt.Sdk` for the simplest, cleanest setup.
+
+### Option B: SDK Approach (Recommended for new projects)
 
 Use the SDK in your project file:
 
@@ -28,7 +49,7 @@ Use the SDK in your project file:
 </Project>
 ```
 
-### Option B: PackageReference Approach
+### Option C: PackageReference Approach
 
 **Step 1:** Add the NuGet package to your application project / class library:
 
@@ -50,6 +71,18 @@ dotnet build
 dotnet tool install --global ErikEJ.EFCorePowerTools.Cli --version "8.*"
 dotnet tool install --global ErikEJ.EFCorePowerTools.Cli --version "9.*"
 ```
+
+---
+
+## 📦 Available Packages
+
+This project provides three NuGet packages:
+
+| Package | Purpose | Usage |
+|---------|---------|-------|
+| **[JD.Efcpt.Build](https://www.nuget.org/packages/JD.Efcpt.Build/)** | Main package for MSBuild integration | Add as `PackageReference` to existing projects |
+| **[JD.Efcpt.Sdk](https://www.nuget.org/packages/JD.Efcpt.Sdk/)** | SDK package for cleanest setup | Use as project SDK: `<Project Sdk="JD.Efcpt.Sdk">` |
+| **[JD.Efcpt.Build.Templates](https://www.nuget.org/packages/JD.Efcpt.Build.Templates/)** | Project templates for `dotnet new` | Install once: `dotnet new install JD.Efcpt.Build.Templates` <br/> Creates SDK-based projects |
 
 ---
 
@@ -173,7 +206,29 @@ See the [SDK documentation](docs/user-guide/sdk.md) for detailed guidance.
   - **[MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj)** - Community SDK for SQL Projects (uses `.csproj` or `.fsproj` extension), cross-platform
   - **Traditional SQL Projects** - Legacy `.sqlproj` format, requires Windows/Visual Studio with SQL Server Data Tools
 
-### Step 1: Install the Package
+### Quick Start with Templates (Recommended)
+
+The easiest way to get started is using the project template:
+
+```bash
+# Install the template package (one-time)
+dotnet new install JD.Efcpt.Build.Templates
+
+# Create a new project
+dotnet new efcptbuild --name MyDataProject
+```
+
+This creates a fully configured SDK project with:
+- JD.Efcpt.Sdk as the project SDK (cleanest setup)
+- EF Core dependencies
+- Sample `efcpt-config.json` with best practices
+- Helpful README with next steps
+
+**Visual Studio users:** After installing the templates, you can create new projects via **File > New > Project** and search for **"EF Core Power Tools SDK Project"**.
+
+### Manual Installation
+
+#### Step 1: Install the Package
 
 Add to your application project (`.csproj`):
 
@@ -191,7 +246,7 @@ dotnet add package JD.Efcpt.Build
 dotnet add package Microsoft.EntityFrameworkCore.SqlServer
 ```
 
-### Step 2: Install EF Core Power Tools CLI
+#### Step 2: Install EF Core Power Tools CLI
 
 **Option A: Global Tool (Quick Start)**
 

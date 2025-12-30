@@ -1,0 +1,5 @@
+{
+  "$schema": "http://json.schemastore.org/vs-2017.3.host",
+  "learnMoreLink": "https://github.com/jerrettdavis/JD.Efcpt.Build",
+  "uiFilters": [ "oneOrMoreProjects" ]
+}

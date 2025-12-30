@@ -42,11 +42,8 @@ public class FrameworkMsBuildTests : IDisposable
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_framework", "net8.0");
 
-        // First restore with dotnet to ensure packages are available
-        var restoreResult = await _builder.RestoreAsync();
-        restoreResult.Success.Should().BeTrue($"Restore should succeed.\n{restoreResult}");
-
         // Act - Build with MSBuild.exe (Framework MSBuild)
+        // BuildWithMSBuildExeAsync passes -restore to MSBuild.exe
         var buildResult = await _builder.BuildWithMSBuildExeAsync();
 
         // Assert
@@ -72,9 +69,8 @@ public class FrameworkMsBuildTests : IDisposable
         // Arrange
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_framework_ctx", "net8.0");
-        await _builder.RestoreAsync();
 
-        // Act
+        // Act - BuildWithMSBuildExeAsync passes -restore to MSBuild.exe
         var buildResult = await _builder.BuildWithMSBuildExeAsync();
 
         // Assert
@@ -95,9 +91,8 @@ public class FrameworkMsBuildTests : IDisposable
         // Arrange
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateSdkProject("TestEfProject_sdk_framework", "net8.0");
-        await _builder.RestoreAsync();
 
-        // Act
+        // Act - BuildWithMSBuildExeAsync passes -restore to MSBuild.exe
         var buildResult = await _builder.BuildWithMSBuildExeAsync();
 
         // Assert
@@ -126,9 +121,8 @@ public class FrameworkMsBuildTests : IDisposable
         // Add detailed logging to see task assembly selection
         _builder.AddProjectProperty("EfcptLogVerbosity", "detailed");
 
-        await _builder.RestoreAsync();
-
         // Act - Build with MSBuild.exe (Framework MSBuild)
+        // BuildWithMSBuildExeAsync passes -restore to MSBuild.exe
         var buildResult = await _builder.BuildWithMSBuildExeAsync();
 
         // Assert
@@ -152,9 +146,8 @@ public class FrameworkMsBuildTests : IDisposable
         // Arrange
         _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_incremental", "net8.0");
-        await _builder.RestoreAsync();
 
-        // Act - First build
+        // Act - First build (BuildWithMSBuildExeAsync passes -restore to MSBuild.exe)
         var firstBuild = await _builder.BuildWithMSBuildExeAsync();
         firstBuild.Success.Should().BeTrue($"First build should succeed.\n{firstBuild}");
 
@@ -183,8 +176,9 @@ public class FrameworkMsBuildTests : IDisposable
 /// <summary>
 /// Collection definition for Framework MSBuild tests.
 /// Uses the same fixture as other package tests to share package setup.
+/// DisableParallelization prevents NuGet package file locking conflicts.
 /// </summary>
-[CollectionDefinition("Framework MSBuild Tests")]
+[CollectionDefinition("Framework MSBuild Tests", DisableParallelization = true)]
 public class FrameworkMsBuildTestsCollection : ICollectionFixture<SdkPackageTestFixture>
 {
 }

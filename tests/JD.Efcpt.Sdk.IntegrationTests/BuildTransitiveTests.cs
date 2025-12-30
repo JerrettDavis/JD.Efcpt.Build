@@ -6,7 +6,8 @@ namespace JD.Efcpt.Sdk.IntegrationTests;
 
 /// <summary>
 /// Tests that verify the build folder content is correctly packaged in the SDK.
-/// We use build/ (not buildTransitive/) so targets only apply to direct consumers.
+/// We use build/ (not buildTransitive/) so targets only apply to direct consumers,
+/// preventing transitive propagation to projects that reference our consumers.
 /// </summary>
 [Collection("Package Content Tests")]
 public class BuildTransitiveTests
@@ -60,6 +61,10 @@ public class BuildTransitiveTests
         entries.Should().Contain("build/JD.Efcpt.Build.targets", "SDK package should contain shared build targets in build folder");
     }
 
+    /// <summary>
+    /// Verifies SDK package does NOT have buildTransitive folder.
+    /// We use build/ to prevent transitive propagation.
+    /// </summary>
     [Fact]
     public void SdkPackage_DoesNotContainBuildTransitiveFolder()
     {
@@ -133,6 +138,10 @@ public class BuildTransitiveTests
             "Build package should contain build folder for direct consumers only");
     }
 
+    /// <summary>
+    /// Verifies Build package does NOT have buildTransitive folder.
+    /// We use build/ to prevent transitive propagation.
+    /// </summary>
     [Fact]
     public void BuildPackage_DoesNotContainBuildTransitiveFolder()
     {

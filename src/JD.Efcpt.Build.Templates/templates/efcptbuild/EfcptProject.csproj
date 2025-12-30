@@ -1,0 +1,64 @@
+<!--
+  JD.Efcpt.Sdk Project Template
+  
+  This project uses JD.Efcpt.Sdk to automatically generate EF Core models from a database project.
+  
+  The SDK:
+  - Extends Microsoft.NET.Sdk with EF Core Power Tools integration
+  - Automatically discovers SQL projects in your solution or via ProjectReference
+  - Builds the SQL project to DACPAC and generates EF Core models
+  
+  No JD.Efcpt.Build PackageReference needed - the SDK handles everything!
+-->
+<Project Sdk="JD.Efcpt.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!--
+    Optional: Reference your SQL Server Database Project for explicit DACPAC generation
+    
+    This is optional when there's only a single SQL project in the solution.
+    Use it to explicitly specify which database to generate from, or to make
+    the configuration more declarative.
+    
+    <ItemGroup>
+      <ProjectReference Include="..\YourDatabase\YourDatabase.sqlproj">
+        <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+        <OutputItemType>None</OutputItemType>
+      </ProjectReference>
+    </ItemGroup>
+    
+    Or for MSBuild.Sdk.SqlProj:
+    
+    <ItemGroup>
+      <ProjectReference Include="..\YourDatabase\YourDatabase.csproj">
+        <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+        <OutputItemType>None</OutputItemType>
+      </ProjectReference>
+    </ItemGroup>
+  -->
+
+  <!-- EF Core packages for runtime -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.*" />
+    
+    <!-- Optional: Include for EF Core migrations support -->
+    <!-- <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.*">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference> -->
+  </ItemGroup>
+
+  <!--
+    Optional: Override EF Core Power Tools settings
+    
+    <PropertyGroup>
+      <EfcptSqlProj>..\YourDatabase\YourDatabase.sqlproj</EfcptSqlProj>
+      <EfcptConfig>efcpt-config.json</EfcptConfig>
+      <EfcptLogVerbosity>detailed</EfcptLogVerbosity>
+    </PropertyGroup>
+  -->
+
+</Project>

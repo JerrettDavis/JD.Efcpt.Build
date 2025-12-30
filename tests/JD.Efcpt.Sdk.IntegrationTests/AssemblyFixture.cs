@@ -17,6 +17,7 @@ public static class AssemblyFixture
     public static string BuildPackagePath => GetPackageInfo().BuildPath;
     public static string SdkVersion => GetPackageInfo().SdkVersion;
     public static string BuildVersion => GetPackageInfo().BuildVersion;
+    public static string SharedDatabaseProjectPath => GetPackageInfo().SharedDatabaseProjectPath;
     public static string TestFixturesPath => Path.Combine(
         Path.GetDirectoryName(typeof(AssemblyFixture).Assembly.Location)!, "TestFixtures");
 
@@ -38,14 +39,23 @@ public static class AssemblyFixture
         var outputPath = Path.Combine(Path.GetTempPath(), "JD.Efcpt.Sdk.IntegrationTests", $"pkg_{Guid.NewGuid():N}");
         Directory.CreateDirectory(outputPath);
 
-        // Pack both projects in parallel
         var sdkProject = Path.Combine(RepoRoot, "src", "JD.Efcpt.Sdk", "JD.Efcpt.Sdk.csproj");
         var buildProject = Path.Combine(RepoRoot, "src", "JD.Efcpt.Build", "JD.Efcpt.Build.csproj");
 
-        var sdkTask = PackProjectAsync(sdkProject, outputPath);
-        var buildTask = PackProjectAsync(buildProject, outputPath);
+        // Pack sequentially to avoid file conflicts on shared dependencies (JD.Efcpt.Build.Tasks)
+        // Both projects reference the Tasks project, and parallel pack causes obj/ folder conflicts
+        await PackProjectAsync(buildProject, outputPath);
+        await PackProjectAsync(sdkProject, outputPath);
 
-        await Task.WhenAll(sdkTask, buildTask);
+        // Create shared database project directory (copied once, used by all tests)
+        // Exclude obj/bin to avoid stale restore artifacts
+        var sharedDbProjectPath = Path.Combine(outputPath, "SharedDatabaseProject");
+        var sourceDbProject = Path.Combine(TestFixturesPath, "DatabaseProject");
+        CopyDirectory(sourceDbProject, sharedDbProjectPath, excludeBuildArtifacts: true);
+
+        // Pre-restore and build the database project once
+        // This prevents race conditions when multiple tests try to restore it in parallel
+        await RestoreAndBuildDatabaseProjectAsync(sharedDbProjectPath);
 
         // Find packaged files
         var sdkPackages = Directory.GetFiles(outputPath, "JD.Efcpt.Sdk.*.nupkg");
@@ -70,8 +80,56 @@ public static class AssemblyFixture
             sdkPath,
             buildPath,
             ExtractVersion(Path.GetFileName(sdkPath), "JD.Efcpt.Sdk"),
-            ExtractVersion(Path.GetFileName(buildPath), "JD.Efcpt.Build")
+            ExtractVersion(Path.GetFileName(buildPath), "JD.Efcpt.Build"),
+            sharedDbProjectPath
         );
+    }
+
+    private static async Task RestoreAndBuildDatabaseProjectAsync(string projectPath)
+    {
+        var projectFile = Path.Combine(projectPath, "DatabaseProject.csproj");
+
+        // Restore the SQL project
+        var restorePsi = new ProcessStartInfo
+        {
+            FileName = "dotnet",
+            Arguments = $"restore \"{projectFile}\"",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using var restoreProcess = Process.Start(restorePsi)!;
+        await restoreProcess.WaitForExitAsync();
+
+        if (restoreProcess.ExitCode != 0)
+        {
+            var error = await restoreProcess.StandardError.ReadToEndAsync();
+            throw new InvalidOperationException(
+                $"Failed to restore DatabaseProject.\nError: {error}");
+        }
+
+        // Build the SQL project to produce DACPAC
+        var buildPsi = new ProcessStartInfo
+        {
+            FileName = "dotnet",
+            Arguments = $"build \"{projectFile}\" --no-restore",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using var buildProcess = Process.Start(buildPsi)!;
+        await buildProcess.WaitForExitAsync();
+
+        if (buildProcess.ExitCode != 0)
+        {
+            var error = await buildProcess.StandardError.ReadToEndAsync();
+            throw new InvalidOperationException(
+                $"Failed to build DatabaseProject.\nError: {error}");
+        }
     }
 
     private static async Task PackProjectAsync(string projectPath, string outputPath)
@@ -143,10 +201,37 @@ public static class AssemblyFixture
         throw new InvalidOperationException("Could not find repository root");
     }
 
+    private static void CopyDirectory(string sourceDir, string destDir, bool excludeBuildArtifacts = false)
+    {
+        Directory.CreateDirectory(destDir);
+
+        foreach (var file in Directory.GetFiles(sourceDir))
+        {
+            var destFile = Path.Combine(destDir, Path.GetFileName(file));
+            File.Copy(file, destFile, overwrite: true);
+        }
+
+        foreach (var dir in Directory.GetDirectories(sourceDir))
+        {
+            var dirName = Path.GetFileName(dir);
+
+            // Skip obj and bin folders to avoid stale restore artifacts
+            if (excludeBuildArtifacts && (dirName.Equals("obj", StringComparison.OrdinalIgnoreCase) ||
+                                          dirName.Equals("bin", StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            var destSubDir = Path.Combine(destDir, dirName);
+            CopyDirectory(dir, destSubDir, excludeBuildArtifacts);
+        }
+    }
+
     private sealed record PackageInfo(
         string OutputPath,
         string SdkPath,
         string BuildPath,
         string SdkVersion,
-        string BuildVersion);
+        string BuildVersion,
+        string SharedDatabaseProjectPath);
 }
