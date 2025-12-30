@@ -41,5 +41,5 @@ public class PackageContentTestCollection : ICollectionFixture<SdkPackageTestFix
 public class CodeGenerationTestCollection : ICollectionFixture<SdkPackageTestFixture> { }
 
 // Legacy collection for backwards compatibility
-[CollectionDefinition("SDK Package Tests")]
+[CollectionDefinition("SDK Package Tests", DisableParallelization = true)]
 public class SdkPackageTestCollection : ICollectionFixture<SdkPackageTestFixture> { }
