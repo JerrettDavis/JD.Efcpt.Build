@@ -29,8 +29,8 @@ namespace JD.Efcpt.Build.Tasks;
 ///   </item>
 ///   <item>
 ///     <description>
-///       On .NET 10.0 or later, if dnx is available, the task runs <c>dnx &lt;ToolPackageId&gt;</c>
-///       to execute the tool without requiring installation.
+///       When the project targets .NET 10.0 or later, the .NET 10+ SDK is installed, and dnx is available,
+///       the task runs <c>dnx &lt;ToolPackageId&gt;</c> to execute the tool without requiring installation.
 ///     </description>
 ///   </item>
 ///   <item>
@@ -119,9 +119,10 @@ public sealed class RunEfcpt : Task
     /// </value>
     /// <remarks>
     /// <para>
-    /// On .NET 10.0 or later, tool restoration is skipped even when this property is <c>true</c>
-    /// because the <c>dnx</c> command handles tool execution directly without requiring prior
-    /// installation. The tool is fetched and run on-demand by the dotnet SDK.
+    /// When the project targets .NET 10.0 or later and the .NET 10+ SDK is installed, tool restoration
+    /// is skipped even when this property is <c>true</c> because the <c>dnx</c> command handles tool
+    /// execution directly without requiring prior installation. The tool is fetched and run on-demand
+    /// by the dotnet SDK.
     /// </para>
     /// </remarks>
     public string ToolRestore { get; set; } = "true";
@@ -278,7 +279,7 @@ public sealed class RunEfcpt : Task
                     Args: ctx.Args,
                     Cwd: ctx.WorkingDir,
                     UseManifest: false))
-            .When((in ctx) => IsDotNet10OrLater(ctx.TargetFramework) && IsDnxAvailable(ctx.DotNetExe))
+            .When((in ctx) => IsDotNet10OrLater(ctx.TargetFramework) && IsDotNet10SdkInstalled(ctx.DotNetExe) && IsDnxAvailable(ctx.DotNetExe))
             .Then((in ctx)
                 => new ToolInvocation(
                     Exe: ctx.DotNetExe,
@@ -308,15 +309,15 @@ public sealed class RunEfcpt : Task
     private static readonly Lazy<ActionStrategy<ToolRestoreContext>> ToolRestoreStrategy = new(() =>
         ActionStrategy<ToolRestoreContext>.Create()
             // Manifest restore: restore tools from local manifest
-            // Skip on .NET 10+ because dnx handles tool execution without installation
-            .When((in ctx) => ctx is { UseManifest: true, ShouldRestore: true } && !IsDotNet10OrLater(ctx.TargetFramework))
+            // Skip on .NET 10+ with SDK installed because dnx handles tool execution without installation
+            .When((in ctx) => ctx is { UseManifest: true, ShouldRestore: true } && !(IsDotNet10OrLater(ctx.TargetFramework) && IsDotNet10SdkInstalled(ctx.DotNetExe)))
             .Then((in ctx) =>
             {
                 var restoreCwd = ctx.ManifestDir ?? ctx.WorkingDir;
                 ProcessRunner.RunOrThrow(ctx.Log, ctx.DotNetExe, "tool restore", restoreCwd);
             })
             // Global restore: update global tool package
-            // Skip on .NET 10+ because dnx handles tool execution without installation
+            // Skip on .NET 10+ with SDK installed because dnx handles tool execution without installation
             .When((in ctx)
                 => ctx is
                 {
@@ -324,13 +325,13 @@ public sealed class RunEfcpt : Task
                     ShouldRestore: true,
                     HasExplicitPath: false,
                     HasPackageId: true
-                } && !IsDotNet10OrLater(ctx.TargetFramework))
+                } && !(IsDotNet10OrLater(ctx.TargetFramework) && IsDotNet10SdkInstalled(ctx.DotNetExe)))
             .Then((in ctx) =>
             {
                 var versionArg = string.IsNullOrWhiteSpace(ctx.ToolVersion) ? "" : $" --version \"{ctx.ToolVersion}\"";
                 ProcessRunner.RunOrThrow(ctx.Log, ctx.DotNetExe, $"tool update --global {ctx.ToolPackageId}{versionArg}", ctx.WorkingDir);
             })
-            // Default: no restoration needed (includes .NET 10+ with dnx)
+            // Default: no restoration needed (includes .NET 10+ with SDK installed and dnx)
             .Default(static (in _) => { })
             .Build());
 
@@ -479,6 +480,63 @@ public sealed class RunEfcpt : Task
 
             if (int.TryParse(versionPart, out var version))
                 return version >= 10;
+
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Checks if .NET SDK version 10 or later is installed.
+    /// </summary>
+    /// <param name="dotnetExe">Path to the dotnet executable.</param>
+    /// <returns>True if .NET 10+ SDK is installed; otherwise false.</returns>
+    private static bool IsDotNet10SdkInstalled(string dotnetExe)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = dotnetExe,
+                Arguments = "--list-sdks",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var p = Process.Start(psi);
+            if (p is null) return false;
+
+            var output = p.StandardOutput.ReadToEnd();
+            p.WaitForExit(5000); // 5 second timeout
+
+            if (p.ExitCode != 0)
+                return false;
+
+            // Parse output like "10.0.100 [C:\Program Files\dotnet\sdk]"
+            // Check if any line starts with "10." or higher
+            foreach (var line in output.Split('\n'))
+            {
+                var trimmed = line.Trim();
+                if (string.IsNullOrEmpty(trimmed))
+                    continue;
+
+                // Extract version number (first part before space or bracket)
+                var spaceIndex = trimmed.IndexOf(' ');
+                var versionStr = spaceIndex > 0 ? trimmed.Substring(0, spaceIndex) : trimmed;
+
+                // Parse major version
+                var dotIndex = versionStr.IndexOf('.');
+                if (dotIndex > 0 && int.TryParse(versionStr.Substring(0, dotIndex), out var major))
+                {
+                    if (major >= 10)
+                        return true;
+                }
+            }
 
             return false;
         }
