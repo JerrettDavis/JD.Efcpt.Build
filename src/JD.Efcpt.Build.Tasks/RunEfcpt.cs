@@ -573,7 +573,7 @@ public sealed class RunEfcpt : Task
 
             if (!p.WaitForExit(ProcessTimeoutMs))
                 return false;
-                
+
             return p.ExitCode == 0;
         }
         catch
