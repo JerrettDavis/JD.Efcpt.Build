@@ -61,65 +61,140 @@ public class TemplateTestFixture : IDisposable
 
     private static async Task<string> PackTemplatePackageAsync()
     {
-        // Use the same package output path as AssemblyFixture to share SDK/Build packages
-        // This ensures version consistency and avoids packing the same packages twice
-        _packageOutputPath = AssemblyFixture.PackageOutputPath;
+        // Use a named mutex to ensure only one process packs at a time across test runs
+        using var mutex = new System.Threading.Mutex(false, "Global\\JD.Efcpt.Build.Templates.PackMutex");
+        
+        try
+        {
+            // Wait up to 2 minutes for other processes to finish packing
+            if (!mutex.WaitOne(TimeSpan.FromMinutes(2)))
+            {
+                throw new InvalidOperationException("Timeout waiting for template packing mutex");
+            }
 
-        var templateProject = Path.Combine(RepoRoot, "src", "JD.Efcpt.Build.Templates", "JD.Efcpt.Build.Templates.csproj");
+            // Use the same package output path as AssemblyFixture to share SDK/Build packages
+            // This ensures version consistency and avoids packing the same packages twice
+            _packageOutputPath = AssemblyFixture.PackageOutputPath;
 
-        // Pack template with the same version as SDK/Build packages from AssemblyFixture
-        await PackProjectAsync(templateProject, _packageOutputPath).ConfigureAwait(false);
+            var templateProject = Path.Combine(RepoRoot, "src", "JD.Efcpt.Build.Templates", "JD.Efcpt.Build.Templates.csproj");
 
-        // Find packaged file
-        var templatePackages = Directory.GetFiles(_packageOutputPath, "JD.Efcpt.Build.Templates.*.nupkg");
+            // Check if package already exists to avoid redundant packing
+            var existingPackages = Directory.GetFiles(_packageOutputPath, "JD.Efcpt.Build.Templates.*.nupkg");
+            if (existingPackages.Length > 0)
+            {
+                Console.WriteLine($"Template package already exists at {existingPackages[0]}, skipping pack");
+                return existingPackages[0];
+            }
 
-        if (templatePackages.Length == 0)
-            throw new InvalidOperationException($"JD.Efcpt.Build.Templates package not found in {_packageOutputPath}");
+            // Pack template with the same version as SDK/Build packages from AssemblyFixture
+            await PackProjectAsync(templateProject, _packageOutputPath).ConfigureAwait(false);
 
-        var templatePath = templatePackages[0];
+            // Find packaged file
+            var templatePackages = Directory.GetFiles(_packageOutputPath, "JD.Efcpt.Build.Templates.*.nupkg");
 
-        // SDK and Build packages are already available from AssemblyFixture
-        // No need to pack them again - this avoids version mismatches and file locking
+            if (templatePackages.Length == 0)
+                throw new InvalidOperationException($"JD.Efcpt.Build.Templates package not found in {_packageOutputPath}");
 
-        return templatePath;
+            var templatePath = templatePackages[0];
+
+            // SDK and Build packages are already available from AssemblyFixture
+            // No need to pack them again - this avoids version mismatches and file locking
+
+            return templatePath;
+        }
+        finally
+        {
+            try
+            {
+                mutex.ReleaseMutex();
+            }
+            catch (ApplicationException)
+            {
+                // Mutex was not owned by this thread - ignore
+            }
+        }
     }
 
     private static async Task PackProjectAsync(string projectPath, string outputPath)
     {
-        var psi = new ProcessStartInfo
+        // Use retry logic with exponential backoff for file locking issues
+        const int maxRetries = 3;
+        const int baseDelayMs = 1000;
+        
+        for (int attempt = 0; attempt < maxRetries; attempt++)
         {
-            FileName = "dotnet",
-            Arguments = $"pack \"{projectPath}\" -c Release -o \"{outputPath}\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "dotnet",
+                    Arguments = $"pack \"{projectPath}\" -c Release -o \"{outputPath}\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
 
-        using var process = Process.Start(psi)!;
-        var outputTask = process.StandardOutput.ReadToEndAsync();
-        var errorTask = process.StandardError.ReadToEndAsync();
+                using var process = Process.Start(psi)!;
+                var outputTask = process.StandardOutput.ReadToEndAsync();
+                var errorTask = process.StandardError.ReadToEndAsync();
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
-        try
-        {
-            await process.WaitForExitAsync(cts.Token).ConfigureAwait(false);
+                using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+                try
+                {
+                    await process.WaitForExitAsync(cts.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    try { process.Kill(entireProcessTree: true); } catch { /* best effort */ }
+                    throw new InvalidOperationException(
+                        $"Pack of {Path.GetFileName(projectPath)} timed out after 5 minutes.");
+                }
+
+                var output = await outputTask.ConfigureAwait(false);
+                var error = await errorTask.ConfigureAwait(false);
+
+                if (process.ExitCode != 0)
+                {
+                    // Check if it's a file locking issue that we should retry
+                    if (attempt < maxRetries - 1 && IsFileLockingError(output, error))
+                    {
+                        var delay = baseDelayMs * (int)Math.Pow(2, attempt);
+                        Console.WriteLine($"File locking detected in pack, retrying in {delay}ms (attempt {attempt + 1}/{maxRetries})");
+                        await Task.Delay(delay).ConfigureAwait(false);
+                        continue;
+                    }
+                    
+                    throw new InvalidOperationException(
+                        $"Failed to pack {Path.GetFileName(projectPath)}.\nOutput: {output}\nError: {error}");
+                }
+                
+                // Success - break out of retry loop
+                return;
+            }
+            catch (Exception ex) when (attempt < maxRetries - 1 && IsTransientError(ex))
+            {
+                var delay = baseDelayMs * (int)Math.Pow(2, attempt);
+                Console.WriteLine($"Transient error in pack, retrying in {delay}ms (attempt {attempt + 1}/{maxRetries}): {ex.Message}");
+                await Task.Delay(delay).ConfigureAwait(false);
+            }
         }
-        catch (OperationCanceledException)
-        {
-            try { process.Kill(entireProcessTree: true); } catch { /* best effort */ }
-            throw new InvalidOperationException(
-                $"Pack of {Path.GetFileName(projectPath)} timed out after 5 minutes.");
-        }
-
-        var output = await outputTask.ConfigureAwait(false);
-        var error = await errorTask.ConfigureAwait(false);
-
-        if (process.ExitCode != 0)
-        {
-            throw new InvalidOperationException(
-                $"Failed to pack {Path.GetFileName(projectPath)}.\nOutput: {output}\nError: {error}");
-        }
+    }
+    
+    private static bool IsFileLockingError(string output, string error)
+    {
+        var combinedOutput = output + error;
+        return combinedOutput.Contains("being used by another process", StringComparison.OrdinalIgnoreCase) ||
+               combinedOutput.Contains("access denied", StringComparison.OrdinalIgnoreCase) ||
+               combinedOutput.Contains("cannot access the file", StringComparison.OrdinalIgnoreCase) ||
+               combinedOutput.Contains("lock", StringComparison.OrdinalIgnoreCase);
+    }
+    
+    private static bool IsTransientError(Exception ex)
+    {
+        return ex is IOException ||
+               ex.Message.Contains("being used by another process", StringComparison.OrdinalIgnoreCase) ||
+               ex.Message.Contains("access denied", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -239,6 +314,7 @@ public class TemplateTestFixture : IDisposable
 
     /// <summary>
     /// Removes any previously installed template packages to avoid conflicts.
+    /// Uses retry logic with exponential backoff for file locking resilience.
     /// </summary>
     private static void CleanupInstalledTemplates()
     {
@@ -276,7 +352,7 @@ public class TemplateTestFixture : IDisposable
                 var packageFiles = Directory.GetFiles(templatePackagesDir, "JD.Efcpt.Build.Templates.*.nupkg");
                 foreach (var file in packageFiles)
                 {
-                    try { File.Delete(file); } catch { /* best effort */ }
+                    DeleteFileWithRetry(file);
                 }
             }
         }
@@ -295,7 +371,7 @@ public class TemplateTestFixture : IDisposable
             var contentFile = Path.Combine(templateCacheDir, "content");
             if (File.Exists(contentFile))
             {
-                try { File.Delete(contentFile); } catch { /* best effort */ }
+                DeleteFileWithRetry(contentFile);
             }
 
             // Also try to delete the entire cache directory for a clean slate
@@ -306,13 +382,48 @@ public class TemplateTestFixture : IDisposable
                 var filePath = Path.Combine(templateCacheDir, file);
                 if (File.Exists(filePath))
                 {
-                    try { File.Delete(filePath); } catch { /* best effort */ }
+                    DeleteFileWithRetry(filePath);
                 }
             }
         }
         catch
         {
             // Best effort cleanup
+        }
+    }
+    
+    /// <summary>
+    /// Deletes a file with retry logic for file locking resilience.
+    /// </summary>
+    private static void DeleteFileWithRetry(string filePath, int maxRetries = 3)
+    {
+        for (int attempt = 0; attempt < maxRetries; attempt++)
+        {
+            try
+            {
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
+                return; // Success
+            }
+            catch (IOException) when (attempt < maxRetries - 1)
+            {
+                // File is locked, wait and retry
+                var delay = 200 * (int)Math.Pow(2, attempt); // 200ms, 400ms, 800ms
+                Thread.Sleep(delay);
+            }
+            catch (UnauthorizedAccessException) when (attempt < maxRetries - 1)
+            {
+                // Access denied, wait and retry
+                var delay = 200 * (int)Math.Pow(2, attempt);
+                Thread.Sleep(delay);
+            }
+            catch
+            {
+                // Other errors or final attempt - best effort, ignore
+                return;
+            }
         }
     }
 }
