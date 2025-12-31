@@ -59,6 +59,9 @@ public class TestProjectBuilder : IDisposable
 }}";
         File.WriteAllText(Path.Combine(_testDirectory, "global.json"), globalJson);
 
+        // Create .config/dotnet-tools.json for tool-manifest mode support
+        CreateToolManifest();
+
         // Create project file using shared DACPAC (direct path to avoid ProjectReference issues)
         var efCoreVersion = GetEfCoreVersionForTargetFramework(targetFramework);
         var dacpacPath = Path.Combine(_sharedDatabaseProjectPath, "bin", "Debug", "DatabaseProject.dacpac").Replace("\\", "/");
@@ -102,6 +105,9 @@ public class TestProjectBuilder : IDisposable
   </config>
 </configuration>";
         File.WriteAllText(Path.Combine(_testDirectory, "nuget.config"), nugetConfig);
+
+        // Create .config/dotnet-tools.json for tool-manifest mode support
+        CreateToolManifest();
 
         // Create project file using shared DACPAC (direct path to avoid ProjectReference issues)
         var efCoreVersion = GetEfCoreVersionForTargetFramework(targetFramework);
@@ -416,6 +422,31 @@ public class TestProjectBuilder : IDisposable
         // This is typically ~/.nuget/packages or %USERPROFILE%\.nuget\packages on Windows
         var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         return Path.Combine(userProfile, ".nuget", "packages");
+    }
+
+    /// <summary>
+    /// Creates a .config/dotnet-tools.json manifest file in the test directory.
+    /// This enables tool-manifest mode to work with the efcpt CLI tool.
+    /// </summary>
+    private void CreateToolManifest()
+    {
+        var configDir = Path.Combine(_testDirectory, ".config");
+        Directory.CreateDirectory(configDir);
+
+        var toolManifest = @"{
+  ""version"": 1,
+  ""isRoot"": true,
+  ""tools"": {
+    ""erikej.efcorepowertools.cli"": {
+      ""version"": ""10.1.1055"",
+      ""commands"": [
+        ""efcpt""
+      ],
+      ""rollForward"": false
+    }
+  }
+}";
+        File.WriteAllText(Path.Combine(configDir, "dotnet-tools.json"), toolManifest);
     }
 
     /// <summary>
