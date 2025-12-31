@@ -60,7 +60,9 @@ public class TestProjectBuilder : IDisposable
         File.WriteAllText(Path.Combine(_testDirectory, "global.json"), globalJson);
 
         // Create .config/dotnet-tools.json for tool-manifest mode support
-        CreateToolManifest();
+        // Use a single version that exists on NuGet.org for all target frameworks
+        CreateToolManifest("10.1.1055");
+
 
         // Create project file using shared DACPAC (direct path to avoid ProjectReference issues)
         var efCoreVersion = GetEfCoreVersionForTargetFramework(targetFramework);
@@ -107,12 +109,8 @@ public class TestProjectBuilder : IDisposable
         File.WriteAllText(Path.Combine(_testDirectory, "nuget.config"), nugetConfig);
 
         // Create .config/dotnet-tools.json for tool-manifest mode support
-        Dictionary<string,string> toolVersions = new() {
-            { "8.0", "8.1.1094" },
-            { "9.0", "9.1.1094" },
-            { "10.0", "10.0.1094" }
-        };
-        CreateToolManifest(toolVersions[targetFramework]);
+        // Use a single version that exists on NuGet.org for all target frameworks
+        CreateToolManifest("10.1.1055");
 
         // Create project file using shared DACPAC (direct path to avoid ProjectReference issues)
         var efCoreVersion = GetEfCoreVersionForTargetFramework(targetFramework);
@@ -430,9 +428,14 @@ public class TestProjectBuilder : IDisposable
     }
 
     /// <summary>
-    /// Creates a .config/dotnet-tools.json manifest file in the test directory.
-    /// This enables tool-manifest mode to work with the efcpt CLI tool.
+    /// Creates a .config/dotnet-tools.json manifest file in the test directory
+    /// and restores the tools so they are available for both tool-manifest and dnx modes.
     /// </summary>
+    /// <remarks>
+    /// The tool restore is critical because dotnet dnx defers to local tool manifests
+    /// when the same package is defined there. Without restoring, dnx fails with
+    /// "Run 'dotnet tool restore' to make the tool available."
+    /// </remarks>
     private void CreateToolManifest(string toolVersion)
     {
         var configDir = Path.Combine(_testDirectory, ".config");
@@ -452,6 +455,30 @@ public class TestProjectBuilder : IDisposable
   }
 }";
         File.WriteAllText(Path.Combine(configDir, "dotnet-tools.json"), toolManifest);
+
+        // Restore tools synchronously so they're available for both tool-manifest and dnx modes
+        RestoreToolsSync();
+    }
+
+    /// <summary>
+    /// Synchronously restores dotnet tools from the manifest.
+    /// </summary>
+    private void RestoreToolsSync()
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = "dotnet",
+            Arguments = "tool restore",
+            WorkingDirectory = _testDirectory,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using var process = new Process { StartInfo = psi };
+        process.Start();
+        process.WaitForExit(60000); // 60 second timeout for tool restore
     }
 
     /// <summary>
