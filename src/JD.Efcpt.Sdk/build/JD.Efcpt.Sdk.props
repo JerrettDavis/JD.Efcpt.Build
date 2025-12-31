@@ -16,6 +16,12 @@
   -->
   <PropertyGroup>
     <_EfcptIsDirectReference>true</_EfcptIsDirectReference>
+    <!--
+      SDK users get automatic version checking enabled by default.
+      This helps ensure SDK users are always aware of updates.
+      Users can still opt-out by setting EfcptCheckForUpdates=false in their project.
+    -->
+    <EfcptCheckForUpdates Condition="'$(EfcptCheckForUpdates)' == ''">true</EfcptCheckForUpdates>
   </PropertyGroup>
 
   <!-- Import SDK version for update check feature -->
