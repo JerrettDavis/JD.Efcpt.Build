@@ -154,6 +154,9 @@ public class TemplateTests : IDisposable
 }}";
         await File.WriteAllTextAsync(Path.Combine(_testDirectory, "global.json"), globalJson);
 
+        // Create tool manifest and restore tools for tool-manifest mode support
+        await CreateToolManifestAndRestoreAsync(_testDirectory);
+
         // Act - Restore
         var restoreResult = await RunDotnetCommandAsync(_testDirectory, projectName, "restore");
         restoreResult.Success.Should().BeTrue($"Restore should succeed.\n{restoreResult}");
@@ -318,6 +321,13 @@ public class TemplateTests : IDisposable
             await File.WriteAllTextAsync(globalJsonPath, globalJson);
         }
 
+        // Create tool manifest and restore tools for tool-manifest mode support
+        var toolManifestPath = Path.Combine(_testDirectory, ".config", "dotnet-tools.json");
+        if (!File.Exists(toolManifestPath))
+        {
+            await CreateToolManifestAndRestoreAsync(_testDirectory);
+        }
+
         // Act - Restore
         var restoreResult = await RunDotnetCommandAsync(_testDirectory, projectName, "restore");
         restoreResult.Success.Should().BeTrue($"Restore for {framework} should succeed.\n{restoreResult}");
@@ -396,6 +406,46 @@ public class TemplateTests : IDisposable
             Directory.CreateDirectory(Path.GetDirectoryName(destFile)!);
             File.Copy(file, destFile, true);
         }
+    }
+
+    /// <summary>
+    /// Creates a .config/dotnet-tools.json manifest and restores tools.
+    /// Required for tool-manifest mode to find the efcpt tool.
+    /// </summary>
+    private static async Task CreateToolManifestAndRestoreAsync(string testDirectory)
+    {
+        var configDir = Path.Combine(testDirectory, ".config");
+        Directory.CreateDirectory(configDir);
+
+        var toolManifest = @"{
+  ""version"": 1,
+  ""isRoot"": true,
+  ""tools"": {
+    ""erikej.efcorepowertools.cli"": {
+      ""version"": ""10.1.1055"",
+      ""commands"": [
+        ""efcpt""
+      ],
+      ""rollForward"": false
+    }
+  }
+}";
+        await File.WriteAllTextAsync(Path.Combine(configDir, "dotnet-tools.json"), toolManifest);
+
+        // Restore tools so they're available for both tool-manifest and dnx modes
+        var psi = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "dotnet",
+            Arguments = "tool restore",
+            WorkingDirectory = testDirectory,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using var process = System.Diagnostics.Process.Start(psi)!;
+        await process.WaitForExitAsync();
     }
 
     private static async Task<TestUtilities.CommandResult> RunDotnetCommandAsync(string workingDirectory, string projectName, string arguments)
