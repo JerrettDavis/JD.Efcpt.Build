@@ -3,7 +3,7 @@
   "isRoot": true,
   "tools": {
     "erikej.efcorepowertools.cli": {
-      "version": "10.1.1055",
+      "version": "10.1.1094",
       "commands": [
         "efcpt"
       ],

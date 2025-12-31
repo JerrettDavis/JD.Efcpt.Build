@@ -107,7 +107,12 @@ public class TestProjectBuilder : IDisposable
         File.WriteAllText(Path.Combine(_testDirectory, "nuget.config"), nugetConfig);
 
         // Create .config/dotnet-tools.json for tool-manifest mode support
-        CreateToolManifest();
+        Dictionary<string,string> toolVersions = new() {
+            { "8.0", "8.1.1094" },
+            { "9.0", "9.1.1094" },
+            { "10.0", "10.0.1094" }
+        };
+        CreateToolManifest(toolVersions[targetFramework]);
 
         // Create project file using shared DACPAC (direct path to avoid ProjectReference issues)
         var efCoreVersion = GetEfCoreVersionForTargetFramework(targetFramework);
@@ -428,7 +433,7 @@ public class TestProjectBuilder : IDisposable
     /// Creates a .config/dotnet-tools.json manifest file in the test directory.
     /// This enables tool-manifest mode to work with the efcpt CLI tool.
     /// </summary>
-    private void CreateToolManifest()
+    private void CreateToolManifest(string toolVersion)
     {
         var configDir = Path.Combine(_testDirectory, ".config");
         Directory.CreateDirectory(configDir);
@@ -438,7 +443,7 @@ public class TestProjectBuilder : IDisposable
   ""isRoot"": true,
   ""tools"": {
     ""erikej.efcorepowertools.cli"": {
-      ""version"": ""10.1.1055"",
+      ""version"": """ + toolVersion + @""",
       ""commands"": [
         ""efcpt""
       ],
