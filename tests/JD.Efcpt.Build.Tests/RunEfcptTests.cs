@@ -382,4 +382,34 @@ public sealed class RunEfcptTests(ITestOutputHelper output) : TinyBddXunitBase(o
             .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
+
+    [Scenario("Accepts target framework parameter")]
+    [Fact]
+    public async Task Accepts_target_framework_parameter()
+    {
+        await Given("inputs for DACPAC mode", SetupForDacpacMode)
+            .When("task executes with target framework", s =>
+                ExecuteTaskWithFakeMode(s, t => t.TargetFramework = "net10.0"))
+            .Then("task succeeds", r => r.Success)
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Handles various target framework formats")]
+    [Theory]
+    [InlineData("net8.0")]
+    [InlineData("net9.0")]
+    [InlineData("net10.0")]
+    [InlineData("net10.0-windows")]
+    [InlineData("net10-windows")]
+    [InlineData("")]
+    public async Task Handles_various_target_framework_formats(string targetFramework)
+    {
+        await Given("inputs for DACPAC mode", SetupForDacpacMode)
+            .When("task executes with target framework", s =>
+                ExecuteTaskWithFakeMode(s, t => t.TargetFramework = targetFramework))
+            .Then("task succeeds", r => r.Success)
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
 }
