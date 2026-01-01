@@ -1,4 +1,5 @@
 using System.Data;
+using System.Data.Common;
 using JD.Efcpt.Build.Tasks.Extensions;
 using MySqlConnector;
 
@@ -7,38 +8,20 @@ namespace JD.Efcpt.Build.Tasks.Schema.Providers;
 /// <summary>
 /// Reads schema metadata from MySQL/MariaDB databases using GetSchema() for standard metadata.
 /// </summary>
-internal sealed class MySqlSchemaReader : ISchemaReader
+internal sealed class MySqlSchemaReader : SchemaReaderBase
 {
     /// <summary>
-    /// Reads the complete schema from a MySQL database.
+    /// Creates a MySQL database connection for the specified connection string.
     /// </summary>
-    public SchemaModel ReadSchema(string connectionString)
-    {
-        using var connection = new MySqlConnection(connectionString);
-        connection.Open();
+    protected override DbConnection CreateConnection(string connectionString)
+        => new MySqlConnection(connectionString);
 
-        // Get the database name for use as schema
+    /// <summary>
+    /// Gets a list of user-defined tables from MySQL.
+    /// </summary>
+    protected override List<(string Schema, string Name)> GetUserTables(DbConnection connection)
+    {
         var databaseName = connection.Database;
-
-        var columnsData = connection.GetSchema("Columns");
-        var tablesList = GetUserTables(connection, databaseName);
-        var indexesData = connection.GetSchema("Indexes");
-        var indexColumnsData = connection.GetSchema("IndexColumns");
-
-        var tables = tablesList
-            .Select(t => TableModel.Create(
-                t.Schema,
-                t.Name,
-                ReadColumnsForTable(columnsData, t.Schema, t.Name),
-                ReadIndexesForTable(indexesData, indexColumnsData, t.Schema, t.Name),
-                []))
-            .ToList();
-
-        return SchemaModel.Create(tables);
-    }
-
-    private static List<(string Schema, string Name)> GetUserTables(MySqlConnection connection, string databaseName)
-    {
         var tablesData = connection.GetSchema("Tables");
 
         // MySQL uses TABLE_SCHEMA (database name) and TABLE_NAME
@@ -54,27 +37,10 @@ internal sealed class MySqlSchemaReader : ISchemaReader
             .ToList();
     }
 
-    private static IEnumerable<ColumnModel> ReadColumnsForTable(
-        DataTable columnsData,
-        string schemaName,
-        string tableName)
-        => columnsData
-            .AsEnumerable()
-            .Where(row => row.GetString("TABLE_SCHEMA").EqualsIgnoreCase(schemaName) &&
-                          row.GetString("TABLE_NAME").EqualsIgnoreCase(tableName))
-            .OrderBy(row => Convert.ToInt32(row["ORDINAL_POSITION"]))
-            .Select(row => new ColumnModel(
-                Name: row.GetString("COLUMN_NAME"),
-                DataType: row.GetString("DATA_TYPE"),
-                MaxLength: row.IsNull("CHARACTER_MAXIMUM_LENGTH") ? 0 : Convert.ToInt32(row["CHARACTER_MAXIMUM_LENGTH"]),
-                Precision: row.IsNull("NUMERIC_PRECISION") ? 0 : Convert.ToInt32(row["NUMERIC_PRECISION"]),
-                Scale: row.IsNull("NUMERIC_SCALE") ? 0 : Convert.ToInt32(row["NUMERIC_SCALE"]),
-                IsNullable: row.GetString("IS_NULLABLE").EqualsIgnoreCase("YES"),
-                OrdinalPosition: Convert.ToInt32(row["ORDINAL_POSITION"]),
-                DefaultValue: row.IsNull("COLUMN_DEFAULT") ? null : row.GetString("COLUMN_DEFAULT")
-            ));
-
-    private static IEnumerable<IndexModel> ReadIndexesForTable(
+    /// <summary>
+    /// Reads all indexes for a specific table from MySQL.
+    /// </summary>
+    protected override IEnumerable<IndexModel> ReadIndexesForTable(
         DataTable indexesData,
         DataTable indexColumnsData,
         string schemaName,
@@ -141,7 +107,4 @@ internal sealed class MySqlSchemaReader : ISchemaReader
                     : 1,
                 IsDescending: false));
     }
-
-    private static string? GetExistingColumn(DataTable table, params string[] possibleNames)
-        => possibleNames.FirstOrDefault(name => table.Columns.Contains(name));
 }
