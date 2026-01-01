@@ -1,4 +1,5 @@
 using System.Data;
+using System.Data.Common;
 using JD.Efcpt.Build.Tasks.Extensions;
 using Npgsql;
 
@@ -7,34 +8,18 @@ namespace JD.Efcpt.Build.Tasks.Schema.Providers;
 /// <summary>
 /// Reads schema metadata from PostgreSQL databases using GetSchema() for standard metadata.
 /// </summary>
-internal sealed class PostgreSqlSchemaReader : ISchemaReader
+internal sealed class PostgreSqlSchemaReader : SchemaReaderBase
 {
     /// <summary>
-    /// Reads the complete schema from a PostgreSQL database.
+    /// Creates a PostgreSQL database connection for the specified connection string.
     /// </summary>
-    public SchemaModel ReadSchema(string connectionString)
-    {
-        using var connection = new NpgsqlConnection(connectionString);
-        connection.Open();
+    protected override DbConnection CreateConnection(string connectionString)
+        => new NpgsqlConnection(connectionString);
 
-        var columnsData = connection.GetSchema("Columns");
-        var tablesList = GetUserTables(connection);
-        var indexesData = connection.GetSchema("Indexes");
-        var indexColumnsData = connection.GetSchema("IndexColumns");
-
-        var tables = tablesList
-            .Select(t => TableModel.Create(
-                t.Schema,
-                t.Name,
-                ReadColumnsForTable(columnsData, t.Schema, t.Name),
-                ReadIndexesForTable(indexesData, indexColumnsData, t.Schema, t.Name),
-                []))
-            .ToList();
-
-        return SchemaModel.Create(tables);
-    }
-
-    private static List<(string Schema, string Name)> GetUserTables(NpgsqlConnection connection)
+    /// <summary>
+    /// Gets a list of user-defined tables from PostgreSQL, excluding system tables.
+    /// </summary>
+    protected override List<(string Schema, string Name)> GetUserTables(DbConnection connection)
     {
         // PostgreSQL GetSchema("Tables") returns tables with table_schema and table_name columns
         var tablesData = connection.GetSchema("Tables");
@@ -53,7 +38,13 @@ internal sealed class PostgreSqlSchemaReader : ISchemaReader
             .ToList();
     }
 
-    private static IEnumerable<ColumnModel> ReadColumnsForTable(
+    /// <summary>
+    /// Reads columns for a table, handling PostgreSQL's case-sensitive column names.
+    /// </summary>
+    /// <remarks>
+    /// PostgreSQL uses lowercase column names in GetSchema results, so we need to check both cases.
+    /// </remarks>
+    protected override IEnumerable<ColumnModel> ReadColumnsForTable(
         DataTable columnsData,
         string schemaName,
         string tableName)
@@ -87,7 +78,10 @@ internal sealed class PostgreSqlSchemaReader : ISchemaReader
             ));
     }
 
-    private static IEnumerable<IndexModel> ReadIndexesForTable(
+    /// <summary>
+    /// Reads all indexes for a specific table from PostgreSQL.
+    /// </summary>
+    protected override IEnumerable<IndexModel> ReadIndexesForTable(
         DataTable indexesData,
         DataTable indexColumnsData,
         string schemaName,
@@ -138,7 +132,4 @@ internal sealed class PostgreSqlSchemaReader : ISchemaReader
                     : ordinal++,
                 IsDescending: false));
     }
-
-    private static string GetColumnName(DataTable table, params string[] possibleNames)
-        => possibleNames.FirstOrDefault(name => table.Columns.Contains(name)) ?? possibleNames[0];
 }
