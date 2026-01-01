@@ -48,7 +48,6 @@
     <Content Include="buildTransitive/JD.Efcpt.Build.targets" Pack="true" PackagePath="build" />
 
     <None Include="../../README.md" Pack="true" PackagePath="" />
-    <None Include="../../QUICKSTART.md" Pack="true" PackagePath="" />
     <None Update="defaults/Template/CodeTemplates/EfCore/net1000/DbContext.t4">
       <Pack>true</Pack>
       <PackagePath>build/Defaults</PackagePath>

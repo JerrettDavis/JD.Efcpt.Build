@@ -370,7 +370,7 @@ For more details, see [TinyBDD documentation](https://github.com/ledjon-behluli/
 When contributing, please update:
 
 - **README.md** - For user-facing features
-- **QUICKSTART.md** - For common usage scenarios
+- **docs/** - For detailed documentation in docs/user-guide/
 - **XML comments** - For all public APIs
 - **Code comments** - For complex logic
 
@@ -439,7 +439,7 @@ Maintainers handle releases using this process:
 
 - **GitHub Issues** - For bugs and feature requests
 - **GitHub Discussions** - For questions and community support
-- **Documentation** - Check README.md and QUICKSTART.md first
+- **Documentation** - Check README.md and docs/user-guide/ first
 
 ## Recognition
 
