@@ -1,4 +1,5 @@
 using System.Data;
+using System.Data.Common;
 using JD.Efcpt.Build.Tasks.Extensions;
 using Microsoft.Data.SqlClient;
 
@@ -7,39 +8,18 @@ namespace JD.Efcpt.Build.Tasks.Schema.Providers;
 /// <summary>
 /// Reads schema metadata from SQL Server databases using GetSchema() for standard metadata.
 /// </summary>
-internal sealed class SqlServerSchemaReader : ISchemaReader
+internal sealed class SqlServerSchemaReader : SchemaReaderBase
 {
     /// <summary>
-    /// Reads the complete schema from a SQL Server database.
+    /// Creates a SQL Server database connection for the specified connection string.
     /// </summary>
-    public SchemaModel ReadSchema(string connectionString)
-    {
-        using var connection = new SqlConnection(connectionString);
-        connection.Open();
+    protected override DbConnection CreateConnection(string connectionString)
+        => new SqlConnection(connectionString);
 
-        // Use GetSchema for columns (standardized across providers)
-        var columnsData = connection.GetSchema("Columns");
-
-        // Get table list using GetSchema with restrictions
-        var tablesList = GetUserTables(connection);
-
-        // Get metadata using GetSchema
-        var indexesData = GetIndexes(connection);
-        var indexColumnsData = GetIndexColumns(connection);
-
-        var tables = tablesList
-            .Select(t => TableModel.Create(
-                t.Schema,
-                t.Name,
-                ReadColumnsForTable(columnsData, t.Schema, t.Name),
-                ReadIndexesForTable(indexesData, indexColumnsData, t.Schema, t.Name),
-                [])) // GetSchema doesn't provide constraints
-            .ToList();
-
-        return SchemaModel.Create(tables);
-    }
-
-    private static List<(string Schema, string Name)> GetUserTables(SqlConnection connection)
+    /// <summary>
+    /// Gets a list of user-defined tables from SQL Server, excluding system tables.
+    /// </summary>
+    protected override List<(string Schema, string Name)> GetUserTables(DbConnection connection)
     {
         // Use GetSchema with restrictions to get base tables
         // Restrictions array: [0]=Catalog, [1]=Schema, [2]=TableName, [3]=TableType
@@ -58,7 +38,14 @@ internal sealed class SqlServerSchemaReader : ISchemaReader
             .ToList();
     }
 
-    private static IEnumerable<ColumnModel> ReadColumnsForTable(
+    /// <summary>
+    /// Reads columns for a table using DataTable.Select() for efficient filtering.
+    /// </summary>
+    /// <remarks>
+    /// SQL Server's GetSchema returns uppercase column names, which allows using
+    /// DataTable.Select() with filter expressions for better performance.
+    /// </remarks>
+    protected override IEnumerable<ColumnModel> ReadColumnsForTable(
         DataTable columnsData,
         string schemaName,
         string tableName)
@@ -75,19 +62,10 @@ internal sealed class SqlServerSchemaReader : ISchemaReader
                 DefaultValue: row.IsNull("COLUMN_DEFAULT") ? null : row.GetString("COLUMN_DEFAULT")
             ));
 
-    private static DataTable GetIndexes(SqlConnection connection)
-    {
-        // Use GetSchema("Indexes") for standardized index metadata
-        return connection.GetSchema("Indexes");
-    }
-
-    private static DataTable GetIndexColumns(SqlConnection connection)
-    {
-        // Use GetSchema("IndexColumns") for index column metadata
-        return connection.GetSchema("IndexColumns");
-    }
-
-    private static IEnumerable<IndexModel> ReadIndexesForTable(
+    /// <summary>
+    /// Reads all indexes for a specific table from SQL Server.
+    /// </summary>
+    protected override IEnumerable<IndexModel> ReadIndexesForTable(
         DataTable indexesData,
         DataTable indexColumnsData,
         string schemaName,
@@ -127,6 +105,4 @@ internal sealed class SqlServerSchemaReader : ISchemaReader
                 ColumnName: row.GetString("column_name"),
                 OrdinalPosition: Convert.ToInt32(row["ordinal_position"]),
                 IsDescending: false)); // Not available from GetSchema, default to ascending
-
-    private static string EscapeSql(string value) => value.Replace("'", "''");
 }

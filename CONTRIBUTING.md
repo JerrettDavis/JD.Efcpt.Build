@@ -120,6 +120,16 @@ When adding or modifying tasks:
 
 ### Testing
 
+JD.Efcpt.Build uses **TinyBDD** for behavior-driven testing. All tests follow a consistent Given-When-Then pattern.
+
+#### Testing Framework
+
+We use **TinyBDD** for all tests (not traditional xUnit Arrange-Act-Assert). This provides:
+- ✅ Clear behavior specifications
+- ✅ Readable test scenarios
+- ✅ Consistent patterns across the codebase
+- ✅ Self-documenting tests
+
 #### Running Tests
 
 ```bash
@@ -129,40 +139,231 @@ dotnet test
 # Run with detailed output
 dotnet test -v detailed
 
-# Run specific test
-dotnet test --filter "FullyQualifiedName~TestName"
+# Run specific test category
+dotnet test --filter "FullyQualifiedName~SchemaReader"
+
+# Run with code coverage
+dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
 ```
 
-#### Writing Tests
+#### Writing Tests with TinyBDD
 
-- Add tests for new features
-- Test both success and error scenarios
-- Use descriptive test names: `Should_ExpectedBehavior_When_Condition`
-- Keep tests isolated and independent
-- Mock external dependencies
-
-Example test structure:
+**Test Structure:**
 
 ```csharp
-[Fact]
-public void Should_StageTemplates_When_TemplateDirectoryExists()
+using TinyBDD.Xunit;
+using Xunit;
+
+[Feature("Component: brief description of functionality")]
+[Collection(nameof(AssemblySetup))]
+public sealed class ComponentTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
-    // Arrange
-    var task = new StageEfcptInputs
+    // Define state records
+    private sealed record SetupState(
+        string InputValue,
+        ITestOutputHelper Output);
+
+    private sealed record ExecutionResult(
+        bool Success,
+        string Output,
+        Exception? Error = null);
+
+    [Scenario("Description of specific behavior")]
+    [Fact]
+    public async Task Scenario_Name()
     {
-        OutputDir = testDir,
-        TemplateDir = sourceTemplateDir,
-        // ... other properties
-    };
+        await Given("context setup", () => new SetupState("test-value", Output))
+            .When("action is performed", state => PerformAction(state))
+            .Then("expected outcome occurs", result => result.Success)
+            .And("additional assertion", result => result.Output == "expected")
+            .Finally(result => CleanupResources(result))
+            .AssertPassed();
+    }
 
-    // Act
-    var result = task.Execute();
+    private static ExecutionResult PerformAction(SetupState state)
+    {
+        try
+        {
+            // Execute the action being tested
+            var output = DoSomething(state.InputValue);
+            return new ExecutionResult(true, output);
+        }
+        catch (Exception ex)
+        {
+            return new ExecutionResult(false, "", ex);
+        }
+    }
 
-    // Assert
-    Assert.True(result);
-    Assert.True(Directory.Exists(expectedStagedPath));
+    private static void CleanupResources(ExecutionResult result)
+    {
+        // Clean up any resources
+    }
 }
 ```
+
+#### Testing Best Practices
+
+**DO:**
+- ✅ Use TinyBDD for all new tests
+- ✅ Write descriptive scenario names (e.g., "Should detect changed fingerprint when DACPAC modified")
+- ✅ Use state records for Given context
+- ✅ Use result records for When outcomes
+- ✅ Test both success and failure paths
+- ✅ Clean up resources in `Finally` blocks
+- ✅ Use meaningful assertion messages
+
+**DON'T:**
+- ❌ Use traditional Arrange-Act-Assert (use Given-When-Then)
+- ❌ Skip the `Finally` block if cleanup is needed
+- ❌ Write tests without clear scenarios
+- ❌ Test implementation details (test behavior)
+- ❌ Create inter-dependent tests
+
+#### Testing Patterns
+
+**Pattern 1: Simple Value Transformation**
+
+```csharp
+[Scenario("Should compute fingerprint from byte array")]
+[Fact]
+public async Task Computes_fingerprint_from_bytes()
+{
+    await Given("byte array with known content", () => new byte[] { 1, 2, 3, 4 })
+        .When("computing fingerprint", bytes => ComputeFingerprint(bytes))
+        .Then("fingerprint is deterministic", fp => !string.IsNullOrEmpty(fp))
+        .And("fingerprint has expected format", fp => fp.Length == 16)
+        .AssertPassed();
+}
+```
+
+**Pattern 2: File System Operations**
+
+```csharp
+[Scenario("Should create output directory when it doesn't exist")]
+[Fact]
+public async Task Creates_missing_output_directory()
+{
+    await Given("non-existent directory path", () =>
+        {
+            var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            return new SetupState(path, Output);
+        })
+        .When("ensuring directory exists", state =>
+        {
+            Directory.CreateDirectory(state.Path);
+            return new Result(Directory.Exists(state.Path), state.Path);
+        })
+        .Then("directory is created", result => result.Exists)
+        .Finally(result =>
+        {
+            if (Directory.Exists(result.Path))
+                Directory.Delete(result.Path, true);
+        })
+        .AssertPassed();
+}
+```
+
+**Pattern 3: Exception Testing**
+
+```csharp
+[Scenario("Should throw when connection string is invalid")]
+[Fact]
+public async Task Throws_on_invalid_connection_string()
+{
+    await Given("invalid connection string", () => "not-a-valid-connection-string")
+        .When("reading schema", connectionString =>
+        {
+            try
+            {
+                reader.ReadSchema(connectionString);
+                return (false, null as Exception);
+            }
+            catch (Exception ex)
+            {
+                return (true, ex);
+            }
+        })
+        .Then("exception is thrown", result => result.Item1)
+        .And("exception message is descriptive", result =>
+            result.Item2!.Message.Contains("connection") ||
+            result.Item2!.Message.Contains("invalid"))
+        .AssertPassed();
+}
+```
+
+**Pattern 4: Integration Tests with Testcontainers**
+
+```csharp
+[Feature("PostgreSqlSchemaReader: integration with real database")]
+[Collection(nameof(PostgreSqlContainer))]
+public sealed class PostgreSqlSchemaIntegrationTests(
+    PostgreSqlFixture fixture,
+    ITestOutputHelper output) : TinyBddXunitBase(output)
+{
+    [Scenario("Should read schema from PostgreSQL database")]
+    [Fact]
+    public async Task Reads_schema_from_postgres()
+    {
+        await Given("PostgreSQL database with test schema", () => fixture.ConnectionString)
+            .When("reading schema", cs => new PostgreSqlSchemaReader().ReadSchema(cs))
+            .Then("schema contains expected tables", schema => schema.Tables.Count > 0)
+            .And("tables have columns", schema => schema.Tables.All(t => t.Columns.Any()))
+            .AssertPassed();
+    }
+}
+```
+
+#### Test Coverage Goals
+
+| Component | Target | Current |
+|-----------|--------|---------|
+| **MSBuild Tasks** | 95%+ | ~90% |
+| **Schema Readers** | 90%+ | ~85% |
+| **Resolution Chains** | 90%+ | ~88% |
+| **Utilities** | 85%+ | ~82% |
+
+#### Integration Testing
+
+**Database Provider Tests:**
+- Use Testcontainers for SQL Server, PostgreSQL, MySQL
+- Use in-memory SQLite for fast tests
+- Mock unavailable providers (Snowflake requires LocalStack Pro)
+
+**Sample Projects:**
+- Create minimal test projects in `tests/TestAssets/`
+- Test actual MSBuild integration
+- Verify generated code compiles
+
+#### Running Integration Tests
+
+```bash
+# Requires Docker for Testcontainers
+docker info
+
+# Run integration tests
+dotnet test --filter "Category=Integration"
+
+# Run specific provider tests
+dotnet test --filter "FullyQualifiedName~PostgreSql"
+```
+
+#### Debugging Tests
+
+```csharp
+// TinyBDD provides detailed output on failure
+await Given("setup", CreateSetup)
+    .When("action", Execute)
+    .Then("assertion", result => result.IsValid)
+    .AssertPassed();
+
+// On failure, you'll see:
+// ❌ Scenario failed at step: Then "assertion"
+// Expected: True
+// Actual: False
+// State: { ... }
+```
+
+For more details, see [TinyBDD documentation](https://github.com/ledjon-behluli/TinyBDD).
 
 ### Documentation
 
