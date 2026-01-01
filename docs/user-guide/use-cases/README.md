@@ -66,7 +66,6 @@ Strategies for managing multiple database connections:
 | Monorepo with many projects | Centralized configuration | [Enterprise](enterprise.md) |
 | GitHub Actions deployment | DACPAC mode with caching | [CI/CD Patterns](ci-cd-patterns.md) |
 | Development + staging + production | Connection string mode | [Multi-Database](multi-database.md) |
-| Large schema (500+ tables) | Split outputs + partial generation | [Case Studies](../../case-studies/large-schema.md) |
 
 ### Mode Selection Guide
 
@@ -102,5 +101,4 @@ Strategies for managing multiple database connections:
 
 - [Getting Started Guide](../getting-started.md)
 - [Configuration Reference](../configuration.md)
-- [Case Studies](../../case-studies/README.md)
 - [Troubleshooting](../troubleshooting.md)
