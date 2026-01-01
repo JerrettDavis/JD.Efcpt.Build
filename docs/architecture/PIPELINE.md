@@ -92,8 +92,8 @@ The task follows a multi-tier resolution chain for each input type:
 
 #### DACPAC Resolution
 
-1. **Explicit DacpacPath** - If `EfcptDacpacPath` is set, use it directly
-2. **SQL Project Reference** - If `EfcptSqlProjectPath` is set, locate the `.dacpac` in its output directory
+1. **Explicit DacpacPath** - If `EfcptDacpac` is set, use it directly
+2. **SQL Project Reference** - If `EfcptSqlProj` is set, locate the `.dacpac` in its output directory
 3. **Auto-Discovery** - Search for `.sqlproj` files in:
    - Same directory as the .csproj
    - Parent directories (up to solution root)
@@ -101,11 +101,10 @@ The task follows a multi-tier resolution chain for each input type:
 
 #### Configuration File Resolution
 
-1. **Explicit Path** - If `EfcptConfigFilePath` is set, use it
-2. **Convention-Based** - Search for `efcpt.json` in:
+1. **Explicit Path** - If `EfcptConfig` is set, use it
+2. **Convention-Based** - Search for `efcpt-config.json` in:
    - Project directory
    - Solution directory
-   - `.efcpt/` subdirectories
 
 #### Connection String Resolution
 
@@ -118,7 +117,7 @@ Supports multiple input sources:
 
 **Outputs:**
 - `ResolvedDacpacPath` - Absolute path to the DACPAC file
-- `ResolvedConfigPath` - Absolute path to the efcpt.json file (if found)
+- `ResolvedConfigPath` - Absolute path to the efcpt-config.json file (if found)
 - `ResolvedConnectionString` - Connection string for database access (if using connection string mode)
 - `ResolvedSqlProjectPath` - Path to the .sqlproj file (if found)
 
@@ -149,7 +148,7 @@ The fingerprint is a XXH64 hash of:
    - Includes schema definitions, table structures, columns, indexes
 
 2. **Configuration File**
-   - Content of efcpt.json (if present)
+   - Content of efcpt-config.json (if present)
    - Includes all override settings
 
 3. **Template Files**
@@ -221,7 +220,7 @@ Directly executes the specified executable.
 For projects targeting .NET 10.0 or later:
 
 ```bash
-dnx EFCorePowerTools.Cli
+dotnet dnx ErikEJ.EFCorePowerTools.Cli --yes -- [args]
 ```
 
 - Automatically used when:
@@ -236,7 +235,7 @@ dnx EFCorePowerTools.Cli
 #### 3. Local Tool Manifest Mode
 
 ```bash
-dotnet tool run efcpt
+dotnet tool run efcpt -- [args]
 ```
 
 - Used when `.config/dotnet-tools.json` is found
@@ -246,8 +245,8 @@ dotnet tool run efcpt
 #### 4. Global Tool Mode
 
 ```bash
-dotnet tool update --global EFCorePowerTools.Cli
-efcpt
+dotnet tool update --global ErikEJ.EFCorePowerTools.Cli
+efcpt [args]
 ```
 
 - Fallback mode when no manifest is found
@@ -259,7 +258,7 @@ efcpt
 ```bash
 efcpt reverse-engineer \
     --dacpac /path/to/project.dacpac \
-    --config /path/to/efcpt.json \
+    --config /path/to/efcpt-config.json \
     --output-dir /path/to/generated \
     --namespace MyProject.Models
 ```
@@ -331,7 +330,7 @@ NorthwindContext.cs → NorthwindContext.g.cs
 Code generation occurs when:
 
 1. **DACPAC changes** - Schema modifications detected
-2. **Configuration changes** - efcpt.json modified
+2. **Configuration changes** - efcpt-config.json modified
 3. **Template changes** - Custom T4 templates updated
 4. **Tool version changes** - efcpt CLI updated
 5. **First build** - No previous fingerprint exists
@@ -435,7 +434,7 @@ Configuration overrides are applied:
 
 The `ApplyConfigOverrides` task:
 
-1. Reads base efcpt.json configuration
+1. Reads base efcpt-config.json configuration
 2. Merges with `Overrides` section
 3. Writes updated configuration
 4. efcpt tool reads the updated configuration

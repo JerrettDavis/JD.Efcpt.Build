@@ -103,7 +103,7 @@ if (File.Exists(configPath))
 ```
 
 **What's Included:**
-- Complete content of efcpt.json
+- Complete content of efcpt-config.json
 - All override sections
 - Formatting and whitespace (JSON content-based)
 
@@ -111,15 +111,15 @@ if (File.Exists(configPath))
 ```json
 // Before
 {
-  "Names": {
-    "DbContext": "NorthwindContext"
+  "names": {
+    "dbcontext-name": "NorthwindContext"
   }
 }
 
 // After - changes fingerprint
 {
-  "Names": {
-    "DbContext": "NorthwindDbContext"  // ← Different name
+  "names": {
+    "dbcontext-name": "NorthwindDbContext"  // ← Different name
   }
 }
 ```

@@ -177,7 +177,7 @@ jobs:
           path: |
             **/obj
             **/bin
-          key: ${{ runner.os }}-build-${{ hashFiles('**/*.sqlproj', '**/*.csproj', '**/efcpt.json') }}
+          key: ${{ runner.os }}-build-${{ hashFiles('**/*.sqlproj', '**/*.csproj', '**/efcpt-config.json') }}
           restore-keys: |
             ${{ runner.os }}-build-
 
@@ -208,7 +208,7 @@ steps:
   # Cache build outputs
   - task: Cache@2
     inputs:
-      key: 'build | "$(Agent.OS)" | **/*.sqlproj, **/*.csproj, **/efcpt.json'
+      key: 'build | "$(Agent.OS)" | **/*.sqlproj, **/*.csproj, **/efcpt-config.json'
       restoreKeys: |
         build | "$(Agent.OS)"
       path: |
@@ -376,7 +376,7 @@ jobs:
             schema:
               - 'src/Database/**'
               - '**/*.sqlproj'
-              - '**/efcpt.json'
+              - '**/efcpt-config.json'
 
   build:
     needs: changes
@@ -459,7 +459,7 @@ jobs:
       # 3. Regenerate models
       - name: Regenerate Models
         env:
-          EfcptDacpacPath: updated.dacpac
+          EfcptDacpac: updated.dacpac
         run: dotnet build
 
       # 4. Deploy application
@@ -504,7 +504,7 @@ jobs:
     steps:
       - id: compute
         run: |
-          FP=$(cat obj/Debug/net8.0/.efcpt/fingerprint.txt)
+          FP=$(cat obj/efcpt/fingerprint.txt 2>/dev/null || echo "")
           echo "fingerprint=$FP" >> $GITHUB_OUTPUT
 
   test:

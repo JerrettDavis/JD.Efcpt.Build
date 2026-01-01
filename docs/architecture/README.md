@@ -90,11 +90,11 @@ Detailed explanation of the fingerprinting system that enables fast incremental 
 │  ┌─────────────────────────────────────────────────────┐   │
 │  │         External Process Execution                  │   │
 │  ├─────────────────────────────────────────────────────┤   │
-│  │  dnx EFCorePowerTools.Cli ──────┐                   │   │
-│  │   OR                            │                   │   │
-│  │  dotnet tool run efcpt ─────────┼─► efcpt.exe      │   │
-│  │   OR                            │                   │   │
-│  │  efcpt (global) ────────────────┘                   │   │
+│  │  dotnet dnx ErikEJ.EFCorePowerTools.Cli ───┐        │   │
+│  │   OR                                       │        │   │
+│  │  dotnet tool run efcpt ────────────────────┼─► efcpt│   │
+│  │   OR                                       │        │   │
+│  │  efcpt (global) ───────────────────────────┘        │   │
 │  └─────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
 ```
