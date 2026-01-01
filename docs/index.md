@@ -20,11 +20,15 @@ JD.Efcpt.Build transforms EF Core Power Tools into a fully automated build step.
 
 ## Quick Start
 
-Choose your preferred integration approach:
+### Option A: Project Template (Easiest)
 
-### Option A: SDK Approach (Cleanest Setup)
+```bash
+dotnet new install JD.Efcpt.Build.Templates
+dotnet new efcptbuild --name MyDataProject
+dotnet build
+```
 
-Use the SDK in your project:
+### Option B: SDK Approach (Recommended)
 
 ```xml
 <Project Sdk="JD.Efcpt.Sdk/1.0.0">
@@ -34,29 +38,16 @@ Use the SDK in your project:
 </Project>
 ```
 
-### Option B: PackageReference Approach
-
-**Step 1:** Add the NuGet package:
-
-```xml
-<ItemGroup>
-  <PackageReference Include="JD.Efcpt.Build" Version="x.x.x" />
-</ItemGroup>
-```
-
-**Step 2:** Install EF Core Power Tools CLI (not required for .NET 10+):
+### Option C: PackageReference
 
 ```bash
-dotnet tool install --global ErikEJ.EFCorePowerTools.Cli --version "10.*"
-```
-
-### Build Your Project
-
-```bash
+dotnet add package JD.Efcpt.Build
 dotnet build
 ```
 
-Your EF Core DbContext and entities are now automatically generated from your database schema during every build.
+> **.NET 8-9:** Install CLI first: `dotnet tool install -g ErikEJ.EFCorePowerTools.Cli --version "10.*"`
+>
+> **.NET 10+:** No tool installation needed.
 
 ## How It Works
 
@@ -75,12 +66,18 @@ The package orchestrates a six-stage MSBuild pipeline:
 - EF Core Power Tools CLI (auto-executed via `dnx` on .NET 10+)
 - SQL Server Database Project (.sqlproj) or live database connection
 
-## Next Steps
+## Documentation
 
-- [Getting Started](user-guide/getting-started.md) - Complete installation and setup guide
-- [Using JD.Efcpt.Sdk](user-guide/sdk.md) - SDK integration approach
-- [Core Concepts](user-guide/core-concepts.md) - Understanding the build pipeline
-- [Configuration](user-guide/configuration.md) - Customize generation behavior
+| Guide | Description |
+|-------|-------------|
+| [Getting Started](user-guide/getting-started.md) | Installation and first project setup |
+| [Using the SDK](user-guide/sdk.md) | SDK integration for cleanest project files |
+| [Configuration](user-guide/configuration.md) | MSBuild properties and JSON config |
+| [Connection String Mode](user-guide/connection-string-mode.md) | Generate from live databases |
+| [CI/CD Integration](user-guide/ci-cd.md) | GitHub Actions, Azure DevOps, Docker |
+| [Troubleshooting](user-guide/troubleshooting.md) | Common issues and solutions |
+| [API Reference](user-guide/api-reference.md) | Complete MSBuild properties and tasks |
+| [Core Concepts](user-guide/core-concepts.md) | How the build pipeline works |
 
 ## License
 
