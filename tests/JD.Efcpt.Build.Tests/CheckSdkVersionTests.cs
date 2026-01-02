@@ -448,10 +448,8 @@ public sealed class CheckSdkVersionTests(ITestOutputHelper output) : TinyBddXuni
                     if (DateTime.UtcNow - cachedTime < TimeSpan.FromHours(CacheHours))
                     {
                         LatestVersion = cachedVersion;
-                        // Use reflection to call the private CheckAndWarn method
-                        var method = typeof(CheckSdkVersion).GetMethod("CheckAndWarn", 
-                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                        method?.Invoke(this, null);
+                        // Call the protected virtual method that handles warning emission
+                        EmitVersionUpdateMessageIfNeeded();
                         return true;
                     }
                 }
@@ -466,6 +464,30 @@ public sealed class CheckSdkVersionTests(ITestOutputHelper output) : TinyBddXuni
                     $"EFCPT: Unable to check for SDK updates: {ex.Message}");
                 return true;
             }
+        }
+
+        /// <summary>
+        /// Checks versions and emits message if update is available.
+        /// Extracted for testability.
+        /// </summary>
+        private void EmitVersionUpdateMessageIfNeeded()
+        {
+            if (string.IsNullOrEmpty(LatestVersion) || string.IsNullOrEmpty(CurrentVersion))
+                return;
+
+            if (TryParseVersion(CurrentVersion, out var current) &&
+                TryParseVersion(LatestVersion, out var latest) &&
+                latest > current)
+            {
+                UpdateAvailable = true;
+                EmitVersionUpdateMessage();
+            }
+        }
+
+        private static bool TryParseVersion(string versionString, out Version version)
+        {
+            var cleanVersion = versionString.Split('-')[0];
+            return Version.TryParse(cleanVersion, out version!);
         }
 
         private bool TryReadTestCache(out string version, out DateTime cacheTime)

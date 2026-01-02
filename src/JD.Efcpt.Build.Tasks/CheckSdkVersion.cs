@@ -109,43 +109,52 @@ public class CheckSdkVersion : Microsoft.Build.Utilities.Task
             latest > current)
         {
             UpdateAvailable = true;
-            var level = MessageLevelHelpers.Parse(WarningLevel, MessageLevel.Warn);
-            var message = $"A newer version of JD.Efcpt.Sdk is available: {LatestVersion} (current: {CurrentVersion}). " +
-                         $"Update your project's Sdk attribute or global.json to use the latest version.";
-            
-            switch (level)
-            {
-                case MessageLevel.None:
-                    // Do nothing
-                    break;
-                case MessageLevel.Info:
-                    Log.LogMessage(MessageImportance.High, message);
-                    break;
-                case MessageLevel.Warn:
-                    Log.LogWarning(
-                        subcategory: null,
-                        warningCode: "EFCPT002",
-                        helpKeyword: null,
-                        file: null,
-                        lineNumber: 0,
-                        columnNumber: 0,
-                        endLineNumber: 0,
-                        endColumnNumber: 0,
-                        message: message);
-                    break;
-                case MessageLevel.Error:
-                    Log.LogError(
-                        subcategory: null,
-                        errorCode: "EFCPT002",
-                        helpKeyword: null,
-                        file: null,
-                        lineNumber: 0,
-                        columnNumber: 0,
-                        endLineNumber: 0,
-                        endColumnNumber: 0,
-                        message: message);
-                    break;
-            }
+            EmitVersionUpdateMessage();
+        }
+    }
+
+    /// <summary>
+    /// Emits the version update message at the configured severity level.
+    /// Protected virtual to allow testing without reflection.
+    /// </summary>
+    protected virtual void EmitVersionUpdateMessage()
+    {
+        var level = MessageLevelHelpers.Parse(WarningLevel, MessageLevel.Warn);
+        var message = $"A newer version of JD.Efcpt.Sdk is available: {LatestVersion} (current: {CurrentVersion}). " +
+                     $"Update your project's Sdk attribute or global.json to use the latest version.";
+        
+        switch (level)
+        {
+            case MessageLevel.None:
+                // Do nothing
+                break;
+            case MessageLevel.Info:
+                Log.LogMessage(MessageImportance.High, message);
+                break;
+            case MessageLevel.Warn:
+                Log.LogWarning(
+                    subcategory: null,
+                    warningCode: "EFCPT002",
+                    helpKeyword: null,
+                    file: null,
+                    lineNumber: 0,
+                    columnNumber: 0,
+                    endLineNumber: 0,
+                    endColumnNumber: 0,
+                    message: message);
+                break;
+            case MessageLevel.Error:
+                Log.LogError(
+                    subcategory: null,
+                    errorCode: "EFCPT002",
+                    helpKeyword: null,
+                    file: null,
+                    lineNumber: 0,
+                    columnNumber: 0,
+                    endLineNumber: 0,
+                    endColumnNumber: 0,
+                    message: message);
+                break;
         }
     }
 
