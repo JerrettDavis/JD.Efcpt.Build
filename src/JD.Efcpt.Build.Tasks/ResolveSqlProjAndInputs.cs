@@ -171,6 +171,14 @@ public sealed class ResolveSqlProjAndInputs : Task
     public string DumpResolvedInputs { get; set; } = "false";
 
     /// <summary>
+    /// Controls the severity level for SQL project or connection string auto-detection messages.
+    /// </summary>
+    /// <value>
+    /// Valid values: "None", "Info", "Warn", "Error". Defaults to "Info".
+    /// </value>
+    public string AutoDetectWarningLevel { get; set; } = "Info";
+
+    /// <summary>
     /// Resolved full path to the SQL project to use.
     /// </summary>
     [Output]
@@ -384,7 +392,8 @@ public sealed class ResolveSqlProjAndInputs : Task
         if (string.IsNullOrWhiteSpace(connectionString))
             return null;
 
-        log.Info("No .sqlproj found. Using auto-discovered connection string.");
+        var level = MessageLevelHelpers.Parse(AutoDetectWarningLevel, MessageLevel.Info);
+        log.Log(level, "No .sqlproj found. Using auto-discovered connection string.", "EFCPT001");
         return new(true, connectionString, "");
     }
 
@@ -531,7 +540,9 @@ public sealed class ResolveSqlProjAndInputs : Task
             var fallback = TryResolveFromSolution();
             if (!string.IsNullOrWhiteSpace(fallback))
             {
-                log.Warn("No SQL project references found in project; using SQL project detected from solution: " + fallback);
+                var level = MessageLevelHelpers.Parse(AutoDetectWarningLevel, MessageLevel.Info);
+                var message = "No SQL project references found in project; using SQL project detected from solution: " + fallback;
+                log.Log(level, message, "EFCPT001");
                 sqlRefs.Add(fallback);
             }
         }

@@ -242,9 +242,18 @@ warning EFCPT002: A newer version of JD.Efcpt.Sdk is available: 1.1.0 (current: 
 ```
 
 Configuration options:
-- `EfcptCheckForUpdates` - Enable/disable version checking (default: `false`)
+- `EfcptCheckForUpdates` - Enable/disable version checking (default: `false` for package references, `true` for SDK references)
+- `EfcptSdkVersionWarningLevel` - Control severity of update notifications: `None`, `Info`, `Warn` (default), or `Error`
 - `EfcptUpdateCheckCacheHours` - Hours to cache the result (default: `24`)
 - `EfcptForceUpdateCheck` - Bypass cache and always check (default: `false`)
+
+Example: Make version updates informational instead of warnings:
+
+```xml
+<PropertyGroup>
+    <EfcptSdkVersionWarningLevel>Info</EfcptSdkVersionWarningLevel>
+</PropertyGroup>
+```
 
 ### Use global.json for Centralized Management
 
