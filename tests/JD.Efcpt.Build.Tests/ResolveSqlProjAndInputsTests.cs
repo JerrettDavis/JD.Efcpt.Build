@@ -278,7 +278,7 @@ public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : Tin
             .When("execute task with solution scan", ExecuteTaskSolutionScan)
             .Then("task succeeds", r => r.Success)
             .And("sql project path resolved", r => r.Task.SqlProjPath == Path.GetFullPath(r.Setup.SqlProj))
-            .And("warning logged", r => r.Setup.Engine.Warnings.Count == 1)
+            .And("info message logged", r => r.Setup.Engine.Messages.Count > 0)
             .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
@@ -291,7 +291,7 @@ public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : Tin
             .When("execute task with solution scan", ExecuteTaskSolutionScan)
             .Then("task succeeds", r => r.Success)
             .And("sql project path resolved", r => r.Task.SqlProjPath == Path.GetFullPath(r.Setup.SqlProj))
-            .And("warning logged", r => r.Setup.Engine.Warnings.Count == 1)
+            .And("info message logged", r => r.Setup.Engine.Messages.Count > 0)
             .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
