@@ -61,6 +61,18 @@
     <EfcptDumpResolvedInputs Condition="'$(EfcptDumpResolvedInputs)'==''">false</EfcptDumpResolvedInputs>
 
     <!--
+      Warning Level Configuration: Controls the severity of build-time diagnostic messages.
+      
+      EfcptAutoDetectWarningLevel: Severity for SQL project or connection string auto-detection.
+      Valid values: "None", "Info", "Warn", "Error". Defaults to "Info".
+      
+      EfcptSdkVersionWarningLevel: Severity for SDK version update notifications.
+      Valid values: "None", "Info", "Warn", "Error". Defaults to "Warn".
+    -->
+    <EfcptAutoDetectWarningLevel Condition="'$(EfcptAutoDetectWarningLevel)'==''">Info</EfcptAutoDetectWarningLevel>
+    <EfcptSdkVersionWarningLevel Condition="'$(EfcptSdkVersionWarningLevel)'==''">Warn</EfcptSdkVersionWarningLevel>
+
+    <!--
       SDK Version Check: Opt-in feature to check for newer SDK versions on NuGet.
       Enable with EfcptCheckForUpdates=true. Results are cached to avoid network
       calls on every build. This helps SDK users stay up-to-date since NuGet's

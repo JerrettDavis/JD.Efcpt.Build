@@ -50,6 +50,14 @@ public interface IBuildLog
     /// <param name="code">The error code.</param>
     /// <param name="message">The error message.</param>
     void Error(string code, string message);
+
+    /// <summary>
+    /// Logs a message at the specified severity level with an optional code.
+    /// </summary>
+    /// <param name="level">The message severity level.</param>
+    /// <param name="message">The message to log.</param>
+    /// <param name="code">Optional message code.</param>
+    void Log(MessageLevel level, string message, string? code = null);
 }
 
 /// <summary>
@@ -89,6 +97,32 @@ internal sealed class BuildLog(TaskLoggingHelper log, string verbosity) : IBuild
         => log.LogError(subcategory: null, code, helpKeyword: null,
                         file: null, lineNumber: 0, columnNumber: 0,
                         endLineNumber: 0, endColumnNumber: 0, message);
+
+    /// <inheritdoc />
+    public void Log(MessageLevel level, string message, string? code = null)
+    {
+        switch (level)
+        {
+            case MessageLevel.None:
+                // Do nothing
+                break;
+            case MessageLevel.Info:
+                log.LogMessage(MessageImportance.High, message);
+                break;
+            case MessageLevel.Warn:
+                if (!string.IsNullOrEmpty(code))
+                    Warn(code, message);
+                else
+                    Warn(message);
+                break;
+            case MessageLevel.Error:
+                if (!string.IsNullOrEmpty(code))
+                    Error(code, message);
+                else
+                    Error(message);
+                break;
+        }
+    }
 }
 
 /// <summary>
@@ -124,4 +158,7 @@ internal sealed class NullBuildLog : IBuildLog
 
     /// <inheritdoc />
     public void Error(string code, string message) { }
+
+    /// <inheritdoc />
+    public void Log(MessageLevel level, string message, string? code = null) { }
 }

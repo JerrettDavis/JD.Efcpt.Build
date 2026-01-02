@@ -320,6 +320,8 @@ Applies MSBuild property overrides to the staged `efcpt-config.json` file. This 
 | `EfcptFingerprintFile` | `$(EfcptOutput)fingerprint.txt` | Fingerprint cache location |
 | `EfcptStampFile` | `$(EfcptOutput).efcpt.stamp` | Generation stamp file |
 | `EfcptDetectGeneratedFileChanges` | `false` | Detect changes to generated `.g.cs` files and trigger regeneration. **Warning**: When enabled, manual edits to generated files will be overwritten. |
+| `EfcptAutoDetectWarningLevel` | `Info` | Severity for SQL project/connection string auto-detection messages. Valid values: `None`, `Info`, `Warn`, `Error` |
+| `EfcptSdkVersionWarningLevel` | `Warn` | Severity for SDK version update notifications. Valid values: `None`, `Info`, `Warn`, `Error` |
 
 ### Config Override Properties
 

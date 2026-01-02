@@ -281,6 +281,143 @@ public sealed class CheckSdkVersionTests(ITestOutputHelper output) : TinyBddXuni
 
     #endregion
 
+    #region Warning Level Tests
+
+    [Scenario("Warning level None emits no message")]
+    [Fact]
+    public async Task Warning_level_none_emits_nothing()
+    {
+        await Given("a cache with latest version 2.0.0", () =>
+                CreateSetupWithCache("2.0.0", DateTime.UtcNow.AddMinutes(-5)))
+            .When("task executes with current version 1.0.0 and warning level None", s =>
+            {
+                var task = new TestableCheckSdkVersion
+                {
+                    BuildEngine = s.Engine,
+                    CurrentVersion = "1.0.0",
+                    WarningLevel = "None",
+                    CacheFilePath = s.CacheFile
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("no warning is logged", r => r.Setup.Engine.Warnings.Count == 0)
+            .And("no error is logged", r => r.Setup.Engine.Errors.Count == 0)
+            .And("update is available", r => r.Task.UpdateAvailable)
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Warning level Info emits informational message")]
+    [Fact]
+    public async Task Warning_level_info_emits_info()
+    {
+        await Given("a cache with latest version 2.0.0", () =>
+                CreateSetupWithCache("2.0.0", DateTime.UtcNow.AddMinutes(-5)))
+            .When("task executes with current version 1.0.0 and warning level Info", s =>
+            {
+                var task = new TestableCheckSdkVersion
+                {
+                    BuildEngine = s.Engine,
+                    CurrentVersion = "1.0.0",
+                    WarningLevel = "Info",
+                    CacheFilePath = s.CacheFile
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("no warning is logged", r => r.Setup.Engine.Warnings.Count == 0)
+            .And("no error is logged", r => r.Setup.Engine.Errors.Count == 0)
+            .And("info message is logged", r => r.Setup.Engine.Messages.Count > 0)
+            .And("update is available", r => r.Task.UpdateAvailable)
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Warning level Warn emits warning (default behavior)")]
+    [Fact]
+    public async Task Warning_level_warn_emits_warning()
+    {
+        await Given("a cache with latest version 2.0.0", () =>
+                CreateSetupWithCache("2.0.0", DateTime.UtcNow.AddMinutes(-5)))
+            .When("task executes with current version 1.0.0 and warning level Warn", s =>
+            {
+                var task = new TestableCheckSdkVersion
+                {
+                    BuildEngine = s.Engine,
+                    CurrentVersion = "1.0.0",
+                    WarningLevel = "Warn",
+                    CacheFilePath = s.CacheFile
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("warning is logged", r => r.Setup.Engine.Warnings.Count == 1)
+            .And("warning code is EFCPT002", r =>
+                r.Setup.Engine.Warnings[0].Code == "EFCPT002")
+            .And("update is available", r => r.Task.UpdateAvailable)
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Warning level Error emits error")]
+    [Fact]
+    public async Task Warning_level_error_emits_error()
+    {
+        await Given("a cache with latest version 2.0.0", () =>
+                CreateSetupWithCache("2.0.0", DateTime.UtcNow.AddMinutes(-5)))
+            .When("task executes with current version 1.0.0 and warning level Error", s =>
+            {
+                var task = new TestableCheckSdkVersion
+                {
+                    BuildEngine = s.Engine,
+                    CurrentVersion = "1.0.0",
+                    WarningLevel = "Error",
+                    CacheFilePath = s.CacheFile
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("error is logged", r => r.Setup.Engine.Errors.Count == 1)
+            .And("error code is EFCPT002", r =>
+                r.Setup.Engine.Errors[0].Code == "EFCPT002")
+            .And("update is available", r => r.Task.UpdateAvailable)
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Invalid warning level defaults to Warn")]
+    [Fact]
+    public async Task Invalid_warning_level_defaults_to_warn()
+    {
+        await Given("a cache with latest version 2.0.0", () =>
+                CreateSetupWithCache("2.0.0", DateTime.UtcNow.AddMinutes(-5)))
+            .When("task executes with current version 1.0.0 and invalid warning level", s =>
+            {
+                var task = new TestableCheckSdkVersion
+                {
+                    BuildEngine = s.Engine,
+                    CurrentVersion = "1.0.0",
+                    WarningLevel = "InvalidLevel",
+                    CacheFilePath = s.CacheFile
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("warning is logged (default behavior)", r => r.Setup.Engine.Warnings.Count == 1)
+            .And("warning code is EFCPT002", r =>
+                r.Setup.Engine.Warnings[0].Code == "EFCPT002")
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    #endregion
+
     /// <summary>
     /// Testable version of CheckSdkVersion that allows overriding the cache file path.
     /// </summary>
@@ -311,7 +448,8 @@ public sealed class CheckSdkVersionTests(ITestOutputHelper output) : TinyBddXuni
                     if (DateTime.UtcNow - cachedTime < TimeSpan.FromHours(CacheHours))
                     {
                         LatestVersion = cachedVersion;
-                        CheckAndWarnInternal();
+                        // Call the private helper method that checks versions and emits message if needed
+                        EmitVersionUpdateMessageIfNeeded();
                         return true;
                     }
                 }
@@ -326,6 +464,30 @@ public sealed class CheckSdkVersionTests(ITestOutputHelper output) : TinyBddXuni
                     $"EFCPT: Unable to check for SDK updates: {ex.Message}");
                 return true;
             }
+        }
+
+        /// <summary>
+        /// Checks versions and emits message if update is available.
+        /// Extracted for testability.
+        /// </summary>
+        private void EmitVersionUpdateMessageIfNeeded()
+        {
+            if (string.IsNullOrEmpty(LatestVersion) || string.IsNullOrEmpty(CurrentVersion))
+                return;
+
+            if (TryParseVersion(CurrentVersion, out var current) &&
+                TryParseVersion(LatestVersion, out var latest) &&
+                latest > current)
+            {
+                UpdateAvailable = true;
+                EmitVersionUpdateMessage();
+            }
+        }
+
+        private static bool TryParseVersion(string versionString, out Version version)
+        {
+            var cleanVersion = versionString.Split('-')[0];
+            return Version.TryParse(cleanVersion, out version!);
         }
 
         private bool TryReadTestCache(out string version, out DateTime cacheTime)
@@ -348,36 +510,6 @@ public sealed class CheckSdkVersionTests(ITestOutputHelper output) : TinyBddXuni
             {
                 return false;
             }
-        }
-
-        private void CheckAndWarnInternal()
-        {
-            if (string.IsNullOrEmpty(LatestVersion) || string.IsNullOrEmpty(CurrentVersion))
-                return;
-
-            if (TryParseVersionInternal(CurrentVersion, out var current) &&
-                TryParseVersionInternal(LatestVersion, out var latest) &&
-                latest > current)
-            {
-                UpdateAvailable = true;
-                Log.LogWarning(
-                    subcategory: null,
-                    warningCode: "EFCPT002",
-                    helpKeyword: null,
-                    file: null,
-                    lineNumber: 0,
-                    columnNumber: 0,
-                    endLineNumber: 0,
-                    endColumnNumber: 0,
-                    message: $"A newer version of JD.Efcpt.Sdk is available: {LatestVersion} (current: {CurrentVersion}). " +
-                             $"Update your project's Sdk attribute or global.json to use the latest version.");
-            }
-        }
-
-        private static bool TryParseVersionInternal(string versionString, out Version version)
-        {
-            var cleanVersion = versionString.Split('-')[0];
-            return Version.TryParse(cleanVersion, out version!);
         }
     }
 }

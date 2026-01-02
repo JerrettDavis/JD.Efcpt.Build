@@ -47,6 +47,12 @@ public class CheckSdkVersion : Microsoft.Build.Utilities.Task
     public bool ForceCheck { get; set; }
 
     /// <summary>
+    /// Controls the severity level for SDK version update messages.
+    /// Valid values: "None", "Info", "Warn", "Error". Defaults to "Warn".
+    /// </summary>
+    public string WarningLevel { get; set; } = "Warn";
+
+    /// <summary>
     /// The latest version available on NuGet (output).
     /// </summary>
     [Output]
@@ -103,17 +109,62 @@ public class CheckSdkVersion : Microsoft.Build.Utilities.Task
             latest > current)
         {
             UpdateAvailable = true;
-            Log.LogWarning(
-                subcategory: null,
-                warningCode: "EFCPT002",
-                helpKeyword: null,
-                file: null,
-                lineNumber: 0,
-                columnNumber: 0,
-                endLineNumber: 0,
-                endColumnNumber: 0,
-                message: $"A newer version of JD.Efcpt.Sdk is available: {LatestVersion} (current: {CurrentVersion}). " +
-                         $"Update your project's Sdk attribute or global.json to use the latest version.");
+            EmitVersionUpdateMessage();
+        }
+    }
+
+    /// <summary>
+    /// Emits the version update message at the configured severity level.
+    /// Protected virtual to allow testing without reflection.
+    /// </summary>
+    protected virtual void EmitVersionUpdateMessage()
+    {
+        var level = MessageLevelHelpers.Parse(WarningLevel, MessageLevel.Warn);
+        var message = $"A newer version of JD.Efcpt.Sdk is available: {LatestVersion} (current: {CurrentVersion}). " +
+                     $"Update your project's Sdk attribute or global.json to use the latest version.";
+        
+        switch (level)
+        {
+            case MessageLevel.None:
+                // Do nothing
+                break;
+            case MessageLevel.Info:
+                Log.LogMessage(
+                    subcategory: null,
+                    code: "EFCPT002",
+                    helpKeyword: null,
+                    file: null,
+                    lineNumber: 0,
+                    columnNumber: 0,
+                    endLineNumber: 0,
+                    endColumnNumber: 0,
+                    importance: MessageImportance.High,
+                    message: message);
+                break;
+            case MessageLevel.Warn:
+                Log.LogWarning(
+                    subcategory: null,
+                    warningCode: "EFCPT002",
+                    helpKeyword: null,
+                    file: null,
+                    lineNumber: 0,
+                    columnNumber: 0,
+                    endLineNumber: 0,
+                    endColumnNumber: 0,
+                    message: message);
+                break;
+            case MessageLevel.Error:
+                Log.LogError(
+                    subcategory: null,
+                    errorCode: "EFCPT002",
+                    helpKeyword: null,
+                    file: null,
+                    lineNumber: 0,
+                    columnNumber: 0,
+                    endLineNumber: 0,
+                    endColumnNumber: 0,
+                    message: message);
+                break;
         }
     }
 
