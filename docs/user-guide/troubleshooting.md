@@ -354,9 +354,41 @@ JD.Efcpt.Build task assemblies target .NET 8.0+ and cannot run on the .NET Frame
 2. Build from command line with `dotnet build`
 3. Set `EfcptEnabled=false` to disable code generation if you only need to compile the project
 
+### EFCPT001: Auto-Detection Informational Message
+
+**Type:** Informational (configurable)
+
+**Message:**
+```
+EFCPT001: No SQL project references found in project; using SQL project detected from solution: path/to/project.sqlproj
+```
+or
+```
+EFCPT001: No .sqlproj found. Using auto-discovered connection string.
+```
+
+**Cause:**
+The build automatically detected a SQL project from the solution or a connection string from configuration files when no explicit reference was provided. This is expected behavior in zero-config scenarios.
+
+**Severity Control:**
+Control the message severity using `EfcptAutoDetectWarningLevel`:
+```xml
+<PropertyGroup>
+  <!-- Valid values: None, Info, Warn, Error -->
+  <EfcptAutoDetectWarningLevel>Info</EfcptAutoDetectWarningLevel>
+</PropertyGroup>
+```
+
+**Default:** `Info` (informational message)
+
+**Solutions:**
+- If you want to suppress this message entirely, set `EfcptAutoDetectWarningLevel=None`
+- If you want to make it a warning, set `EfcptAutoDetectWarningLevel=Warn`
+- To be explicit about your SQL project or connection string, configure `EfcptSqlProj`, `EfcptConnectionString`, or other relevant properties
+
 ### EFCPT002: Newer SDK Version Available
 
-**Type:** Warning (opt-in)
+**Type:** Warning (opt-in, configurable)
 
 **Message:**
 ```
@@ -365,6 +397,17 @@ EFCPT002: A newer version of JD.Efcpt.Sdk is available: X.Y.Z (current: A.B.C)
 
 **Cause:**
 When `EfcptCheckForUpdates` is enabled, the build checks NuGet for newer SDK versions. This warning indicates an update is available.
+
+**Severity Control:**
+Control the message severity using `EfcptSdkVersionWarningLevel`:
+```xml
+<PropertyGroup>
+  <!-- Valid values: None, Info, Warn, Error -->
+  <EfcptSdkVersionWarningLevel>Warn</EfcptSdkVersionWarningLevel>
+</PropertyGroup>
+```
+
+**Default:** `Warn` (warning message)
 
 **Solutions:**
 1. Update your project's `Sdk` attribute: `Sdk="JD.Efcpt.Sdk/X.Y.Z"`
@@ -376,9 +419,10 @@ When `EfcptCheckForUpdates` is enabled, the build checks NuGet for newer SDK ver
      }
    }
    ```
-3. To suppress this warning, set `EfcptCheckForUpdates=false`
+3. To change the severity level, set `EfcptSdkVersionWarningLevel` to `None`, `Info`, `Warn`, or `Error`
+4. To disable version checking entirely, set `EfcptCheckForUpdates=false`
 
-**Note:** This check is opt-in and disabled by default. Results are cached for 24 hours to minimize network calls.
+**Note:** This check is opt-in for package references and opt-out for SDK references. Results are cached for 24 hours to minimize network calls.
 
 ## Error Messages
 
