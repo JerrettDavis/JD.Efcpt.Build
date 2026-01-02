@@ -129,7 +129,17 @@ public class CheckSdkVersion : Microsoft.Build.Utilities.Task
                 // Do nothing
                 break;
             case MessageLevel.Info:
-                Log.LogMessage(MessageImportance.High, message);
+                Log.LogMessage(
+                    subcategory: null,
+                    code: "EFCPT002",
+                    helpKeyword: null,
+                    file: null,
+                    lineNumber: 0,
+                    columnNumber: 0,
+                    endLineNumber: 0,
+                    endColumnNumber: 0,
+                    importance: MessageImportance.High,
+                    message: message);
                 break;
             case MessageLevel.Warn:
                 Log.LogWarning(
