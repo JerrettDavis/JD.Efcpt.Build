@@ -448,7 +448,7 @@ public sealed class CheckSdkVersionTests(ITestOutputHelper output) : TinyBddXuni
                     if (DateTime.UtcNow - cachedTime < TimeSpan.FromHours(CacheHours))
                     {
                         LatestVersion = cachedVersion;
-                        // Call the protected virtual method that handles warning emission
+                        // Call the private helper method that checks versions and emits message if needed
                         EmitVersionUpdateMessageIfNeeded();
                         return true;
                     }

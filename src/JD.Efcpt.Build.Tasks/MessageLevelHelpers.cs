@@ -13,17 +13,7 @@ public static class MessageLevelHelpers
     /// <returns>The parsed <see cref="MessageLevel"/>.</returns>
     public static MessageLevel Parse(string? value, MessageLevel defaultValue)
     {
-        if (string.IsNullOrWhiteSpace(value))
-            return defaultValue;
-
-        return value.Trim().ToLowerInvariant() switch
-        {
-            "none" => MessageLevel.None,
-            "info" => MessageLevel.Info,
-            "warn" or "warning" => MessageLevel.Warn,
-            "error" => MessageLevel.Error,
-            _ => defaultValue
-        };
+        return TryParse(value, out var result) ? result : defaultValue;
     }
 
     /// <summary>
