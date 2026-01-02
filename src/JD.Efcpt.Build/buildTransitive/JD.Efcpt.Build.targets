@@ -109,7 +109,8 @@
         CurrentVersion="$(EfcptSdkVersion)"
         PackageId="JD.Efcpt.Sdk"
         CacheHours="$(EfcptUpdateCheckCacheHours)"
-        ForceCheck="$(EfcptForceUpdateCheck)">
+        ForceCheck="$(EfcptForceUpdateCheck)"
+        WarningLevel="$(EfcptSdkVersionWarningLevel)">
       <Output TaskParameter="LatestVersion" PropertyName="_EfcptLatestVersion" />
       <Output TaskParameter="UpdateAvailable" PropertyName="_EfcptUpdateAvailable" />
     </CheckSdkVersion>
@@ -136,7 +137,8 @@
         EfcptConnectionString="$(EfcptConnectionString)"
         EfcptAppSettings="$(EfcptAppSettings)"
         EfcptAppConfig="$(EfcptAppConfig)"
-        EfcptConnectionStringName="$(EfcptConnectionStringName)">
+        EfcptConnectionStringName="$(EfcptConnectionStringName)"
+        AutoDetectWarningLevel="$(EfcptAutoDetectWarningLevel)">
       <Output TaskParameter="SqlProjPath" PropertyName="_EfcptSqlProj" />
       <Output TaskParameter="ResolvedConfigPath" PropertyName="_EfcptResolvedConfig" />
       <Output TaskParameter="ResolvedRenamingPath" PropertyName="_EfcptResolvedRenaming" />
