@@ -98,6 +98,12 @@
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.CheckSdkVersion"
              AssemblyFile="$(_EfcptTaskAssembly)" />
 
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.RunSqlPackage"
+             AssemblyFile="$(_EfcptTaskAssembly)" />
+
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.GenerateSqlProj"
+             AssemblyFile="$(_EfcptTaskAssembly)" />
+
   <!--
     SDK Version Check: Warns users when a newer SDK version is available.
     Opt-in via EfcptCheckForUpdates=true. Results are cached for 24 hours.
@@ -116,8 +122,98 @@
     </CheckSdkVersion>
   </Target>
 
+  <!--
+    ========================================================================
+    SqlProj Generation Pipeline: Extract database schema and generate SQL project
+    ========================================================================
+    When EfcptGenerateSqlProj=true, this pipeline runs BEFORE the normal EF Core
+    model generation. It extracts the schema from a live database and generates
+    a SQL project (.sqlproj, .csproj, or .fsproj) that can then be used as the
+    source for EF Core model generation.
+  -->
+
+  <!-- Extract database schema using sqlpackage -->
+  <Target Name="EfcptExtractDatabaseSchema"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptGenerateSqlProj)' == 'true'">
+    <PropertyGroup>
+      <_EfcptExtractDir>$(EfcptSqlProjOutputDir)Extracted\</_EfcptExtractDir>
+    </PropertyGroup>
+    
+    <Error Condition="'$(EfcptConnectionString)' == '' and '$(EfcptAppSettings)' == '' and '$(EfcptAppConfig)' == ''"
+           Text="SqlProj generation requires a connection string. Set EfcptConnectionString, EfcptAppSettings, or EfcptAppConfig." />
+    
+    <Message Text="Extracting database schema to: $(_EfcptExtractDir)" Importance="high" />
+    
+    <MakeDir Directories="$(_EfcptExtractDir)" />
+    
+    <RunSqlPackage
+        ToolVersion="$(EfcptSqlPackageToolVersion)"
+        ToolRestore="$(EfcptSqlPackageToolRestore)"
+        ToolPath="$(EfcptSqlPackageToolPath)"
+        DotNetExe="$(EfcptDotNetExe)"
+        WorkingDirectory="$(EfcptOutput)"
+        ConnectionString="$(EfcptConnectionString)"
+        TargetDirectory="$(_EfcptExtractDir)"
+        TargetFramework="$(TargetFramework)"
+        LogVerbosity="$(EfcptLogVerbosity)" />
+  </Target>
+
+  <!-- Generate SQL project file -->
+  <Target Name="EfcptGenerateSqlProjFile"
+          DependsOnTargets="EfcptExtractDatabaseSchema"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptGenerateSqlProj)' == 'true'">
+    <PropertyGroup>
+      <_EfcptSqlProjExtension Condition="'$(EfcptSqlProjType)' == 'microsoft-build-sql'">.sqlproj</_EfcptSqlProjExtension>
+      <_EfcptSqlProjExtension Condition="'$(EfcptSqlProjType)' == 'msbuild-sdk-sqlproj' and '$(EfcptSqlProjLanguage)' == 'fsharp'">.fsproj</_EfcptSqlProjExtension>
+      <_EfcptSqlProjExtension Condition="'$(EfcptSqlProjType)' == 'msbuild-sdk-sqlproj' and '$(EfcptSqlProjLanguage)' != 'fsharp'">.csproj</_EfcptSqlProjExtension>
+      <_EfcptGeneratedSqlProjPath>$(EfcptSqlProjOutputDir)$(EfcptSqlProjName)$(_EfcptSqlProjExtension)</_EfcptGeneratedSqlProjPath>
+    </PropertyGroup>
+    
+    <Message Text="Generating SQL project file: $(_EfcptGeneratedSqlProjPath)" Importance="high" />
+    
+    <GenerateSqlProj
+        ProjectType="$(EfcptSqlProjType)"
+        Language="$(EfcptSqlProjLanguage)"
+        OutputPath="$(_EfcptGeneratedSqlProjPath)"
+        ProjectName="$(EfcptSqlProjName)"
+        TargetFramework="$(TargetFramework)"
+        SqlServerVersion="$(EfcptSqlServerVersion)"
+        MicrosoftBuildSqlVersion="$(EfcptMicrosoftBuildSqlVersion)"
+        MsBuildSdkSqlProjVersion="$(EfcptMsBuildSdkSqlProjVersion)"
+        ScriptsDirectory="$(_EfcptExtractDir)"
+        LogVerbosity="$(EfcptLogVerbosity)">
+      <Output TaskParameter="GeneratedProjectPath" PropertyName="_EfcptGeneratedSqlProj" />
+    </GenerateSqlProj>
+    
+    <Message Text="SQL project generated: $(_EfcptGeneratedSqlProj)" Importance="high" />
+  </Target>
+
+  <!-- Build the generated SQL project to create a DACPAC -->
+  <Target Name="EfcptBuildGeneratedSqlProj"
+          DependsOnTargets="EfcptGenerateSqlProjFile"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptGenerateSqlProj)' == 'true'">
+    <Message Text="Building generated SQL project: $(_EfcptGeneratedSqlProj)" Importance="high" />
+    
+    <MSBuild
+        Projects="$(_EfcptGeneratedSqlProj)"
+        Targets="Build"
+        Properties="Configuration=$(Configuration)"
+        BuildInParallel="false">
+      <Output TaskParameter="TargetOutputs" ItemName="_EfcptGeneratedDacpac" />
+    </MSBuild>
+    
+    <!-- Set the DACPAC path for the rest of the pipeline -->
+    <PropertyGroup>
+      <_EfcptDacpacPath>$([System.IO.Path]::Combine('$(EfcptSqlProjOutputDir)', 'bin', '$(Configuration)', '$(EfcptSqlProjName).dacpac'))</_EfcptDacpacPath>
+      <EfcptDacpac>$(_EfcptDacpacPath)</EfcptDacpac>
+    </PropertyGroup>
+    
+    <Message Text="Generated DACPAC: $(_EfcptDacpacPath)" Importance="high" />
+  </Target>
+
   <!-- Main pipeline -->
   <Target Name="EfcptResolveInputs"
+          DependsOnTargets="EfcptBuildGeneratedSqlProj"
           Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptDacpac)' == ''">
     <ResolveSqlProjAndInputs
         ProjectFullPath="$(MSBuildProjectFullPath)"

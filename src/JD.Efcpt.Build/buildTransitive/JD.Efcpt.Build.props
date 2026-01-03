@@ -158,5 +158,23 @@
 
     <!-- Replacements section overrides -->
     <EfcptConfigPreserveCasingWithRegex Condition="'$(EfcptConfigPreserveCasingWithRegex)'==''"></EfcptConfigPreserveCasingWithRegex>
+
+    <!--
+      SqlProj Generation: Reverse engineer a database into a SQL project.
+      When enabled, this runs BEFORE EF Core model generation, creating a SQL project
+      from a live database connection. The generated SQL project is then used as the
+      source for EF Core model generation.
+    -->
+    <EfcptGenerateSqlProj Condition="'$(EfcptGenerateSqlProj)'==''">false</EfcptGenerateSqlProj>
+    <EfcptSqlProjType Condition="'$(EfcptSqlProjType)'==''">microsoft-build-sql</EfcptSqlProjType>
+    <EfcptSqlProjLanguage Condition="'$(EfcptSqlProjLanguage)'==''">csharp</EfcptSqlProjLanguage>
+    <EfcptSqlProjName Condition="'$(EfcptSqlProjName)'==''">$(MSBuildProjectName).Database</EfcptSqlProjName>
+    <EfcptSqlProjOutputDir Condition="'$(EfcptSqlProjOutputDir)'==''">$(EfcptOutput)GeneratedSqlProj\</EfcptSqlProjOutputDir>
+    <EfcptSqlServerVersion Condition="'$(EfcptSqlServerVersion)'==''">Sql160</EfcptSqlServerVersion>
+    <EfcptSqlPackageToolVersion Condition="'$(EfcptSqlPackageToolVersion)'==''"></EfcptSqlPackageToolVersion>
+    <EfcptSqlPackageToolRestore Condition="'$(EfcptSqlPackageToolRestore)'==''">true</EfcptSqlPackageToolRestore>
+    <EfcptSqlPackageToolPath Condition="'$(EfcptSqlPackageToolPath)'==''"></EfcptSqlPackageToolPath>
+    <EfcptMicrosoftBuildSqlVersion Condition="'$(EfcptMicrosoftBuildSqlVersion)'==''">2.0.0</EfcptMicrosoftBuildSqlVersion>
+    <EfcptMsBuildSdkSqlProjVersion Condition="'$(EfcptMsBuildSdkSqlProjVersion)'==''">3.3.0</EfcptMsBuildSdkSqlProjVersion>
   </PropertyGroup>
 </Project>
