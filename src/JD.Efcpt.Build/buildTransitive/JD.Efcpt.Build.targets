@@ -127,30 +127,32 @@
 
   <!--
     ========================================================================
-    SqlProj Generation Pipeline: Extract database schema to SQL scripts
+    SQL Project Generation Pipeline: Extract database schema to SQL scripts
     ========================================================================
-    When EfcptGenerateSqlProj=true, this pipeline runs BEFORE the normal EF Core
-    model generation. It extracts the schema from a live database into individual
-    SQL script files, generates a proper SQL project, builds it to a DACPAC, and
-    then uses that DACPAC for EF Core model generation.
+    When JD.Efcpt.Build is referenced within a SQL project (Microsoft.Build.Sql or 
+    MSBuild.Sdk.SqlProj), this pipeline automatically extracts the database schema 
+    into individual SQL script files within that SQL project.
     
-    This enables the workflow: Database → SQL Scripts → SqlProj → DACPAC → EF Core Models
+    Detection is automatic based on SDK type - no configuration needed.
+    
+    This enables the workflow: 
+    Database → SQL Scripts (in SQL Project) → Build to DACPAC → EF Core Models (in DataAccess Project)
     
     Lifecycle hooks:
     - BeforeSqlProjGeneration: Custom target that runs before extraction
-    - AfterSqlProjGeneration: Custom target that runs after SQL project is generated
+    - AfterSqlProjGeneration: Custom target that runs after SQL scripts are generated
     - BeforeEfcptGeneration: Custom target that runs before EF Core generation
     - AfterEfcptGeneration: Custom target that runs after EF Core generation
   -->
 
   <!-- Lifecycle hook: BeforeSqlProjGeneration -->
   <Target Name="BeforeSqlProjGeneration"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptGenerateSqlProj)' == 'true'" />
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'" />
 
   <!-- Query database schema for fingerprinting -->
   <Target Name="EfcptQueryDatabaseSchemaForSqlProj"
           DependsOnTargets="BeforeSqlProjGeneration"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptGenerateSqlProj)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'">
     <Error Condition="'$(EfcptConnectionString)' == '' and '$(EfcptAppSettings)' == '' and '$(EfcptAppConfig)' == ''"
            Text="SqlProj generation requires a connection string. Set EfcptConnectionString, EfcptAppSettings, or EfcptAppConfig." />
     
@@ -170,16 +172,20 @@
   <!-- Extract database schema to SQL scripts using sqlpackage -->
   <Target Name="EfcptExtractDatabaseSchemaToScripts"
           DependsOnTargets="EfcptQueryDatabaseSchemaForSqlProj"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptGenerateSqlProj)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'">
     <PropertyGroup>
-      <_EfcptScriptsDir>$(EfcptSqlProjOutputDir)Scripts\</_EfcptScriptsDir>
+      <!-- Extract directly to the SQL project directory -->
+      <_EfcptScriptsDir>$(EfcptSqlScriptsDir)</_EfcptScriptsDir>
     </PropertyGroup>
     
-    <Message Text="Extracting database schema to SQL scripts: $(_EfcptScriptsDir)" Importance="high" />
+    <Message Text="Extracting database schema to SQL scripts in SQL project: $(_EfcptScriptsDir)" Importance="high" />
     
-    <!-- Remove existing scripts directory to ensure clean generation -->
-    <RemoveDir Directories="$(_EfcptScriptsDir)" Condition="Exists('$(_EfcptScriptsDir)')" />
-    <MakeDir Directories="$(_EfcptScriptsDir)" />
+    <!-- Remove existing generated scripts to ensure clean generation -->
+    <!-- Only remove specific patterns to avoid deleting user scripts -->
+    <ItemGroup>
+      <_EfcptGeneratedScripts Include="$(_EfcptScriptsDir)**\*.sql" />
+    </ItemGroup>
+    <Delete Files="@(_EfcptGeneratedScripts)" Condition="'@(_EfcptGeneratedScripts)' != ''" />
     
     <RunSqlPackage
         ToolVersion="$(EfcptSqlPackageToolVersion)"
@@ -201,7 +207,7 @@
   <!-- Add auto-generation warnings to SQL files -->
   <Target Name="EfcptAddSqlFileWarnings"
           DependsOnTargets="EfcptExtractDatabaseSchemaToScripts"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptGenerateSqlProj)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'">
     <Message Text="Adding auto-generation warnings to SQL files..." Importance="high" />
     
     <!-- Get database name from connection string for the warning header -->
@@ -216,69 +222,20 @@
         LogVerbosity="$(EfcptLogVerbosity)" />
   </Target>
 
-  <!-- Generate SQL project file -->
-  <Target Name="EfcptGenerateSqlProjFile"
-          DependsOnTargets="EfcptAddSqlFileWarnings"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptGenerateSqlProj)' == 'true'">
-    <PropertyGroup>
-      <_EfcptSqlProjExtension Condition="'$(EfcptSqlProjType)' == 'microsoft-build-sql'">.sqlproj</_EfcptSqlProjExtension>
-      <_EfcptSqlProjExtension Condition="'$(EfcptSqlProjType)' == 'msbuild-sdk-sqlproj' and '$(EfcptSqlProjLanguage)' == 'fsharp'">.fsproj</_EfcptSqlProjExtension>
-      <_EfcptSqlProjExtension Condition="'$(EfcptSqlProjType)' == 'msbuild-sdk-sqlproj' and '$(EfcptSqlProjLanguage)' != 'fsharp'">.csproj</_EfcptSqlProjExtension>
-      <_EfcptGeneratedSqlProjPath>$(EfcptSqlProjOutputDir)$(EfcptSqlProjName)$(_EfcptSqlProjExtension)</_EfcptGeneratedSqlProjPath>
-    </PropertyGroup>
-    
-    <Message Text="Generating SQL project file: $(_EfcptGeneratedSqlProjPath)" Importance="high" />
-    
-    <GenerateSqlProj
-        ProjectType="$(EfcptSqlProjType)"
-        Language="$(EfcptSqlProjLanguage)"
-        OutputPath="$(_EfcptGeneratedSqlProjPath)"
-        ProjectName="$(EfcptSqlProjName)"
-        TargetFramework="$(TargetFramework)"
-        SqlServerVersion="$(EfcptSqlServerVersion)"
-        MicrosoftBuildSqlVersion="$(EfcptMicrosoftBuildSqlVersion)"
-        MsBuildSdkSqlProjVersion="$(EfcptMsBuildSdkSqlProjVersion)"
-        ScriptsDirectory="$(_EfcptScriptsDir)"
-        LogVerbosity="$(EfcptLogVerbosity)">
-      <Output TaskParameter="GeneratedProjectPath" PropertyName="_EfcptGeneratedSqlProj" />
-    </GenerateSqlProj>
-    
-    <Message Text="SQL project generated: $(_EfcptGeneratedSqlProj)" Importance="high" />
-  </Target>
-
-  <!-- Build the generated SQL project to create a DACPAC -->
-  <Target Name="EfcptBuildGeneratedSqlProj"
-          DependsOnTargets="EfcptGenerateSqlProjFile"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptGenerateSqlProj)' == 'true'">
-    <Message Text="Building generated SQL project: $(_EfcptGeneratedSqlProj)" Importance="high" />
-    
-    <MSBuild
-        Projects="$(_EfcptGeneratedSqlProj)"
-        Targets="Build"
-        Properties="Configuration=$(Configuration)"
-        BuildInParallel="false" />
-    
-    <!-- Determine DACPAC path based on SQL project type -->
-    <PropertyGroup>
-      <_EfcptDacpacPath Condition="'$(EfcptSqlProjType)' == 'microsoft-build-sql'">$(EfcptSqlProjOutputDir)bin\$(Configuration)\$(EfcptSqlProjName).dacpac</_EfcptDacpacPath>
-      <_EfcptDacpacPath Condition="'$(EfcptSqlProjType)' == 'msbuild-sdk-sqlproj'">$(EfcptSqlProjOutputDir)bin\$(Configuration)\$(TargetFramework)\$(EfcptSqlProjName).dacpac</_EfcptDacpacPath>
-      <EfcptDacpac>$(_EfcptDacpacPath)</EfcptDacpac>
-      <!-- Mark that we're using connection string mode for fingerprinting -->
-      <_EfcptUseConnectionString>true</_EfcptUseConnectionString>
-    </PropertyGroup>
-    
-    <Message Text="Generated DACPAC: $(_EfcptDacpacPath)" Importance="high" />
-  </Target>
-
   <!-- Lifecycle hook: AfterSqlProjGeneration -->
+  <!-- This runs after SQL scripts are generated in the SQL project -->
+  <!-- The SQL project will build normally and create its DACPAC -->
+  <!-- DataAccess projects that reference this SQL project will wait for this to complete -->
   <Target Name="AfterSqlProjGeneration"
-          DependsOnTargets="EfcptBuildGeneratedSqlProj"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptGenerateSqlProj)' == 'true'" />
+          DependsOnTargets="EfcptAddSqlFileWarnings"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'">
+    <Message Text="SQL script generation complete. SQL project will build to DACPAC." Importance="high" />
+  </Target>
 
   <!-- Main pipeline -->
+  <!-- When NOT in a SQL project, resolve inputs normally -->
   <Target Name="EfcptResolveInputs"
-          DependsOnTargets="AfterSqlProjGeneration"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptDacpac)' == ''">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptDacpac)' == ''">
     <ResolveSqlProjAndInputs
         ProjectFullPath="$(MSBuildProjectFullPath)"
         ProjectDirectory="$(MSBuildProjectDirectory)"

@@ -160,21 +160,24 @@
     <EfcptConfigPreserveCasingWithRegex Condition="'$(EfcptConfigPreserveCasingWithRegex)'==''"></EfcptConfigPreserveCasingWithRegex>
 
     <!--
-      SqlProj Generation: Reverse engineer a database into a SQL project.
-      When enabled, this runs BEFORE EF Core model generation, creating a SQL project
-      from a live database connection. The generated SQL project is then used as the
-      source for EF Core model generation.
+      SQL Project Detection: Auto-detect when JD.Efcpt.Build is referenced within a SQL project.
+      When detected, SQL scripts will be generated within the SQL project from the live database.
+      
+      Detection logic:
+      - Microsoft.Build.Sql SDK: Check for $(SqlServerVersion) or $(DSP) properties
+      - MSBuild.Sdk.SqlProj: Check for $(SqlServerVersion) and if SDK attribute contains "MSBuild.Sdk.SqlProj"
     -->
-    <EfcptGenerateSqlProj Condition="'$(EfcptGenerateSqlProj)'==''">false</EfcptGenerateSqlProj>
+    <_EfcptIsSqlProject Condition="'$(_EfcptIsSqlProject)'=='' and ('$(SqlServerVersion)' != '' or '$(DSP)' != '')">true</_EfcptIsSqlProject>
+    <_EfcptIsSqlProject Condition="'$(_EfcptIsSqlProject)'==''">false</_EfcptIsSqlProject>
+    
+    <!-- SQL Project Generation Configuration -->
     <EfcptSqlProjType Condition="'$(EfcptSqlProjType)'==''">microsoft-build-sql</EfcptSqlProjType>
     <EfcptSqlProjLanguage Condition="'$(EfcptSqlProjLanguage)'==''">csharp</EfcptSqlProjLanguage>
-    <EfcptSqlProjName Condition="'$(EfcptSqlProjName)'==''">$(MSBuildProjectName).Database</EfcptSqlProjName>
-    <EfcptSqlProjOutputDir Condition="'$(EfcptSqlProjOutputDir)'==''">$(EfcptOutput)GeneratedSqlProj\</EfcptSqlProjOutputDir>
+    <EfcptSqlProjOutputDir Condition="'$(EfcptSqlProjOutputDir)'==''">$(MSBuildProjectDirectory)\</EfcptSqlProjOutputDir>
+    <EfcptSqlScriptsDir Condition="'$(EfcptSqlScriptsDir)'==''">$(MSBuildProjectDirectory)\</EfcptSqlScriptsDir>
     <EfcptSqlServerVersion Condition="'$(EfcptSqlServerVersion)'==''">Sql160</EfcptSqlServerVersion>
     <EfcptSqlPackageToolVersion Condition="'$(EfcptSqlPackageToolVersion)'==''"></EfcptSqlPackageToolVersion>
     <EfcptSqlPackageToolRestore Condition="'$(EfcptSqlPackageToolRestore)'==''">true</EfcptSqlPackageToolRestore>
     <EfcptSqlPackageToolPath Condition="'$(EfcptSqlPackageToolPath)'==''"></EfcptSqlPackageToolPath>
-    <EfcptMicrosoftBuildSqlVersion Condition="'$(EfcptMicrosoftBuildSqlVersion)'==''">2.0.0</EfcptMicrosoftBuildSqlVersion>
-    <EfcptMsBuildSdkSqlProjVersion Condition="'$(EfcptMsBuildSdkSqlProjVersion)'==''">3.3.0</EfcptMsBuildSdkSqlProjVersion>
   </PropertyGroup>
 </Project>
