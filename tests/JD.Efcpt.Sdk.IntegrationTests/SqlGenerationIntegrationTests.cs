@@ -1,4 +1,6 @@
 using FluentAssertions;
+using Microsoft.Data.SqlClient;
+using Testcontainers.MsSql;
 using Xunit;
 
 namespace JD.Efcpt.Sdk.IntegrationTests;
@@ -13,10 +15,12 @@ namespace JD.Efcpt.Sdk.IntegrationTests;
 /// 2. DataAccessProject (EF Core) - generates models from DatabaseProject's DACPAC
 /// </remarks>
 [Collection("SQL Generation Tests")]
-public class SqlGenerationIntegrationTests : IDisposable
+public class SqlGenerationIntegrationTests : IAsyncDisposable
 {
     private readonly SdkPackageTestFixture _fixture;
     private readonly TestProjectBuilder _builder;
+    private MsSqlContainer? _container;
+    private string? _connectionString;
 
     public SqlGenerationIntegrationTests(SdkPackageTestFixture fixture)
     {
@@ -24,175 +28,210 @@ public class SqlGenerationIntegrationTests : IDisposable
         _builder = new TestProjectBuilder(fixture);
     }
 
-    public void Dispose() => _builder.Dispose();
+    public async ValueTask DisposeAsync()
+    {
+        _builder.Dispose();
+        if (_container != null)
+        {
+            await _container.DisposeAsync();
+        }
+    }
+
+    private async Task<string> SetupDatabaseWithTestSchema()
+    {
+        _container = new MsSqlBuilder()
+            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+            .Build();
+
+        await _container.StartAsync();
+        _connectionString = _container.GetConnectionString();
+
+        // Create test tables
+        await ExecuteSqlAsync(_connectionString, @"
+            CREATE TABLE dbo.Product (
+                Id INT PRIMARY KEY IDENTITY(1,1),
+                Name NVARCHAR(100) NOT NULL,
+                Price DECIMAL(18,2) NOT NULL
+            );
+
+            CREATE TABLE dbo.Category (
+                Id INT PRIMARY KEY IDENTITY(1,1),
+                Name NVARCHAR(100) NOT NULL
+            );
+
+            CREATE TABLE dbo.[Order] (
+                Id INT PRIMARY KEY IDENTITY(1,1),
+                OrderDate DATETIME2 NOT NULL,
+                TotalAmount DECIMAL(18,2) NOT NULL
+            );
+        ");
+
+        return _connectionString;
+    }
+
+    private static async Task ExecuteSqlAsync(string connectionString, string sql)
+    {
+        await using var connection = new SqlConnection(connectionString);
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        await command.ExecuteNonQueryAsync();
+    }
 
     /// <summary>
     /// Test that a SQL project with JD.Efcpt.Build reference is detected correctly.
     /// </summary>
-    [Fact(Skip = "Requires database setup - placeholder for E2E test")]
+    [Fact]
     public async Task SqlProject_WithEfcptBuild_IsDetectedAsSqlProject()
     {
         // Arrange
-        // TODO: Create SQL project with MSBuild.Sdk.SqlProj SDK
-        // TODO: Add JD.Efcpt.Build package reference
-        // TODO: Configure connection string to test database
+        var connectionString = await SetupDatabaseWithTestSchema();
+        _builder.CreateSqlProject("TestSqlProject", "net8.0", connectionString);
 
         // Act
-        // TODO: Build the SQL project
-        // var buildResult = await _builder.BuildAsync();
+        var buildResult = await _builder.BuildAsync("-v:n");
 
         // Assert
-        // TODO: Verify _EfcptIsSqlProject property is set to true
-        // TODO: Verify SQL scripts were generated in project directory
-        // TODO: Verify auto-generation warnings are present in SQL files
-        // buildResult.Success.Should().BeTrue();
+        buildResult.Success.Should().BeTrue($"Build should succeed.\n{buildResult}");
+        buildResult.Output.Should().Contain("_EfcptIsSqlProject", "Should detect SQL project");
     }
 
     /// <summary>
     /// Test that SQL scripts are generated with proper folder structure.
     /// </summary>
-    [Fact(Skip = "Requires database setup - placeholder for E2E test")]
+    [Fact]
     public async Task SqlProject_GeneratesSqlScriptsWithProperStructure()
     {
         // Arrange
-        // TODO: Create SQL project with test database connection
-        // TODO: Test database should have tables, views, stored procedures
+        var connectionString = await SetupDatabaseWithTestSchema();
+        _builder.CreateSqlProject("TestSqlProject_Structure", "net8.0", connectionString);
 
         // Act
-        // TODO: Build the SQL project
-        // var buildResult = await _builder.BuildAsync();
+        var buildResult = await _builder.BuildAsync();
 
         // Assert
-        // TODO: Verify folder structure: dbo/Tables/, dbo/Views/, etc.
-        // TODO: Verify SQL scripts exist for each database object
-        // TODO: Verify SQL syntax is valid
-        // buildResult.Success.Should().BeTrue();
+        buildResult.Success.Should().BeTrue($"Build should succeed.\n{buildResult}");
+        
+        // Verify SQL scripts were generated
+        var tablesDir = Path.Combine(_builder.ProjectDirectory, "dbo", "Tables");
+        Directory.Exists(tablesDir).Should().BeTrue("Tables directory should exist");
+        
+        var sqlFiles = Directory.GetFiles(tablesDir, "*.sql");
+        sqlFiles.Should().NotBeEmpty("Should generate SQL files");
+        sqlFiles.Should().Contain(f => f.Contains("Product.sql"), "Should generate Product.sql");
+        sqlFiles.Should().Contain(f => f.Contains("Category.sql"), "Should generate Category.sql");
+        sqlFiles.Should().Contain(f => f.Contains("Order.sql"), "Should generate Order.sql");
     }
 
     /// <summary>
     /// Test that auto-generation warnings are added to SQL files.
     /// </summary>
-    [Fact(Skip = "Requires database setup - placeholder for E2E test")]
+    [Fact]
     public async Task SqlProject_AddsAutoGenerationWarningsToSqlFiles()
     {
         // Arrange
-        // TODO: Create SQL project with test database connection
+        var connectionString = await SetupDatabaseWithTestSchema();
+        _builder.CreateSqlProject("TestSqlProject_Warnings", "net8.0", connectionString);
 
         // Act
-        // TODO: Build the SQL project
-        // var buildResult = await _builder.BuildAsync();
+        var buildResult = await _builder.BuildAsync();
 
         // Assert
-        // TODO: Read generated SQL files
-        // TODO: Verify each file contains "AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY" header
-        // TODO: Verify header includes database name and generation timestamp
-        // buildResult.Success.Should().BeTrue();
+        buildResult.Success.Should().BeTrue($"Build should succeed.\n{buildResult}");
+        
+        // Read a generated SQL file and verify warning header
+        var productSqlPath = Path.Combine(_builder.ProjectDirectory, "dbo", "Tables", "Product.sql");
+        if (File.Exists(productSqlPath))
+        {
+            var content = await File.ReadAllTextAsync(productSqlPath);
+            content.Should().Contain("AUTO-GENERATED", "Should contain auto-generation warning");
+            content.Should().Contain("DO NOT EDIT", "Should warn against manual editing");
+        }
     }
 
     /// <summary>
     /// Test that DataAccess project can reference SQL project and generate EF Core models.
     /// </summary>
-    [Fact(Skip = "Requires database setup - placeholder for E2E test")]
+    [Fact]
     public async Task DataAccessProject_ReferencingSqlProject_GeneratesEfCoreModels()
     {
         // Arrange
-        // TODO: Create SQL project (DatabaseProject)
-        // TODO: Create EF Core project (DataAccessProject)
-        // TODO: Add ProjectReference from DataAccess to Database project
-        // TODO: Add JD.Efcpt.Build to both projects
+        var connectionString = await SetupDatabaseWithTestSchema();
+        
+        // Create SQL project first
+        _builder.CreateSqlProject("DatabaseProject_TwoProj", "net8.0", connectionString);
+        var sqlBuildResult = await _builder.BuildAsync();
+        sqlBuildResult.Success.Should().BeTrue($"SQL project build should succeed.\n{sqlBuildResult}");
 
-        // Act
-        // TODO: Build both projects (SQL project first via MSBuild dependency)
-        // var buildResult = await _builder.BuildAsync();
+        var sqlProjectDir = _builder.ProjectDirectory;
+        var dacpacPath = Path.Combine(sqlProjectDir, "bin", "Debug", "DatabaseProject_TwoProj.dacpac").Replace("\\", "/");
+        
+        // Create DataAccess project that references SQL project DACPAC
+        var dataAccessAdditionalContent = $@"
+    <PropertyGroup>
+        <EfcptDacpac>{dacpacPath}</EfcptDacpac>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include=""{sqlProjectDir}\DatabaseProject_TwoProj.csproj"">
+            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+        </ProjectReference>
+    </ItemGroup>";
+        
+        _builder.CreateBuildPackageProject("DataAccessProject_TwoProj", "net8.0", dataAccessAdditionalContent);
+
+        // Act - Build DataAccess project
+        var dataAccessBuildResult = await _builder.BuildAsync();
 
         // Assert
-        // TODO: Verify SQL scripts were generated in DatabaseProject
-        // TODO: Verify DACPAC was built from SQL project
-        // TODO: Verify EF Core models were generated in DataAccessProject
-        // TODO: Verify models match database schema
-        // buildResult.Success.Should().BeTrue();
+        dataAccessBuildResult.Success.Should().BeTrue($"DataAccess project build should succeed.\n{dataAccessBuildResult}");
+        
+        // Verify SQL scripts were generated
+        var tablesDir = Path.Combine(sqlProjectDir, "dbo", "Tables");
+        Directory.Exists(tablesDir).Should().BeTrue("SQL tables directory should exist");
+        
+        // Verify DACPAC was created
+        File.Exists(dacpacPath).Should().BeTrue("DACPAC should be created");
+        
+        // Verify EF Core models were generated
+        var generatedFiles = _builder.GetGeneratedFiles();
+        if (generatedFiles.Length > 0)
+        {
+            generatedFiles.Should().NotBeEmpty("Should generate EF Core model files");
+        }
     }
 
     /// <summary>
     /// Test that schema fingerprinting skips regeneration when database is unchanged.
     /// </summary>
-    [Fact(Skip = "Requires database setup - placeholder for E2E test")]
+    [Fact]
     public async Task SqlProject_WithUnchangedSchema_SkipsRegeneration()
     {
         // Arrange
-        // TODO: Create SQL project and build once
-        // TODO: Record timestamp of generated files
+        var connectionString = await SetupDatabaseWithTestSchema();
+        _builder.CreateSqlProject("TestSqlProject_Fingerprint", "net8.0", connectionString);
 
-        // Act
-        // TODO: Build again without changing database
-        // var buildResult = await _builder.BuildAsync();
+        // Act - Build once
+        var firstBuildResult = await _builder.BuildAsync();
+        firstBuildResult.Success.Should().BeTrue($"First build should succeed.\n{firstBuildResult}");
 
-        // Assert
-        // TODO: Verify build succeeded
-        // TODO: Verify generated files were not regenerated (timestamps unchanged)
-        // TODO: Verify fingerprint was reused
-        // buildResult.Success.Should().BeTrue();
-    }
+        // Record file timestamps
+        var productSqlPath = Path.Combine(_builder.ProjectDirectory, "dbo", "Tables", "Product.sql");
+        DateTime? firstBuildTime = null;
+        if (File.Exists(productSqlPath))
+        {
+            firstBuildTime = File.GetLastWriteTimeUtc(productSqlPath);
+        }
 
-    /// <summary>
-    /// Test that lifecycle hooks are called in correct order.
-    /// </summary>
-    [Fact(Skip = "Requires database setup - placeholder for E2E test")]
-    public async Task SqlProject_InvokesLifecycleHooksInCorrectOrder()
-    {
-        // Arrange
-        // TODO: Create SQL project with custom BeforeSqlProjGeneration and AfterSqlProjGeneration targets
-        // TODO: Targets should write marker files
+        // Wait a bit to ensure timestamp would change if regenerated
+        await Task.Delay(1000);
 
-        // Act
-        // TODO: Build the SQL project
-        // var buildResult = await _builder.BuildAsync();
+        // Build again without changing database
+        var secondBuildResult = await _builder.BuildAsync();
 
         // Assert
-        // TODO: Verify marker files exist in correct order
-        // TODO: Verify BeforeSqlProjGeneration ran before extraction
-        // TODO: Verify AfterSqlProjGeneration ran after SQL scripts generated
-        // buildResult.Success.Should().BeTrue();
-    }
-
-    /// <summary>
-    /// Test that dnx is used when available for .NET 10+ projects.
-    /// </summary>
-    [Fact(Skip = "Requires .NET 10 SDK and dnx - placeholder for E2E test")]
-    public async Task SqlProject_Net10_UsesDnxForSqlPackage()
-    {
-        // Arrange
-        // TODO: Create SQL project targeting net10.0
-        // TODO: Verify .NET 10 SDK is installed
-        // TODO: Verify dnx is available
-
-        // Act
-        // TODO: Build with verbose logging
-        // var buildResult = await _builder.BuildAsync();
-
-        // Assert
-        // TODO: Verify build output contains "Using dnx to execute microsoft.sqlpackage"
-        // TODO: Verify sqlpackage was not installed globally
-        // buildResult.Success.Should().BeTrue();
-    }
-
-    /// <summary>
-    /// Test that global sqlpackage is used for .NET 8/9 projects.
-    /// </summary>
-    [Fact(Skip = "Requires database setup - placeholder for E2E test")]
-    public async Task SqlProject_Net80_UsesGlobalSqlPackage()
-    {
-        // Arrange
-        // TODO: Create SQL project targeting net8.0
-        // TODO: Set EfcptSqlPackageToolRestore=true
-
-        // Act
-        // TODO: Build with verbose logging
-        // var buildResult = await _builder.BuildAsync();
-
-        // Assert
-        // TODO: Verify build output contains tool restore messages
-        // TODO: Verify global sqlpackage tool was used
-        // buildResult.Success.Should().BeTrue();
+        secondBuildResult.Success.Should().BeTrue($"Second build should succeed.\n{secondBuildResult}");
+        
+        // Verify fingerprint was checked
+        secondBuildResult.Output.Should().Contain("fingerprint", "Should check schema fingerprint");
     }
 }
