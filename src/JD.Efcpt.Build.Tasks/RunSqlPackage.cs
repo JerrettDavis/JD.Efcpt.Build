@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text;
 using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Extensions;
+using JD.Efcpt.Build.Tasks.Utilities;
 using Microsoft.Build.Framework;
 using Task = Microsoft.Build.Utilities.Task;
 #if NETFRAMEWORK
@@ -44,10 +45,6 @@ namespace JD.Efcpt.Build.Tasks;
 /// </remarks>
 public sealed class RunSqlPackage : Task
 {
-    /// <summary>
-    /// Timeout in milliseconds for external process operations (SDK checks, dnx availability).
-    /// </summary>
-    private const int ProcessTimeoutMs = 5000;
 
     /// <summary>
     /// Package identifier of the sqlpackage dotnet tool.
@@ -139,14 +136,6 @@ public sealed class RunSqlPackage : Task
             // Set the output path
             ExtractedPath = TargetDirectory;
 
-            // Check for test hook
-            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("EFCPT_FAKE_SQLPACKAGE")))
-            {
-                log.Info("EFCPT_FAKE_SQLPACKAGE is set - skipping actual sqlpackage execution");
-                CreateFakeOutput();
-                return true;
-            }
-
             // Resolve tool path
             var toolInfo = ResolveToolPath(log);
             if (toolInfo == null)
@@ -202,7 +191,8 @@ public sealed class RunSqlPackage : Task
         }
 
         // Check for .NET 10+ SDK with dnx support
-        if (IsDnxAvailable(log) && IsTargetFrameworkNet10OrLater())
+        if (DotNetToolUtilities.IsDotNet10OrLater(TargetFramework) && 
+            DotNetToolUtilities.IsDnxAvailable(DotNetExe))
         {
             log.Info($"Using dnx to execute {SqlPackageToolPackageId}");
             return (DotNetExe, $"dnx {SqlPackageToolPackageId}");
@@ -216,92 +206,6 @@ public sealed class RunSqlPackage : Task
 
         log.Info("Using global sqlpackage tool");
         return (SqlPackageCommand, string.Empty);
-    }
-
-    /// <summary>
-    /// Checks if dnx is available.
-    /// </summary>
-    private bool IsDnxAvailable(IBuildLog log)
-    {
-        try
-        {
-            var psi = new ProcessStartInfo
-            {
-                FileName = DotNetExe,
-                Arguments = "dnx --help",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using var process = Process.Start(psi);
-            if (process == null)
-            {
-                return false;
-            }
-
-            var completed = process.WaitForExit(ProcessTimeoutMs);
-            
-            // If timeout expired, kill the process to prevent resource leaks
-            if (!completed)
-            {
-                try
-                {
-                    process.Kill();
-                }
-                catch
-                {
-                    // Process may have already exited
-                }
-                return false;
-            }
-            
-            return process.ExitCode == 0;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Checks if the target framework is .NET 10 or later.
-    /// </summary>
-    private bool IsTargetFrameworkNet10OrLater()
-    {
-        if (string.IsNullOrEmpty(TargetFramework))
-        {
-            return false;
-        }
-
-        // Parse target framework (e.g., "net10.0", "net9.0", "net8.0")
-        // Only handle modern .NET (net5.0+), not .NET Framework or .NET Standard
-        if (TargetFramework.StartsWith("net", StringComparison.OrdinalIgnoreCase))
-        {
-            var versionPart = TargetFramework.Substring(3);
-            
-            // Skip .NET Standard and .NET Framework patterns
-            if (versionPart.StartsWith("standard", StringComparison.OrdinalIgnoreCase) ||
-                versionPart.StartsWith("coreapp", StringComparison.OrdinalIgnoreCase) ||
-                versionPart.StartsWith("framework", StringComparison.OrdinalIgnoreCase))
-            {
-                return false;
-            }
-            
-            // Extract major version (e.g., "10" from "10.0" or "net10.0")
-            if (versionPart.Contains('.'))
-            {
-                versionPart = versionPart.Split('.')[0];
-            }
-
-            if (int.TryParse(versionPart, out var majorVersion))
-            {
-                return majorVersion >= 10;
-            }
-        }
-
-        return false;
     }
 
     /// <summary>
@@ -456,24 +360,5 @@ public sealed class RunSqlPackage : Task
         }
 
         return true;
-    }
-
-    /// <summary>
-    /// Creates fake output for testing purposes.
-    /// </summary>
-    private void CreateFakeOutput()
-    {
-        if (ExtractTarget == "Flat")
-        {
-            // Create fake SQL script structure
-            var dboTablesDir = Path.Combine(TargetDirectory, "dbo", "Tables");
-            Directory.CreateDirectory(dboTablesDir);
-            File.WriteAllText(Path.Combine(dboTablesDir, "TestTable.sql"), "-- FAKE SQL SCRIPT FOR TESTING");
-        }
-        else
-        {
-            // Create fake DACPAC file
-            File.WriteAllText(Path.Combine(TargetDirectory, "extracted.dacpac"), "FAKE DACPAC FOR TESTING");
-        }
     }
 }

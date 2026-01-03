@@ -101,9 +101,6 @@
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.RunSqlPackage"
              AssemblyFile="$(_EfcptTaskAssembly)" />
 
-  <UsingTask TaskName="JD.Efcpt.Build.Tasks.GenerateSqlProj"
-             AssemblyFile="$(_EfcptTaskAssembly)" />
-
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.AddSqlFileWarnings"
              AssemblyFile="$(_EfcptTaskAssembly)" />
 
