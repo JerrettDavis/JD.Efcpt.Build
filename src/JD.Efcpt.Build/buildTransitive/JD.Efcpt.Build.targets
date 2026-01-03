@@ -225,6 +225,7 @@
   <!-- DataAccess projects that reference this SQL project will wait for this to complete -->
   <Target Name="AfterSqlProjGeneration"
           DependsOnTargets="EfcptAddSqlFileWarnings"
+          BeforeTargets="Build"
           Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'">
     <Message Text="SQL script generation complete. SQL project will build to DACPAC." Importance="high" />
   </Target>
