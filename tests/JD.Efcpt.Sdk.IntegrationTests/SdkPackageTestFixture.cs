@@ -40,6 +40,9 @@ public class PackageContentTestCollection : ICollectionFixture<SdkPackageTestFix
 [CollectionDefinition("Code Generation Tests", DisableParallelization = true)]
 public class CodeGenerationTestCollection : ICollectionFixture<SdkPackageTestFixture> { }
 
+[CollectionDefinition("SQL Generation Tests", DisableParallelization = true)]
+public class SqlGenerationTestCollection : ICollectionFixture<SdkPackageTestFixture> { }
+
 // Legacy collection for backwards compatibility
 [CollectionDefinition("SDK Package Tests", DisableParallelization = true)]
 public class SdkPackageTestCollection : ICollectionFixture<SdkPackageTestFixture> { }
