@@ -252,11 +252,33 @@ public sealed class RunSqlPackage : Task
             return;
         }
 
+        var stdOut = new StringBuilder();
+        var stdErr = new StringBuilder();
+
+        process.OutputDataReceived += (_, e) =>
+        {
+            if (e.Data != null)
+            {
+                stdOut.AppendLine(e.Data);
+            }
+        };
+
+        process.ErrorDataReceived += (_, e) =>
+        {
+            if (e.Data != null)
+            {
+                stdErr.AppendLine(e.Data);
+            }
+        };
+
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+
         process.WaitForExit();
 
         if (process.ExitCode != 0)
         {
-            var error = process.StandardError.ReadToEnd();
+            var error = stdErr.ToString();
             log.Warn($"Tool restore completed with exit code {process.ExitCode}");
             if (!string.IsNullOrEmpty(error))
             {
