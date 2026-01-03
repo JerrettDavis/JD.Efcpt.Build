@@ -90,31 +90,45 @@ dotnet build
 | [MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj) | `.csproj` / `.fsproj` | Yes |
 | Traditional SQL Projects | `.sqlproj` | Windows only |
 
-## New: Database-First SqlProj Generation
+## New: Database-First SQL Generation
 
-Extract your database schema directly into a DACPAC, eliminating the need for manual SQL project maintenance:
+Automatically generate SQL scripts from your live database when JD.Efcpt.Build detects it's referenced in a SQL project:
 
+**DatabaseProject** (SQL):
 ```xml
-<PropertyGroup>
-    <EfcptGenerateSqlProj>true</EfcptGenerateSqlProj>
-    <EfcptAppSettings>appsettings.json</EfcptAppSettings>
-</PropertyGroup>
+<Project Sdk="MSBuild.Sdk.SqlProj/3.3.0">
+    <PropertyGroup>
+        <EfcptConnectionString>Server=...;Database=MyDb;...</EfcptConnectionString>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="JD.Efcpt.Build" Version="*" />
+    </ItemGroup>
+</Project>
 ```
 
-This enables the complete database-first workflow:
+**DataAccessProject** (EF Core):
+```xml
+<ItemGroup>
+    <ProjectReference Include="..\DatabaseProject\DatabaseProject.csproj" />
+    <PackageReference Include="JD.Efcpt.Build" Version="*" />
+</ItemGroup>
+```
+
+This enables the complete two-project workflow:
 
 ```
-Live Database → sqlpackage Extract → DACPAC → EF Core Models
+Live Database → SQL Scripts (in SQL Project) → DACPAC → EF Core Models (in DataAccess Project)
 ```
 
 **Benefits:**
-- ✅ No SQL project files to maintain
+- ✅ Automatic SQL project detection (no configuration needed)
 - ✅ Database as source of truth
-- ✅ Automatic schema extraction on build
+- ✅ Human-readable SQL scripts for review and version control
+- ✅ Clean separation: Database project (schema) + DataAccess project (models)
 - ✅ Incremental builds with schema fingerprinting
 - ✅ Works with .NET 10+ `dnx` (no sqlpackage installation required)
 
-See the [Database-First SqlProj Generation sample](samples/database-first-sqlproj-generation/) for a complete example.
+See the [Database-First SQL Generation sample](samples/database-first-sql-generation/) for a complete example.
 
 ## Samples
 
@@ -122,7 +136,7 @@ See the [samples directory](samples/) for complete working examples:
 
 - [Simple Generation](samples/simple-generation/) - Basic DACPAC-based generation
 - [SDK Zero Config](samples/sdk-zero-config/) - Minimal SDK project setup
-- [Database-First SqlProj Generation](samples/database-first-sqlproj-generation/) - Extract schema from live database (NEW!)
+- [Database-First SQL Generation](samples/database-first-sql-generation/) - Auto-generate SQL scripts from live database (NEW!)
 - [Connection String Mode](samples/connection-string-sqlite/) - Generate from live database
 - [Custom Renaming](samples/custom-renaming/) - Table and column renaming
 - [Schema Organization](samples/schema-organization/) - Multi-schema folder structure
