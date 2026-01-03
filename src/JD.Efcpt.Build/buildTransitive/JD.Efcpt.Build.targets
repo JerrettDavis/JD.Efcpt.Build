@@ -209,8 +209,8 @@
     
     <!-- Get database name from connection string for the warning header -->
     <PropertyGroup>
-      <_EfcptDatabaseName Condition="$(EfcptConnectionString.Contains('Database='))">$([System.Text.RegularExpressions.Regex]::Match($(EfcptConnectionString), 'Database=([^;]+)').Groups[1].Value)</_EfcptDatabaseName>
-      <_EfcptDatabaseName Condition="$(EfcptConnectionString.Contains('Initial Catalog='))">$([System.Text.RegularExpressions.Regex]::Match($(EfcptConnectionString), 'Initial Catalog=([^;]+)').Groups[1].Value)</_EfcptDatabaseName>
+      <_EfcptDatabaseName Condition="$(EfcptConnectionString.Contains('Database='))">$([System.Text.RegularExpressions.Regex]::Match($(EfcptConnectionString), 'Database\s*=\s*\"?([^;"]+)\"?').Groups[1].Value)</_EfcptDatabaseName>
+      <_EfcptDatabaseName Condition="$(EfcptConnectionString.Contains('Initial Catalog='))">$([System.Text.RegularExpressions.Regex]::Match($(EfcptConnectionString), 'Initial Catalog\s*=\s*\"?([^;"]+)\"?').Groups[1].Value)</_EfcptDatabaseName>
     </PropertyGroup>
     
     <AddSqlFileWarnings
