@@ -37,8 +37,7 @@ internal static class DotNetToolUtilities
             };
 
             process.Start();
-            var output = process.StandardOutput.ReadToEnd();
-            
+
             if (!process.WaitForExit(ProcessTimeoutMs))
             {
                 try { process.Kill(); } catch { /* best effort */ }
@@ -47,6 +46,8 @@ internal static class DotNetToolUtilities
 
             if (process.ExitCode != 0)
                 return false;
+
+            var output = process.StandardOutput.ReadToEnd();
 
             // Parse SDK versions from output like "10.0.100 [C:\Program Files\dotnet\sdk]"
             foreach (var line in output.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries))
@@ -94,7 +95,6 @@ internal static class DotNetToolUtilities
             };
 
             process.Start();
-            _ = process.StandardOutput.ReadToEnd();
 
             if (!process.WaitForExit(ProcessTimeoutMs))
             {
@@ -106,6 +106,8 @@ internal static class DotNetToolUtilities
             {
                 return false;
             }
+
+            var output = process.StandardOutput.ReadToEnd();
 
             // If we can list runtimes and at least one .NET 10 runtime is present, dnx is available
             foreach (var line in output.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries))
