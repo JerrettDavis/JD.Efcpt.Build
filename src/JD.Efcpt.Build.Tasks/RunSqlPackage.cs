@@ -92,15 +92,15 @@ public sealed class RunSqlPackage : Task
     public string ConnectionString { get; set; } = "";
 
     /// <summary>
-    /// Target directory where the DACPAC will be extracted.
+    /// Target directory where SQL scripts will be extracted.
     /// </summary>
     [Required]
     public string TargetDirectory { get; set; } = "";
 
     /// <summary>
-    /// Name of the output DACPAC file (without extension).
+    /// Extract target mode: "Flat" for SQL scripts, "File" for DACPAC.
     /// </summary>
-    public string OutputFileName { get; set; } = "extracted";
+    public string ExtractTarget { get; set; } = "Flat";
 
     /// <summary>
     /// Target framework being built (for example <c>net8.0</c>, <c>net9.0</c>, <c>net10.0</c>).
@@ -113,10 +113,10 @@ public sealed class RunSqlPackage : Task
     public string LogVerbosity { get; set; } = "minimal";
 
     /// <summary>
-    /// Output parameter: Full path to the extracted DACPAC file.
+    /// Output parameter: Target directory where extraction occurred.
     /// </summary>
     [Output]
-    public string ExtractedDacpacPath { get; set; } = "";
+    public string ExtractedPath { get; set; } = "";
 
     /// <summary>
     /// Executes the task.
@@ -127,7 +127,7 @@ public sealed class RunSqlPackage : Task
 
         try
         {
-            log.Info("Starting SqlPackage extract operation");
+            log.Info($"Starting SqlPackage extract operation (ExtractTarget={ExtractTarget})");
 
             // Create target directory if it doesn't exist
             if (!Directory.Exists(TargetDirectory))
@@ -136,8 +136,8 @@ public sealed class RunSqlPackage : Task
                 log.Detail($"Created target directory: {TargetDirectory}");
             }
 
-            // Set the output DACPAC path
-            ExtractedDacpacPath = Path.Combine(TargetDirectory, $"{OutputFileName}.dacpac");
+            // Set the output path
+            ExtractedPath = TargetDirectory;
 
             // Check for test hook
             if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("EFCPT_FAKE_SQLPACKAGE")))
@@ -378,8 +378,11 @@ public sealed class RunSqlPackage : Task
         // Source connection string
         args.Append($"/SourceConnectionString:\"{ConnectionString}\" ");
 
-        // Target file (DACPAC)
-        args.Append($"/TargetFile:\"{ExtractedDacpacPath}\" ");
+        // Target file or directory
+        args.Append($"/TargetFile:\"{TargetDirectory}\" ");
+
+        // Extract target mode (Flat for SQL scripts, File for DACPAC)
+        args.Append($"/p:ExtractTarget={ExtractTarget} ");
 
         // Properties for application-scoped objects only
         args.Append("/p:ExtractApplicationScopedObjectsOnly=True ");
@@ -460,6 +463,17 @@ public sealed class RunSqlPackage : Task
     /// </summary>
     private void CreateFakeOutput()
     {
-        File.WriteAllText(ExtractedDacpacPath, "FAKE DACPAC FOR TESTING");
+        if (ExtractTarget == "Flat")
+        {
+            // Create fake SQL script structure
+            var dboTablesDir = Path.Combine(TargetDirectory, "dbo", "Tables");
+            Directory.CreateDirectory(dboTablesDir);
+            File.WriteAllText(Path.Combine(dboTablesDir, "TestTable.sql"), "-- FAKE SQL SCRIPT FOR TESTING");
+        }
+        else
+        {
+            // Create fake DACPAC file
+            File.WriteAllText(Path.Combine(TargetDirectory, "extracted.dacpac"), "FAKE DACPAC FOR TESTING");
+        }
     }
 }

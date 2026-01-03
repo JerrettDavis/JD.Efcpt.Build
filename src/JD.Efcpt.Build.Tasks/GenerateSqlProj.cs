@@ -179,20 +179,50 @@ public sealed class GenerateSqlProj : Task
     {
         try
         {
+            // Find all SQL scripts in the scripts directory
+            var sqlFiles = Directory.Exists(ScriptsDirectory)
+                ? Directory.GetFiles(ScriptsDirectory, "*.sql", SearchOption.AllDirectories)
+                : Array.Empty<string>();
+
+            var projectElement = new XElement("Project",
+                new XAttribute("DefaultTargets", "Build"),
+                new XElement("Sdk",
+                    new XAttribute("Name", "Microsoft.Build.Sql"),
+                    new XAttribute("Version", MicrosoftBuildSqlVersion)
+                ),
+                new XElement("PropertyGroup",
+                    new XElement("Name", ProjectName),
+                    new XElement("DSP", GetDatabaseSchemaProvider()),
+                    new XElement("ModelCollation", "1033, CI")
+                )
+            );
+
+            // Add SQL scripts as Build items (Microsoft.Build.Sql auto-includes by default, but we can be explicit)
+            if (sqlFiles.Length > 0)
+            {
+                var itemGroup = new XElement("ItemGroup");
+                var projectDir = Path.GetDirectoryName(OutputPath) ?? "";
+                
+                foreach (var sqlFile in sqlFiles)
+                {
+                    // Create relative path manually for .NET Framework compatibility
+                    var relativePath = GetRelativePath(projectDir, sqlFile);
+                    itemGroup.Add(new XElement("Build",
+                        new XAttribute("Include", relativePath)
+                    ));
+                }
+                
+                projectElement.Add(itemGroup);
+                log.Detail($"Added {sqlFiles.Length} SQL script files to project");
+            }
+            else
+            {
+                log.Warn("No SQL script files found in scripts directory");
+            }
+
             var doc = new XDocument(
                 new XDeclaration("1.0", "utf-8", null),
-                new XElement("Project",
-                    new XAttribute("DefaultTargets", "Build"),
-                    new XElement("Sdk",
-                        new XAttribute("Name", "Microsoft.Build.Sql"),
-                        new XAttribute("Version", MicrosoftBuildSqlVersion)
-                    ),
-                    new XElement("PropertyGroup",
-                        new XElement("Name", ProjectName),
-                        new XElement("DSP", GetDatabaseSchemaProvider()),
-                        new XElement("ModelCollation", "1033, CI")
-                    )
-                )
+                projectElement
             );
 
             // Create output directory if needed
@@ -282,6 +312,40 @@ public sealed class GenerateSqlProj : Task
             log.Error($"Failed to generate MSBuild.Sdk.SqlProj project: {ex.Message}");
             return false;
         }
+    }
+
+    /// <summary>
+    /// Gets a relative path from one path to another (.NET Framework compatible).
+    /// </summary>
+    private string GetRelativePath(string fromPath, string toPath)
+    {
+        if (string.IsNullOrEmpty(fromPath))
+            return toPath;
+
+        if (string.IsNullOrEmpty(toPath))
+            return string.Empty;
+
+        var fromUri = new Uri(EnsureTrailingSlash(Path.GetFullPath(fromPath)));
+        var toUri = new Uri(Path.GetFullPath(toPath));
+
+        var relativeUri = fromUri.MakeRelativeUri(toUri);
+        var relativePath = Uri.UnescapeDataString(relativeUri.ToString());
+
+        // Convert forward slashes to backslashes for Windows paths
+        return relativePath.Replace('/', Path.DirectorySeparatorChar);
+    }
+
+    /// <summary>
+    /// Ensures a path has a trailing slash.
+    /// </summary>
+    private string EnsureTrailingSlash(string path)
+    {
+        if (!path.EndsWith(Path.DirectorySeparatorChar.ToString()) &&
+            !path.EndsWith(Path.AltDirectorySeparatorChar.ToString()))
+        {
+            return path + Path.DirectorySeparatorChar;
+        }
+        return path;
     }
 
     /// <summary>
