@@ -8,6 +8,6 @@
     <ItemGroup>
         <PackageReference Include="JD.Efcpt.Build" Version="*" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.1" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.1" />
     </ItemGroup>
 </Project>

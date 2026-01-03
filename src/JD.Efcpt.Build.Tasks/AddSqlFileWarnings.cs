@@ -109,8 +109,7 @@ public sealed class AddSqlFileWarnings : Task
         {
             header.AppendLine($" * This file was automatically generated from database: {DatabaseName}");
         }
-        
-        header.AppendLine($" * Generated on: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
+
         header.AppendLine($" * Generator: JD.Efcpt.Build (Database-First SqlProj Generation)");
         header.AppendLine(" *");
         header.AppendLine(" * IMPORTANT:");
