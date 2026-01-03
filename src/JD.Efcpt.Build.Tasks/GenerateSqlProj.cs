@@ -230,10 +230,14 @@ public sealed class GenerateSqlProj : Task
     {
         try
         {
+            // Determine the correct extension based on language
             var extension = Language.ToLowerInvariant() == "fsharp" ? ".fsproj" : ".csproj";
-            if (!OutputPath.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
+            var outputPath = OutputPath;
+            
+            // Ensure the output path has the correct extension
+            if (!outputPath.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
             {
-                OutputPath = Path.ChangeExtension(OutputPath, extension);
+                outputPath = Path.ChangeExtension(outputPath, extension);
             }
 
             var doc = new XDocument(
@@ -250,7 +254,7 @@ public sealed class GenerateSqlProj : Task
             );
 
             // Create output directory if needed
-            var outputDir = Path.GetDirectoryName(OutputPath);
+            var outputDir = Path.GetDirectoryName(outputPath);
             if (!string.IsNullOrEmpty(outputDir) && !Directory.Exists(outputDir))
             {
                 Directory.CreateDirectory(outputDir);
@@ -258,7 +262,7 @@ public sealed class GenerateSqlProj : Task
             }
 
             // Save with proper formatting
-            using var writer = XmlWriter.Create(OutputPath, new XmlWriterSettings
+            using var writer = XmlWriter.Create(outputPath, new XmlWriterSettings
             {
                 Indent = true,
                 IndentChars = "    ",
@@ -267,7 +271,10 @@ public sealed class GenerateSqlProj : Task
             });
             doc.Save(writer);
 
-            log.Detail($"Generated MSBuild.Sdk.SqlProj project: {OutputPath}");
+            log.Detail($"Generated MSBuild.Sdk.SqlProj project: {outputPath}");
+            
+            // Update the output parameter with the final path
+            GeneratedProjectPath = outputPath;
             return true;
         }
         catch (Exception ex)

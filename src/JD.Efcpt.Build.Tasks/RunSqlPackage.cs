@@ -242,7 +242,22 @@ public sealed class RunSqlPackage : Task
             }
 
             var completed = process.WaitForExit(ProcessTimeoutMs);
-            return completed && process.ExitCode == 0;
+            
+            // If timeout expired, kill the process to prevent resource leaks
+            if (!completed)
+            {
+                try
+                {
+                    process.Kill();
+                }
+                catch
+                {
+                    // Process may have already exited
+                }
+                return false;
+            }
+            
+            return process.ExitCode == 0;
         }
         catch
         {
@@ -260,10 +275,21 @@ public sealed class RunSqlPackage : Task
             return false;
         }
 
-        // Parse target framework (e.g., "net10.0", "net9.0")
+        // Parse target framework (e.g., "net10.0", "net9.0", "net8.0")
+        // Only handle modern .NET (net5.0+), not .NET Framework or .NET Standard
         if (TargetFramework.StartsWith("net", StringComparison.OrdinalIgnoreCase))
         {
             var versionPart = TargetFramework.Substring(3);
+            
+            // Skip .NET Standard and .NET Framework patterns
+            if (versionPart.StartsWith("standard", StringComparison.OrdinalIgnoreCase) ||
+                versionPart.StartsWith("coreapp", StringComparison.OrdinalIgnoreCase) ||
+                versionPart.StartsWith("framework", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+            
+            // Extract major version (e.g., "10" from "10.0" or "net10.0")
             if (versionPart.Contains('.'))
             {
                 versionPart = versionPart.Split('.')[0];
