@@ -102,8 +102,31 @@ internal static class DotNetToolUtilities
                 return false;
             }
 
-            // If we can list runtimes and .NET 10 SDK is installed, dnx is available
-            return process.ExitCode == 0 && IsDotNet10SdkInstalled(dotnetExe);
+            if (process.ExitCode != 0)
+            {
+                return false;
+            }
+
+            // If we can list runtimes and at least one .NET 10 runtime is present, dnx is available
+            foreach (var line in output.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                var trimmed = line.Trim();
+                if (string.IsNullOrEmpty(trimmed))
+                    continue;
+
+                // Expected format: "<runtimeName> <version> [path]"
+                var parts = trimmed.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length < 2)
+                    continue;
+
+                var versionStr = parts[1];
+                if (Version.TryParse(versionStr, out var version) && version.Major >= 10)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
         catch
         {
