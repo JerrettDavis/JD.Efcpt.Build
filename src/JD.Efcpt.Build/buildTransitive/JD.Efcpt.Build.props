@@ -166,6 +166,7 @@
       source for EF Core model generation.
     -->
     <EfcptGenerateSqlProj Condition="'$(EfcptGenerateSqlProj)'==''">false</EfcptGenerateSqlProj>
+    <EfcptGenerateSqlProjFile Condition="'$(EfcptGenerateSqlProjFile)'==''">false</EfcptGenerateSqlProjFile>
     <EfcptSqlProjType Condition="'$(EfcptSqlProjType)'==''">microsoft-build-sql</EfcptSqlProjType>
     <EfcptSqlProjLanguage Condition="'$(EfcptSqlProjLanguage)'==''">csharp</EfcptSqlProjLanguage>
     <EfcptSqlProjName Condition="'$(EfcptSqlProjName)'==''">$(MSBuildProjectName).Database</EfcptSqlProjName>

@@ -92,10 +92,15 @@ public sealed class RunSqlPackage : Task
     public string ConnectionString { get; set; } = "";
 
     /// <summary>
-    /// Target directory where SQL scripts will be extracted.
+    /// Target directory where the DACPAC will be extracted.
     /// </summary>
     [Required]
     public string TargetDirectory { get; set; } = "";
+
+    /// <summary>
+    /// Name of the output DACPAC file (without extension).
+    /// </summary>
+    public string OutputFileName { get; set; } = "extracted";
 
     /// <summary>
     /// Target framework being built (for example <c>net8.0</c>, <c>net9.0</c>, <c>net10.0</c>).
@@ -106,6 +111,12 @@ public sealed class RunSqlPackage : Task
     /// Log verbosity level.
     /// </summary>
     public string LogVerbosity { get; set; } = "minimal";
+
+    /// <summary>
+    /// Output parameter: Full path to the extracted DACPAC file.
+    /// </summary>
+    [Output]
+    public string ExtractedDacpacPath { get; set; } = "";
 
     /// <summary>
     /// Executes the task.
@@ -124,6 +135,9 @@ public sealed class RunSqlPackage : Task
                 Directory.CreateDirectory(TargetDirectory);
                 log.Detail($"Created target directory: {TargetDirectory}");
             }
+
+            // Set the output DACPAC path
+            ExtractedDacpacPath = Path.Combine(TargetDirectory, $"{OutputFileName}.dacpac");
 
             // Check for test hook
             if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("EFCPT_FAKE_SQLPACKAGE")))
@@ -338,11 +352,10 @@ public sealed class RunSqlPackage : Task
         // Source connection string
         args.Append($"/SourceConnectionString:\"{ConnectionString}\" ");
 
-        // Target directory
-        args.Append($"/TargetFile:\"{Path.Combine(TargetDirectory, "extracted.dacpac")}\" ");
+        // Target file (DACPAC)
+        args.Append($"/TargetFile:\"{ExtractedDacpacPath}\" ");
 
-        // Properties for script generation
-        args.Append("/p:ExtractTarget=SchemaObjectType ");
+        // Properties for application-scoped objects only
         args.Append("/p:ExtractApplicationScopedObjectsOnly=True ");
 
         return args.ToString().Trim();
@@ -421,7 +434,6 @@ public sealed class RunSqlPackage : Task
     /// </summary>
     private void CreateFakeOutput()
     {
-        var fakeFile = Path.Combine(TargetDirectory, "extracted.dacpac");
-        File.WriteAllText(fakeFile, "FAKE DACPAC FOR TESTING");
+        File.WriteAllText(ExtractedDacpacPath, "FAKE DACPAC FOR TESTING");
     }
 }
