@@ -335,9 +335,9 @@
   <Target Name="EfcptEnsureDacpac"
           DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptBuildSqlProj"
           Condition="'$(EfcptEnabled)' == 'true'">
-    <!-- Only run the dacpac task when NOT in connection string mode and NOT using direct dacpac -->
+    <!-- Only run the dacpac task when NOT in connection string mode, NOT using direct dacpac, and NOT in a SQL project -->
     <EnsureDacpacBuilt
-        Condition="'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true'"
+        Condition="'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptIsSqlProject)' != 'true'"
         SqlProjPath="$(_EfcptSqlProj)"
         Configuration="$(Configuration)"
         MsBuildExe="$(MSBuildBinPath)msbuild.exe"
@@ -354,7 +354,7 @@
   -->
   <Target Name="EfcptResolveDbContextName"
           DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpac;EfcptUseDirectDacpac"
-          Condition="'$(EfcptEnabled)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'">
     <ResolveDbContextName
         ExplicitDbContextName="$(EfcptConfigDbContextName)"
         SqlProjPath="$(_EfcptSqlProj)"
@@ -372,7 +372,7 @@
 
   <Target Name="EfcptStageInputs"
           DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpac;EfcptUseDirectDacpac;EfcptResolveDbContextName"
-          Condition="'$(EfcptEnabled)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'">
     <StageEfcptInputs
         OutputDir="$(EfcptOutput)"
         ProjectDirectory="$(MSBuildProjectDirectory)"
@@ -394,7 +394,7 @@
   -->
   <Target Name="EfcptApplyConfigOverrides"
           DependsOnTargets="EfcptStageInputs"
-          Condition="'$(EfcptEnabled)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'">
     <ApplyConfigOverrides
         StagedConfigPath="$(_EfcptStagedConfig)"
         ApplyOverrides="$(EfcptApplyMsBuildOverrides)"
@@ -445,7 +445,7 @@
   -->
   <Target Name="EfcptSerializeConfigProperties"
           DependsOnTargets="EfcptApplyConfigOverrides"
-          Condition="'$(EfcptEnabled)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'">
     <SerializeConfigProperties
         RootNamespace="$(EfcptConfigRootNamespace)"
         DbContextName="$(EfcptConfigDbContextName)"
@@ -490,7 +490,7 @@
 
   <Target Name="EfcptComputeFingerprint"
           DependsOnTargets="EfcptSerializeConfigProperties"
-          Condition="'$(EfcptEnabled)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'">
     <ComputeFingerprint
         DacpacPath="$(_EfcptDacpacPath)"
         SchemaFingerprint="$(_EfcptSchemaFingerprint)"
@@ -512,14 +512,14 @@
   <!-- Lifecycle hook: BeforeEfcptGeneration -->
   <Target Name="BeforeEfcptGeneration"
           DependsOnTargets="EfcptComputeFingerprint"
-          Condition="'$(EfcptEnabled)' == 'true'" />
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'" />
 
   <Target Name="EfcptGenerateModels"
           DependsOnTargets="BeforeEfcptGeneration"
           BeforeTargets="CoreCompile"
           Inputs="$(_EfcptDacpacPath);$(_EfcptStagedConfig);$(_EfcptStagedRenaming)"
           Outputs="$(EfcptStampFile)"
-          Condition="'$(EfcptEnabled)' == 'true' and ('$(_EfcptFingerprintChanged)' == 'true' or !Exists('$(EfcptStampFile)'))">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and ('$(_EfcptFingerprintChanged)' == 'true' or !Exists('$(EfcptStampFile)'))">
     <MakeDir Directories="$(EfcptGeneratedDir)" />
     <RunEfcpt
         ToolMode="$(EfcptToolMode)"
@@ -549,7 +549,7 @@
   <!-- Lifecycle hook: AfterEfcptGeneration -->
   <Target Name="AfterEfcptGeneration"
           AfterTargets="EfcptGenerateModels"
-          Condition="'$(EfcptEnabled)' == 'true'" />
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'" />
 
   <!--
     ========================================================================
@@ -569,7 +569,7 @@
   -->
   <Target Name="EfcptValidateSplitOutputs"
           DependsOnTargets="EfcptGenerateModels"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptSplitOutputs)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptSplitOutputs)' == 'true'">
 
     <!-- Resolve Data project path -->
     <PropertyGroup>
@@ -602,7 +602,7 @@
   -->
   <Target Name="EfcptCopyDataToDataProject"
           DependsOnTargets="EfcptValidateSplitOutputs"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptSplitOutputs)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptSplitOutputs)' == 'true'">
 
     <!-- Find DbContext files (root-level .g.cs files that are NOT configurations) -->
     <ItemGroup>
@@ -665,7 +665,7 @@
   <Target Name="EfcptAddToCompile"
           BeforeTargets="CoreCompile"
           DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpac;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels;EfcptCopyDataToDataProject"
-          Condition="'$(EfcptEnabled)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'">
     <ItemGroup>
       <!-- In split outputs mode (Models project is primary), only include model files -->
       <Compile Include="$(EfcptGeneratedDir)Models\**\*.g.cs"
