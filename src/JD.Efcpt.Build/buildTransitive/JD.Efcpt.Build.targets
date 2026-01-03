@@ -133,15 +133,32 @@
     This enables the workflow: Database → DACPAC → EF Core Models
   -->
 
+  <!-- Query database schema for fingerprinting -->
+  <Target Name="EfcptQueryDatabaseSchemaForSqlProj"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptGenerateSqlProj)' == 'true'">
+    <Error Condition="'$(EfcptConnectionString)' == '' and '$(EfcptAppSettings)' == '' and '$(EfcptAppConfig)' == ''"
+           Text="SqlProj generation requires a connection string. Set EfcptConnectionString, EfcptAppSettings, or EfcptAppConfig." />
+    
+    <Message Text="Querying database schema for fingerprinting..." Importance="high" />
+    
+    <QuerySchemaMetadata
+        ConnectionString="$(EfcptConnectionString)"
+        OutputDir="$(EfcptOutput)"
+        Provider="$(EfcptProvider)"
+        LogVerbosity="$(EfcptLogVerbosity)">
+      <Output TaskParameter="SchemaFingerprint" PropertyName="_EfcptSchemaFingerprint" />
+    </QuerySchemaMetadata>
+    
+    <Message Text="Database schema fingerprint: $(_EfcptSchemaFingerprint)" Importance="normal" />
+  </Target>
+
   <!-- Extract database schema using sqlpackage -->
   <Target Name="EfcptExtractDatabaseSchema"
+          DependsOnTargets="EfcptQueryDatabaseSchemaForSqlProj"
           Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptGenerateSqlProj)' == 'true'">
     <PropertyGroup>
       <_EfcptExtractDir>$(EfcptSqlProjOutputDir)</_EfcptExtractDir>
     </PropertyGroup>
-    
-    <Error Condition="'$(EfcptConnectionString)' == '' and '$(EfcptAppSettings)' == '' and '$(EfcptAppConfig)' == ''"
-           Text="SqlProj generation requires a connection string. Set EfcptConnectionString, EfcptAppSettings, or EfcptAppConfig." />
     
     <Message Text="Extracting database schema to DACPAC in: $(_EfcptExtractDir)" Importance="high" />
     
@@ -165,6 +182,8 @@
     <PropertyGroup>
       <_EfcptDacpacPath>$(_EfcptExtractedDacpacPath)</_EfcptDacpacPath>
       <EfcptDacpac>$(_EfcptDacpacPath)</EfcptDacpac>
+      <!-- Mark that we're using connection string mode for fingerprinting -->
+      <_EfcptUseConnectionString>true</_EfcptUseConnectionString>
     </PropertyGroup>
     
     <Message Text="Extracted DACPAC will be used for EF Core generation: $(_EfcptDacpacPath)" Importance="high" />
