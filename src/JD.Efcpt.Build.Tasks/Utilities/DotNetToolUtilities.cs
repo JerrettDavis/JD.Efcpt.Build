@@ -94,7 +94,7 @@ internal static class DotNetToolUtilities
             };
 
             process.Start();
-            var output = process.StandardOutput.ReadToEnd();
+            _ = process.StandardOutput.ReadToEnd();
 
             if (!process.WaitForExit(ProcessTimeoutMs))
             {
