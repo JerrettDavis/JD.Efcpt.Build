@@ -53,6 +53,7 @@ dotnet build
 
 - **Automatic generation** - DbContext and entities generated during `dotnet build`
 - **Incremental builds** - Only regenerates when schema or config changes
+- **Database-First SqlProj Generation** - Extract schema from live databases to DACPAC (NEW!)
 - **Dual input modes** - Works with SQL Projects (.sqlproj) or live database connections
 - **Smart discovery** - Auto-finds database projects and configuration files
 - **T4 template support** - Customize code generation with your own templates
@@ -89,12 +90,39 @@ dotnet build
 | [MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj) | `.csproj` / `.fsproj` | Yes |
 | Traditional SQL Projects | `.sqlproj` | Windows only |
 
+## New: Database-First SqlProj Generation
+
+Extract your database schema directly into a DACPAC, eliminating the need for manual SQL project maintenance:
+
+```xml
+<PropertyGroup>
+    <EfcptGenerateSqlProj>true</EfcptGenerateSqlProj>
+    <EfcptAppSettings>appsettings.json</EfcptAppSettings>
+</PropertyGroup>
+```
+
+This enables the complete database-first workflow:
+
+```
+Live Database → sqlpackage Extract → DACPAC → EF Core Models
+```
+
+**Benefits:**
+- ✅ No SQL project files to maintain
+- ✅ Database as source of truth
+- ✅ Automatic schema extraction on build
+- ✅ Incremental builds with schema fingerprinting
+- ✅ Works with .NET 10+ `dnx` (no sqlpackage installation required)
+
+See the [Database-First SqlProj Generation sample](samples/database-first-sqlproj-generation/) for a complete example.
+
 ## Samples
 
 See the [samples directory](samples/) for complete working examples:
 
 - [Simple Generation](samples/simple-generation/) - Basic DACPAC-based generation
 - [SDK Zero Config](samples/sdk-zero-config/) - Minimal SDK project setup
+- [Database-First SqlProj Generation](samples/database-first-sqlproj-generation/) - Extract schema from live database (NEW!)
 - [Connection String Mode](samples/connection-string-sqlite/) - Generate from live database
 - [Custom Renaming](samples/custom-renaming/) - Table and column renaming
 - [Schema Organization](samples/schema-organization/) - Multi-schema folder structure
