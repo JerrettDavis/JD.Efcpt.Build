@@ -161,14 +161,21 @@ internal static class DotNetToolUtilities
         {
             // Extract version number
             var versionPart = tfm.Substring(3); // Remove "net" prefix
-            
+
             // Handle "net10.0" or "net10"
             var dotIndex = versionPart.IndexOf('.');
             var majorStr = dotIndex > 0 ? versionPart.Substring(0, dotIndex) : versionPart;
 
             if (int.TryParse(majorStr, out var major))
             {
-                return major >= 10;
+                // .NET 5+ uses single-digit or low double-digit major versions (5, 6, 7, 8, 9, 10, 11...)
+                // .NET Framework uses higher numbers (46 for 4.6, 48 for 4.8, 472 for 4.7.2, etc.)
+                // Filter out .NET Framework by checking if major is in the valid .NET 5+ range
+                // .NET Framework versions are >= 40, so we reject those
+                if (major >= 5 && major < 40)
+                {
+                    return major >= 10;
+                }
             }
         }
 
