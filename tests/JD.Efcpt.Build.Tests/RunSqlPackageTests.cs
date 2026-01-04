@@ -535,15 +535,9 @@ public sealed class RunSqlPackageTests(ITestOutputHelper output) : TinyBddXunitB
         .When("tool path resolution logic is evaluated", s =>
         {
             // Simulate ResolveToolPath logic for explicit path
-            string resolvedPath;
-            if (Path.IsPathRooted(s.toolPath))
-            {
-                resolvedPath = s.toolPath;
-            }
-            else
-            {
-                resolvedPath = Path.GetFullPath(Path.Combine(s.state.TempDir, s.toolPath));
-            }
+            var resolvedPath = Path.IsPathRooted(s.toolPath)
+                ? s.toolPath
+                : Path.GetFullPath(Path.Combine(s.state.TempDir, s.toolPath));
 
             var exists = File.Exists(resolvedPath);
             return (s.state, resolvedPath, exists);
