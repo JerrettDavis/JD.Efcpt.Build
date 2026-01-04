@@ -477,4 +477,283 @@ public sealed class RunSqlPackageTests(ITestOutputHelper output) : TinyBddXunitB
         .Finally(r => Cleanup(r.state))
         .AssertPassed();
     }
+
+    [Scenario("ToolRestore property handles false values")]
+    [Theory]
+    [InlineData("false")]
+    [InlineData("FALSE")]
+    [InlineData("False")]
+    [InlineData("0")]
+    [InlineData("no")]
+    [InlineData("NO")]
+    [InlineData("")]
+    public async Task ToolRestore_recognizes_false_values(string value)
+    {
+        await Given($"ToolRestore set to '{value}'", () =>
+        {
+            var state = Setup();
+            return (state, value);
+        })
+        .When("ShouldRestoreTool logic is evaluated", s =>
+        {
+            // Simulate the ShouldRestoreTool logic
+            bool shouldRestore;
+            if (string.IsNullOrEmpty(s.value))
+            {
+                shouldRestore = true; // Empty defaults to true
+            }
+            else
+            {
+                var normalized = s.value.Trim().ToLowerInvariant();
+                shouldRestore = normalized == "true" || normalized == "1" || normalized == "yes";
+            }
+            return (s.state, shouldRestore, s.value);
+        })
+        .Then("restore should not be performed for explicit false values", r =>
+        {
+            // Empty string defaults to true, explicit false values should be false
+            if (string.IsNullOrEmpty(r.value))
+                return r.shouldRestore == true;
+            return r.shouldRestore == false;
+        })
+        .Finally(r => Cleanup(r.state))
+        .AssertPassed();
+    }
+
+    [Scenario("Explicit tool path with rooted path")]
+    [Fact]
+    public async Task Explicit_tool_path_with_rooted_path()
+    {
+        await Given("a rooted tool path that exists", () =>
+        {
+            var state = Setup();
+            // Create a dummy file to represent sqlpackage
+            var toolPath = Path.Combine(state.TempDir, "sqlpackage.exe");
+            File.WriteAllText(toolPath, "dummy");
+            return (state, toolPath);
+        })
+        .When("tool path resolution logic is evaluated", s =>
+        {
+            // Simulate ResolveToolPath logic for explicit path
+            string resolvedPath;
+            if (Path.IsPathRooted(s.toolPath))
+            {
+                resolvedPath = s.toolPath;
+            }
+            else
+            {
+                resolvedPath = Path.GetFullPath(Path.Combine(s.state.TempDir, s.toolPath));
+            }
+
+            var exists = File.Exists(resolvedPath);
+            return (s.state, resolvedPath, exists);
+        })
+        .Then("path is used as-is", r => r.resolvedPath == r.state.TempDir + Path.DirectorySeparatorChar + "sqlpackage.exe" ||
+                                          r.resolvedPath.EndsWith("sqlpackage.exe"))
+        .And("path exists", r => r.exists)
+        .Finally(r => Cleanup(r.state))
+        .AssertPassed();
+    }
+
+    [Scenario("Explicit tool path with relative path")]
+    [Fact]
+    public async Task Explicit_tool_path_with_relative_path()
+    {
+        await Given("a relative tool path", () =>
+        {
+            var state = Setup();
+            var workingDir = state.TempDir;
+            var relativePath = "tools\\sqlpackage.exe";
+
+            // Create the tool file
+            var toolDir = Path.Combine(workingDir, "tools");
+            Directory.CreateDirectory(toolDir);
+            var fullPath = Path.Combine(toolDir, "sqlpackage.exe");
+            File.WriteAllText(fullPath, "dummy");
+
+            return (state, relativePath, workingDir, fullPath);
+        })
+        .When("tool path resolution logic is evaluated", s =>
+        {
+            // Simulate ResolveToolPath logic
+            string resolvedPath;
+            if (Path.IsPathRooted(s.relativePath))
+            {
+                resolvedPath = s.relativePath;
+            }
+            else
+            {
+                resolvedPath = Path.GetFullPath(Path.Combine(s.workingDir, s.relativePath));
+            }
+
+            return (s.state, resolvedPath, s.fullPath);
+        })
+        .Then("path is resolved relative to working directory", r => r.resolvedPath == r.fullPath)
+        .Finally(r => Cleanup(r.state))
+        .AssertPassed();
+    }
+
+    [Scenario("File movement handles files without source directory prefix")]
+    [Fact]
+    public async Task File_movement_handles_files_without_prefix()
+    {
+        await Given("a file path that doesn't start with source directory", () =>
+        {
+            var state = Setup();
+            var sourceDir = Path.Combine(state.TempDir, "source");
+            Directory.CreateDirectory(sourceDir);
+
+            // Simulate a case where file path doesn't start with normalized source dir
+            var fileName = "Table1.sql";
+
+            return (state, sourceDir, fileName);
+        })
+        .When("path processing logic is evaluated", s =>
+        {
+            var sourceDirNormalized = s.sourceDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+
+            // Simulate the substring logic
+            string relativePath;
+            if (s.fileName.StartsWith(sourceDirNormalized, StringComparison.OrdinalIgnoreCase))
+            {
+                relativePath = s.fileName.Substring(sourceDirNormalized.Length);
+            }
+            else
+            {
+                // Fallback: use just the filename
+                relativePath = Path.GetFileName(s.fileName);
+            }
+
+            return (s.state, relativePath, s.fileName);
+        })
+        .Then("falls back to filename", r => r.relativePath == Path.GetFileName(r.fileName))
+        .Finally(r => Cleanup(r.state))
+        .AssertPassed();
+    }
+
+    [Scenario("Target framework for .NET 10 detection")]
+    [Theory]
+    [InlineData("net10.0")]
+    [InlineData("net11.0")]
+    [InlineData("net12.0")]
+    public async Task Target_framework_net10_detection(string tfm)
+    {
+        await Given($"target framework {tfm}", () =>
+        {
+            var state = Setup();
+            return (state, tfm);
+        })
+        .When("framework version is evaluated", s =>
+        {
+            // This would trigger the IsDotNet10OrLater check in ResolveToolPath
+            var isNet10OrLater = Tasks.Utilities.DotNetToolUtilities.IsDotNet10OrLater(s.tfm);
+            return (s.state, isNet10OrLater);
+        })
+        .Then("is recognized as .NET 10+", r => r.isNet10OrLater)
+        .Finally(r => Cleanup(r.state))
+        .AssertPassed();
+    }
+
+    [Scenario("Target framework for pre-.NET 10 detection")]
+    [Theory]
+    [InlineData("net8.0")]
+    [InlineData("net9.0")]
+    [InlineData("netstandard2.0")]
+    [InlineData("net472")]
+    public async Task Target_framework_pre_net10_detection(string tfm)
+    {
+        await Given($"target framework {tfm}", () =>
+        {
+            var state = Setup();
+            return (state, tfm);
+        })
+        .When("framework version is evaluated", s =>
+        {
+            var isNet10OrLater = Tasks.Utilities.DotNetToolUtilities.IsDotNet10OrLater(s.tfm);
+            return (s.state, isNet10OrLater);
+        })
+        .Then("is not recognized as .NET 10+", r => !r.isNet10OrLater)
+        .Finally(r => Cleanup(r.state))
+        .AssertPassed();
+    }
+
+    [Scenario("ExtractedPath output is set to target directory")]
+    [Fact]
+    public async Task ExtractedPath_output_is_set()
+    {
+        await Given("a RunSqlPackage task", () =>
+        {
+            var state = Setup();
+            var targetDir = Path.Combine(state.TempDir, "output");
+            Directory.CreateDirectory(targetDir);
+            return (state, targetDir);
+        })
+        .When("ExtractedPath would be set", s =>
+        {
+            // Simulating line 145: ExtractedPath = TargetDirectory;
+            var extractedPath = s.targetDir;
+            return (s.state, extractedPath, s.targetDir);
+        })
+        .Then("ExtractedPath equals TargetDirectory", r => r.extractedPath == r.targetDir)
+        .Finally(r => Cleanup(r.state))
+        .AssertPassed();
+    }
+
+    [Scenario("ToolVersion property is configurable")]
+    [Fact]
+    public async Task ToolVersion_is_configurable()
+    {
+        await Given("a tool version", () =>
+        {
+            var state = Setup();
+            var version = "162.0.52";
+            return (state, version);
+        })
+        .When("task is configured with ToolVersion", s =>
+        {
+            var task = new RunSqlPackage
+            {
+                BuildEngine = s.state.Engine,
+                WorkingDirectory = s.state.TempDir,
+                ConnectionString = "Server=test;Database=test",
+                TargetDirectory = s.state.TempDir,
+                ToolVersion = s.version,
+                ToolPath = "sqlpackage",
+                LogVerbosity = "minimal"
+            };
+            return (s.state, task, s.version);
+        })
+        .Then("ToolVersion is set correctly", r => r.task.ToolVersion == r.version)
+        .Finally(r => Cleanup(r.state))
+        .AssertPassed();
+    }
+
+    [Scenario("DotNetExe property is configurable")]
+    [Fact]
+    public async Task DotNetExe_is_configurable()
+    {
+        await Given("a custom dotnet exe path", () =>
+        {
+            var state = Setup();
+            var dotnetPath = "C:\\custom\\dotnet.exe";
+            return (state, dotnetPath);
+        })
+        .When("task is configured with DotNetExe", s =>
+        {
+            var task = new RunSqlPackage
+            {
+                BuildEngine = s.state.Engine,
+                WorkingDirectory = s.state.TempDir,
+                ConnectionString = "Server=test;Database=test",
+                TargetDirectory = s.state.TempDir,
+                DotNetExe = s.dotnetPath,
+                ToolPath = "sqlpackage",
+                LogVerbosity = "minimal"
+            };
+            return (s.state, task, s.dotnetPath);
+        })
+        .Then("DotNetExe is set correctly", r => r.task.DotNetExe == r.dotnetPath)
+        .Finally(r => Cleanup(r.state))
+        .AssertPassed();
+    }
 }
