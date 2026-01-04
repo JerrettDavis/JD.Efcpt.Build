@@ -160,16 +160,12 @@
     <EfcptConfigPreserveCasingWithRegex Condition="'$(EfcptConfigPreserveCasingWithRegex)'==''"></EfcptConfigPreserveCasingWithRegex>
 
     <!--
-      SQL Project Detection: Auto-detect when JD.Efcpt.Build is referenced within a SQL project.
-      When detected, SQL scripts will be generated within the SQL project from the live database.
-      
-      Detection logic:
-      - Microsoft.Build.Sql SDK: Check for $(SqlServerVersion) or $(DSP) properties
-      - MSBuild.Sdk.SqlProj: Check for $(SqlServerVersion) and if SDK attribute contains "MSBuild.Sdk.SqlProj"
+      SQL Project Detection: Moved to targets file to ensure properties are set.
+      See _EfcptDetectSqlProject target in JD.Efcpt.Build.targets.
     -->
-    <_EfcptIsSqlProject Condition="'$(_EfcptIsSqlProject)'=='' and ('$(SqlServerVersion)' != '' or '$(DSP)' != '')">true</_EfcptIsSqlProject>
-    <_EfcptIsSqlProject Condition="'$(_EfcptIsSqlProject)'==''">false</_EfcptIsSqlProject>
-    
+  </PropertyGroup>
+
+  <PropertyGroup>
     <!-- SQL Project Generation Configuration -->
     <EfcptSqlProjType Condition="'$(EfcptSqlProjType)'==''">microsoft-build-sql</EfcptSqlProjType>
     <EfcptSqlProjLanguage Condition="'$(EfcptSqlProjLanguage)'==''">csharp</EfcptSqlProjLanguage>

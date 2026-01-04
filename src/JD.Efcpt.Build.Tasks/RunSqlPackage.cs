@@ -304,8 +304,12 @@ public sealed class RunSqlPackage : Task
         // Source connection string
         args.Append($"/SourceConnectionString:\"{ConnectionString}\" ");
 
-        // Target file or directory
-        args.Append($"/TargetFile:\"{TargetDirectory}\" ");
+        // Target file - SqlPackage requires .dacpac extension even for Flat mode
+        // When ExtractTarget=Flat with path ending in .dacpac, SqlPackage extracts to that directory
+        var targetFile = ExtractTarget.Equals("Flat", StringComparison.OrdinalIgnoreCase)
+            ? TargetDirectory.TrimEnd('\\', '/') + ".dacpac"
+            : TargetDirectory;
+        args.Append($"/TargetFile:\"{targetFile}\" ");
 
         // Extract target mode (Flat for SQL scripts, File for DACPAC)
         args.Append($"/p:ExtractTarget={ExtractTarget} ");

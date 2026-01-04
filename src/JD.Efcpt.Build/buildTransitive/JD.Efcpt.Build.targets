@@ -10,6 +10,19 @@
     <!-- Derive UseNullableReferenceTypes from project's Nullable setting for zero-config scenarios -->
     <EfcptConfigUseNullableReferenceTypes Condition="'$(EfcptConfigUseNullableReferenceTypes)'=='' and ('$(Nullable)'=='enable' or '$(Nullable)'=='Enable')">true</EfcptConfigUseNullableReferenceTypes>
     <EfcptConfigUseNullableReferenceTypes Condition="'$(EfcptConfigUseNullableReferenceTypes)'=='' and '$(Nullable)'!=''">false</EfcptConfigUseNullableReferenceTypes>
+
+    <!--
+      SQL Project Detection: Detect if this is a SQL database project (not an EF Core consumer project).
+
+      Detection logic:
+      - Microsoft.Build.Sql SDK: Check for $(SqlServerVersion) or $(DSP) properties
+      - MSBuild.Sdk.SqlProj: Check for $(SqlServerVersion)
+
+      This must be in the targets file (not props) because SDK properties like SqlServerVersion
+      are not available when props files are evaluated.
+    -->
+    <_EfcptIsSqlProject Condition="'$(_EfcptIsSqlProject)'=='' and ('$(SqlServerVersion)' != '' or '$(DSP)' != '')">true</_EfcptIsSqlProject>
+    <_EfcptIsSqlProject Condition="'$(_EfcptIsSqlProject)'==''">false</_EfcptIsSqlProject>
   </PropertyGroup>
 
   <!--
@@ -227,6 +240,7 @@
           DependsOnTargets="EfcptAddSqlFileWarnings"
           BeforeTargets="Build"
           Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'">
+    <Message Text="_EfcptIsSqlProject: $(_EfcptIsSqlProject)" Importance="high" />
     <Message Text="SQL script generation complete. SQL project will build to DACPAC." Importance="high" />
   </Target>
 
@@ -572,8 +586,10 @@
           Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptSplitOutputs)' == 'true'">
 
     <!-- Resolve Data project path -->
+    <!-- Use Combine+GetFullPath for .NET Framework compatibility (GetFullPath with basePath is .NET Core only) -->
     <PropertyGroup>
-      <_EfcptDataProjectPath Condition="'$(EfcptDataProject)' != ''">$([System.IO.Path]::GetFullPath('$(EfcptDataProject)', '$(MSBuildProjectDirectory)'))</_EfcptDataProjectPath>
+      <_EfcptDataProjectPath Condition="'$(EfcptDataProject)' != '' and $([System.IO.Path]::IsPathRooted('$(EfcptDataProject)'))">$(EfcptDataProject)</_EfcptDataProjectPath>
+      <_EfcptDataProjectPath Condition="'$(EfcptDataProject)' != '' and !$([System.IO.Path]::IsPathRooted('$(EfcptDataProject)'))">$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(EfcptDataProject)'))))</_EfcptDataProjectPath>
     </PropertyGroup>
 
     <!-- Error if Data project not specified -->
