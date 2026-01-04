@@ -35,7 +35,21 @@
     <Compile Remove="**\*" />
   </ItemGroup>
 
-  <!-- Replace TEMPLATE_SDK_VERSION with actual package version during pack -->
+  <!--
+    Unified Template Replacement Strategy
+    =====================================
+    All template content uses dotnet template engine's symbol system for replacements:
+
+    1. Framework: Replaced at template instantiation time via "Framework" parameter symbol
+    2. EFCoreVersion: Replaced at template instantiation time via "EFCoreVersion" generated symbol
+    3. SdkVersion: Replaced at template instantiation time via "SdkVersion" parameter symbol
+
+    At pack time, we only update the defaultValue for SdkVersion in template.json to match the
+    package version being built. This ensures users get the correct SDK version by default.
+
+    The template csproj file uses SDKVERSION_PLACEHOLDER which gets replaced by the template
+    engine when users run `dotnet new efcptbuild`, just like net8.0 and 8.0.* placeholders.
+  -->
   <UsingTask TaskName="ReplaceFileContent" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
     <ParameterGroup>
       <FilePath ParameterType="System.String" Required="true" />
@@ -57,40 +71,36 @@
   <Target Name="ReplaceTemplateSdkVersion" BeforeTargets="GenerateNuspec">
     <PropertyGroup>
       <_TemplateJsonPath>$(MSBuildProjectDirectory)/templates/efcptbuild/.template.config/template.json</_TemplateJsonPath>
-      <_TemplateCsprojPath>$(MSBuildProjectDirectory)/templates/efcptbuild/EfcptProject.csproj</_TemplateCsprojPath>
       <_TemplateJsonBackupPath>$(MSBuildProjectDirectory)/templates/efcptbuild/.template.config/template.json.bak</_TemplateJsonBackupPath>
-      <_TemplateCsprojBackupPath>$(MSBuildProjectDirectory)/templates/efcptbuild/EfcptProject.csproj.bak</_TemplateCsprojBackupPath>
     </PropertyGroup>
-    
-    <!-- Backup original files -->
+
+    <!-- Backup template.json -->
     <Copy SourceFiles="$(_TemplateJsonPath)" DestinationFiles="$(_TemplateJsonBackupPath)" />
-    <Copy SourceFiles="$(_TemplateCsprojPath)" DestinationFiles="$(_TemplateCsprojBackupPath)" />
-    
-    <!-- Replace in files -->
-    <ReplaceFileContent FilePath="$(_TemplateJsonPath)" OldValue="TEMPLATE_SDK_VERSION" NewValue="$(PackageVersion)" />
-    <ReplaceFileContent FilePath="$(_TemplateCsprojPath)" OldValue="TEMPLATE_SDK_VERSION" NewValue="$(PackageVersion)" />
-    
-    <Message Importance="high" Text="Replaced TEMPLATE_SDK_VERSION with $(PackageVersion) in template files" />
+
+    <!--
+      Replace the defaultValue in template.json with the actual package version.
+      The template engine will use this as the default when SdkVersion parameter is not specified.
+      This unifies all replacements to use the template.json symbol system, just like Framework and EFCoreVersion.
+    -->
+    <ReplaceFileContent FilePath="$(_TemplateJsonPath)" OldValue="&quot;defaultValue&quot;: &quot;1.0.0&quot;" NewValue="&quot;defaultValue&quot;: &quot;$(PackageVersion)&quot;" />
+
+    <Message Importance="high" Text="Replaced SDK version defaultValue with $(PackageVersion) in template.json" />
   </Target>
 
-  <!-- Restore original template files after pack -->
+  <!-- Restore original template.json after pack -->
   <Target Name="RestoreTemplateFiles" AfterTargets="Pack">
     <PropertyGroup>
       <_TemplateJsonPath>$(MSBuildProjectDirectory)/templates/efcptbuild/.template.config/template.json</_TemplateJsonPath>
-      <_TemplateCsprojPath>$(MSBuildProjectDirectory)/templates/efcptbuild/EfcptProject.csproj</_TemplateCsprojPath>
       <_TemplateJsonBackupPath>$(MSBuildProjectDirectory)/templates/efcptbuild/.template.config/template.json.bak</_TemplateJsonBackupPath>
-      <_TemplateCsprojBackupPath>$(MSBuildProjectDirectory)/templates/efcptbuild/EfcptProject.csproj.bak</_TemplateCsprojBackupPath>
     </PropertyGroup>
-    
-    <!-- Restore from backups if they exist -->
+
+    <!-- Restore from backup -->
     <Move SourceFiles="$(_TemplateJsonBackupPath)" DestinationFiles="$(_TemplateJsonPath)" Condition="Exists('$(_TemplateJsonBackupPath)')" />
-    <Move SourceFiles="$(_TemplateCsprojBackupPath)" DestinationFiles="$(_TemplateCsprojPath)" Condition="Exists('$(_TemplateCsprojBackupPath)')" />
-    
+
     <!-- Verify restoration -->
     <Error Text="Failed to restore template.json - backup file was not found" Condition="!Exists('$(_TemplateJsonPath)')" />
-    <Error Text="Failed to restore EfcptProject.csproj - backup file was not found" Condition="!Exists('$(_TemplateCsprojPath)')" />
-    
-    <Message Importance="high" Text="Restored original template files" />
+
+    <Message Importance="high" Text="Restored original template.json" />
   </Target>
 
 </Project>

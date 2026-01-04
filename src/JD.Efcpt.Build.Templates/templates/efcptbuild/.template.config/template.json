@@ -104,8 +104,8 @@
     "SdkVersion": {
       "type": "parameter",
       "datatype": "string",
-      "replaces": "TEMPLATE_SDK_VERSION",
-      "defaultValue": "TEMPLATE_SDK_VERSION"
+      "replaces": "SDKVERSION_PLACEHOLDER",
+      "defaultValue": "1.0.0"
     }
   },
   "primaryOutputs": [
