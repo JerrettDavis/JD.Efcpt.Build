@@ -129,8 +129,16 @@ public sealed class RunSqlPackage : Task
             // Create target directory if it doesn't exist
             if (!Directory.Exists(TargetDirectory))
             {
-                Directory.CreateDirectory(TargetDirectory);
-                log.Detail($"Created target directory: {TargetDirectory}");
+                try
+                {
+                    Directory.CreateDirectory(TargetDirectory);
+                    log.Detail($"Created target directory: {TargetDirectory}");
+                }
+                catch (Exception ex)
+                {
+                    log.Error("JD0024", $"Failed to create target directory '{TargetDirectory}': {ex.Message}");
+                    return false;
+                }
             }
 
             // Set the output path
@@ -174,14 +182,14 @@ public sealed class RunSqlPackage : Task
             }
             else
             {
-                log.Error("SqlPackage extract failed");
+                log.Error("JD0022", "SqlPackage extract failed");
             }
 
             return success;
         }
         catch (Exception ex)
         {
-            log.Error($"SqlPackage execution failed: {ex.Message}");
+            log.Error("JD0023", $"SqlPackage execution failed: {ex.Message}");
             log.Detail($"Exception details: {ex}");
             return false;
         }
@@ -201,7 +209,7 @@ public sealed class RunSqlPackage : Task
 
             if (!File.Exists(resolvedPath))
             {
-                log.Error($"Explicit tool path does not exist: {resolvedPath}");
+                log.Error("JD0020", $"Explicit tool path does not exist: {resolvedPath}");
                 return null;
             }
 
@@ -365,7 +373,7 @@ public sealed class RunSqlPackage : Task
         using var process = Process.Start(psi);
         if (process == null)
         {
-            log.Error("Failed to start sqlpackage process");
+            log.Error("JD0021", "Failed to start sqlpackage process");
             return false;
         }
 
@@ -397,10 +405,10 @@ public sealed class RunSqlPackage : Task
 
         if (process.ExitCode != 0)
         {
-            log.Error($"SqlPackage failed with exit code {process.ExitCode}");
+            log.Error("JD0022", $"SqlPackage failed with exit code {process.ExitCode}");
             if (error.Length > 0)
             {
-                log.Error($"SqlPackage error output:\n{error}");
+                log.Detail($"SqlPackage error output:\n{error}");
             }
             return false;
         }

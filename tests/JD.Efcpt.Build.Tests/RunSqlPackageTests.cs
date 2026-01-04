@@ -416,4 +416,65 @@ public sealed class RunSqlPackageTests(ITestOutputHelper output) : TinyBddXunitB
         .Finally(r => Cleanup(r.s))
         .AssertPassed();
     }
+
+    [Scenario("Explicit tool path not found produces JD0020 error")]
+    [Fact]
+    public async Task Explicit_tool_path_not_found_error()
+    {
+        await Given("a task with non-existent tool path", () =>
+        {
+            var state = Setup();
+            var nonExistentPath = Path.Combine(state.TempDir, "nonexistent-sqlpackage.exe");
+            return (state, nonExistentPath);
+        })
+        .When("task is executed", s =>
+        {
+            var task = new RunSqlPackage
+            {
+                BuildEngine = s.state.Engine,
+                WorkingDirectory = s.state.TempDir,
+                ConnectionString = "Server=test;Database=test",
+                TargetDirectory = s.state.TempDir,
+                ToolPath = s.nonExistentPath,
+                LogVerbosity = "minimal"
+            };
+            var result = task.Execute();
+            return (s.state, result, s.state.Engine.Errors);
+        })
+        .Then("task fails", r => !r.result)
+        .And("JD0020 error is logged", r => r.Errors.Any(e => e.Code == "JD0020" && e.Message?.Contains("Explicit tool path does not exist") == true))
+        .Finally(r => Cleanup(r.state))
+        .AssertPassed();
+    }
+
+    [Scenario("Invalid target directory produces JD0024 error")]
+    [Fact]
+    public async Task Invalid_target_directory_error()
+    {
+        await Given("a task with invalid target directory", () =>
+        {
+            var state = Setup();
+            // Use an invalid path (e.g., contains invalid characters)
+            var invalidPath = Path.Combine(state.TempDir, new string(Path.GetInvalidPathChars()));
+            return (state, invalidPath);
+        })
+        .When("task is executed", s =>
+        {
+            var task = new RunSqlPackage
+            {
+                BuildEngine = s.state.Engine,
+                WorkingDirectory = s.state.TempDir,
+                ConnectionString = "Server=test;Database=test",
+                TargetDirectory = s.invalidPath,
+                ToolPath = "sqlpackage", // Use explicit path to avoid needing real tool
+                LogVerbosity = "minimal"
+            };
+            var result = task.Execute();
+            return (s.state, result, s.state.Engine.Errors);
+        })
+        .Then("task fails", r => !r.result)
+        .And("JD0024 error is logged", r => r.Errors.Any(e => e.Code == "JD0024" && e.Message?.Contains("Failed to create target directory") == true))
+        .Finally(r => Cleanup(r.state))
+        .AssertPassed();
+    }
 }

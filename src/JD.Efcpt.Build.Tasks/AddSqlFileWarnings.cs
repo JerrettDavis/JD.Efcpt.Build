@@ -78,7 +78,7 @@ public sealed class AddSqlFileWarnings : Task
         }
         catch (Exception ex)
         {
-            log.Error($"Failed to add SQL file warnings: {ex.Message}");
+            log.Error("JD0025", $"Failed to add SQL file warnings: {ex.Message}");
             log.Detail($"Exception details: {ex}");
             return false;
         }

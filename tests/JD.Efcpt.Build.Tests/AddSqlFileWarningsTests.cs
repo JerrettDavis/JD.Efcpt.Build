@@ -324,4 +324,9 @@ public sealed class AddSqlFileWarningsTests(ITestOutputHelper output) : TinyBddX
         .Finally(r => Cleanup(r.state))
         .AssertPassed();
     }
+
+    // Note: JD0025 error path (top-level exception) is difficult to test in a unit test
+    // as it requires triggering an unhandled exception during Directory.GetFiles or file processing.
+    // This error path exists for unexpected failures and is covered by the error handling
+    // implementation in AddSqlFileWarnings.cs:79-84
 }
