@@ -337,13 +337,6 @@ public sealed class RunSqlPackage : Task
         // Properties for application-scoped objects only
         args.Append("/p:ExtractApplicationScopedObjectsOnly=True ");
 
-        // Exclude system objects that cause cross-platform path issues
-        args.Append("/p:IgnorePermissions=True ");
-        args.Append("/p:IgnoreRoleMembership=True ");
-        args.Append("/p:IgnoreUserSettingsObjects=True ");
-        args.Append("/p:IgnoreLoginSids=True ");
-        args.Append("/p:IgnoreUsers=True ");
-
         return args.ToString().Trim();
     }
 
@@ -367,10 +360,6 @@ public sealed class RunSqlPackage : Task
             WorkingDirectory = WorkingDirectory
         };
 
-        // TEMP DIAGNOSTIC: Log command at high importance
-        log.Info($"[DIAGNOSTIC] Running SqlPackage:");
-        log.Info($"[DIAGNOSTIC] Executable: {toolInfo.Executable}");
-        log.Info($"[DIAGNOSTIC] Arguments: {fullArgs}");
         log.Detail($"Running: {toolInfo.Executable} {fullArgs}");
 
         using var process = Process.Start(psi);
@@ -427,6 +416,9 @@ public sealed class RunSqlPackage : Task
         // Ensure source directory path ends with separator for proper substring
         var sourceDirNormalized = sourceDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
 
+        // System directories to exclude (not application-scoped objects)
+        var excludedPaths = new[] { "Security", "ServerObjects", "Storage" };
+
         // Move all files
         foreach (var file in Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories))
         {
@@ -434,6 +426,14 @@ public sealed class RunSqlPackage : Task
             var relativePath = file.StartsWith(sourceDirNormalized, StringComparison.OrdinalIgnoreCase)
                 ? file.Substring(sourceDirNormalized.Length)
                 : Path.GetFileName(file);
+
+            // Skip system security and server objects that cause cross-platform path issues
+            var pathParts = relativePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            if (pathParts.Length > 0 && Array.Exists(excludedPaths, p => p.Equals(pathParts[0], StringComparison.OrdinalIgnoreCase)))
+            {
+                log.Detail($"Skipping system object: {relativePath}");
+                continue;
+            }
 
             var destPath = Path.Combine(destDir, relativePath);
 
