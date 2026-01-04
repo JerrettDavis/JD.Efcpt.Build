@@ -2,6 +2,8 @@
   "$schema": "https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/master/samples/efcpt-config.schema.json",
   "names": {
     "root-namespace": "EfcptProject",
-    "dbcontext-name": "ApplicationDbContext"
+    "dbcontext-name": "ApplicationDbContext",
+    "dbcontext-namespace": "EfcptProject.Data",
+    "model-namespace": "EfcptProject.Data.Entities"
   }
 }
