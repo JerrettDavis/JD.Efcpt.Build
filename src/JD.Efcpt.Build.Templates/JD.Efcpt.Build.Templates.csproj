@@ -149,4 +149,16 @@
     <Message Importance="high" Text="Restored original template.json from backup" />
   </Target>
 
+  <!-- Ensure any leftover backup from a previous failed pack is restored before modifying template.json again -->
+  <Target Name="EnsureTemplateFilesRestored" BeforeTargets="ReplaceTemplateSdkVersion">
+    <PropertyGroup>
+      <_TemplateJsonPath>$(MSBuildProjectDirectory)/templates/efcptbuild/.template.config/template.json</_TemplateJsonPath>
+      <_TemplateJsonBackupPath>$(MSBuildProjectDirectory)/templates/efcptbuild/.template.config/template.json.bak</_TemplateJsonBackupPath>
+    </PropertyGroup>
+
+    <!-- If a backup exists, restore it to ensure a clean state from any previous failed or interrupted pack -->
+    <Move SourceFiles="$(_TemplateJsonBackupPath)" DestinationFiles="$(_TemplateJsonPath)" Condition="Exists('$(_TemplateJsonBackupPath)')" />
+
+    <Message Importance="high" Text="Ensured original template.json is restored before replacing SDK version." Condition="Exists('$(_TemplateJsonPath)')" />
+  </Target>
 </Project>
