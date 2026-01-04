@@ -158,5 +158,22 @@
 
     <!-- Replacements section overrides -->
     <EfcptConfigPreserveCasingWithRegex Condition="'$(EfcptConfigPreserveCasingWithRegex)'==''"></EfcptConfigPreserveCasingWithRegex>
+
+    <!--
+      SQL Project Detection: Moved to targets file to ensure properties are set.
+      See _EfcptDetectSqlProject target in JD.Efcpt.Build.targets.
+    -->
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- SQL Project Generation Configuration -->
+    <EfcptSqlProjType Condition="'$(EfcptSqlProjType)'==''">microsoft-build-sql</EfcptSqlProjType>
+    <EfcptSqlProjLanguage Condition="'$(EfcptSqlProjLanguage)'==''">csharp</EfcptSqlProjLanguage>
+    <EfcptSqlProjOutputDir Condition="'$(EfcptSqlProjOutputDir)'==''">$(MSBuildProjectDirectory)\</EfcptSqlProjOutputDir>
+    <EfcptSqlScriptsDir Condition="'$(EfcptSqlScriptsDir)'==''">$(MSBuildProjectDirectory)\</EfcptSqlScriptsDir>
+    <EfcptSqlServerVersion Condition="'$(EfcptSqlServerVersion)'==''">Sql160</EfcptSqlServerVersion>
+    <EfcptSqlPackageToolVersion Condition="'$(EfcptSqlPackageToolVersion)'==''"></EfcptSqlPackageToolVersion>
+    <EfcptSqlPackageToolRestore Condition="'$(EfcptSqlPackageToolRestore)'==''">true</EfcptSqlPackageToolRestore>
+    <EfcptSqlPackageToolPath Condition="'$(EfcptSqlPackageToolPath)'==''"></EfcptSqlPackageToolPath>
   </PropertyGroup>
 </Project>

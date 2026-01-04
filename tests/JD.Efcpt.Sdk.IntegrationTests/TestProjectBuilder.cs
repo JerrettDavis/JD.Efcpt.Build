@@ -145,6 +145,49 @@ public class TestProjectBuilder : IDisposable
     }
 
     /// <summary>
+    /// Creates a SQL project using MSBuild.Sdk.SqlProj SDK.
+    /// </summary>
+    public void CreateSqlProject(string projectName, string targetFramework, string connectionString, string? additionalContent = null)
+    {
+        ProjectDirectory = Path.Combine(_testDirectory, projectName);
+        Directory.CreateDirectory(ProjectDirectory);
+
+        // Create nuget.config with shared global packages folder for caching
+        var globalPackagesFolder = GetSharedGlobalPackagesFolder();
+        var nugetConfig = $@"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
+  <packageSources>
+    <clear />
+    <add key=""TestPackages"" value=""{_packageSource}"" />
+    <add key=""nuget.org"" value=""https://api.nuget.org/v3/index.json"" />
+  </packageSources>
+  <config>
+    <add key=""globalPackagesFolder"" value=""{globalPackagesFolder}"" />
+  </config>
+</configuration>";
+        File.WriteAllText(Path.Combine(_testDirectory, "nuget.config"), nugetConfig);
+
+        // Create .config/dotnet-tools.json for tool-manifest mode support
+        CreateToolManifest("10.1.1055");
+
+        // Create SQL project file
+        var projectContent = $@"<Project Sdk=""MSBuild.Sdk.SqlProj/3.3.0"">
+    <PropertyGroup>
+        <TargetFramework>{targetFramework}</TargetFramework>
+        <SqlServerVersion>Sql160</SqlServerVersion>
+        <EfcptConnectionString>{connectionString}</EfcptConnectionString>
+        <EfcptSqlPackageToolRestore>true</EfcptSqlPackageToolRestore>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include=""JD.Efcpt.Build"" Version=""{_buildVersion}"" />
+    </ItemGroup>
+{additionalContent ?? ""}
+</Project>";
+        File.WriteAllText(Path.Combine(ProjectDirectory, $"{projectName}.csproj"), projectContent);
+    }
+
+
+    /// <summary>
     /// Runs dotnet restore on the project.
     /// Only call this if you need to restore without building.
     /// BuildAsync() handles restore automatically.
