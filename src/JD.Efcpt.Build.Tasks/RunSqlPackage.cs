@@ -210,11 +210,11 @@ public sealed class RunSqlPackage : Task
         }
 
         // Check for .NET 10+ SDK with dnx support
-        if (DotNetToolUtilities.IsDotNet10OrLater(TargetFramework) && 
+        if (DotNetToolUtilities.IsDotNet10OrLater(TargetFramework) &&
             DotNetToolUtilities.IsDnxAvailable(DotNetExe))
         {
             log.Info($"Using dnx to execute {SqlPackageToolPackageId}");
-            return (DotNetExe, $"dnx {SqlPackageToolPackageId}");
+            return (DotNetExe, $"dnx --yes {SqlPackageToolPackageId}");
         }
 
         // Use global tool
