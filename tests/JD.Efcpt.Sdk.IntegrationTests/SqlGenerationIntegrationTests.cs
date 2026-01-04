@@ -164,7 +164,7 @@ public class SqlGenerationIntegrationTests : IAsyncDisposable
         sqlBuildResult.Success.Should().BeTrue($"SQL project build should succeed.\n{sqlBuildResult}");
 
         var sqlProjectDir = _builder.ProjectDirectory;
-        var dacpacPath = Path.Combine(sqlProjectDir, "bin", "Debug", "DatabaseProject_TwoProj.dacpac").Replace("\\", "/");
+        var dacpacPath = Path.Combine(sqlProjectDir, "bin", "Debug", "net8.0", "DatabaseProject_TwoProj.dacpac").Replace("\\", "/");
         
         // Create DataAccess project that references SQL project DACPAC
         var dataAccessAdditionalContent = $@"

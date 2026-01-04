@@ -205,7 +205,7 @@
         WorkingDirectory="$(EfcptOutput)"
         ConnectionString="$(EfcptConnectionString)"
         TargetDirectory="$(_EfcptScriptsDir)"
-        ExtractTarget="Flat"
+        ExtractTarget="SchemaObjectType"
         TargetFramework="$(TargetFramework)"
         LogVerbosity="$(EfcptLogVerbosity)">
       <Output TaskParameter="ExtractedPath" PropertyName="_EfcptExtractedScriptsPath" />

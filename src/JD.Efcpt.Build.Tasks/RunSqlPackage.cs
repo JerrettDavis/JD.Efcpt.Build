@@ -144,7 +144,7 @@ public sealed class RunSqlPackage : Task
             }
 
             // Build sqlpackage command arguments
-            var args = BuildSqlPackageArguments();
+            var args = BuildSqlPackageArguments(log);
 
             // Execute sqlpackage
             var success = ExecuteSqlPackage(toolInfo.Value, args, log);
@@ -152,6 +152,25 @@ public sealed class RunSqlPackage : Task
             if (success)
             {
                 log.Info("SqlPackage extract completed successfully");
+
+                // Post-process: Move files from .dacpac/ subdirectory to target directory
+                var dacpacTempDir = Path.Combine(TargetDirectory, ".dacpac");
+                if (Directory.Exists(dacpacTempDir))
+                {
+                    log.Detail($"Moving extracted files from {dacpacTempDir} to {TargetDirectory}");
+                    MoveDirectoryContents(dacpacTempDir, TargetDirectory, log);
+
+                    // Clean up temp directory
+                    try
+                    {
+                        Directory.Delete(dacpacTempDir, recursive: true);
+                        log.Detail("Cleaned up temporary extraction directory");
+                    }
+                    catch (Exception ex)
+                    {
+                        log.Warn($"Failed to delete temporary directory: {ex.Message}");
+                    }
+                }
             }
             else
             {
@@ -294,7 +313,7 @@ public sealed class RunSqlPackage : Task
     /// <summary>
     /// Builds the command-line arguments for sqlpackage.
     /// </summary>
-    private string BuildSqlPackageArguments()
+    private string BuildSqlPackageArguments(IBuildLog log)
     {
         var args = new StringBuilder();
 
@@ -304,14 +323,15 @@ public sealed class RunSqlPackage : Task
         // Source connection string
         args.Append($"/SourceConnectionString:\"{ConnectionString}\" ");
 
-        // Target file - SqlPackage requires .dacpac extension even for Flat mode
-        // When ExtractTarget=Flat with path ending in .dacpac, SqlPackage extracts to that directory
-        var targetFile = ExtractTarget.Equals("Flat", StringComparison.OrdinalIgnoreCase)
-            ? TargetDirectory.TrimEnd('\\', '/') + ".dacpac"
-            : TargetDirectory;
+        // Target file parameter:
+        // SqlPackage ALWAYS requires /TargetFile to end with .dacpac extension
+        // With ExtractTarget=SchemaObjectType, SqlPackage creates a directory with the .dacpac path
+        // and outputs SQL files inside that directory. We'll move them afterward.
+        var targetFile = Path.Combine(TargetDirectory, ".dacpac");
+
         args.Append($"/TargetFile:\"{targetFile}\" ");
 
-        // Extract target mode (Flat for SQL scripts, File for DACPAC)
+        // Extract target mode
         args.Append($"/p:ExtractTarget={ExtractTarget} ");
 
         // Properties for application-scoped objects only
@@ -340,6 +360,10 @@ public sealed class RunSqlPackage : Task
             WorkingDirectory = WorkingDirectory
         };
 
+        // TEMP DIAGNOSTIC: Log command at high importance
+        log.Info($"[DIAGNOSTIC] Running SqlPackage:");
+        log.Info($"[DIAGNOSTIC] Executable: {toolInfo.Executable}");
+        log.Info($"[DIAGNOSTIC] Arguments: {fullArgs}");
         log.Detail($"Running: {toolInfo.Executable} {fullArgs}");
 
         using var process = Process.Start(psi);
@@ -386,5 +410,40 @@ public sealed class RunSqlPackage : Task
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Recursively moves all contents from source directory to destination directory.
+    /// </summary>
+    private void MoveDirectoryContents(string sourceDir, string destDir, IBuildLog log)
+    {
+        // Ensure source directory path ends with separator for proper substring
+        var sourceDirNormalized = sourceDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+
+        // Move all files
+        foreach (var file in Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories))
+        {
+            // Get relative path (compatible with .NET Framework)
+            var relativePath = file.StartsWith(sourceDirNormalized, StringComparison.OrdinalIgnoreCase)
+                ? file.Substring(sourceDirNormalized.Length)
+                : Path.GetFileName(file);
+
+            var destPath = Path.Combine(destDir, relativePath);
+
+            // Ensure destination directory exists
+            var destDirectory = Path.GetDirectoryName(destPath);
+            if (destDirectory != null && !Directory.Exists(destDirectory))
+            {
+                Directory.CreateDirectory(destDirectory);
+            }
+
+            // Move file (overwrite if exists)
+            if (File.Exists(destPath))
+            {
+                File.Delete(destPath);
+            }
+            File.Move(file, destPath);
+            log.Detail($"Moved: {relativePath}");
+        }
     }
 }
