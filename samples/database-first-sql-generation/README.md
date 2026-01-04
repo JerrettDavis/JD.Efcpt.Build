@@ -110,18 +110,28 @@ When detected, it runs SQL generation instead of EF Core generation.
 
 ## Building the Sample
 
-1. **Set up a database**:
-   ```bash
-   # Create a LocalDB instance
-   sqllocaldb create mssqllocaldb
-   sqllocaldb start mssqllocaldb
-   
-   # Create test database with tables
-   sqlcmd -S "(localdb)\mssqllocaldb" -Q "CREATE DATABASE EfcptSampleDb"
-   sqlcmd -S "(localdb)\mssqllocaldb" -d EfcptSampleDb -Q "CREATE TABLE Users (Id INT PRIMARY KEY, Name NVARCHAR(100))"
+1. **Set up a database**: Use the provided setup scripts to create the sample schema (Categories, Products, Customers, Orders, and OrderItems):
+
+   ```powershell
+   # On PowerShell (Windows/Linux/macOS)
+   pwsh ./setup-database.ps1
    ```
 
-2. **Update connection string**: Edit `DatabaseProject/DatabaseProject.csproj`
+   Or on Windows Command Prompt:
+   ```cmd
+   setup-database.cmd
+   ```
+
+   The scripts will:
+   - Create or start a LocalDB instance
+   - Create the `EfcptSampleDb` database
+   - Create tables: Categories, Products, Customers, Orders, OrderItems
+   - Insert sample data
+
+2. **Verify connection string**: The default in `DatabaseProject/DatabaseProject.csproj` should work:
+   ```xml
+   <EfcptConnectionString>Server=(localdb)\mssqllocaldb;Database=EfcptSampleDb;Trusted_Connection=True</EfcptConnectionString>
+   ```
 
 3. **Build**:
    ```bash

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 
 namespace JD.Efcpt.Build.Tasks.Utilities;
 
@@ -36,7 +37,17 @@ internal static class DotNetToolUtilities
                 }
             };
 
+            var outputBuilder = new StringBuilder();
+            process.OutputDataReceived += (_, e) =>
+            {
+                if (e.Data != null)
+                {
+                    outputBuilder.AppendLine(e.Data);
+                }
+            };
+
             process.Start();
+            process.BeginOutputReadLine();
 
             if (!process.WaitForExit(ProcessTimeoutMs))
             {
@@ -47,7 +58,7 @@ internal static class DotNetToolUtilities
             if (process.ExitCode != 0)
                 return false;
 
-            var output = process.StandardOutput.ReadToEnd();
+            var output = outputBuilder.ToString();
 
             // Parse SDK versions from output like "10.0.100 [C:\Program Files\dotnet\sdk]"
             foreach (var line in output.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries))
@@ -94,7 +105,17 @@ internal static class DotNetToolUtilities
                 }
             };
 
+            var outputBuilder = new StringBuilder();
+            process.OutputDataReceived += (_, e) =>
+            {
+                if (e.Data != null)
+                {
+                    outputBuilder.AppendLine(e.Data);
+                }
+            };
+
             process.Start();
+            process.BeginOutputReadLine();
 
             if (!process.WaitForExit(ProcessTimeoutMs))
             {
@@ -107,7 +128,7 @@ internal static class DotNetToolUtilities
                 return false;
             }
 
-            var output = process.StandardOutput.ReadToEnd();
+            var output = outputBuilder.ToString();
 
             // If we can list runtimes and at least one .NET 10 runtime is present, dnx is available
             foreach (var line in output.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries))

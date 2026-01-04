@@ -311,7 +311,7 @@
           DependsOnTargets="EfcptResolveInputs;EfcptResolveInputsForDirectDacpac"
           Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(EfcptDacpac)' != ''">
     <PropertyGroup>
-      <!-- Use Combine+GetFullPath for .NET Framework compatibility (GetFullPath with basePath is .NET Core only) -->
+      <!-- Use Combine+GetFullPath to resolve non-rooted EfcptDacpac paths relative to $(MSBuildProjectDirectory) -->
       <_EfcptDacpacPath Condition="$([System.IO.Path]::IsPathRooted('$(EfcptDacpac)'))">$(EfcptDacpac)</_EfcptDacpacPath>
       <_EfcptDacpacPath Condition="!$([System.IO.Path]::IsPathRooted('$(EfcptDacpac)'))">$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(EfcptDacpac)'))))</_EfcptDacpacPath>
       <_EfcptUseDirectDacpac>true</_EfcptUseDirectDacpac>
@@ -586,7 +586,7 @@
           Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptSplitOutputs)' == 'true'">
 
     <!-- Resolve Data project path -->
-    <!-- Use Combine+GetFullPath for .NET Framework compatibility (GetFullPath with basePath is .NET Core only) -->
+    <!-- Use Combine+GetFullPath to resolve non-rooted EfcptDataProject paths relative to $(MSBuildProjectDirectory) -->
     <PropertyGroup>
       <_EfcptDataProjectPath Condition="'$(EfcptDataProject)' != '' and $([System.IO.Path]::IsPathRooted('$(EfcptDataProject)'))">$(EfcptDataProject)</_EfcptDataProjectPath>
       <_EfcptDataProjectPath Condition="'$(EfcptDataProject)' != '' and !$([System.IO.Path]::IsPathRooted('$(EfcptDataProject)'))">$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(EfcptDataProject)'))))</_EfcptDataProjectPath>
