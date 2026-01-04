@@ -214,13 +214,8 @@ public class SqlGenerationIntegrationTests : IAsyncDisposable
         var firstBuildResult = await _builder.BuildAsync();
         firstBuildResult.Success.Should().BeTrue($"First build should succeed.\n{firstBuildResult}");
 
-        // Record file timestamps
+        // Record file path
         var productSqlPath = Path.Combine(_builder.ProjectDirectory, "dbo", "Tables", "Product.sql");
-        DateTime? firstBuildTime = null;
-        if (File.Exists(productSqlPath))
-        {
-            firstBuildTime = File.GetLastWriteTimeUtc(productSqlPath);
-        }
 
         // Wait a bit to ensure timestamp would change if regenerated
         await Task.Delay(1000);
