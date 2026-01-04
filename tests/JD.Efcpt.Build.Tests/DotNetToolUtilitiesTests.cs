@@ -106,7 +106,7 @@ public sealed class DotNetToolUtilitiesTests(ITestOutputHelper output) : TinyBdd
     {
         await Given("null target framework", () => (string?)null)
             .When("IsDotNet10OrLater is called", t => DotNetToolUtilities.IsDotNet10OrLater(t!))
-            .Then("returns false", result => result == false)
+            .Then("returns false", result => !result)
             .AssertPassed();
     }
 
