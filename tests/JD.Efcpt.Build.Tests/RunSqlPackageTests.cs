@@ -513,8 +513,8 @@ public sealed class RunSqlPackageTests(ITestOutputHelper output) : TinyBddXunitB
         {
             // Empty string defaults to true, explicit false values should be false
             if (string.IsNullOrEmpty(r.value))
-                return r.shouldRestore == true;
-            return r.shouldRestore == false;
+                return r.shouldRestore;
+            return !r.shouldRestore;
         })
         .Finally(r => Cleanup(r.state))
         .AssertPassed();
