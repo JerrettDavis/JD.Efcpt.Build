@@ -35,4 +35,58 @@
     <Compile Remove="**\*" />
   </ItemGroup>
 
+  <!-- Replace TEMPLATE_SDK_VERSION with actual package version during pack -->
+  <UsingTask TaskName="ReplaceFileContent" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <FilePath ParameterType="System.String" Required="true" />
+      <OldValue ParameterType="System.String" Required="true" />
+      <NewValue ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.IO" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+        var content = File.ReadAllText(FilePath);
+        content = content.Replace(OldValue, NewValue);
+        File.WriteAllText(FilePath, content);
+      ]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="ReplaceTemplateSdkVersion" BeforeTargets="GenerateNuspec">
+    <PropertyGroup>
+      <_TemplateJsonPath>$(MSBuildProjectDirectory)/templates/efcptbuild/.template.config/template.json</_TemplateJsonPath>
+      <_TemplateCsprojPath>$(MSBuildProjectDirectory)/templates/efcptbuild/EfcptProject.csproj</_TemplateCsprojPath>
+      <_TemplateJsonBackupPath>$(MSBuildProjectDirectory)/templates/efcptbuild/.template.config/template.json.bak</_TemplateJsonBackupPath>
+      <_TemplateCsprojBackupPath>$(MSBuildProjectDirectory)/templates/efcptbuild/EfcptProject.csproj.bak</_TemplateCsprojBackupPath>
+    </PropertyGroup>
+    
+    <!-- Backup original files -->
+    <Copy SourceFiles="$(_TemplateJsonPath)" DestinationFiles="$(_TemplateJsonBackupPath)" />
+    <Copy SourceFiles="$(_TemplateCsprojPath)" DestinationFiles="$(_TemplateCsprojBackupPath)" />
+    
+    <!-- Replace in files -->
+    <ReplaceFileContent FilePath="$(_TemplateJsonPath)" OldValue="TEMPLATE_SDK_VERSION" NewValue="$(PackageVersion)" />
+    <ReplaceFileContent FilePath="$(_TemplateCsprojPath)" OldValue="TEMPLATE_SDK_VERSION" NewValue="$(PackageVersion)" />
+    
+    <Message Importance="high" Text="Replaced TEMPLATE_SDK_VERSION with $(PackageVersion) in template files" />
+  </Target>
+
+  <!-- Restore original template files after pack -->
+  <Target Name="RestoreTemplateFiles" AfterTargets="Pack">
+    <PropertyGroup>
+      <_TemplateJsonPath>$(MSBuildProjectDirectory)/templates/efcptbuild/.template.config/template.json</_TemplateJsonPath>
+      <_TemplateCsprojPath>$(MSBuildProjectDirectory)/templates/efcptbuild/EfcptProject.csproj</_TemplateCsprojPath>
+      <_TemplateJsonBackupPath>$(MSBuildProjectDirectory)/templates/efcptbuild/.template.config/template.json.bak</_TemplateJsonBackupPath>
+      <_TemplateCsprojBackupPath>$(MSBuildProjectDirectory)/templates/efcptbuild/EfcptProject.csproj.bak</_TemplateCsprojBackupPath>
+    </PropertyGroup>
+    
+    <!-- Restore from backups -->
+    <Move SourceFiles="$(_TemplateJsonBackupPath)" DestinationFiles="$(_TemplateJsonPath)" Condition="Exists('$(_TemplateJsonBackupPath)')" />
+    <Move SourceFiles="$(_TemplateCsprojBackupPath)" DestinationFiles="$(_TemplateCsprojPath)" Condition="Exists('$(_TemplateCsprojBackupPath)')" />
+    
+    <Message Importance="high" Text="Restored original template files" />
+  </Target>
+
 </Project>

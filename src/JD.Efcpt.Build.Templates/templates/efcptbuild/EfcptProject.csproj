@@ -10,7 +10,7 @@
   
   No JD.Efcpt.Build PackageReference needed - the SDK handles everything!
 -->
-<Project Sdk="JD.Efcpt.Sdk">
+<Project Sdk="JD.Efcpt.Sdk/TEMPLATE_SDK_VERSION">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
