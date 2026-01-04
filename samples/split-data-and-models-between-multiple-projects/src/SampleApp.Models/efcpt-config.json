@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/master/samples/efcpt-config.schema.json",
   "names": {
     "root-namespace": "SampleApp",
     "dbcontext-name": "SampleDbContext",
@@ -12,8 +13,6 @@
   },
   "file-layout": {
     "output-path": "Models",
-    "output-dbcontext-path": ".",
-    "use-schema-folders-preview": false,
-    "use-schema-namespaces-preview": false
+    "output-dbcontext-path": "."
   }
 }
