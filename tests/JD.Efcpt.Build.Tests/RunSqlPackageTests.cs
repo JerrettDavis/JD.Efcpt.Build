@@ -563,7 +563,8 @@ public sealed class RunSqlPackageTests(ITestOutputHelper output) : TinyBddXunitB
         {
             var state = Setup();
             var workingDir = state.TempDir;
-            var relativePath = "tools\\sqlpackage.exe";
+            // Use Path.Combine for cross-platform compatibility
+            var relativePath = Path.Combine("tools", "sqlpackage.exe");
 
             // Create the tool file
             var toolDir = Path.Combine(workingDir, "tools");
