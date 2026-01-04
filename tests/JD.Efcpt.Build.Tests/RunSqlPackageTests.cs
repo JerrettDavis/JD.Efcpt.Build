@@ -682,7 +682,11 @@ public sealed class RunSqlPackageTests(ITestOutputHelper output) : TinyBddXunitB
             var extractedPath = s.targetDir;
             return (s.state, extractedPath, s.targetDir);
         })
-        .Then("ExtractedPath equals TargetDirectory", r => r.extractedPath == r.targetDir)
+        .Then("ExtractedPath equals TargetDirectory", r =>
+        {
+            var expectedPath = Path.Combine(r.state.TempDir, "output");
+            return r.extractedPath == expectedPath && r.targetDir == expectedPath;
+        })
         .Finally(r => Cleanup(r.state))
         .AssertPassed();
     }
