@@ -203,7 +203,7 @@ public sealed class AddSqlFileWarningsTests(ITestOutputHelper output) : TinyBddX
         })
         .Then("task succeeds", r => r.result)
         .And("no files are processed", r => r.FilesProcessed == 0)
-        .And("warning is logged", r => r.Warnings.Any(w => w.Message?.Contains("Scripts directory not found") == true))
+        .And("warning is logged", r => r.Warnings.Any(w => w.Message?.Contains("Scripts directory not found") is true))
         .Finally(r => Cleanup(r.state))
         .AssertPassed();
     }
