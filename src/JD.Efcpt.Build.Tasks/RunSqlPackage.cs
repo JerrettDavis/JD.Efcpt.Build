@@ -337,6 +337,13 @@ public sealed class RunSqlPackage : Task
         // Properties for application-scoped objects only
         args.Append("/p:ExtractApplicationScopedObjectsOnly=True ");
 
+        // Exclude system objects that cause cross-platform path issues
+        args.Append("/p:IgnorePermissions=True ");
+        args.Append("/p:IgnoreRoleMembership=True ");
+        args.Append("/p:IgnoreUserSettingsObjects=True ");
+        args.Append("/p:IgnoreLoginSids=True ");
+        args.Append("/p:IgnoreUsers=True ");
+
         return args.ToString().Trim();
     }
 
