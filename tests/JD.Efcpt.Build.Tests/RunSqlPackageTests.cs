@@ -614,16 +614,9 @@ public sealed class RunSqlPackageTests(ITestOutputHelper output) : TinyBddXunitB
             var sourceDirNormalized = s.sourceDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
 
             // Simulate the substring logic
-            string relativePath;
-            if (s.fileName.StartsWith(sourceDirNormalized, StringComparison.OrdinalIgnoreCase))
-            {
-                relativePath = s.fileName.Substring(sourceDirNormalized.Length);
-            }
-            else
-            {
-                // Fallback: use just the filename
-                relativePath = Path.GetFileName(s.fileName);
-            }
+            var relativePath = s.fileName.StartsWith(sourceDirNormalized, StringComparison.OrdinalIgnoreCase)
+                ? s.fileName.Substring(sourceDirNormalized.Length)
+                : Path.GetFileName(s.fileName); // Fallback: use just the filename
 
             return (s.state, relativePath, s.fileName);
         })
