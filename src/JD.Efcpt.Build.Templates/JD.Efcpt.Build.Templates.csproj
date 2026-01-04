@@ -82,9 +82,13 @@
       <_TemplateCsprojBackupPath>$(MSBuildProjectDirectory)/templates/efcptbuild/EfcptProject.csproj.bak</_TemplateCsprojBackupPath>
     </PropertyGroup>
     
-    <!-- Restore from backups -->
+    <!-- Restore from backups if they exist -->
     <Move SourceFiles="$(_TemplateJsonBackupPath)" DestinationFiles="$(_TemplateJsonPath)" Condition="Exists('$(_TemplateJsonBackupPath)')" />
     <Move SourceFiles="$(_TemplateCsprojBackupPath)" DestinationFiles="$(_TemplateCsprojPath)" Condition="Exists('$(_TemplateCsprojBackupPath)')" />
+    
+    <!-- Verify restoration -->
+    <Error Text="Failed to restore template.json - backup file was not found" Condition="!Exists('$(_TemplateJsonPath)')" />
+    <Error Text="Failed to restore EfcptProject.csproj - backup file was not found" Condition="!Exists('$(_TemplateCsprojPath)')" />
     
     <Message Importance="high" Text="Restored original template files" />
   </Target>
