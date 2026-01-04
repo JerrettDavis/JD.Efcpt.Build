@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <!--
+        DataAccess Project:
+        References the DatabaseProject to get the DACPAC for EF Core model generation.
+    -->
+    <ItemGroup>
+        <!-- Reference the SQL Database Project - it builds first and creates the DACPAC -->
+        <ProjectReference Include="..\DatabaseProject\DatabaseProject.csproj">
+            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+            <OutputItemType>Content</OutputItemType>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </ProjectReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- JD.Efcpt.Build will generate EF Core models from the DatabaseProject DACPAC -->
+        <PackageReference Include="JD.Efcpt.Build" Version="*" />
+        
+        <!-- EF Core dependencies -->
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.1">
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+    </ItemGroup>
+</Project>

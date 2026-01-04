@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="MSBuild.Sdk.SqlProj/3.3.0">
+    <PropertyGroup>
+        <Name>DatabaseProject</Name>
+        <TargetFramework>net10.0</TargetFramework>
+        <SqlServerVersion>Sql160</SqlServerVersion>
+        <RunSqlCodeAnalysis>True</RunSqlCodeAnalysis>
+    </PropertyGroup>
+
+    <!--
+        Database-First SQL Generation:
+        JD.Efcpt.Build detects it's referenced in a SQL project and automatically
+        generates SQL scripts from the live database connection.
+    -->
+    <PropertyGroup>
+        <!-- Connection to source database -->
+        <EfcptConnectionString>Server=(localdb)\mssqllocaldb;Database=EfcptSampleDb;Trusted_Connection=True;MultipleActiveResultSets=true</EfcptConnectionString>
+        
+        <!-- Optional: Customize script output location (default is project root) -->
+        <EfcptSqlScriptsDir>$(MSBuildProjectDirectory)\</EfcptSqlScriptsDir>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- JD.Efcpt.Build will generate SQL scripts when building this project -->
+        <PackageReference Include="JD.Efcpt.Build" Version="*" />
+    </ItemGroup>
+</Project>
