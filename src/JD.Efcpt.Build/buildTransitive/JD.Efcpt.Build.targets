@@ -10,20 +10,31 @@
     <!-- Derive UseNullableReferenceTypes from project's Nullable setting for zero-config scenarios -->
     <EfcptConfigUseNullableReferenceTypes Condition="'$(EfcptConfigUseNullableReferenceTypes)'=='' and ('$(Nullable)'=='enable' or '$(Nullable)'=='Enable')">true</EfcptConfigUseNullableReferenceTypes>
     <EfcptConfigUseNullableReferenceTypes Condition="'$(EfcptConfigUseNullableReferenceTypes)'=='' and '$(Nullable)'!=''">false</EfcptConfigUseNullableReferenceTypes>
-
-    <!--
-      SQL Project Detection: Detect if this is a SQL database project (not an EF Core consumer project).
-
-      Detection logic:
-      - Microsoft.Build.Sql SDK: Check for $(SqlServerVersion) or $(DSP) properties
-      - MSBuild.Sdk.SqlProj: Check for $(SqlServerVersion)
-
-      This must be in the targets file (not props) because SDK properties like SqlServerVersion
-      are not available when props files are evaluated.
-    -->
-    <_EfcptIsSqlProject Condition="'$(_EfcptIsSqlProject)'=='' and ('$(SqlServerVersion)' != '' or '$(DSP)' != '')">true</_EfcptIsSqlProject>
-    <_EfcptIsSqlProject Condition="'$(_EfcptIsSqlProject)'==''">false</_EfcptIsSqlProject>
   </PropertyGroup>
+
+  <!--
+    SQL Project Detection: Detect if this is a SQL database project (not an EF Core consumer project).
+
+    Detection logic (in priority order):
+    1. Check if project file Sdk attribute references Microsoft.Build.Sql or MSBuild.Sdk.SqlProj
+    2. Fall back to MSBuild properties ($(SqlServerVersion) or $(DSP)) for legacy SSDT projects
+
+    This must be in the targets file (not props) because SDK properties like SqlServerVersion
+    are not available when props files are evaluated.
+  -->
+  <Target Name="_EfcptDetectSqlProject" BeforeTargets="BeforeBuild;BeforeRebuild">
+    <DetectSqlProject
+        ProjectPath="$(MSBuildProjectFullPath)"
+        SqlServerVersion="$(SqlServerVersion)"
+        DSP="$(DSP)">
+      <Output TaskParameter="IsSqlProject" PropertyName="_EfcptIsSqlProject" />
+    </DetectSqlProject>
+    
+    <!-- Defensive: ensure the property is always set, even if the task encounters an unexpected scenario -->
+    <PropertyGroup>
+      <_EfcptIsSqlProject Condition="'$(_EfcptIsSqlProject)'==''">false</_EfcptIsSqlProject>
+    </PropertyGroup>
+  </Target>
 
   <!--
     Determine the correct task assembly path based on MSBuild runtime and version.
@@ -115,6 +126,9 @@
              AssemblyFile="$(_EfcptTaskAssembly)" />
 
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.AddSqlFileWarnings"
+             AssemblyFile="$(_EfcptTaskAssembly)" />
+
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.DetectSqlProject"
              AssemblyFile="$(_EfcptTaskAssembly)" />
 
   <!--
