@@ -30,7 +30,7 @@
       <Output TaskParameter="IsSqlProject" PropertyName="_EfcptIsSqlProject" />
     </DetectSqlProject>
     
-    <!-- Set default to false if not already set (shouldn't happen but defensive) -->
+    <!-- Defensive: ensure the property is always set, even if the task encounters an unexpected scenario -->
     <PropertyGroup>
       <_EfcptIsSqlProject Condition="'$(_EfcptIsSqlProject)'==''">false</_EfcptIsSqlProject>
     </PropertyGroup>

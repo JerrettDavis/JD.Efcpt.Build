@@ -7,6 +7,7 @@ namespace JD.Efcpt.Build.Tasks;
 /// MSBuild task that detects whether the current project is a SQL database project.
 /// Uses the SqlProjectDetector to check for SDK-based projects first, then falls back to property-based detection.
 /// </summary>
+// Note: Fully qualifying Task to avoid ambiguity with System.Threading.Tasks.Task
 public sealed class DetectSqlProject : Microsoft.Build.Utilities.Task
 {
     /// <summary>
