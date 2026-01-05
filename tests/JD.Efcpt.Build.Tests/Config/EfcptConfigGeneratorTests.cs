@@ -34,6 +34,11 @@ public class EfcptConfigGeneratorTests
         // Verify it's valid JSON
         var parsed = JsonNode.Parse(result);
         Assert.NotNull(parsed);
+        
+        // Verify $schema property is present
+        Assert.NotNull(parsed["$schema"]);
+        Assert.Equal("https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/master/samples/efcpt-config.schema.json", 
+            parsed["$schema"]?.GetValue<string>());
     }
 
     [Fact]
@@ -157,9 +162,53 @@ public class EfcptConfigGeneratorTests
         Assert.Contains("\"code-generation\":", result);
         Assert.Contains("\"names\":", result);
         Assert.Contains("\"file-layout\":", result);
+        Assert.Contains("\"$schema\":", result);
 
         // Verify indentation (should be formatted)
         Assert.Contains("  ", result);
+        
+        // Verify type-mappings is NOT present (not required)
+        Assert.DoesNotContain("\"type-mappings\":", result);
+    }
+    
+    [Fact]
+    public void GenerateFromFile_OnlyIncludesRequiredProperties()
+    {
+        // Act
+        var result = EfcptConfigGenerator.GenerateFromFile(_schemaPath);
+        var config = JsonNode.Parse(result);
+
+        // Assert
+        Assert.NotNull(config);
+        
+        // Verify only required sections are present
+        Assert.NotNull(config["$schema"]);
+        Assert.NotNull(config["code-generation"]);
+        Assert.NotNull(config["names"]);
+        Assert.NotNull(config["file-layout"]);
+        
+        // Verify optional sections are NOT present
+        Assert.Null(config["type-mappings"]);
+        Assert.Null(config["tables"]);
+        Assert.Null(config["views"]);
+        Assert.Null(config["stored-procedures"]);
+        Assert.Null(config["functions"]);
+        Assert.Null(config["replacements"]);
+        
+        // Verify code-generation has exactly 12 required properties
+        var codeGen = config["code-generation"]?.AsObject();
+        Assert.NotNull(codeGen);
+        Assert.Equal(12, codeGen.Count);
+        
+        // Verify names has exactly 2 required properties
+        var names = config["names"]?.AsObject();
+        Assert.NotNull(names);
+        Assert.Equal(2, names.Count);
+        
+        // Verify file-layout has exactly 1 required property
+        var fileLayout = config["file-layout"]?.AsObject();
+        Assert.NotNull(fileLayout);
+        Assert.Single(fileLayout);
     }
 
     private static string FindRepoRoot()
