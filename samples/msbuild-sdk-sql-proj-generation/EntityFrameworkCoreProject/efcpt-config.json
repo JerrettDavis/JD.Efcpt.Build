@@ -1,20 +1,18 @@
 {
+  "$schema": "https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/master/samples/efcpt-config.schema.json",
   "names": {
     "root-namespace": "EntityFrameworkCoreProject",
     "dbcontext-name": "SampleDbContext",
     "dbcontext-namespace": null,
-    "entity-namespace": "EntityFrameworkCoreProject.Models"
+    "model-namespace": "EntityFrameworkCoreProject.Models"
   },
   "code-generation": {
     "use-t4": true,
     "t4-template-path": ".",
     "enable-on-configuring": false
-    
   },
   "file-layout": {
     "output-path": "Models",
-    "output-dbcontext-path": ".",
-    "use-schema-folders-preview": true,
-    "use-schema-namespaces-preview": false
+    "output-dbcontext-path": "."
   }
 }
