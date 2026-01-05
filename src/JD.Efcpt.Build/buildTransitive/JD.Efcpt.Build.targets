@@ -10,20 +10,33 @@
     <!-- Derive UseNullableReferenceTypes from project's Nullable setting for zero-config scenarios -->
     <EfcptConfigUseNullableReferenceTypes Condition="'$(EfcptConfigUseNullableReferenceTypes)'=='' and ('$(Nullable)'=='enable' or '$(Nullable)'=='Enable')">true</EfcptConfigUseNullableReferenceTypes>
     <EfcptConfigUseNullableReferenceTypes Condition="'$(EfcptConfigUseNullableReferenceTypes)'=='' and '$(Nullable)'!=''">false</EfcptConfigUseNullableReferenceTypes>
-
-    <!--
-      SQL Project Detection: Detect if this is a SQL database project (not an EF Core consumer project).
-
-      Detection logic:
-      - Microsoft.Build.Sql SDK: Check for $(SqlServerVersion) or $(DSP) properties
-      - MSBuild.Sdk.SqlProj: Check for $(SqlServerVersion)
-
-      This must be in the targets file (not props) because SDK properties like SqlServerVersion
-      are not available when props files are evaluated.
-    -->
-    <_EfcptIsSqlProject Condition="'$(_EfcptIsSqlProject)'=='' and ('$(SqlServerVersion)' != '' or '$(DSP)' != '')">true</_EfcptIsSqlProject>
-    <_EfcptIsSqlProject Condition="'$(_EfcptIsSqlProject)'==''">false</_EfcptIsSqlProject>
   </PropertyGroup>
+
+  <!--
+    SQL Project Detection: Detect if this is a SQL database project (not an EF Core consumer project).
+
+    Detection logic (in priority order):
+    1. Check if project file Sdk attribute references Microsoft.Build.Sql or MSBuild.Sdk.SqlProj
+    2. Fall back to MSBuild properties ($(SqlServerVersion) or $(DSP)) for legacy SSDT projects
+
+    This must be in the targets file (not props) because SDK properties like SqlServerVersion
+    are not available when props files are evaluated.
+  -->
+  <Target Name="_EfcptDetectSqlProject" BeforeTargets="BeforeBuild;BeforeRebuild;BeforeClean">
+    <PropertyGroup>
+      <!-- Read the project file content to check SDK attribute -->
+      <_EfcptProjectContent Condition="Exists('$(MSBuildProjectFullPath)')">$([System.IO.File]::ReadAllText('$(MSBuildProjectFullPath)'))</_EfcptProjectContent>
+      
+      <!-- Check if SDK attribute contains supported SQL SDKs -->
+      <_EfcptHasMicrosoftBuildSql Condition="$(_EfcptProjectContent.Contains('Microsoft.Build.Sql'))">true</_EfcptHasMicrosoftBuildSql>
+      <_EfcptHasMSBuildSdkSqlProj Condition="$(_EfcptProjectContent.Contains('MSBuild.Sdk.SqlProj'))">true</_EfcptHasMSBuildSdkSqlProj>
+      
+      <!-- Detect SQL project: SDK-based first, then property-based for legacy -->
+      <_EfcptIsSqlProject Condition="'$(_EfcptIsSqlProject)'=='' and ('$(_EfcptHasMicrosoftBuildSql)' == 'true' or '$(_EfcptHasMSBuildSdkSqlProj)' == 'true')">true</_EfcptIsSqlProject>
+      <_EfcptIsSqlProject Condition="'$(_EfcptIsSqlProject)'=='' and ('$(SqlServerVersion)' != '' or '$(DSP)' != '')">true</_EfcptIsSqlProject>
+      <_EfcptIsSqlProject Condition="'$(_EfcptIsSqlProject)'==''">false</_EfcptIsSqlProject>
+    </PropertyGroup>
+  </Target>
 
   <!--
     Determine the correct task assembly path based on MSBuild runtime and version.
