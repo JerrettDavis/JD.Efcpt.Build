@@ -18,7 +18,9 @@
     "output-path": "Models"
   },
   "names": {
+    "root-namespace": "EfcptProject",
     "dbcontext-name": "ApplicationDbContext",
-    "root-namespace": "EfcptProject"
+    "dbcontext-namespace": "EfcptProject.Data",
+    "model-namespace": "EfcptProject.Data.Entities"
   }
 }
