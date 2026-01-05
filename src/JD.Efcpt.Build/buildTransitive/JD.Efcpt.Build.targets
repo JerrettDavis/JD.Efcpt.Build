@@ -22,18 +22,16 @@
     This must be in the targets file (not props) because SDK properties like SqlServerVersion
     are not available when props files are evaluated.
   -->
-  <Target Name="_EfcptDetectSqlProject" BeforeTargets="BeforeBuild;BeforeRebuild;BeforeClean">
+  <Target Name="_EfcptDetectSqlProject" BeforeTargets="BeforeBuild;BeforeRebuild">
+    <DetectSqlProject
+        ProjectPath="$(MSBuildProjectFullPath)"
+        SqlServerVersion="$(SqlServerVersion)"
+        DSP="$(DSP)">
+      <Output TaskParameter="IsSqlProject" PropertyName="_EfcptIsSqlProject" />
+    </DetectSqlProject>
+    
+    <!-- Set default to false if not already set (shouldn't happen but defensive) -->
     <PropertyGroup>
-      <!-- Read the project file content to check SDK attribute -->
-      <_EfcptProjectContent Condition="Exists('$(MSBuildProjectFullPath)')">$([System.IO.File]::ReadAllText('$(MSBuildProjectFullPath)'))</_EfcptProjectContent>
-      
-      <!-- Check if SDK attribute contains supported SQL SDKs -->
-      <_EfcptHasMicrosoftBuildSql Condition="$(_EfcptProjectContent.Contains('Microsoft.Build.Sql'))">true</_EfcptHasMicrosoftBuildSql>
-      <_EfcptHasMSBuildSdkSqlProj Condition="$(_EfcptProjectContent.Contains('MSBuild.Sdk.SqlProj'))">true</_EfcptHasMSBuildSdkSqlProj>
-      
-      <!-- Detect SQL project: SDK-based first, then property-based for legacy -->
-      <_EfcptIsSqlProject Condition="'$(_EfcptIsSqlProject)'=='' and ('$(_EfcptHasMicrosoftBuildSql)' == 'true' or '$(_EfcptHasMSBuildSdkSqlProj)' == 'true')">true</_EfcptIsSqlProject>
-      <_EfcptIsSqlProject Condition="'$(_EfcptIsSqlProject)'=='' and ('$(SqlServerVersion)' != '' or '$(DSP)' != '')">true</_EfcptIsSqlProject>
       <_EfcptIsSqlProject Condition="'$(_EfcptIsSqlProject)'==''">false</_EfcptIsSqlProject>
     </PropertyGroup>
   </Target>
