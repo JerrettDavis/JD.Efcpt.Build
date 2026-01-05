@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/master/samples/efcpt-config.schema.json",
   "code-generation": {
     "enable-on-configuring": false,
     "type": "all",
@@ -9,33 +10,15 @@
     "use-legacy-inflector": false,
     "use-many-to-many-entity": false,
     "use-t4": false,
-    "use-t4-split": false,
     "remove-defaultsql-from-bool-properties": false,
     "soft-delete-obsolete-files": true,
-    "use-alternate-stored-procedure-resultset-discovery": false,
-    "t4-template-path": null,
-    "merge-dacpacs": false,
-    "refresh-object-lists": true,
-    "generate-mermaid-diagram": false,
-    "use-decimal-data-annotation-for-sproc-results": true,
-    "use-prefix-navigation-naming": false,
-    "use-database-names-for-routines": true,
-    "use-internal-access-modifiers-for-sprocs-and-functions": false
+    "use-alternate-stored-procedure-resultset-discovery": false
   },
   "file-layout": {
-    "output-path": "Models",
-    "output-dbcontext-path": null
+    "output-path": "Models"
   },
   "names": {
-    "root-namespace": "EfcptProject",
     "dbcontext-name": "ApplicationDbContext",
-    "dbcontext-namespace": null,
-    "model-namespace": null
-  },
-  "type-mappings": {
-    "use-DateOnly-TimeOnly": false,
-    "use-HierarchyId": false,
-    "use-spatial": false,
-    "use-NodaTime": false
+    "root-namespace": "EfcptProject"
   }
 }

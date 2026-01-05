@@ -14,12 +14,13 @@ namespace JD.Efcpt.Build.Tasks.Config;
 /// </summary>
 public static class EfcptConfigGenerator
 {
-    private const string DefaultSchemaUrl = "https://raw.githubusercontent.com/JerrettDavis/JD.Efcpt.Build/refs/heads/main/lib/efcpt-config.schema.json";
+    private const string PrimarySchemaUrl = "https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/master/samples/efcpt-config.schema.json";
+    private const string FallbackSchemaUrl = "https://raw.githubusercontent.com/JerrettDavis/JD.Efcpt.Build/refs/heads/main/lib/efcpt-config.schema.json";
 
     /// <summary>
     /// Generates a default efcpt-config.json from a schema URL.
     /// </summary>
-    /// <param name="schemaUrl">URL to the schema (optional, uses default if not provided)</param>
+    /// <param name="schemaUrl">URL to the schema (optional, tries primary then fallback)</param>
     /// <param name="dbContextName">Optional custom DbContext name (default: "ApplicationDbContext")</param>
     /// <param name="rootNamespace">Optional custom root namespace (default: "EfcptProject")</param>
     /// <returns>Generated JSON string</returns>
@@ -28,11 +29,30 @@ public static class EfcptConfigGenerator
         string? dbContextName = null,
         string? rootNamespace = null)
     {
-        schemaUrl ??= DefaultSchemaUrl;
+        schemaUrl ??= await TryGetSchemaUrlAsync();
 
         using var client = new HttpClient();
         var schemaJson = await client.GetStringAsync(schemaUrl);
-        return GenerateFromSchema(schemaJson, dbContextName, rootNamespace);
+        return GenerateFromSchema(schemaJson, dbContextName, rootNamespace, schemaUrl);
+    }
+
+    /// <summary>
+    /// Tries to fetch schema from primary URL, falling back to secondary if needed.
+    /// </summary>
+    private static async Task<string> TryGetSchemaUrlAsync()
+    {
+        using var client = new HttpClient();
+        client.Timeout = TimeSpan.FromSeconds(5);
+        
+        try
+        {
+            await client.GetStringAsync(PrimarySchemaUrl);
+            return PrimarySchemaUrl;
+        }
+        catch
+        {
+            return FallbackSchemaUrl;
+        }
     }
 
     /// <summary>
@@ -41,14 +61,17 @@ public static class EfcptConfigGenerator
     /// <param name="schemaPath">Path to the schema file</param>
     /// <param name="dbContextName">Optional custom DbContext name (default: "ApplicationDbContext")</param>
     /// <param name="rootNamespace">Optional custom root namespace (default: "EfcptProject")</param>
+    /// <param name="schemaUrl">Optional schema URL to include in $schema property (default: primary schema URL)</param>
     /// <returns>Generated JSON string</returns>
     public static string GenerateFromFile(
         string schemaPath,
         string? dbContextName = null,
-        string? rootNamespace = null)
+        string? rootNamespace = null,
+        string? schemaUrl = null)
     {
         var schemaJson = File.ReadAllText(schemaPath);
-        return GenerateFromSchema(schemaJson, dbContextName, rootNamespace);
+        schemaUrl ??= PrimarySchemaUrl;
+        return GenerateFromSchema(schemaJson, dbContextName, rootNamespace, schemaUrl);
     }
 
     /// <summary>
@@ -57,26 +80,33 @@ public static class EfcptConfigGenerator
     /// <param name="schemaJson">The JSON schema as a string</param>
     /// <param name="dbContextName">Optional custom DbContext name (default: "ApplicationDbContext")</param>
     /// <param name="rootNamespace">Optional custom root namespace (default: "EfcptProject")</param>
+    /// <param name="schemaUrl">Optional schema URL to include in $schema property (default: primary schema URL)</param>
     /// <returns>Generated JSON string</returns>
     public static string GenerateFromSchema(
         string schemaJson,
         string? dbContextName = null,
-        string? rootNamespace = null)
+        string? rootNamespace = null,
+        string? schemaUrl = null)
     {
         var schema = JsonNode.Parse(schemaJson);
         if (schema is null)
             throw new InvalidOperationException("Failed to parse schema JSON");
 
         var config = new JsonObject();
+        
+        // Add $schema property first
+        schemaUrl ??= PrimarySchemaUrl;
+        config["$schema"] = schemaUrl;
+
         var definitions = schema["definitions"]?.AsObject();
         if (definitions is null)
             throw new InvalidOperationException("Schema does not contain definitions section");
 
-        // Process each top-level section
+        // Process each top-level section - only required properties
         ProcessCodeGeneration(config, definitions);
         ProcessFileLayout(config, definitions);
         ProcessNames(config, definitions, dbContextName, rootNamespace);
-        ProcessTypeMappings(config, definitions);
+        // Don't process TypeMappings as it's not required
 
         // Serialize with indentation
         var options = new JsonSerializerOptions
@@ -93,21 +123,20 @@ public static class EfcptConfigGenerator
         var codeGenDef = definitions["CodeGeneration"]?.AsObject();
         if (codeGenDef is null) return;
 
+        var required = GetRequiredProperties(codeGenDef);
         var properties = codeGenDef["properties"]?.AsObject();
         if (properties is null) return;
 
         var codeGenConfig = new JsonObject();
 
-        // Process all properties, not just required ones
-        foreach (var kvp in properties)
+        // Process only required properties
+        foreach (var propName in required)
         {
-            var propName = kvp.Key;
-            
             // Skip preview properties
             if (propName.Contains("-preview", StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            var propDef = kvp.Value?.AsObject();
+            var propDef = properties[propName]?.AsObject();
             if (propDef is null) continue;
 
             if (TryGetDefaultValue(propDef, propName, out var defaultValue))
@@ -131,16 +160,15 @@ public static class EfcptConfigGenerator
         var namesDef = definitions["Names"]?.AsObject();
         if (namesDef is null) return;
 
+        var required = GetRequiredProperties(namesDef);
         var properties = namesDef["properties"]?.AsObject();
         if (properties is null) return;
 
         var namesConfig = new JsonObject();
 
-        // Process all properties
-        foreach (var kvp in properties)
+        // Process only required properties
+        foreach (var propName in required)
         {
-            var propName = kvp.Key;
-            
             // Skip preview properties
             if (propName.Contains("-preview", StringComparison.OrdinalIgnoreCase))
                 continue;
@@ -156,7 +184,7 @@ public static class EfcptConfigGenerator
             }
             else
             {
-                var propDef = kvp.Value?.AsObject();
+                var propDef = properties[propName]?.AsObject();
                 if (propDef is null) continue;
 
                 if (TryGetDefaultValue(propDef, propName, out var defaultValue))
@@ -170,8 +198,6 @@ public static class EfcptConfigGenerator
                         namesConfig[propName] = "ApplicationDbContext";
                     else if (propName == "root-namespace")
                         namesConfig[propName] = "EfcptProject";
-                    else
-                        namesConfig[propName] = JsonValue.Create<string?>(null);
                 }
             }
         }
@@ -187,21 +213,20 @@ public static class EfcptConfigGenerator
         var fileLayoutDef = definitions["FileLayout"]?.AsObject();
         if (fileLayoutDef is null) return;
 
+        var required = GetRequiredProperties(fileLayoutDef);
         var properties = fileLayoutDef["properties"]?.AsObject();
         if (properties is null) return;
 
         var fileLayoutConfig = new JsonObject();
 
-        // Process all properties, not just required ones
-        foreach (var kvp in properties)
+        // Process only required properties
+        foreach (var propName in required)
         {
-            var propName = kvp.Key;
-            
             // Skip preview properties
             if (propName.Contains("-preview", StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            var propDef = kvp.Value?.AsObject();
+            var propDef = properties[propName]?.AsObject();
             if (propDef is null) continue;
 
             if (TryGetDefaultValue(propDef, propName, out var defaultValue))
@@ -213,40 +238,6 @@ public static class EfcptConfigGenerator
         if (fileLayoutConfig.Count > 0)
         {
             config["file-layout"] = fileLayoutConfig;
-        }
-    }
-
-    private static void ProcessTypeMappings(JsonObject config, JsonObject definitions)
-    {
-        var typeMappingsDef = definitions["TypeMappings"]?.AsObject();
-        if (typeMappingsDef is null) return;
-
-        var properties = typeMappingsDef["properties"]?.AsObject();
-        if (properties is null) return;
-
-        var typeMappingsConfig = new JsonObject();
-
-        // Process all properties
-        foreach (var kvp in properties)
-        {
-            var propName = kvp.Key;
-            
-            // Skip preview properties
-            if (propName.Contains("-preview", StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            var propDef = kvp.Value?.AsObject();
-            if (propDef is null) continue;
-
-            if (TryGetDefaultValue(propDef, propName, out var defaultValue))
-            {
-                typeMappingsConfig[propName] = defaultValue;
-            }
-        }
-
-        if (typeMappingsConfig.Count > 0)
-        {
-            config["type-mappings"] = typeMappingsConfig;
         }
     }
 
