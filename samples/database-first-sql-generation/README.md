@@ -81,10 +81,10 @@ database-first-sql-generation/
 
 ### Automatic Detection
 
-JD.Efcpt.Build uses MSBuild properties to detect SQL projects:
+JD.Efcpt.Build detects SQL projects by checking the project file's SDK attribute:
 
-- **Microsoft.Build.Sql**: Checks for `$(DSP)` property
-- **MSBuild.Sdk.SqlProj**: Checks for `$(SqlServerVersion)` property
+- **SDK-based projects**: Checks if the `Sdk` attribute contains `Microsoft.Build.Sql` or `MSBuild.Sdk.SqlProj`
+- **Legacy SSDT projects**: Falls back to checking MSBuild properties (`$(DSP)` or `$(SqlServerVersion)`)
 
 When detected, it runs SQL generation instead of EF Core generation.
 
