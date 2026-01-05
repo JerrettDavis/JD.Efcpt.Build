@@ -27,16 +27,11 @@ jobs:
       - name: Download upstream schema
         id: download
         run: |
-          UPSTREAM_URL="https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/refs/heads/master/samples/efcpt-config.schema.json"
+          UPSTREAM_URL="https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/master/samples/efcpt-config.schema.json"
           LOCAL_PATH="lib/efcpt-config.schema.json"
           
           # Download the upstream schema to a temporary file
           curl -f -s -o /tmp/upstream-schema.json "$UPSTREAM_URL"
-          
-          if [ $? -ne 0 ]; then
-            echo "Failed to download upstream schema"
-            exit 1
-          fi
           
           # Compare the files
           if diff -q "$LOCAL_PATH" /tmp/upstream-schema.json > /dev/null 2>&1; then
@@ -58,7 +53,7 @@ jobs:
           body: |
             This PR updates the `/lib/efcpt-config.schema.json` file to match the upstream version from the EFCorePowerTools repository.
             
-            **Source**: https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/refs/heads/master/samples/efcpt-config.schema.json
+            **Source**: https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/master/samples/efcpt-config.schema.json
             
             This PR was automatically created by the scheduled workflow.
           branch: automated/update-efcpt-schema
