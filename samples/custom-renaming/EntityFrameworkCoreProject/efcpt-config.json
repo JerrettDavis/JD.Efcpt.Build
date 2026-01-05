@@ -11,8 +11,7 @@
     "use-t4": false
   },
   "file-layout": {
-    "output-path": "Models",
-    "use-schema-folders-preview": false
+    "output-path": "Models"
   },
   "tables": [
     { "name": "[dbo].[tblCustomers]" },
