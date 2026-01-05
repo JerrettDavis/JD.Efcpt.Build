@@ -1,50 +1,24 @@
 {
   "$schema": "https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/master/samples/efcpt-config.schema.json",
-  "code-generation":
-  { 
-     "enable-on-configuring": false,
-     "type": "all",
-     "use-database-names": false,
-     "use-data-annotations": false,
-     "use-nullable-reference-types": true,
-     "use-inflector": true,
-     "use-legacy-inflector": false,
-     "use-many-to-many-entity": false,
-     "use-t4": true,
-     "remove-defaultsql-from-bool-properties": false,
-     "soft-delete-obsolete-files": false,
-     "discover-multiple-stored-procedure-resultsets-preview": false,
-     "use-alternate-stored-procedure-resultset-discovery": false,
-     "t4-template-path": null
+  "code-generation": {
+    "enable-on-configuring": false,
+    "type": "all",
+    "use-database-names": false,
+    "use-data-annotations": false,
+    "use-nullable-reference-types": false,
+    "use-inflector": true,
+    "use-legacy-inflector": false,
+    "use-many-to-many-entity": false,
+    "use-t4": false,
+    "remove-defaultsql-from-bool-properties": false,
+    "soft-delete-obsolete-files": true,
+    "use-alternate-stored-procedure-resultset-discovery": false
   },
-  "names":
-  {
-    "root-namespace": "MyProject",
-    "dbcontext-name": "MyDbContext",
-    "dbcontext-namespace": null,
-    "model-namespace": null
+  "file-layout": {
+    "output-path": "Models"
   },
-  "file-layout":
-  {
-      "output-path": "Models",
-      "output-dbcontext-path": null,
-      "split-dbcontext-preview": false,
-      "use-schema-folders-preview": true,
-      "use-schema-namespaces-preview": false
-  },
- "type-mappings":
-  {
-     "use-DateOnly-TimeOnly": true,
-     "use-HierarchyId": true,
-     "use-spatial": true,
-     "use-NodaTime": false
-  },
-  "replacements":
-   {
-      "preserve-casing-with-regex": false,
-      "uncountable-words": [
-         "Status",
-         "Data"
-      ]
-   }
+  "names": {
+    "dbcontext-name": "ApplicationDbContext",
+    "root-namespace": "EfcptProject"
+  }
 }
