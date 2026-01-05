@@ -77,8 +77,8 @@ public class TemplateTests : IDisposable
         var projectContent = await File.ReadAllTextAsync(projectFile);
 
         // Assert
-        projectContent.Should().Contain("<Project Sdk=\"JD.Efcpt.Sdk\">",
-            "Project should use JD.Efcpt.Sdk");
+        projectContent.Should().Match("*<Project Sdk=\"JD.Efcpt.Sdk/*\">*",
+            "Project should use JD.Efcpt.Sdk with version");
         projectContent.Should().NotMatch("*<PackageReference*Include=\"JD.Efcpt.Build\"*",
             "Project should not reference JD.Efcpt.Build package directly");
         projectContent.Should().Contain("Microsoft.EntityFrameworkCore",
@@ -364,8 +364,8 @@ public class TemplateTests : IDisposable
         var projectContent = await File.ReadAllTextAsync(projectFile);
 
         // Assert
-        projectContent.Should().Contain("<Project Sdk=\"JD.Efcpt.Sdk\">",
-            $"{framework} project should use JD.Efcpt.Sdk");
+        projectContent.Should().Match("*<Project Sdk=\"JD.Efcpt.Sdk/*\">*",
+            $"{framework} project should use JD.Efcpt.Sdk with version");
         projectContent.Should().NotContain("PackageReference Include=\"JD.Efcpt.Build\"",
             $"{framework} project should not have JD.Efcpt.Build package reference");
     }
