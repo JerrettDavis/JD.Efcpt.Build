@@ -13,6 +13,7 @@
     "remove-defaultsql-from-bool-properties": false,
     "soft-delete-obsolete-files": true,
     "use-alternate-stored-procedure-resultset-discovery": false,
+    "t4-template-path": null,
     "merge-dacpacs": false,
     "refresh-object-lists": true,
     "generate-mermaid-diagram": false,
@@ -22,7 +23,8 @@
     "use-internal-access-modifiers-for-sprocs-and-functions": false
   },
   "file-layout": {
-    "output-path": "Models"
+    "output-path": "Models",
+    "output-dbcontext-path": null
   },
   "names": {
     "root-namespace": "EfcptProject",

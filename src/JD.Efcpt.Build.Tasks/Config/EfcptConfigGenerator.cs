@@ -110,8 +110,7 @@ public static class EfcptConfigGenerator
             var propDef = kvp.Value?.AsObject();
             if (propDef is null) continue;
 
-            var defaultValue = GetDefaultValue(propDef, propName);
-            if (defaultValue is not null)
+            if (TryGetDefaultValue(propDef, propName, out var defaultValue))
             {
                 codeGenConfig[propName] = defaultValue;
             }
@@ -160,10 +159,9 @@ public static class EfcptConfigGenerator
                 var propDef = kvp.Value?.AsObject();
                 if (propDef is null) continue;
 
-                var defaultValue = GetDefaultValue(propDef, propName);
-                if (defaultValue is not null)
+                if (TryGetDefaultValue(propDef, propName, out var defaultValue))
                 {
-                    namesConfig[propName] = defaultValue;
+                    namesConfig[propName] = defaultValue!;
                 }
                 else
                 {
@@ -206,8 +204,7 @@ public static class EfcptConfigGenerator
             var propDef = kvp.Value?.AsObject();
             if (propDef is null) continue;
 
-            var defaultValue = GetDefaultValue(propDef, propName);
-            if (defaultValue is not null)
+            if (TryGetDefaultValue(propDef, propName, out var defaultValue))
             {
                 fileLayoutConfig[propName] = defaultValue;
             }
@@ -241,8 +238,7 @@ public static class EfcptConfigGenerator
             var propDef = kvp.Value?.AsObject();
             if (propDef is null) continue;
 
-            var defaultValue = GetDefaultValue(propDef, propName);
-            if (defaultValue is not null)
+            if (TryGetDefaultValue(propDef, propName, out var defaultValue))
             {
                 typeMappingsConfig[propName] = defaultValue;
             }
@@ -267,36 +263,46 @@ public static class EfcptConfigGenerator
             .ToList();
     }
 
-    private static JsonNode? GetDefaultValue(JsonObject propertyDef, string propertyName)
+    private static bool TryGetDefaultValue(JsonObject propertyDef, string propertyName, out JsonNode? defaultValue)
     {
         // Check if there's an explicit default value
-        if (propertyDef.TryGetPropertyValue("default", out var defaultNode) && defaultNode is not null)
+        if (propertyDef.TryGetPropertyValue("default", out defaultValue) && defaultValue is not null)
         {
-            return defaultNode.DeepClone();
+            defaultValue = defaultValue.DeepClone();
+            return true;
         }
 
         // Check type to determine implicit defaults
         var type = propertyDef["type"];
-        if (type is null) return null;
+        if (type is null)
+        {
+            defaultValue = null;
+            return false;
+        }
 
         // Handle type as string
         if (type is JsonValue typeValue)
         {
             var typeStr = typeValue.GetValue<string>();
-            return typeStr switch
+            if (typeStr == "boolean")
             {
-                "boolean" => JsonValue.Create(false),
-                _ => null
-            };
+                defaultValue = JsonValue.Create(false);
+                return true;
+            }
+            
+            defaultValue = null;
+            return false;
         }
 
-        // Handle type as array (e.g., ["string", "null"])
+        // Handle type as array (e.g., ["string", "null"]) - nullable types
         if (type is JsonArray typeArray)
         {
             // Return null for nullable properties
-            return JsonValue.Create<string?>(null);
+            defaultValue = JsonValue.Create<string?>(null);
+            return true;
         }
 
-        return null;
+        defaultValue = null;
+        return false;
     }
 }
