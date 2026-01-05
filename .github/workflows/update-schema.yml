@@ -49,10 +49,10 @@ jobs:
             echo "Changes detected in schema file (local file was missing)"
           # Compare the files when the local schema exists
           elif diff -q "$LOCAL_PATH" /tmp/upstream-schema.json; then
-            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
             echo "No changes detected in schema file"
           else
-            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
             echo "Changes detected in schema file"
             cp /tmp/upstream-schema.json "$LOCAL_PATH"
           fi
