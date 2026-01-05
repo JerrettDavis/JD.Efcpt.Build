@@ -35,4 +35,130 @@
     <Compile Remove="**\*" />
   </ItemGroup>
 
+  <!--
+    Unified Template Replacement Strategy
+    =====================================
+    All template content uses dotnet template engine's symbol system for replacements:
+
+    1. Framework: Replaced at template instantiation time via "Framework" parameter symbol
+    2. EFCoreVersion: Replaced at template instantiation time via "EFCoreVersion" generated symbol
+    3. SdkVersion: Replaced at template instantiation time via "SdkVersion" parameter symbol
+
+    At pack time, we only update the defaultValue for SdkVersion in template.json to match the
+    package version being built. This ensures users get the correct SDK version by default.
+
+    The template csproj file uses SDKVERSION_PLACEHOLDER which gets replaced by the template
+    engine when users run `dotnet new efcptbuild`, just like net8.0 and 8.0.* placeholders.
+  -->
+  <UsingTask TaskName="ReplaceFileContent" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <FilePath ParameterType="System.String" Required="true" />
+      <OldValue ParameterType="System.String" Required="true" />
+      <NewValue ParameterType="System.String" Required="true" />
+      <UseRegex ParameterType="System.Boolean" Required="false" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+        var content = File.ReadAllText(FilePath);
+        string newContent;
+
+        if (UseRegex)
+        {
+          var regex = new Regex(OldValue);
+          if (!regex.IsMatch(content))
+          {
+            Log.LogWarning($"ReplaceFileContent: Regex pattern '{OldValue}' did not match any content in file '{FilePath}'. No replacement performed.");
+            return true;
+          }
+          newContent = regex.Replace(content, NewValue);
+        }
+        else
+        {
+          if (!content.Contains(OldValue))
+          {
+            Log.LogWarning($"ReplaceFileContent: OldValue '{OldValue}' was not found in file '{FilePath}'. No replacement performed.");
+            return true;
+          }
+          newContent = content.Replace(OldValue, NewValue);
+        }
+
+        File.WriteAllText(FilePath, newContent);
+        Log.LogMessage(Microsoft.Build.Framework.MessageImportance.High, $"Successfully replaced content in '{FilePath}'");
+      ]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
+  <!-- Cleanup target: Ensures any leftover backup files from failed previous packs are restored -->
+  <Target Name="EnsureTemplateFilesRestored" BeforeTargets="ReplaceTemplateSdkVersion">
+    <PropertyGroup>
+      <_TemplateJsonPath>$(MSBuildProjectDirectory)/templates/efcptbuild/.template.config/template.json</_TemplateJsonPath>
+      <_TemplateJsonBackupPath>$(MSBuildProjectDirectory)/templates/efcptbuild/.template.config/template.json.bak</_TemplateJsonBackupPath>
+    </PropertyGroup>
+
+    <!-- Restore from backup if one exists from a previous failed pack -->
+    <Move SourceFiles="$(_TemplateJsonBackupPath)" DestinationFiles="$(_TemplateJsonPath)" Condition="Exists('$(_TemplateJsonBackupPath)')" />
+
+    <Message Importance="high" Text="Ensured original template.json is restored before replacing SDK version." Condition="Exists('$(_TemplateJsonPath)')" />
+  </Target>
+
+  <Target Name="ReplaceTemplateSdkVersion" BeforeTargets="GenerateNuspec">
+    <PropertyGroup>
+      <_TemplateJsonPath>$(MSBuildProjectDirectory)/templates/efcptbuild/.template.config/template.json</_TemplateJsonPath>
+      <_TemplateJsonBackupPath>$(MSBuildProjectDirectory)/templates/efcptbuild/.template.config/template.json.bak</_TemplateJsonBackupPath>
+    </PropertyGroup>
+
+    <!-- Backup template.json -->
+    <Copy SourceFiles="$(_TemplateJsonPath)" DestinationFiles="$(_TemplateJsonBackupPath)" />
+
+    <!--
+      Replace the defaultValue in template.json with the actual package version.
+      The template engine will use this as the default when SdkVersion parameter is not specified.
+      This unifies all replacements to use the template.json symbol system, just like Framework and EFCoreVersion.
+
+      Uses regex to be tolerant of whitespace variations in JSON formatting.
+    -->
+    <ReplaceFileContent
+      FilePath="$(_TemplateJsonPath)"
+      OldValue="&quot;defaultValue&quot;\s*:\s*&quot;1\.0\.0&quot;"
+      NewValue="&quot;defaultValue&quot;: &quot;$(PackageVersion)&quot;"
+      UseRegex="true" />
+
+    <Message Importance="high" Text="Replaced SDK version defaultValue with $(PackageVersion) in template.json" />
+  </Target>
+
+  <!-- Restore original template.json after pack -->
+  <Target Name="RestoreTemplateFiles" AfterTargets="Pack">
+    <PropertyGroup>
+      <_TemplateJsonPath>$(MSBuildProjectDirectory)/templates/efcptbuild/.template.config/template.json</_TemplateJsonPath>
+      <_TemplateJsonBackupPath>$(MSBuildProjectDirectory)/templates/efcptbuild/.template.config/template.json.bak</_TemplateJsonBackupPath>
+    </PropertyGroup>
+
+    <!-- Check if backup exists before attempting restore -->
+    <Error Text="Cannot restore template.json - backup file was not found at '$(_TemplateJsonBackupPath)'" Condition="!Exists('$(_TemplateJsonBackupPath)')" />
+
+    <!-- Restore from backup -->
+    <Move SourceFiles="$(_TemplateJsonBackupPath)" DestinationFiles="$(_TemplateJsonPath)" Condition="Exists('$(_TemplateJsonBackupPath)')" />
+
+    <!-- Verify restoration succeeded -->
+    <Error Text="Failed to restore template.json - restored file was not found at '$(_TemplateJsonPath)'" Condition="!Exists('$(_TemplateJsonPath)')" />
+
+    <Message Importance="high" Text="Restored original template.json from backup" />
+  </Target>
+
+  <!-- Ensure any leftover backup from a previous failed pack is restored before modifying template.json again -->
+  <Target Name="EnsureTemplateFilesRestored" BeforeTargets="ReplaceTemplateSdkVersion">
+    <PropertyGroup>
+      <_TemplateJsonPath>$(MSBuildProjectDirectory)/templates/efcptbuild/.template.config/template.json</_TemplateJsonPath>
+      <_TemplateJsonBackupPath>$(MSBuildProjectDirectory)/templates/efcptbuild/.template.config/template.json.bak</_TemplateJsonBackupPath>
+    </PropertyGroup>
+
+    <!-- If a backup exists, restore it to ensure a clean state from any previous failed or interrupted pack -->
+    <Move SourceFiles="$(_TemplateJsonBackupPath)" DestinationFiles="$(_TemplateJsonPath)" Condition="Exists('$(_TemplateJsonBackupPath)')" />
+
+    <Message Importance="high" Text="Ensured original template.json is restored before replacing SDK version." Condition="Exists('$(_TemplateJsonPath)')" />
+  </Target>
 </Project>
