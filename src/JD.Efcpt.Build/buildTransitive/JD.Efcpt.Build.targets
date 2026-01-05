@@ -128,6 +128,9 @@
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.AddSqlFileWarnings"
              AssemblyFile="$(_EfcptTaskAssembly)" />
 
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.DetectSqlProject"
+             AssemblyFile="$(_EfcptTaskAssembly)" />
+
   <!--
     SDK Version Check: Warns users when a newer SDK version is available.
     Opt-in via EfcptCheckForUpdates=true. Results are cached for 24 hours.
