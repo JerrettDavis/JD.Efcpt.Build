@@ -174,15 +174,12 @@
 
   <!-- Lifecycle hook: BeforeSqlProjGeneration -->
   <Target Name="BeforeSqlProjGeneration"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'" />
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true' and ('$(EfcptConnectionString)' != '' or '$(EfcptAppSettings)' != '' or '$(EfcptAppConfig)' != '')" />
 
   <!-- Query database schema for fingerprinting -->
   <Target Name="EfcptQueryDatabaseSchemaForSqlProj"
           DependsOnTargets="BeforeSqlProjGeneration"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'">
-    <Error Condition="'$(EfcptConnectionString)' == '' and '$(EfcptAppSettings)' == '' and '$(EfcptAppConfig)' == ''"
-           Text="SqlProj generation requires a connection string. Set EfcptConnectionString, EfcptAppSettings, or EfcptAppConfig." />
-    
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true' and ('$(EfcptConnectionString)' != '' or '$(EfcptAppSettings)' != '' or '$(EfcptAppConfig)' != '')">
     <Message Text="Querying database schema for fingerprinting..." Importance="high" />
     
     <QuerySchemaMetadata
@@ -199,7 +196,7 @@
   <!-- Extract database schema to SQL scripts using sqlpackage -->
   <Target Name="EfcptExtractDatabaseSchemaToScripts"
           DependsOnTargets="EfcptQueryDatabaseSchemaForSqlProj"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true' and ('$(EfcptConnectionString)' != '' or '$(EfcptAppSettings)' != '' or '$(EfcptAppConfig)' != '')">
     <PropertyGroup>
       <!-- Extract directly to the SQL project directory -->
       <_EfcptScriptsDir>$(EfcptSqlScriptsDir)</_EfcptScriptsDir>
@@ -234,7 +231,7 @@
   <!-- Add auto-generation warnings to SQL files -->
   <Target Name="EfcptAddSqlFileWarnings"
           DependsOnTargets="EfcptExtractDatabaseSchemaToScripts"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true' and ('$(EfcptConnectionString)' != '' or '$(EfcptAppSettings)' != '' or '$(EfcptAppConfig)' != '')">
     <Message Text="Adding auto-generation warnings to SQL files..." Importance="high" />
     
     <!-- Get database name from connection string for the warning header -->
@@ -250,7 +247,8 @@
   </Target>
 
   <!-- Lifecycle hook: AfterSqlProjGeneration -->
-  <!-- This runs after SQL scripts are generated in the SQL project -->
+  <!-- This runs after SQL scripts are generated in the SQL project (if connection string provided) -->
+  <!-- Otherwise, it runs after the SQL project is detected -->
   <!-- The SQL project will build normally and create its DACPAC -->
   <!-- DataAccess projects that reference this SQL project will wait for this to complete -->
   <Target Name="AfterSqlProjGeneration"
@@ -258,7 +256,8 @@
           BeforeTargets="Build"
           Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'">
     <Message Text="_EfcptIsSqlProject: $(_EfcptIsSqlProject)" Importance="high" />
-    <Message Text="SQL script generation complete. SQL project will build to DACPAC." Importance="high" />
+    <Message Text="SQL script generation complete. SQL project will build to DACPAC." Importance="high" Condition="'$(EfcptConnectionString)' != '' or '$(EfcptAppSettings)' != '' or '$(EfcptAppConfig)' != ''" />
+    <Message Text="SQL project will build to DACPAC." Importance="high" Condition="'$(EfcptConnectionString)' == '' and '$(EfcptAppSettings)' == '' and '$(EfcptAppConfig)' == ''" />
   </Target>
 
   <!--
