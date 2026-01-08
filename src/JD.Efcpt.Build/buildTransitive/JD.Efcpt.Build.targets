@@ -296,8 +296,8 @@
       <Output TaskParameter="DownstreamProjects" ItemName="_EfcptDownstreamProject" />
     </DiscoverDownstreamProjects>
 
-    <Message Text="Discovered $([MSBuild]::ValueOrDefault('%(_EfcptDownstreamProject.Identity)', '').Split(';').Length) downstream project(s)"
-             Importance="normal"
+    <Message Text="Discovered @(_EfcptDownstreamProject->Count()) downstream project(s)"
+             Importance="high"
              Condition="'@(_EfcptDownstreamProject)' != ''" />
   </Target>
 
