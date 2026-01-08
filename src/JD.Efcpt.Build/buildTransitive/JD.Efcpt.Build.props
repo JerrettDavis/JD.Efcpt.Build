@@ -175,5 +175,12 @@
     <EfcptSqlPackageToolVersion Condition="'$(EfcptSqlPackageToolVersion)'==''"></EfcptSqlPackageToolVersion>
     <EfcptSqlPackageToolRestore Condition="'$(EfcptSqlPackageToolRestore)'==''">true</EfcptSqlPackageToolRestore>
     <EfcptSqlPackageToolPath Condition="'$(EfcptSqlPackageToolPath)'==''"></EfcptSqlPackageToolPath>
+
+    <!-- Downstream Project Triggering Configuration -->
+    <!-- When enabled in SQL projects, automatically discovers and builds EF Core projects that reference this SQL project -->
+    <EfcptTriggerDownstream Condition="'$(EfcptTriggerDownstream)'==''">true</EfcptTriggerDownstream>
+    <EfcptDownstreamProjects Condition="'$(EfcptDownstreamProjects)'==''"></EfcptDownstreamProjects>
+    <EfcptDownstreamAutoDiscover Condition="'$(EfcptDownstreamAutoDiscover)'==''">true</EfcptDownstreamAutoDiscover>
+    <EfcptDownstreamSearchPaths Condition="'$(EfcptDownstreamSearchPaths)'==''"></EfcptDownstreamSearchPaths>
   </PropertyGroup>
 </Project>

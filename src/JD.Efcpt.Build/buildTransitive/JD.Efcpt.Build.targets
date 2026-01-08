@@ -131,6 +131,9 @@
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.DetectSqlProject"
              AssemblyFile="$(_EfcptTaskAssembly)" />
 
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.DiscoverDownstreamProjects"
+             AssemblyFile="$(_EfcptTaskAssembly)" />
+
   <!--
     SDK Version Check: Warns users when a newer SDK version is available.
     Opt-in via EfcptCheckForUpdates=true. Results are cached for 24 hours.
@@ -256,6 +259,65 @@
           Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'">
     <Message Text="_EfcptIsSqlProject: $(_EfcptIsSqlProject)" Importance="high" />
     <Message Text="SQL script generation complete. SQL project will build to DACPAC." Importance="high" />
+  </Target>
+
+  <!--
+    ========================================================================
+    Downstream Project Triggering: Build referencing EF Core projects
+    ========================================================================
+    When JD.Efcpt.Build is in a SQL project and EfcptTriggerDownstream is enabled,
+    this pipeline discovers and builds downstream projects that reference the SQL
+    project and have JD.Efcpt.Build configured.
+    
+    This enables the simple integration workflow requested by users:
+    1. SQL project builds and creates DACPAC
+    2. Downstream EF Core projects are automatically discovered
+    3. Downstream projects are built, triggering EF Core model generation
+    
+    Configuration:
+    - EfcptTriggerDownstream: Enable/disable feature (default: true in SQL projects)
+    - EfcptDownstreamProjects: Explicit list of downstream projects (semicolon-separated)
+    - EfcptDownstreamAutoDiscover: Enable auto-discovery (default: true)
+    - EfcptDownstreamSearchPaths: Additional paths to search for projects
+  -->
+
+  <!-- Discover downstream projects that reference this SQL project -->
+  <Target Name="EfcptDiscoverDownstreamProjects"
+          DependsOnTargets="AfterSqlProjGeneration"
+          AfterTargets="AfterSqlProjGeneration"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true' and '$(EfcptTriggerDownstream)' == 'true'">
+    <DiscoverDownstreamProjects
+        SqlProjectPath="$(MSBuildProjectFullPath)"
+        SqlProjectDirectory="$(MSBuildProjectDirectory)"
+        SolutionDirectory="$(EfcptSolutionDir)"
+        AutoDiscover="$(EfcptDownstreamAutoDiscover)"
+        ExplicitDownstreamProjects="$(EfcptDownstreamProjects)"
+        AdditionalSearchPaths="$(EfcptDownstreamSearchPaths)"
+        LogVerbosity="$(EfcptLogVerbosity)">
+      <Output TaskParameter="DownstreamProjects" ItemName="_EfcptDownstreamProject" />
+    </DiscoverDownstreamProjects>
+
+    <Message Text="Discovered $([MSBuild]::ValueOrDefault('%(_EfcptDownstreamProject.Identity)', '').Split(';').Length) downstream project(s)"
+             Importance="normal"
+             Condition="'@(_EfcptDownstreamProject)' != ''" />
+  </Target>
+
+  <!-- Build discovered downstream projects to trigger their EF Core generation -->
+  <Target Name="EfcptBuildDownstreamProjects"
+          DependsOnTargets="EfcptDiscoverDownstreamProjects"
+          AfterTargets="Build"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true' and '$(EfcptTriggerDownstream)' == 'true' and '@(_EfcptDownstreamProject)' != ''">
+    <Message Text="Building downstream projects that reference this SQL project..." Importance="high" />
+    
+    <!-- Build each downstream project -->
+    <MSBuild Projects="@(_EfcptDownstreamProject)"
+             Targets="Build"
+             Properties="Configuration=$(Configuration)"
+             BuildInParallel="false">
+      <Output TaskParameter="TargetOutputs" ItemName="_EfcptDownstreamOutputs" />
+    </MSBuild>
+
+    <Message Text="Completed building @(_EfcptDownstreamProject->Count()) downstream project(s)" Importance="high" />
   </Target>
 
   <!-- Main pipeline -->
