@@ -182,5 +182,7 @@
     <EfcptDownstreamProjects Condition="'$(EfcptDownstreamProjects)'==''"></EfcptDownstreamProjects>
     <EfcptDownstreamAutoDiscover Condition="'$(EfcptDownstreamAutoDiscover)'==''">true</EfcptDownstreamAutoDiscover>
     <EfcptDownstreamSearchPaths Condition="'$(EfcptDownstreamSearchPaths)'==''"></EfcptDownstreamSearchPaths>
+    <EfcptDownstreamBuildProperties Condition="'$(EfcptDownstreamBuildProperties)'==''"></EfcptDownstreamBuildProperties>
+    <EfcptBuildingDownstream Condition="'$(EfcptBuildingDownstream)'==''">false</EfcptBuildingDownstream>
   </PropertyGroup>
 </Project>

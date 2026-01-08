@@ -18,7 +18,7 @@ Before this feature, users had a workflow like this:
 3. Run a script to trigger EF Core generation in the data access project:
 
 ```powershell
-$dacPacPath = "..\DatabaseProject\bin\Debug\net9.0\DatabaseProject.dacpac"
+$dacPacPath = "..\DatabaseProject\bin\Debug\net10.0\DatabaseProject.dacpac"
 dotnet build ..\DatabaseProject
 efcpt $dacPacPath
 ```
@@ -50,7 +50,8 @@ simple-sql-integration/
 │   ├── Tables/                   # SQL scripts
 │   │   ├── Categories.sql
 │   │   ├── Products.sql
-│   │   └── Orders.sql
+│   │   ├── Orders.sql
+│   │   └── OrderItems.sql
 │   └── bin/Debug/               # DACPAC output
 │
 └── DataAccessProject/            # EF Core Project

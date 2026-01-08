@@ -169,7 +169,19 @@ public sealed class DiscoverDownstreamProjects : Task
             }
 
             var parentDir = Path.GetDirectoryName(currentDir);
-            if (parentDir == currentDir) break; // Reached root
+            
+            // If there is no parent directory, we've reached the filesystem root (or an invalid path).
+            if (string.IsNullOrEmpty(parentDir))
+            {
+                break;
+            }
+
+            // Safety net: if no progress is possible, stop to avoid an infinite loop.
+            if (string.Equals(parentDir, currentDir, StringComparison.Ordinal))
+            {
+                break;
+            }
+            
             currentDir = parentDir;
         }
 
@@ -204,30 +216,93 @@ public sealed class DiscoverDownstreamProjects : Task
         return candidates;
     }
 
+    private static readonly HashSet<string> ExcludedSearchDirectories = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "bin",
+        "obj",
+        "node_modules",
+        ".git",
+        ".svn",
+        ".vs",
+        ".idea",
+        "packages",
+        ".vscode",
+        "TestResults",
+        "artifacts"
+    };
+
     private void AddProjectsFromDirectory(string directory, List<string> candidates, BuildLog log)
     {
         try
         {
-            // Find all .csproj files
-            var projects = Directory.GetFiles(directory, "*.csproj", SearchOption.AllDirectories);
-
-            foreach (var project in projects)
-            {
-                // Skip the SQL project itself
-                if (PathsAreEqual(project, SqlProjectPath))
-                    continue;
-
-                // Check if project has JD.Efcpt.Build or efcpt-config.json
-                if (IsEfcptProject(project, log))
-                {
-                    candidates.Add(project);
-                    log.Detail($"Found candidate project: {project}");
-                }
-            }
+            AddProjectsFromDirectoryRecursive(directory, candidates, log, 0);
         }
         catch (Exception ex)
         {
             log.Detail($"Error searching directory {directory}: {ex.Message}");
+        }
+    }
+
+    private void AddProjectsFromDirectoryRecursive(string directory, List<string> candidates, BuildLog log, int depth)
+    {
+        const int maxDepth = 10; // Prevent excessive recursion
+        
+        if (depth > maxDepth)
+        {
+            log.Detail($"Skipping directory due to depth limit: {directory}");
+            return;
+        }
+
+        try
+        {
+            // Find all .csproj files in current directory
+            var projects = Directory.GetFiles(directory, "*.csproj", SearchOption.TopDirectoryOnly)
+                .Where(project => !PathsAreEqual(project, SqlProjectPath) && IsEfcptProject(project, log))
+                .ToList();
+
+            foreach (var project in projects)
+            {
+                candidates.Add(project);
+                log.Detail($"Found candidate project: {project}");
+            }
+
+            // Recursively search subdirectories, excluding common build artifact directories
+            var subdirectories = Directory.GetDirectories(directory)
+                .Where(subdir => !ShouldSkipDirectory(subdir))
+                .ToList();
+
+            foreach (var subdir in subdirectories)
+            {
+                AddProjectsFromDirectoryRecursive(subdir, candidates, log, depth + 1);
+            }
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Skip directories we can't access
+            log.Detail($"Access denied to directory: {directory}");
+        }
+        catch (Exception ex)
+        {
+            log.Detail($"Error searching directory {directory}: {ex.Message}");
+        }
+    }
+
+    private static bool ShouldSkipDirectory(string directoryPath)
+    {
+        try
+        {
+            var name = Path.GetFileName(directoryPath);
+            if (string.IsNullOrEmpty(name))
+            {
+                return false;
+            }
+
+            return ExcludedSearchDirectories.Contains(name);
+        }
+        catch
+        {
+            // If anything goes wrong determining the directory name, don't skip it.
+            return false;
         }
     }
 
@@ -281,18 +356,11 @@ public sealed class DiscoverDownstreamProjects : Task
 
     private List<string> FilterDownstreamProjects(List<string> candidates, BuildLog log)
     {
-        var downstream = new List<string>();
         var sqlProjectName = Path.GetFileNameWithoutExtension(SqlProjectPath);
 
-        foreach (var candidate in candidates)
-        {
-            if (ReferenceSqlProject(candidate, sqlProjectName, log))
-            {
-                downstream.Add(candidate);
-            }
-        }
-
-        return downstream;
+        return candidates
+            .Where(candidate => ReferenceSqlProject(candidate, sqlProjectName, log))
+            .ToList();
     }
 
     private bool ReferenceSqlProject(string projectPath, string sqlProjectName, BuildLog log)
@@ -307,16 +375,18 @@ public sealed class DiscoverDownstreamProjects : Task
                 .Where(v => !string.IsNullOrEmpty(v))
                 .ToList();
 
-            foreach (var refPath in projectRefs)
+            var projectDir = Path.GetDirectoryName(projectPath);
+            if (projectDir == null)
             {
-                if (refPath == null)
-                    continue;
+                return false;
+            }
 
-                // Resolve relative path
-                var projectDir = Path.GetDirectoryName(projectPath);
-                if (projectDir != null)
+            return projectRefs
+                .Where(refPath => refPath != null)
+                .Any(refPath =>
                 {
-                    var resolvedRef = Path.GetFullPath(Path.Combine(projectDir, refPath));
+                    // Null check already done by Where clause, but compiler needs the ! operator
+                    var resolvedRef = Path.GetFullPath(Path.Combine(projectDir, refPath!));
                     
                     // Check if this reference points to our SQL project
                     if (PathsAreEqual(resolvedRef, SqlProjectPath))
@@ -325,15 +395,8 @@ public sealed class DiscoverDownstreamProjects : Task
                         return true;
                     }
 
-                    // Also check by filename match
-                    var refFileName = Path.GetFileNameWithoutExtension(refPath);
-                    if (refFileName.Equals(sqlProjectName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        log.Detail($"Project {projectPath} references SQL project by name: {refFileName}");
-                        return true;
-                    }
-                }
-            }
+                    return false;
+                });
         }
         catch (Exception ex)
         {
@@ -359,14 +422,13 @@ public sealed class DiscoverDownstreamProjects : Task
 
     private string[] ParseProjectList(string projectList, string basePath)
     {
-        var projects = projectList.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+        return projectList
+            .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
             .Select(p => p.Trim())
             .Where(p => !string.IsNullOrEmpty(p))
             .Select(p => Path.IsPathRooted(p)
                 ? Path.GetFullPath(p)
                 : Path.GetFullPath(Path.Combine(basePath, p)))
             .ToArray();
-
-        return projects;
     }
 }

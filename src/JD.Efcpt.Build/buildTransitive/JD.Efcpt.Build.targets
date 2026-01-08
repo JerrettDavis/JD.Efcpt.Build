@@ -284,7 +284,7 @@
   <Target Name="EfcptDiscoverDownstreamProjects"
           DependsOnTargets="AfterSqlProjGeneration"
           AfterTargets="AfterSqlProjGeneration"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true' and '$(EfcptTriggerDownstream)' == 'true'">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true' and '$(EfcptTriggerDownstream)' == 'true' and '$(EfcptBuildingDownstream)' != 'true'">
     <DiscoverDownstreamProjects
         SqlProjectPath="$(MSBuildProjectFullPath)"
         SqlProjectDirectory="$(MSBuildProjectDirectory)"
@@ -305,13 +305,22 @@
   <Target Name="EfcptBuildDownstreamProjects"
           DependsOnTargets="EfcptDiscoverDownstreamProjects"
           AfterTargets="Build"
-          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true' and '$(EfcptTriggerDownstream)' == 'true' and '@(_EfcptDownstreamProject)' != ''">
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true' and '$(EfcptTriggerDownstream)' == 'true' and '@(_EfcptDownstreamProject)' != '' and '$(EfcptBuildingDownstream)' != 'true'">
+    
+    <!-- Verify DACPAC exists before building downstream projects -->
+    <PropertyGroup>
+      <_EfcptDacpacOutput>$(OutDir)$(MSBuildProjectName).dacpac</_EfcptDacpacOutput>
+    </PropertyGroup>
+    
+    <Error Condition="!Exists('$(_EfcptDacpacOutput)')"
+           Text="DACPAC file not found at expected location: $(_EfcptDacpacOutput). Downstream projects cannot be built." />
+    
     <Message Text="Building downstream projects that reference this SQL project..." Importance="high" />
     
-    <!-- Build each downstream project -->
+    <!-- Build each downstream project with additional properties to prevent circular builds -->
     <MSBuild Projects="@(_EfcptDownstreamProject)"
              Targets="Build"
-             Properties="Configuration=$(Configuration)"
+             Properties="Configuration=$(Configuration);Platform=$(Platform);TargetFramework=$(TargetFramework);EfcptBuildingDownstream=true;$(EfcptDownstreamBuildProperties)"
              BuildInParallel="false">
       <Output TaskParameter="TargetOutputs" ItemName="_EfcptDownstreamOutputs" />
     </MSBuild>

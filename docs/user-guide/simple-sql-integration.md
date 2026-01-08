@@ -1,6 +1,6 @@
 # Simple SQL Integration
 
-Starting with version 1.x, JD.Efcpt.Build supports a **simple integration workflow** where you add the package to your SQL project, and it automatically discovers and builds downstream EF Core projects that reference it.
+JD.Efcpt.Build now supports a **simple integration workflow** where you add the package to your SQL project, and it automatically discovers and builds downstream EF Core projects that reference it.
 
 This feature eliminates the need for manual build scripts and provides a seamless developer experience.
 
@@ -234,7 +234,7 @@ dotnet build DatabaseProject  # Triggers everything
 
 **Before (Script)**:
 ```powershell
-$dacpac = "..\DatabaseProject\bin\Debug\net9.0\DatabaseProject.dacpac"
+$dacpac = "..\DatabaseProject\bin\Debug\net10.0\DatabaseProject.dacpac"
 dotnet build DatabaseProject
 efcpt $dacpac
 ```
@@ -246,7 +246,7 @@ efcpt $dacpac
 
 ### vs. Database-First SQL Generation
 
-The [database-first-sql-generation](../samples/database-first-sql-generation/) feature extracts SQL scripts from a live database. This simple integration feature works with existing SQL scripts.
+The [database-first-sql-generation](../../samples/database-first-sql-generation/) feature extracts SQL scripts from a live database. This simple integration feature works with existing SQL scripts.
 
 You can use **both** features together:
 1. SQL project extracts schema from database
@@ -288,6 +288,6 @@ You can use **both** features together:
 ## See Also
 
 - [Sample: simple-sql-integration](../../samples/simple-sql-integration/) - Working example
-- [Database-First SQL Generation](../samples/database-first-sql-generation/) - Combine with database extraction
+- [Database-First SQL Generation](../../samples/database-first-sql-generation/) - Combine with database extraction
 - [API Reference](api-reference.md) - Complete property reference
 - [Getting Started](getting-started.md) - General setup guide
