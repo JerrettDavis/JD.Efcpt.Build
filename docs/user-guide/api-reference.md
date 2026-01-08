@@ -311,6 +311,45 @@ Applies MSBuild property overrides to the staged `efcpt-config.json` file. This 
 | `EfcptSolutionPath` | `$(SolutionPath)` | Solution file path |
 | `EfcptProbeSolutionDir` | `true` | Whether to probe solution directory |
 
+### Downstream Project Triggering Properties
+
+These properties control automatic discovery and building of downstream EF Core projects when JD.Efcpt.Build is used in a SQL project.
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `EfcptTriggerDownstream` | `true` | Enable/disable automatic downstream discovery and building. Only active when in a SQL project. |
+| `EfcptDownstreamProjects` | *(empty)* | Explicit semicolon-separated list of downstream project paths. When set, overrides automatic discovery. Paths can be relative to the SQL project directory or absolute. |
+| `EfcptDownstreamAutoDiscover` | `true` | Enable/disable automatic discovery of downstream projects. When `false`, only projects specified in `EfcptDownstreamProjects` are built. |
+| `EfcptDownstreamSearchPaths` | *(empty)* | Additional semicolon-separated directories to search for downstream projects. Paths can be relative to the SQL project directory or absolute. |
+
+**Example Usage:**
+
+```xml
+<!-- In SQL Project: Disable automatic triggering -->
+<PropertyGroup>
+    <EfcptTriggerDownstream>false</EfcptTriggerDownstream>
+</PropertyGroup>
+
+<!-- In SQL Project: Explicit downstream projects only -->
+<PropertyGroup>
+    <EfcptDownstreamProjects>
+        ..\DataAccessProject\DataAccessProject.csproj;
+        ..\TestProject\TestProject.csproj
+    </EfcptDownstreamProjects>
+</PropertyGroup>
+
+<!-- In SQL Project: Disable auto-discovery but use explicit list -->
+<PropertyGroup>
+    <EfcptDownstreamAutoDiscover>false</EfcptDownstreamAutoDiscover>
+    <EfcptDownstreamProjects>..\DataAccessProject\DataAccessProject.csproj</EfcptDownstreamProjects>
+</PropertyGroup>
+
+<!-- In SQL Project: Add custom search paths -->
+<PropertyGroup>
+    <EfcptDownstreamSearchPaths>..\src\DataAccess;..\tests</EfcptDownstreamSearchPaths>
+</PropertyGroup>
+```
+
 ### Advanced Properties
 
 | Property | Default | Description |
