@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <!--
+        DataAccess Project:
+        This project is automatically discovered and built when you build DatabaseProject
+        because it:
+        1. References DatabaseProject (via ProjectReference)
+        2. Has JD.Efcpt.Build package installed
+        
+        When built, JD.Efcpt.Build will:
+        1. Find the DatabaseProject DACPAC
+        2. Generate EF Core models from the DACPAC
+        3. Compile the generated models into this project
+    -->
+    <ItemGroup>
+        <!-- Reference the SQL Database Project -->
+        <ProjectReference Include="..\DatabaseProject\DatabaseProject.csproj">
+            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+            <OutputItemType>Content</OutputItemType>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </ProjectReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- JD.Efcpt.Build generates EF Core models from the DatabaseProject DACPAC -->
+        <PackageReference Include="JD.Efcpt.Build" Version="*" />
+        
+        <!-- EF Core dependencies -->
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.1">
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+    </ItemGroup>
+</Project>
