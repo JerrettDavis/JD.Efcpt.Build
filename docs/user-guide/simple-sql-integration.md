@@ -143,6 +143,30 @@ Add additional directories to search for projects:
 </PropertyGroup>
 ```
 
+### Force Compilation of Downstream Projects
+
+When building from an EF Core project (not a SQL project), you can force recompilation to ensure models are up to date:
+
+```xml
+<!-- In EF Core Project -->
+<PropertyGroup>
+    <EfcptForceCompileDownstreamProjects>true</EfcptForceCompileDownstreamProjects>
+</PropertyGroup>
+```
+
+**Note**: This can result in reduced performance through unnecessary builds. For better performance, add a `ProjectReference` to your SQL project instead:
+
+```xml
+<!-- In EF Core Project - Better approach -->
+<ItemGroup>
+  <ProjectReference Include="..\DatabaseProject\DatabaseProject.csproj">
+    <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+  </ProjectReference>
+</ItemGroup>
+```
+
+This establishes the build dependency without adding an assembly reference overhead.
+
 ## Configuration Reference
 
 | Property | Default | Description |
@@ -151,6 +175,7 @@ Add additional directories to search for projects:
 | `EfcptDownstreamProjects` | (empty) | Explicit semicolon-separated list of downstream projects. Overrides auto-discovery. |
 | `EfcptDownstreamAutoDiscover` | `true` | Enable/disable automatic discovery. When `false`, only `EfcptDownstreamProjects` are used. |
 | `EfcptDownstreamSearchPaths` | (empty) | Additional semicolon-separated directories to search for projects |
+| `EfcptForceCompileDownstreamProjects` | `false` | Force recompilation from EF Core projects. Use `ProjectReference` instead for better performance. |
 
 ## Build Behavior
 

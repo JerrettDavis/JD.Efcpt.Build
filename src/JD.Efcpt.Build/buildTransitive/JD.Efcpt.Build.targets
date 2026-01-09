@@ -324,6 +324,11 @@
           AfterTargets="Build"
           Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true' and '$(EfcptTriggerDownstream)' == 'true' and '@(_EfcptDownstreamProject)' != '' and '$(EfcptBuildingDownstream)' != 'true'">
     
+    <!-- Show informational message when ForceCompileDownstreamProjects is enabled -->
+    <Message Text="EfcptForceCompileDownstreamProjects is enabled. This can result in reduced performance through unnecessary, extraneous builds.%0D%0ATo optimize the MSBuild project dependency graph, add a ProjectReference to your Entity Framework Core project:%0D%0A%0D%0A  &lt;ItemGroup&gt;%0D%0A    &lt;ProjectReference Include=&quot;path\to\SqlProject.csproj&quot;&gt;%0D%0A      &lt;ReferenceOutputAssembly&gt;false&lt;/ReferenceOutputAssembly&gt;%0D%0A    &lt;/ProjectReference&gt;%0D%0A  &lt;/ItemGroup&gt;%0D%0A%0D%0AThis establishes the build dependency without adding an assembly reference."
+             Importance="high"
+             Condition="'$(EfcptForceCompileDownstreamProjects)' == 'true'" />
+    
     <!-- Verify DACPAC exists before building downstream projects -->
     <PropertyGroup>
       <_EfcptDacpacOutput>$(OutDir)$(MSBuildProjectName).dacpac</_EfcptDacpacOutput>
@@ -343,6 +348,22 @@
     </MSBuild>
 
     <Message Text="Completed building @(_EfcptDownstreamProject->Count()) downstream project(s)" Importance="high" />
+  </Target>
+
+  <!-- Force compilation of downstream projects when EfcptForceCompileDownstreamProjects is enabled -->
+  <!-- This runs from EF Core projects to ensure models are compiled -->
+  <Target Name="EfcptForceCompileDownstream"
+          AfterTargets="Build"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptForceCompileDownstreamProjects)' == 'true' and '$(EfcptBuildingDownstream)' != 'true'">
+    
+    <Message Text="EfcptForceCompileDownstreamProjects is enabled. Forcing recompilation to ensure EF Core models are up to date.%0D%0ANote: This can result in reduced performance through unnecessary builds.%0D%0ATo optimize the MSBuild project dependency graph, add a ProjectReference from this project to your SQL project:%0D%0A%0D%0A  &lt;ItemGroup&gt;%0D%0A    &lt;ProjectReference Include=&quot;path\to\SqlProject.csproj&quot;&gt;%0D%0A      &lt;ReferenceOutputAssembly&gt;false&lt;/ReferenceOutputAssembly&gt;%0D%0A    &lt;/ProjectReference&gt;%0D%0A  &lt;/ItemGroup&gt;%0D%0A%0D%0AThis establishes the build dependency without adding an assembly reference."
+             Importance="high" />
+    
+    <!-- Trigger a rebuild of the current project to ensure models are compiled -->
+    <MSBuild Projects="$(MSBuildProjectFullPath)"
+             Targets="Build"
+             Properties="Configuration=$(Configuration);Platform=$(Platform);TargetFramework=$(TargetFramework);EfcptBuildingDownstream=true;EfcptForceCompileDownstreamProjects=false"
+             BuildInParallel="false" />
   </Target>
 
   <!-- Main pipeline -->

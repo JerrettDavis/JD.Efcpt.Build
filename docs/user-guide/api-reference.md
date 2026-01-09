@@ -321,6 +321,8 @@ These properties control automatic discovery and building of downstream EF Core 
 | `EfcptDownstreamProjects` | *(empty)* | Explicit semicolon-separated list of downstream project paths. When set, overrides automatic discovery. Paths can be relative to the SQL project directory or absolute. |
 | `EfcptDownstreamAutoDiscover` | `true` | Enable/disable automatic discovery of downstream projects. When `false`, only projects specified in `EfcptDownstreamProjects` are built. |
 | `EfcptDownstreamSearchPaths` | *(empty)* | Additional semicolon-separated directories to search for downstream projects. Paths can be relative to the SQL project directory or absolute. |
+| `EfcptDownstreamBuildProperties` | *(empty)* | Additional MSBuild properties to pass to downstream projects during build. Use semicolon-separated key=value pairs. |
+| `EfcptForceCompileDownstreamProjects` | `false` | When enabled in an EF Core project (not SQL project), forces recompilation to ensure models are up to date. Note: This can reduce performance. Using `ProjectReference` is recommended instead. |
 
 **Example Usage:**
 
@@ -347,6 +349,11 @@ These properties control automatic discovery and building of downstream EF Core 
 <!-- In SQL Project: Add custom search paths -->
 <PropertyGroup>
     <EfcptDownstreamSearchPaths>..\src\DataAccess;..\tests</EfcptDownstreamSearchPaths>
+</PropertyGroup>
+
+<!-- In EF Core Project: Force recompilation (not recommended - use ProjectReference instead) -->
+<PropertyGroup>
+    <EfcptForceCompileDownstreamProjects>true</EfcptForceCompileDownstreamProjects>
 </PropertyGroup>
 ```
 

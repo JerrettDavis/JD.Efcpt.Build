@@ -184,5 +184,6 @@
     <EfcptDownstreamSearchPaths Condition="'$(EfcptDownstreamSearchPaths)'==''"></EfcptDownstreamSearchPaths>
     <EfcptDownstreamBuildProperties Condition="'$(EfcptDownstreamBuildProperties)'==''"></EfcptDownstreamBuildProperties>
     <EfcptBuildingDownstream Condition="'$(EfcptBuildingDownstream)'==''">false</EfcptBuildingDownstream>
+    <EfcptForceCompileDownstreamProjects Condition="'$(EfcptForceCompileDownstreamProjects)'==''">false</EfcptForceCompileDownstreamProjects>
   </PropertyGroup>
 </Project>
