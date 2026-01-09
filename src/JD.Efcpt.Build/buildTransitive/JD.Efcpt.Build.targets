@@ -741,6 +741,7 @@ in duplicate builds or suboptimal performance in complex solutions.
           Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'">
     <ComputeFingerprint
         DacpacPath="$(_EfcptDacpacPath)"
+        SqlProjectPath="$(_EfcptSqlProj)"
         SchemaFingerprint="$(_EfcptSchemaFingerprint)"
         UseConnectionStringMode="$(_EfcptUseConnectionString)"
         ConfigPath="$(_EfcptStagedConfig)"

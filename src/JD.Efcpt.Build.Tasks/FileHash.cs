@@ -26,4 +26,22 @@ internal static class FileHash
         var bytes = Encoding.UTF8.GetBytes(content);
         return HashBytes(bytes);
     }
+
+    /// <summary>
+    /// Computes a hash of a file with whitespace normalized to detect only material changes.
+    /// </summary>
+    /// <param name="path">Path to the file to hash.</param>
+    /// <returns>A 16-character hexadecimal hash string.</returns>
+    /// <remarks>
+    /// This method normalizes whitespace (spaces, tabs, line endings) before hashing,
+    /// so that only non-whitespace changes trigger a different hash. This is useful
+    /// for SQL files where formatting changes shouldn't trigger regeneration.
+    /// </remarks>
+    public static string HashFileNormalized(string path)
+    {
+        var content = File.ReadAllText(path);
+        // Normalize whitespace: replace all sequences of whitespace with a single space
+        var normalized = System.Text.RegularExpressions.Regex.Replace(content, @"\s+", " ").Trim();
+        return HashString(normalized);
+    }
 }

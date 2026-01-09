@@ -94,6 +94,7 @@ The pipeline consists of seven stages that run before C# compilation:
 **What it does**:
 - Computes an XxHash64 (fast, non-cryptographic) hash of:
   - The DACPAC file contents (or schema fingerprint)
+  - All SQL source files from the SQL project directory (normalized for whitespace)
   - The staged configuration file
   - The staged renaming file
   - All files in the staged template directory
@@ -139,6 +140,7 @@ The fingerprint includes multiple sources to ensure regeneration when any releva
 - **Library version** - Version of JD.Efcpt.Build.Tasks assembly
 - **Tool version** - EF Core Power Tools CLI version (`EfcptToolVersion`)
 - **DACPAC content** (in .sqlproj mode) or **schema metadata** (in connection string mode)
+- **SQL source files** - All *.sql files from the SQL project directory (normalized for whitespace to detect only material changes)
 - **efcpt-config.json** - Generation options, namespaces, table selection
 - **MSBuild property overrides** - All `EfcptConfig*` properties set in the .csproj
 - **efcpt.renaming.json** - Custom naming rules
@@ -146,6 +148,8 @@ The fingerprint includes multiple sources to ensure regeneration when any releva
 - **Generated files** (optional) - When `EfcptDetectGeneratedFileChanges=true`, includes fingerprints of generated `.g.cs` files
 
 **Important**: The fingerprint is computed after MSBuild property overrides are applied, so changing any `EfcptConfig*` property (like `EfcptConfigRootNamespace`) will automatically trigger regeneration.
+
+**Enhanced Change Detection**: Starting with this release, the fingerprinting logic also includes all SQL source files from the SQL project directory. This means that when you modify a `.sql` file (such as adding a column, changing a constraint, or updating a stored procedure), the models will be regenerated automatically - even if the SQL project hasn't been rebuilt yet to create a new DACPAC. The system normalizes whitespace in SQL files, so only material changes (non-whitespace modifications) trigger regeneration, preventing unnecessary rebuilds due to formatting changes.
 
 All hashing uses XxHash64, a fast non-cryptographic hash algorithm.
 

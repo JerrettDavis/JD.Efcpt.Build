@@ -20,6 +20,7 @@ namespace JD.Efcpt.Build.Tasks;
 ///   <item><description>Library version (JD.Efcpt.Build.Tasks assembly)</description></item>
 ///   <item><description>Tool version (EF Core Power Tools CLI version)</description></item>
 ///   <item><description>Database schema (DACPAC or connection string schema fingerprint)</description></item>
+///   <item><description>SQL source files (*.sql files from SQL project directory, normalized for whitespace)</description></item>
 ///   <item><description>Configuration JSON file contents</description></item>
 ///   <item><description>Renaming JSON file contents</description></item>
 ///   <item><description>MSBuild config property overrides (EfcptConfig* properties)</description></item>
@@ -43,6 +44,16 @@ public sealed class ComputeFingerprint : Task
     /// Path to the DACPAC file to include in the fingerprint (used in .sqlproj mode).
     /// </summary>
     public string DacpacPath { get; set; } = "";
+
+    /// <summary>
+    /// Path to the SQL project (.sqlproj) to include SQL files in the fingerprint.
+    /// </summary>
+    /// <remarks>
+    /// When provided, all .sql files in the SQL project directory are included in the fingerprint.
+    /// This ensures model regeneration when SQL files change, even if the DACPAC hasn't been rebuilt yet.
+    /// Only non-whitespace changes are detected by computing a normalized hash of each SQL file.
+    /// </remarks>
+    public string SqlProjectPath { get; set; } = "";
 
     /// <summary>
     /// Schema fingerprint from QuerySchemaMetadata (used in connection string mode).
@@ -166,6 +177,32 @@ public sealed class ComputeFingerprint : Task
                 var dacpacHash = DacpacFingerprint.Compute(DacpacPath);
                 manifest.Append("dacpac").Append('\0').Append(dacpacHash).Append('\n');
                 log.Detail($"Using DACPAC (schema fingerprint): {DacpacPath}");
+            }
+
+            // Include SQL files from SQL project if available
+            // This ensures model regeneration when SQL files change, even if DACPAC hasn't been rebuilt
+            if (!string.IsNullOrWhiteSpace(SqlProjectPath) && File.Exists(SqlProjectPath))
+            {
+                var sqlProjDir = Path.GetDirectoryName(SqlProjectPath);
+                if (!string.IsNullOrWhiteSpace(sqlProjDir) && Directory.Exists(sqlProjDir))
+                {
+                    log.Detail($"Including SQL files from SQL project: {SqlProjectPath}");
+                    manifest = Directory
+                        .EnumerateFiles(sqlProjDir, "*.sql", SearchOption.AllDirectories)
+                        .Select(p => p.Replace('\u005C', '/'))
+                        .OrderBy(p => p, StringComparer.Ordinal)
+                        .Select(file => (
+#if NETFRAMEWORK
+                            rel: NetFrameworkPolyfills.GetRelativePath(sqlProjDir, file).Replace('\u005C', '/'),
+#else
+                            rel: Path.GetRelativePath(sqlProjDir, file).Replace('\u005C', '/'),
+#endif
+                            h: FileHash.HashFileNormalized(file)))
+                        .Aggregate(manifest, (builder, data)
+                            => builder.Append("sql/")
+                                .Append(data.rel).Append('\0')
+                                .Append(data.h).Append('\n'));
+                }
             }
         }
 
