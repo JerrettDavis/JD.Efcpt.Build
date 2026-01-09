@@ -1,45 +1,36 @@
 {
   "$schema": "../../lib/efcpt-config.schema.json",
-  "CodeGenerationMode": 3,
-  "ContextClassName": "DatabaseContext",
-  "ContextNamespace": null,
-  "DefaultDacpacSchema": null,
-  "DoNotCombineNamespace": false,
-  "FilterSchemas": false,
-  "IncludeConnectionString": false,
-  "ModelNamespace": null,
-  "Namespace": "DataAccessProject",
-  "OutputContextPath": null,
-  "OutputPath": "Models",
-  "PreserveCasingWithRegex": true,
-  "ProjectRootNamespace": "DataAccessProject",
-  "Schemas": null,
-  "SelectedHandlebarsLanguage": 0,
-  "SelectedToBeGenerated": 0,
-  "T4TemplatePath": null,
-  "Tables": [],
-  "UiHint": null,
-  "UseBoolPropertiesWithoutDefaultSql": true,
-  "UseDatabaseNames": false,
-  "UseDataAnnotations": false,
-  "UseDbContextSplitting": false,
-  "UseDecimalDataAnnotationForSprocResult": true,
-  "UseFluentApiOnly": true,
-  "UseHandleBars": false,
-  "UseHierarchyId": false,
-  "UseInflector": true,
-  "UseLegacyInflector": false,
-  "UseLegacyResultSetDiscovery": false,
-  "UseManyToManyEntity": false,
-  "UseNoConstructor": false,
-  "UseNoDefaultConstructor": false,
-  "UseNoNavigations": false,
-  "UseNoObjectFilter": false,
-  "UseNodaTime": false,
-  "UseNullableReferences": true,
-  "UsePrefixNavigationNaming": false,
-  "UseSchemaFolders": false,
-  "UseSchemaNamespaces": false,
-  "UseSpatial": false,
-  "UseT4": false
+  "names": {
+    "dbcontext-name": "DatabaseContext",
+    "root-namespace": "DataAccessProject"
+  },
+  "code-generation": {
+    "enable-on-configuring": false,
+    "type": "all",
+    "use-database-names": false,
+    "use-data-annotations": false,
+    "use-nullable-reference-types": true,
+    "use-inflector": true,
+    "use-legacy-inflector": false,
+    "use-many-to-many-entity": false,
+    "use-t4": false,
+    "remove-defaultsql-from-bool-properties": true,
+    "soft-delete-obsolete-files": true,
+    "use-alternate-stored-procedure-resultset-discovery": false,
+    "refresh-object-lists": true,
+    "use-decimal-data-annotation-for-sproc-results": true,
+    "use-prefix-navigation-naming": false
+  },
+  "file-layout": {
+    "output-path": "Models"
+  },
+  "replacements": {
+    "preserve-casing-with-regex": true
+  },
+  "tables": [
+    { "name": "[dbo].[Categories]" },
+    { "name": "[dbo].[Products]" },
+    { "name": "[dbo].[Orders]" },
+    { "name": "[dbo].[OrderItems]" }
+  ]
 }
