@@ -2,7 +2,7 @@
 
 JD.Efcpt.Build now supports a **simple integration workflow** where you add the package to your SQL project, and it automatically discovers and builds downstream EF Core projects that reference it.
 
-This feature eliminates the need for manual build scripts and provides a seamless developer experience.
+This feature eliminates the need for manual build scripts and provides a seamless developer experience with **zero-configuration working builds**.
 
 ## Overview
 
@@ -71,27 +71,46 @@ The build will:
 
 ## How It Works
 
-### Detection
+### Detection and Zero-Config Builds
 
 When you build a SQL project with JD.Efcpt.Build, it:
 
 1. **Detects SQL Project**: Checks if the current project is a SQL project (by SDK or properties)
 2. **Searches for Downstream Projects**: Walks up to the solution root and searches for all `.csproj` files
-3. **Filters Candidates**: Keeps only projects that:
-   - Reference the SQL project (via `<ProjectReference>`)
-   - Have JD.Efcpt.Build package OR `efcpt-config.json` file
-4. **Builds Downstream Projects**: Sequentially builds each discovered project
+3. **Filters Candidates**: Keeps only projects that have JD.Efcpt.Build package OR `efcpt-config.json` file
+4. **Build Orchestration**:
+   - Projects with `<ProjectReference>` to SQL project: Built via MSBuild dependency graph (optimal)
+   - Projects without `<ProjectReference>`: Automatically built after SQL project completes (zero-config)
+5. **Model Generation**: EF Core models generate during each downstream project's build
+
+### Zero-Config Working Builds
+
+JD.Efcpt.Build prioritizes **working builds out-of-the-box**:
+
+**With ProjectReference** (recommended):
+- Optimal MSBuild dependency ordering
+- Best build performance and parallelization
+- No informational messages
+
+**Without ProjectReference** (zero-config):
+- Still works! Projects are built automatically after SQL project
+- Informational message displayed during build
+- Build logs written to `obj/efcpt/build-info.log`
+- Optimization guidance written to `obj/efcpt/README-build-optimization-todos.md`
+
+**Philosophy**: Zero-config routes may not always be optimal, but they always produce consistent, deterministic, working builds with expected generated assets. Build messages and log files guide users toward optimal configuration.
 
 ### Discovery Criteria
 
 A project is considered a downstream candidate if it:
 
-- **References the SQL project**: Has a `<ProjectReference>` to the SQL project
 - **Has EF Core generation configured**: Either:
   - Has `JD.Efcpt.Build` package installed, OR
   - Has an `efcpt-config.json` file in the project directory
 
-This allows for flexible configuration while ensuring only intentional projects are built.
+Then, projects are categorized:
+- **With ProjectReference**: Added to MSBuild graph (optimal)
+- **Without ProjectReference**: Added to automatic build list (zero-config)
 
 ## Configuration
 
@@ -285,22 +304,29 @@ You can use **both** features together:
 **Symptoms**: Build completes but no downstream projects are built.
 
 **Causes**:
-1. Downstream project doesn't reference SQL project
-2. Downstream project doesn't have JD.Efcpt.Build or efcpt-config.json
-3. Solution directory not found
+1. Downstream project doesn't have JD.Efcpt.Build or efcpt-config.json
+2. Solution directory not found
+3. `EfcptTriggerDownstream` is set to `false`
 
 **Solutions**:
-- Verify `<ProjectReference>` exists in downstream project
 - Add JD.Efcpt.Build or efcpt-config.json to downstream project
 - Use `EfcptDownstreamProjects` for explicit configuration
+- Ensure `EfcptTriggerDownstream` is `true` (default)
 
-### Warning: Project Lacks ProjectReference
+### Build Optimization Messages
 
-**Symptom**: Build warning about EFCPT project lacking ProjectReference to SQL project.
+**Symptom**: Informational message about projects lacking ProjectReference.
 
-**Cause**: The SQL project discovered an EFCPT-enabled project (has JD.Efcpt.Build or efcpt-config.json) but that project doesn't have a ProjectReference to the SQL project. Without this reference, MSBuild cannot guarantee the SQL project builds first, which may cause build failures or outdated DACPAC references.
+**Message Example**:
+```
+JD.Efcpt.Build: Found 1 EFCPT project(s) without ProjectReference to SQL project.
+These projects will be built to ensure models are generated, but build performance may be suboptimal.
+See obj/efcpt/README-build-optimization-todos.md for optimization recommendations.
+```
 
-**Solution**: Add the ProjectReference snippet shown in the warning message to your EFCPT project. The warning includes a ready-to-use code snippet with the correct relative path. For example:
+**What this means**: The build is working correctly! Models are being generated. However, adding ProjectReference can improve build performance.
+
+**Solution**: Check `obj/efcpt/README-build-optimization-todos.md` for specific recommendations and copy-paste-able code snippets. For example:
 
 ```xml
 <ItemGroup>
@@ -311,6 +337,17 @@ You can use **both** features together:
 ```
 
 The `ReferenceOutputAssembly=false` setting ensures you get the build ordering benefit without adding an assembly reference overhead.
+
+### Build Information Logs
+
+**Location**: `obj/efcpt/build-info.log`
+
+This file contains:
+- Detected orphaned projects
+- Build timing and activity
+- Diagnostic information for troubleshooting
+
+Use this log to understand what JD.Efcpt.Build is doing during your builds.
 
 ### Downstream Project Built Twice
 

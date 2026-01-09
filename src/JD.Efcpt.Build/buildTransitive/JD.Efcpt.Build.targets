@@ -303,10 +303,20 @@
   </Target>
 
   <!-- Warn about orphaned projects that lack ProjectReference for proper build ordering -->
+  <!-- Also builds them by default for zero-config working builds -->
   <Target Name="EfcptWarnOrphanedProjects"
           DependsOnTargets="EfcptDiscoverDownstreamProjects"
           AfterTargets="EfcptDiscoverDownstreamProjects"
           Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true' and '$(EfcptTriggerDownstream)' == 'true' and '@(_EfcptOrphanedProject)' != '' and '$(EfcptBuildingDownstream)' != 'true'">
+    
+    <PropertyGroup>
+      <_EfcptBuildInfoDir>$(MSBuildProjectDirectory)\obj\efcpt</_EfcptBuildInfoDir>
+      <_EfcptBuildInfoLog>$(_EfcptBuildInfoDir)\build-info.log</_EfcptBuildInfoLog>
+      <_EfcptOptimizationTodos>$(_EfcptBuildInfoDir)\README-build-optimization-todos.md</_EfcptOptimizationTodos>
+    </PropertyGroup>
+    
+    <!-- Ensure obj/efcpt directory exists -->
+    <MakeDir Directories="$(_EfcptBuildInfoDir)" Condition="!Exists('$(_EfcptBuildInfoDir)')" />
     
     <ItemGroup>
       <_EfcptOrphanedWarning Include="@(_EfcptOrphanedProject)">
@@ -314,15 +324,107 @@
       </_EfcptOrphanedWarning>
     </ItemGroup>
 
-    <Warning Text="EFCPT project '%(_EfcptOrphanedWarning.Identity)' will be affected by SQL project generation but lacks a ProjectReference to ensure proper build ordering.%0D%0A%0D%0AWithout a ProjectReference, MSBuild cannot guarantee the SQL project builds before the EFCPT project, which may cause build failures or outdated DACPAC references.%0D%0A%0D%0ATo fix this, add the following to '%(_EfcptOrphanedWarning.Identity)':%0D%0A%0D%0A  &lt;ItemGroup&gt;%0D%0A    &lt;ProjectReference Include=&quot;%(_EfcptOrphanedWarning.RelativePath)&quot;&gt;%0D%0A      &lt;ReferenceOutputAssembly&gt;false&lt;/ReferenceOutputAssembly&gt;%0D%0A    &lt;/ProjectReference&gt;%0D%0A  &lt;/ItemGroup&gt;%0D%0A%0D%0AThis establishes the build dependency without adding an assembly reference."
+    <!-- Prepare informational messages -->
+    <PropertyGroup>
+      <_EfcptOrphanedInfoMessage>JD.Efcpt.Build: Found @(_EfcptOrphanedWarning->Count()) EFCPT project(s) without ProjectReference to SQL project.%0D%0AThese projects will be built to ensure models are generated, but build performance may be suboptimal.%0D%0ASee obj/efcpt/README-build-optimization-todos.md for optimization recommendations.</_EfcptOrphanedInfoMessage>
+    </PropertyGroup>
+    
+    <!-- Log to build-info.log -->
+    <WriteLinesToFile File="$(_EfcptBuildInfoLog)" 
+                      Lines="[$(MSBuildProjectName)] Orphaned projects detected: @(_EfcptOrphanedWarning->Count())"
+                      Overwrite="false" />
+    
+    <WriteLinesToFile File="$(_EfcptBuildInfoLog)" 
+                      Lines="  - %(_EfcptOrphanedWarning.Identity)"
+                      Overwrite="false" />
+    
+    <!-- Create optimization guide -->
+    <PropertyGroup>
+      <_OptimizationContent>
+# Build Optimization TODOs
+
+JD.Efcpt.Build detected projects that could benefit from build graph optimization.
+
+## Projects Without ProjectReference
+
+The following EFCPT-enabled projects don't have a ProjectReference to the SQL project.
+This causes them to be built after the SQL project completes, which can result in:
+- Duplicate builds in some scenarios
+- Suboptimal build parallelization
+- Potential race conditions in complex build graphs
+
+### Affected Projects
+
+</_OptimizationContent>
+    </PropertyGroup>
+    
+    <WriteLinesToFile File="$(_EfcptOptimizationTodos)" 
+                      Lines="$(_OptimizationContent)"
+                      Overwrite="true" />
+    
+    <WriteLinesToFile File="$(_EfcptOptimizationTodos)" 
+                      Lines="- `%(_EfcptOrphanedWarning.Identity)`"
+                      Overwrite="false" />
+    
+    <WriteLinesToFile File="$(_EfcptOptimizationTodos)" 
+                      Lines=""
+                      Overwrite="false" />
+    
+    <PropertyGroup>
+      <_OptimizationSolution>
+### Recommended Solution
+
+Add a ProjectReference to your EFCPT project(s) to establish proper MSBuild dependency ordering:
+
+```xml
+&lt;ItemGroup&gt;
+  &lt;ProjectReference Include=&quot;%(_EfcptOrphanedWarning.RelativePath)&quot;&gt;
+    &lt;ReferenceOutputAssembly&gt;false&lt;/ReferenceOutputAssembly&gt;
+  &lt;/ProjectReference&gt;
+&lt;/ItemGroup&gt;
+```
+
+**Note**: `ReferenceOutputAssembly=false` ensures you get build ordering benefits without assembly reference overhead.
+
+### Why This Matters
+
+- **Build Performance**: MSBuild can better parallelize and optimize builds
+- **Reliability**: Guaranteed build order prevents race conditions
+- **Predictability**: Explicit dependencies are easier to understand and maintain
+
+### Current Behavior
+
+JD.Efcpt.Build is building these projects automatically after SQL project completion to ensure
+generated models are available (zero-config working builds). However, this approach may result
+in duplicate builds or suboptimal performance in complex solutions.
+</_OptimizationSolution>
+    </PropertyGroup>
+    
+    <WriteLinesToFile File="$(_EfcptOptimizationTodos)" 
+                      Lines="$(_OptimizationSolution)"
+                      Overwrite="false" />
+    
+    <!-- Show informational message -->
+    <Message Text="$(_EfcptOrphanedInfoMessage)" 
+             Importance="high"
              Condition="'@(_EfcptOrphanedWarning)' != ''" />
+    
+    <!-- Add orphaned projects to downstream build list for zero-config working builds -->
+    <ItemGroup>
+      <_EfcptDownstreamProject Include="@(_EfcptOrphanedProject)" />
+    </ItemGroup>
   </Target>
 
   <!-- Build discovered downstream projects to trigger their EF Core generation -->
   <Target Name="EfcptBuildDownstreamProjects"
-          DependsOnTargets="EfcptDiscoverDownstreamProjects"
+          DependsOnTargets="EfcptDiscoverDownstreamProjects;EfcptWarnOrphanedProjects"
           AfterTargets="Build"
           Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true' and '$(EfcptTriggerDownstream)' == 'true' and '@(_EfcptDownstreamProject)' != '' and '$(EfcptBuildingDownstream)' != 'true'">
+    
+    <PropertyGroup>
+      <_EfcptBuildInfoDir>$(MSBuildProjectDirectory)\obj\efcpt</_EfcptBuildInfoDir>
+      <_EfcptBuildInfoLog>$(_EfcptBuildInfoDir)\build-info.log</_EfcptBuildInfoLog>
+    </PropertyGroup>
     
     <!-- Show informational message when ForceCompileDownstreamProjects is enabled -->
     <Message Text="EfcptForceCompileDownstreamProjects is enabled. This can result in reduced performance through unnecessary, extraneous builds.%0D%0ATo optimize the MSBuild project dependency graph, add a ProjectReference to your Entity Framework Core project:%0D%0A%0D%0A  &lt;ItemGroup&gt;%0D%0A    &lt;ProjectReference Include=&quot;path\to\SqlProject.csproj&quot;&gt;%0D%0A      &lt;ReferenceOutputAssembly&gt;false&lt;/ReferenceOutputAssembly&gt;%0D%0A    &lt;/ProjectReference&gt;%0D%0A  &lt;/ItemGroup&gt;%0D%0A%0D%0AThis establishes the build dependency without adding an assembly reference."
@@ -337,7 +439,12 @@
     <Error Condition="!Exists('$(_EfcptDacpacOutput)')"
            Text="DACPAC file not found at expected location: $(_EfcptDacpacOutput). Downstream projects cannot be built." />
     
-    <Message Text="Building downstream projects that reference this SQL project..." Importance="high" />
+    <Message Text="Building @(_EfcptDownstreamProject->Count()) downstream project(s) that reference this SQL project..." Importance="high" />
+    
+    <!-- Log build start -->
+    <WriteLinesToFile File="$(_EfcptBuildInfoLog)" 
+                      Lines="[$(MSBuildProjectName)] Building @(_EfcptDownstreamProject->Count()) downstream project(s)"
+                      Overwrite="false" />
     
     <!-- Build each downstream project with additional properties to prevent circular builds -->
     <MSBuild Projects="@(_EfcptDownstreamProject)"
@@ -347,6 +454,11 @@
       <Output TaskParameter="TargetOutputs" ItemName="_EfcptDownstreamOutputs" />
     </MSBuild>
 
+    <!-- Log build completion -->
+    <WriteLinesToFile File="$(_EfcptBuildInfoLog)" 
+                      Lines="[$(MSBuildProjectName)] Completed building @(_EfcptDownstreamProject->Count()) downstream project(s)"
+                      Overwrite="false" />
+    
     <Message Text="Completed building @(_EfcptDownstreamProject->Count()) downstream project(s)" Importance="high" />
   </Target>
 
