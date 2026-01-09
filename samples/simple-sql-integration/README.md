@@ -239,6 +239,36 @@ dotnet build DatabaseProject
 
 The [database-first-sql-generation sample](../database-first-sql-generation/) shows a different workflow where the SQL project ALSO extracts schema from a live database. This sample focuses purely on the simple case where you already have SQL scripts.
 
+## Troubleshooting
+
+### Build Warnings About Missing ProjectReference
+
+If you see a warning like:
+
+```
+warning : EFCPT project 'path/to/Project.csproj' will be affected by SQL project generation 
+but lacks a ProjectReference to ensure proper build ordering.
+```
+
+This means the SQL project discovered an EFCPT-enabled project (has JD.Efcpt.Build or efcpt-config.json) but that project doesn't have a ProjectReference to the SQL project.
+
+**Why this matters**: Without a ProjectReference, MSBuild cannot guarantee the SQL project builds first, which may cause:
+- Build failures due to missing DACPAC files
+- Outdated DACPAC references
+- Race conditions in parallel builds
+
+**Solution**: The warning message includes a ready-to-use code snippet with the correct relative path. Copy and paste it into your EFCPT project's `.csproj` file. For example:
+
+```xml
+<ItemGroup>
+  <ProjectReference Include="..\DatabaseProject\DatabaseProject.csproj">
+    <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+  </ProjectReference>
+</ItemGroup>
+```
+
+The `ReferenceOutputAssembly=false` setting ensures you get the build ordering benefit without adding an assembly reference overhead.
+
 ## See Also
 
 - [Database-First SQL Generation](../database-first-sql-generation/) - Extract SQL scripts from database AND trigger downstream

@@ -294,11 +294,28 @@
         AdditionalSearchPaths="$(EfcptDownstreamSearchPaths)"
         LogVerbosity="$(EfcptLogVerbosity)">
       <Output TaskParameter="DownstreamProjects" ItemName="_EfcptDownstreamProject" />
+      <Output TaskParameter="OrphanedProjects" ItemName="_EfcptOrphanedProject" />
     </DiscoverDownstreamProjects>
 
     <Message Text="Discovered @(_EfcptDownstreamProject->Count()) downstream project(s)"
              Importance="high"
              Condition="'@(_EfcptDownstreamProject)' != ''" />
+  </Target>
+
+  <!-- Warn about orphaned projects that lack ProjectReference for proper build ordering -->
+  <Target Name="EfcptWarnOrphanedProjects"
+          DependsOnTargets="EfcptDiscoverDownstreamProjects"
+          AfterTargets="EfcptDiscoverDownstreamProjects"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true' and '$(EfcptTriggerDownstream)' == 'true' and '@(_EfcptOrphanedProject)' != '' and '$(EfcptBuildingDownstream)' != 'true'">
+    
+    <ItemGroup>
+      <_EfcptOrphanedWarning Include="@(_EfcptOrphanedProject)">
+        <RelativePath>$([MSBuild]::MakeRelative($([System.IO.Path]::GetDirectoryName(%(_EfcptOrphanedProject.Identity))), $(MSBuildProjectFullPath)))</RelativePath>
+      </_EfcptOrphanedWarning>
+    </ItemGroup>
+
+    <Warning Text="EFCPT project '%(_EfcptOrphanedWarning.Identity)' will be affected by SQL project generation but lacks a ProjectReference to ensure proper build ordering.%0D%0A%0D%0AWithout a ProjectReference, MSBuild cannot guarantee the SQL project builds before the EFCPT project, which may cause build failures or outdated DACPAC references.%0D%0A%0D%0ATo fix this, add the following to '%(_EfcptOrphanedWarning.Identity)':%0D%0A%0D%0A  &lt;ItemGroup&gt;%0D%0A    &lt;ProjectReference Include=&quot;%(_EfcptOrphanedWarning.RelativePath)&quot;&gt;%0D%0A      &lt;ReferenceOutputAssembly&gt;false&lt;/ReferenceOutputAssembly&gt;%0D%0A    &lt;/ProjectReference&gt;%0D%0A  &lt;/ItemGroup&gt;%0D%0A%0D%0AThis establishes the build dependency without adding an assembly reference."
+             Condition="'@(_EfcptOrphanedWarning)' != ''" />
   </Target>
 
   <!-- Build discovered downstream projects to trigger their EF Core generation -->

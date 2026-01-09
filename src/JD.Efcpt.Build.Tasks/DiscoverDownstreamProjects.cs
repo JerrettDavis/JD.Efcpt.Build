@@ -71,6 +71,13 @@ public sealed class DiscoverDownstreamProjects : Task
     [Output]
     public string[] DownstreamProjects { get; private set; } = Array.Empty<string>();
 
+    /// <summary>
+    /// Gets the paths of EFCPT projects that lack a ProjectReference to the SQL project.
+    /// These projects won't be built automatically and need a ProjectReference for proper build ordering.
+    /// </summary>
+    [Output]
+    public string[] OrphanedProjects { get; private set; } = Array.Empty<string>();
+
     /// <inheritdoc />
     public override bool Execute()
     {
@@ -123,8 +130,12 @@ public sealed class DiscoverDownstreamProjects : Task
 
         // Filter candidates to those that reference this SQL project
         var downstream = FilterDownstreamProjects(candidates, log);
+        
+        // Identify orphaned projects (EFCPT projects without ProjectReference to SQL project)
+        var orphaned = candidates.Except(downstream).ToList();
 
         DownstreamProjects = downstream.ToArray();
+        OrphanedProjects = orphaned.ToArray();
         
         if (DownstreamProjects.Length > 0)
         {
@@ -137,6 +148,15 @@ public sealed class DiscoverDownstreamProjects : Task
         else
         {
             log.Detail("No downstream projects discovered that reference this SQL project.");
+        }
+
+        if (OrphanedProjects.Length > 0)
+        {
+            log.Info($"Found {OrphanedProjects.Length} EFCPT project(s) without ProjectReference to SQL project:");
+            foreach (var project in OrphanedProjects)
+            {
+                log.Info($"  - {project}");
+            }
         }
 
         return true;

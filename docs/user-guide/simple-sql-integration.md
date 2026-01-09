@@ -269,6 +269,24 @@ You can use **both** features together:
 - Add JD.Efcpt.Build or efcpt-config.json to downstream project
 - Use `EfcptDownstreamProjects` for explicit configuration
 
+### Warning: Project Lacks ProjectReference
+
+**Symptom**: Build warning about EFCPT project lacking ProjectReference to SQL project.
+
+**Cause**: The SQL project discovered an EFCPT-enabled project (has JD.Efcpt.Build or efcpt-config.json) but that project doesn't have a ProjectReference to the SQL project. Without this reference, MSBuild cannot guarantee the SQL project builds first, which may cause build failures or outdated DACPAC references.
+
+**Solution**: Add the ProjectReference snippet shown in the warning message to your EFCPT project. The warning includes a ready-to-use code snippet with the correct relative path. For example:
+
+```xml
+<ItemGroup>
+  <ProjectReference Include="..\DatabaseProject\DatabaseProject.csproj">
+    <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+  </ProjectReference>
+</ItemGroup>
+```
+
+The `ReferenceOutputAssembly=false` setting ensures you get the build ordering benefit without adding an assembly reference overhead.
+
 ### Downstream Project Built Twice
 
 **Symptoms**: Downstream project appears to build twice.
