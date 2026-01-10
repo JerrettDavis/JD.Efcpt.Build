@@ -36,6 +36,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Resolve the path to an absolute path for consistent handling
+$Path = [System.IO.Path]::GetFullPath($Path)
+
 Write-Host "Version Replacement Script" -ForegroundColor Cyan
 Write-Host "=========================" -ForegroundColor Cyan
 Write-Host "Version: $Version" -ForegroundColor Green
@@ -72,7 +75,8 @@ Write-Host ""
 $totalReplacements = 0
 
 foreach ($file in $files) {
-    $relativePath = $file.FullName.Replace($Path, "").TrimStart([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+    # Use GetRelativePath for robust path handling
+    $relativePath = [System.IO.Path]::GetRelativePath($Path, $file.FullName)
     $content = Get-Content -Path $file.FullName -Raw -ErrorAction Stop
     $fileReplacements = 0
     
