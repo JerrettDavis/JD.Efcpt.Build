@@ -449,7 +449,7 @@ Just add the package; everything is auto-discovered:
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="JD.Efcpt.Build" Version="x.x.x" />
+  <PackageReference Include="JD.Efcpt.Build" Version="PACKAGE_VERSION" />
 </ItemGroup>
 ```
 
@@ -511,7 +511,7 @@ Include only specific tables:
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="JD.Efcpt.Build" Version="x.x.x" />
+    <PackageReference Include="JD.Efcpt.Build" Version="PACKAGE_VERSION" />
   </ItemGroup>
 </Project>
 ```

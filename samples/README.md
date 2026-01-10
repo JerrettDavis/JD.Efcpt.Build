@@ -80,7 +80,7 @@ sdk-zero-config/
 │   ├── DatabaseProject.csproj         # Microsoft.Build.Sql project
 │   └── dbo/Tables/*.sql
 └── EntityFrameworkCoreProject/
-    └── EntityFrameworkCoreProject.csproj  # Uses JD.Efcpt.Sdk/1.0.0
+    └── EntityFrameworkCoreProject.csproj  # Uses JD.Efcpt.Sdk/PACKAGE_VERSION
 ```
 
 **Key Features:**
@@ -91,7 +91,7 @@ sdk-zero-config/
 
 **Project File:**
 ```xml
-<Project Sdk="JD.Efcpt.Sdk/1.0.0">
+<Project Sdk="JD.Efcpt.Sdk/PACKAGE_VERSION">
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
     </PropertyGroup>

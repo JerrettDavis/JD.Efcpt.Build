@@ -199,7 +199,7 @@ Edit `MyProject.Models/MyProject.Models.csproj`:
 
   <!-- JD.Efcpt.Build package -->
   <ItemGroup>
-    <PackageReference Include="JD.Efcpt.Build" Version="1.*" />
+    <PackageReference Include="JD.Efcpt.Build" Version="PACKAGE_VERSION" />
   </ItemGroup>
 
   <!-- efcpt Configuration -->
@@ -246,7 +246,7 @@ Edit `MyProject.Data/MyProject.Data.csproj`:
 
   <!-- JD.Efcpt.Build package (needed for external data support) -->
   <ItemGroup>
-    <PackageReference Include="JD.Efcpt.Build" Version="1.*" />
+    <PackageReference Include="JD.Efcpt.Build" Version="PACKAGE_VERSION" />
   </ItemGroup>
 
   <!-- efcpt Configuration -->
