@@ -28,7 +28,7 @@ The SDK approach provides the cleanest project files.
 Use the SDK in your project file with the version specified inline:
 
 ```xml
-<Project Sdk="JD.Efcpt.Sdk/1.0.0">
+<Project Sdk="JD.Efcpt.Sdk/PACKAGE_VERSION">
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -56,7 +56,7 @@ Add JD.Efcpt.Build to your application project (the project that should contain 
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="JD.Efcpt.Build" Version="x.x.x" />
+  <PackageReference Include="JD.Efcpt.Build" Version="PACKAGE_VERSION" />
   <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" />
 </ItemGroup>
 ```

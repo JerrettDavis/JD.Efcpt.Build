@@ -320,7 +320,7 @@ Use Windows/Integrated Authentication when possible:
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <PackageReference Include="JD.Efcpt.Build" Version="x.x.x" />
+    <PackageReference Include="JD.Efcpt.Build" Version="PACKAGE_VERSION" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -333,7 +333,7 @@ Use Windows/Integrated Authentication when possible:
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <PackageReference Include="JD.Efcpt.Build" Version="x.x.x" />
+    <PackageReference Include="JD.Efcpt.Build" Version="PACKAGE_VERSION" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -346,7 +346,7 @@ Use Windows/Integrated Authentication when possible:
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <PackageReference Include="JD.Efcpt.Build" Version="x.x.x" />
+    <PackageReference Include="JD.Efcpt.Build" Version="PACKAGE_VERSION" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -359,7 +359,7 @@ Use Windows/Integrated Authentication when possible:
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <PackageReference Include="JD.Efcpt.Build" Version="x.x.x" />
+    <PackageReference Include="JD.Efcpt.Build" Version="PACKAGE_VERSION" />
   </ItemGroup>
 
   <!-- No connection string config needed! -->
@@ -380,7 +380,7 @@ Complete example for an ASP.NET Core project:
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="JD.Efcpt.Build" Version="x.x.x" />
+    <PackageReference Include="JD.Efcpt.Build" Version="PACKAGE_VERSION" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
   </ItemGroup>
 

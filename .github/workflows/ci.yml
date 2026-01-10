@@ -166,6 +166,11 @@ jobs:
           echo "ASSEMBLY_VERSION=${{ steps.gitversion.outputs.assemblySemVer }}" >> $GITHUB_ENV
           echo "FILE_VERSION=${{ steps.gitversion.outputs.assemblySemFileVer }}" >> $GITHUB_ENV
 
+      - name: Replace version placeholders in documentation
+        shell: pwsh
+        run: |
+          ./build/replace-version.ps1 -Version "${{ env.PACKAGE_VERSION }}" -Path "."
+
       - name: Build (Release)
         run: >
           dotnet build JD.Efcpt.Build.sln

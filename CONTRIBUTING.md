@@ -374,6 +374,50 @@ When contributing, please update:
 - **XML comments** - For all public APIs
 - **Code comments** - For complex logic
 
+#### Version Placeholders in Documentation
+
+Documentation and README files use `PACKAGE_VERSION` as a placeholder for version numbers. This placeholder is automatically replaced with the actual version during the CI/CD build process.
+
+**When to use placeholders:**
+
+Use `PACKAGE_VERSION` in documentation for:
+- SDK version references: `Sdk="JD.Efcpt.Sdk/PACKAGE_VERSION"`
+- PackageReference version attributes: `Version="PACKAGE_VERSION"`
+- Any mention of the current package version in examples
+
+**Example:**
+
+```xml
+<!-- In documentation, write: -->
+<Project Sdk="JD.Efcpt.Sdk/PACKAGE_VERSION">
+  <ItemGroup>
+    <PackageReference Include="JD.Efcpt.Build" Version="PACKAGE_VERSION" />
+  </ItemGroup>
+</Project>
+
+<!-- During CI build, this becomes (e.g., for version 1.2.3): -->
+<Project Sdk="JD.Efcpt.Sdk/1.2.3">
+  <ItemGroup>
+    <PackageReference Include="JD.Efcpt.Build" Version="1.2.3" />
+  </ItemGroup>
+</Project>
+```
+
+**Testing version replacement locally:**
+
+```bash
+# Dry run (shows what would be replaced)
+pwsh ./build/replace-version.ps1 -Version "1.2.3" -DryRun
+
+# Actually replace versions
+pwsh ./build/replace-version.ps1 -Version "1.2.3"
+
+# Revert changes after testing
+git checkout README.md docs/ samples/
+```
+
+**Important:** Always commit documentation with `PACKAGE_VERSION` placeholders, not actual version numbers. The CI/CD workflow automatically replaces these during the build and package process.
+
 ### Commit Messages
 
 Follow conventional commits format:

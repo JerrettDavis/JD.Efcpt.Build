@@ -131,7 +131,7 @@ In a real project, you would consume JD.Efcpt.Build as a NuGet package:
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="JD.Efcpt.Build" Version="x.y.z" />
+  <PackageReference Include="JD.Efcpt.Build" Version="PACKAGE_VERSION" />
 </ItemGroup>
 ```
 
