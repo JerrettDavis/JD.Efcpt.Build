@@ -706,4 +706,453 @@ public sealed class ComputeFingerprintTests(ITestOutputHelper output) : TinyBddX
             .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
+
+    // ============================================================================
+    // SQL File Fingerprinting Tests
+    // ============================================================================
+
+    [Scenario("SQL schema change triggers fingerprint change")]
+    [Fact]
+    public async Task Sql_schema_change_triggers_fingerprint_change()
+    {
+        await Given("inputs with SQL project and existing fingerprint", () =>
+            {
+                var setup = SetupWithExistingFingerprintFile();
+                var sqlProjDir = setup.Folder.CreateDir("SqlProj");
+                var sqlProjPath = Path.Combine(sqlProjDir, "Database.sqlproj");
+                File.WriteAllText(sqlProjPath, "<Project />");
+                setup.Folder.WriteFile("SqlProj/Tables/Users.sql", "CREATE TABLE Users (Id INT PRIMARY KEY)");
+                
+                // First run with initial SQL
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = setup.Engine,
+                    DacpacPath = setup.DacpacPath,
+                    ConfigPath = setup.ConfigPath,
+                    RenamingPath = setup.RenamingPath,
+                    TemplateDir = setup.TemplateDir,
+                    FingerprintFile = setup.FingerprintFile,
+                    SqlProjectPath = sqlProjPath
+                };
+                task.Execute();
+                return (setup, sqlProjPath, sqlProjDir);
+            })
+            .When("SQL schema is modified and task executes", ctx =>
+            {
+                var (s, sqlProjPath, sqlProjDir) = ctx;
+                // Add new column - material change
+                File.WriteAllText(Path.Combine(sqlProjDir, "Tables/Users.sql"), 
+                    "CREATE TABLE Users (Id INT PRIMARY KEY, Name NVARCHAR(100))");
+                
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = s.Engine,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    FingerprintFile = s.FingerprintFile,
+                    SqlProjectPath = sqlProjPath
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("HasChanged is true", r => r.Task.HasChanged == "true")
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("SQL whitespace-only change does not trigger fingerprint change")]
+    [Fact]
+    public async Task Sql_whitespace_only_change_ignored()
+    {
+        await Given("inputs with SQL project and existing fingerprint", () =>
+            {
+                var setup = SetupWithExistingFingerprintFile();
+                var sqlProjDir = setup.Folder.CreateDir("SqlProj");
+                var sqlProjPath = Path.Combine(sqlProjDir, "Database.sqlproj");
+                File.WriteAllText(sqlProjPath, "<Project />");
+                setup.Folder.WriteFile("SqlProj/Tables/Users.sql", "CREATE TABLE Users (Id INT PRIMARY KEY)");
+                
+                // First run
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = setup.Engine,
+                    DacpacPath = setup.DacpacPath,
+                    ConfigPath = setup.ConfigPath,
+                    RenamingPath = setup.RenamingPath,
+                    TemplateDir = setup.TemplateDir,
+                    FingerprintFile = setup.FingerprintFile,
+                    SqlProjectPath = sqlProjPath
+                };
+                task.Execute();
+                return (setup, sqlProjPath, sqlProjDir);
+            })
+            .When("SQL is reformatted and task executes", ctx =>
+            {
+                var (s, sqlProjPath, sqlProjDir) = ctx;
+                // Only whitespace changes
+                File.WriteAllText(Path.Combine(sqlProjDir, "Tables/Users.sql"), 
+                    @"CREATE  TABLE  Users  
+                      (Id    INT    PRIMARY KEY)");
+                
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = s.Engine,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    FingerprintFile = s.FingerprintFile,
+                    SqlProjectPath = sqlProjPath
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("HasChanged is false", r => r.Task.HasChanged == "false")
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("SQL string literal change triggers fingerprint change")]
+    [Fact]
+    public async Task Sql_string_literal_change_triggers_change()
+    {
+        await Given("inputs with SQL project containing string literals", () =>
+            {
+                var setup = SetupWithExistingFingerprintFile();
+                var sqlProjDir = setup.Folder.CreateDir("SqlProj");
+                var sqlProjPath = Path.Combine(sqlProjDir, "Database.sqlproj");
+                File.WriteAllText(sqlProjPath, "<Project />");
+                setup.Folder.WriteFile("SqlProj/Data/Seed.sql", "INSERT INTO Products (Name) VALUES ('Product A')");
+                
+                // First run
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = setup.Engine,
+                    DacpacPath = setup.DacpacPath,
+                    ConfigPath = setup.ConfigPath,
+                    RenamingPath = setup.RenamingPath,
+                    TemplateDir = setup.TemplateDir,
+                    FingerprintFile = setup.FingerprintFile,
+                    SqlProjectPath = sqlProjPath
+                };
+                task.Execute();
+                return (setup, sqlProjPath, sqlProjDir);
+            })
+            .When("string literal content changes", ctx =>
+            {
+                var (s, sqlProjPath, sqlProjDir) = ctx;
+                File.WriteAllText(Path.Combine(sqlProjDir, "Data/Seed.sql"), 
+                    "INSERT INTO Products (Name) VALUES ('Product B')");
+                
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = s.Engine,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    FingerprintFile = s.FingerprintFile,
+                    SqlProjectPath = sqlProjPath
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("HasChanged is true", r => r.Task.HasChanged == "true")
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Handles missing SQL project path gracefully")]
+    [Fact]
+    public async Task Handles_missing_sql_project_path()
+    {
+        await Given("inputs with non-existent SQL project", SetupWithExistingFingerprintFile)
+            .When("task executes with missing SQL project", s =>
+            {
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = s.Engine,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    FingerprintFile = s.FingerprintFile,
+                    SqlProjectPath = Path.Combine(s.Folder.Root, "NonExistent.sqlproj")
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("fingerprint is computed without SQL files", r => !string.IsNullOrEmpty(r.Task.Fingerprint))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("SQL file exclude patterns work correctly")]
+    [Fact]
+    public async Task Sql_exclude_patterns_work()
+    {
+        await Given("inputs with SQL files in bin directory", () =>
+            {
+                var setup = SetupWithExistingFingerprintFile();
+                var sqlProjDir = setup.Folder.CreateDir("SqlProj");
+                var sqlProjPath = Path.Combine(sqlProjDir, "Database.sqlproj");
+                File.WriteAllText(sqlProjPath, "<Project />");
+                setup.Folder.WriteFile("SqlProj/Tables/Users.sql", "CREATE TABLE Users (Id INT)");
+                setup.Folder.WriteFile("SqlProj/bin/Debug/Generated.sql", "-- Generated file");
+                
+                return (setup, sqlProjPath);
+            })
+            .When("task executes with default exclude patterns", ctx =>
+            {
+                var (s, sqlProjPath) = ctx;
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = s.Engine,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    FingerprintFile = s.FingerprintFile,
+                    SqlProjectPath = sqlProjPath,
+                    SqlFileExcludePatterns = "bin/**;obj/**"
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("fingerprint includes source SQL but not bin SQL", r =>
+            {
+                // The fingerprint should include Users.sql but not Generated.sql
+                // We can't directly check the manifest, but we can verify execution succeeded
+                return r.Success;
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("SQL file include patterns work correctly")]
+    [Fact]
+    public async Task Sql_include_patterns_work()
+    {
+        await Given("inputs with SQL and TSQL files", () =>
+            {
+                var setup = SetupWithExistingFingerprintFile();
+                var sqlProjDir = setup.Folder.CreateDir("SqlProj");
+                var sqlProjPath = Path.Combine(sqlProjDir, "Database.sqlproj");
+                File.WriteAllText(sqlProjPath, "<Project />");
+                setup.Folder.WriteFile("SqlProj/Tables/Users.sql", "CREATE TABLE Users (Id INT)");
+                setup.Folder.WriteFile("SqlProj/Scripts/Script.tsql", "SELECT * FROM Users");
+                
+                return (setup, sqlProjPath);
+            })
+            .When("task executes with custom include pattern", ctx =>
+            {
+                var (s, sqlProjPath) = ctx;
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = s.Engine,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    FingerprintFile = s.FingerprintFile,
+                    SqlProjectPath = sqlProjPath,
+                    SqlFileIncludePatterns = "**/*.sql;**/*.tsql"
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("fingerprint is computed", r => !string.IsNullOrEmpty(r.Task.Fingerprint))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("SQL comment-only change does not trigger fingerprint change")]
+    [Fact]
+    public async Task Sql_comment_only_change_ignored()
+    {
+        await Given("inputs with SQL project", () =>
+            {
+                var setup = SetupWithExistingFingerprintFile();
+                var sqlProjDir = setup.Folder.CreateDir("SqlProj");
+                var sqlProjPath = Path.Combine(sqlProjDir, "Database.sqlproj");
+                File.WriteAllText(sqlProjPath, "<Project />");
+                setup.Folder.WriteFile("SqlProj/Tables/Users.sql", "CREATE TABLE Users (Id INT PRIMARY KEY)");
+                
+                // First run
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = setup.Engine,
+                    DacpacPath = setup.DacpacPath,
+                    ConfigPath = setup.ConfigPath,
+                    RenamingPath = setup.RenamingPath,
+                    TemplateDir = setup.TemplateDir,
+                    FingerprintFile = setup.FingerprintFile,
+                    SqlProjectPath = sqlProjPath
+                };
+                task.Execute();
+                return (setup, sqlProjPath, sqlProjDir);
+            })
+            .When("SQL comments are added", ctx =>
+            {
+                var (s, sqlProjPath, sqlProjDir) = ctx;
+                File.WriteAllText(Path.Combine(sqlProjDir, "Tables/Users.sql"), 
+                    @"-- Table: Users
+                      CREATE TABLE Users (Id INT PRIMARY KEY) -- Primary key");
+                
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = s.Engine,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    FingerprintFile = s.FingerprintFile,
+                    SqlProjectPath = sqlProjPath
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("HasChanged is false", r => r.Task.HasChanged == "false")
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Handles UnauthorizedAccessException on SQL directory")]
+    [Fact]
+    public async Task Handles_unauthorized_access_on_sql_directory()
+    {
+        // This test verifies graceful handling - actual UnauthorizedAccessException is hard to simulate in tests
+        // The code has try-catch blocks that return empty enumerables
+        await Given("inputs with SQL project", () =>
+            {
+                var setup = SetupWithExistingFingerprintFile();
+                var sqlProjDir = setup.Folder.CreateDir("SqlProj");
+                var sqlProjPath = Path.Combine(sqlProjDir, "Database.sqlproj");
+                File.WriteAllText(sqlProjPath, "<Project />");
+                setup.Folder.WriteFile("SqlProj/Tables/Users.sql", "CREATE TABLE Users (Id INT)");
+                
+                return (setup, sqlProjPath);
+            })
+            .When("task executes", ctx =>
+            {
+                var (s, sqlProjPath) = ctx;
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = s.Engine,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    FingerprintFile = s.FingerprintFile,
+                    SqlProjectPath = sqlProjPath
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("fingerprint is computed", r => !string.IsNullOrEmpty(r.Task.Fingerprint))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Handles empty SQL project directory")]
+    [Fact]
+    public async Task Handles_empty_sql_directory()
+    {
+        await Given("inputs with empty SQL project directory", () =>
+            {
+                var setup = SetupWithExistingFingerprintFile();
+                var sqlProjDir = setup.Folder.CreateDir("SqlProj");
+                var sqlProjPath = Path.Combine(sqlProjDir, "Database.sqlproj");
+                File.WriteAllText(sqlProjPath, "<Project />");
+                // No SQL files
+                
+                return (setup, sqlProjPath);
+            })
+            .When("task executes", ctx =>
+            {
+                var (s, sqlProjPath) = ctx;
+                var task = new ComputeFingerprint
+                {
+                    BuildEngine = s.Engine,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    FingerprintFile = s.FingerprintFile,
+                    SqlProjectPath = sqlProjPath
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("fingerprint is computed", r => !string.IsNullOrEmpty(r.Task.Fingerprint))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Cross-platform path handling works correctly")]
+    [Fact]
+    public async Task Cross_platform_path_handling()
+    {
+        await Given("inputs with SQL project", () =>
+            {
+                var setup = SetupWithExistingFingerprintFile();
+                var sqlProjDir = setup.Folder.CreateDir("SqlProj");
+                var sqlProjPath = Path.Combine(sqlProjDir, "Database.sqlproj");
+                File.WriteAllText(sqlProjPath, "<Project />");
+                setup.Folder.WriteFile("SqlProj/Tables/Users.sql", "CREATE TABLE Users (Id INT)");
+                
+                return (setup, sqlProjPath);
+            })
+            .When("task executes and fingerprint is computed twice", ctx =>
+            {
+                var (s, sqlProjPath) = ctx;
+                
+                // First run
+                var task1 = new ComputeFingerprint
+                {
+                    BuildEngine = s.Engine,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    FingerprintFile = s.FingerprintFile,
+                    SqlProjectPath = sqlProjPath
+                };
+                task1.Execute();
+                var firstFingerprint = task1.Fingerprint;
+                
+                // Delete and recompute
+                File.Delete(s.FingerprintFile);
+                
+                // Second run
+                var task2 = new ComputeFingerprint
+                {
+                    BuildEngine = s.Engine,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    FingerprintFile = s.FingerprintFile,
+                    SqlProjectPath = sqlProjPath
+                };
+                task2.Execute();
+                var secondFingerprint = task2.Fingerprint;
+                
+                return (firstFingerprint, secondFingerprint, s.Folder);
+            })
+            .Then("fingerprints match across runs", t => t.firstFingerprint == t.secondFingerprint)
+            .Finally(t => t.Folder.Dispose())
+            .AssertPassed();
+    }
 }

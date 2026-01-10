@@ -1,0 +1,8 @@
+CREATE TABLE [dbo].[Orders]
+(
+    [OrderId] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    [CustomerName] NVARCHAR(200) NOT NULL,
+    [OrderDate] DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+    [ShippedDate] DATETIME2 NULL,
+    [TotalAmount] DECIMAL(18,2) NOT NULL DEFAULT 0
+);

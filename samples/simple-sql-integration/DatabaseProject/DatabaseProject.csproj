@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="MSBuild.Sdk.SqlProj/3.3.0">
+    <PropertyGroup>
+        <Name>DatabaseProject</Name>
+        <TargetFramework>net10.0</TargetFramework>
+        <SqlServerVersion>Sql160</SqlServerVersion>
+        <RunSqlCodeAnalysis>False</RunSqlCodeAnalysis>
+    </PropertyGroup>
+
+    <!--
+        Simple SQL Integration:
+        Adding JD.Efcpt.Build to this SQL project enables automatic discovery
+        and building of downstream EF Core projects that reference this project.
+        
+        When you build this project:
+        1. SQL scripts compile to DACPAC (as normal)
+        2. JD.Efcpt.Build discovers DataAccessProject (references this + has JD.Efcpt.Build)
+        3. DataAccessProject is built automatically
+        4. EF Core models are generated from this DACPAC
+        
+        Configuration options:
+        - EfcptTriggerDownstream: Enable/disable (default: true)
+        - EfcptDownstreamProjects: Explicit list (overrides auto-discovery)
+        - EfcptDownstreamAutoDiscover: Enable/disable auto-discovery (default: true)
+        - EfcptDownstreamSearchPaths: Additional directories to search
+    -->
+    <ItemGroup>
+        <!-- This enables automatic downstream discovery and building -->
+        <PackageReference Include="JD.Efcpt.Build" Version="*" />
+    </ItemGroup>
+</Project>

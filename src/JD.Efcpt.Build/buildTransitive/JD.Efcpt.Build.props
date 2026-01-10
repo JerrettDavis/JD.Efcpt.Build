@@ -56,6 +56,10 @@
     <EfcptStampFile Condition="'$(EfcptStampFile)'==''">$(EfcptOutput).efcpt.stamp</EfcptStampFile>
     <EfcptDetectGeneratedFileChanges Condition="'$(EfcptDetectGeneratedFileChanges)'==''">false</EfcptDetectGeneratedFileChanges>
 
+    <!-- SQL File Fingerprinting: Include/exclude patterns for SQL files from SQL project -->
+    <EfcptSqlFileIncludePatterns Condition="'$(EfcptSqlFileIncludePatterns)'==''">**/*.sql</EfcptSqlFileIncludePatterns>
+    <EfcptSqlFileExcludePatterns Condition="'$(EfcptSqlFileExcludePatterns)'==''">bin/**;obj/**;**/generated/**</EfcptSqlFileExcludePatterns>
+
     <!-- Diagnostics -->
     <EfcptLogVerbosity Condition="'$(EfcptLogVerbosity)'==''">minimal</EfcptLogVerbosity>
     <EfcptDumpResolvedInputs Condition="'$(EfcptDumpResolvedInputs)'==''">false</EfcptDumpResolvedInputs>
@@ -175,5 +179,15 @@
     <EfcptSqlPackageToolVersion Condition="'$(EfcptSqlPackageToolVersion)'==''"></EfcptSqlPackageToolVersion>
     <EfcptSqlPackageToolRestore Condition="'$(EfcptSqlPackageToolRestore)'==''">true</EfcptSqlPackageToolRestore>
     <EfcptSqlPackageToolPath Condition="'$(EfcptSqlPackageToolPath)'==''"></EfcptSqlPackageToolPath>
+
+    <!-- Downstream Project Triggering Configuration -->
+    <!-- When enabled in SQL projects, automatically discovers and builds EF Core projects that reference this SQL project -->
+    <EfcptTriggerDownstream Condition="'$(EfcptTriggerDownstream)'==''">true</EfcptTriggerDownstream>
+    <EfcptDownstreamProjects Condition="'$(EfcptDownstreamProjects)'==''"></EfcptDownstreamProjects>
+    <EfcptDownstreamAutoDiscover Condition="'$(EfcptDownstreamAutoDiscover)'==''">true</EfcptDownstreamAutoDiscover>
+    <EfcptDownstreamSearchPaths Condition="'$(EfcptDownstreamSearchPaths)'==''"></EfcptDownstreamSearchPaths>
+    <EfcptDownstreamBuildProperties Condition="'$(EfcptDownstreamBuildProperties)'==''"></EfcptDownstreamBuildProperties>
+    <EfcptBuildingDownstream Condition="'$(EfcptBuildingDownstream)'==''">false</EfcptBuildingDownstream>
+    <EfcptForceCompileDownstreamProjects Condition="'$(EfcptForceCompileDownstreamProjects)'==''">false</EfcptForceCompileDownstreamProjects>
   </PropertyGroup>
 </Project>

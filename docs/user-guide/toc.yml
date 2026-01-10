@@ -10,6 +10,8 @@
   href: configuration.md
 - name: Connection String Mode
   href: connection-string-mode.md
+- name: Simple SQL Integration
+  href: simple-sql-integration.md
 - name: T4 Templates
   href: t4-templates.md
 - name: CI/CD Integration
