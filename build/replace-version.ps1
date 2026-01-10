@@ -74,7 +74,6 @@ $totalReplacements = 0
 foreach ($file in $files) {
     $relativePath = $file.FullName.Replace($Path, "").TrimStart([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
     $content = Get-Content -Path $file.FullName -Raw -ErrorAction Stop
-    $originalContent = $content
     $fileReplacements = 0
     
     foreach ($patternInfo in $patterns) {
