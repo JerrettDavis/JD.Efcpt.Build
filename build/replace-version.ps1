@@ -90,6 +90,8 @@ foreach ($file in $files) {
         Write-Host "    -> $fileReplacements replacement(s)" -ForegroundColor Gray
         
         if (-not $DryRun) {
+            # Preserve the original file's newline behavior
+            # Get-Content with -Raw preserves trailing newlines, so we use -NoNewline to avoid adding an extra one
             Set-Content -Path $file.FullName -Value $content -NoNewline -ErrorAction Stop
         }
         
