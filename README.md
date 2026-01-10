@@ -23,7 +23,7 @@ dotnet build
 ### Option B: SDK Approach (Recommended)
 
 ```xml
-<Project Sdk="JD.Efcpt.Sdk/1.0.0">
+<Project Sdk="JD.Efcpt.Sdk/PACKAGE_VERSION">
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
     </PropertyGroup>
@@ -101,7 +101,7 @@ Automatically generate SQL scripts from your live database when JD.Efcpt.Build d
         <EfcptConnectionString>Server=...;Database=MyDb;...</EfcptConnectionString>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="JD.Efcpt.Build" Version="*" />
+        <PackageReference Include="JD.Efcpt.Build" Version="PACKAGE_VERSION" />
     </ItemGroup>
 </Project>
 ```
@@ -110,7 +110,7 @@ Automatically generate SQL scripts from your live database when JD.Efcpt.Build d
 ```xml
 <ItemGroup>
     <ProjectReference Include="..\DatabaseProject\DatabaseProject.csproj" />
-    <PackageReference Include="JD.Efcpt.Build" Version="*" />
+    <PackageReference Include="JD.Efcpt.Build" Version="PACKAGE_VERSION" />
 </ItemGroup>
 ```
 

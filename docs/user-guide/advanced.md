@@ -26,7 +26,7 @@ Create a `Directory.Build.props` file at the solution root:
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="JD.Efcpt.Build" Version="x.x.x" />
+    <PackageReference Include="JD.Efcpt.Build" Version="PACKAGE_VERSION" />
   </ItemGroup>
 </Project>
 ```

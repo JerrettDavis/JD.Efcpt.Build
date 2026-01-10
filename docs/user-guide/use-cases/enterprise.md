@@ -53,7 +53,7 @@ dotnet new efcptbuild -n MyProject -o src/MyProject
 
 ```xml
 <!-- Replace existing Sdk attribute -->
-<Project Sdk="JD.Efcpt.Sdk/1.0.0">
+<Project Sdk="JD.Efcpt.Sdk/PACKAGE_VERSION">
   <!-- Your project content -->
 </Project>
 ```
@@ -63,7 +63,7 @@ dotnet new efcptbuild -n MyProject -o src/MyProject
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <PackageReference Include="JD.Efcpt.Build" Version="1.0.0" />
+    <PackageReference Include="JD.Efcpt.Build" Version="PACKAGE_VERSION" />
   </ItemGroup>
 </Project>
 ```

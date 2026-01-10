@@ -30,7 +30,7 @@ Choose JD.Efcpt.Build (PackageReference) when:
 Use the SDK in your project file with the version specified inline:
 
 ```xml
-<Project Sdk="JD.Efcpt.Sdk/1.0.0">
+<Project Sdk="JD.Efcpt.Sdk/PACKAGE_VERSION">
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -147,7 +147,7 @@ The SDK works with all SQL project types:
 The SDK also supports connection string mode for direct database reverse engineering:
 
 ```xml
-<Project Sdk="JD.Efcpt.Sdk/1.0.0">
+<Project Sdk="JD.Efcpt.Sdk/PACKAGE_VERSION">
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
         <EfcptConnectionString>Server=localhost;Database=MyDb;Integrated Security=True;</EfcptConnectionString>
@@ -166,7 +166,7 @@ See [Connection String Mode](connection-string-mode.md) for details.
 The SDK supports multi-targeting just like the standard .NET SDK:
 
 ```xml
-<Project Sdk="JD.Efcpt.Sdk/1.0.0">
+<Project Sdk="JD.Efcpt.Sdk/PACKAGE_VERSION">
     <PropertyGroup>
         <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     </PropertyGroup>
@@ -180,7 +180,7 @@ Model generation happens once and is shared across all target frameworks.
 
 | Feature | JD.Efcpt.Sdk | JD.Efcpt.Build (PackageReference) |
 |---------|--------------|-----------------------------------|
-| Project file | `Sdk="JD.Efcpt.Sdk/1.0.0"` | `<PackageReference Include="JD.Efcpt.Build" />` |
+| Project file | `Sdk="JD.Efcpt.Sdk/PACKAGE_VERSION"` | `<PackageReference Include="JD.Efcpt.Build" />` |
 | Version location | Sdk attribute or `global.json` | `.csproj` or Directory.Build.props |
 | Setup complexity | Lower | Slightly higher |
 | Existing projects | Requires SDK change | Drop-in addition |
@@ -279,7 +279,7 @@ If you prefer using tools like `dotnet outdated` for version management, use `JD
 
 If you see an error like "The SDK 'JD.Efcpt.Sdk' could not be resolved":
 
-1. Verify the version is specified (either inline `Sdk="JD.Efcpt.Sdk/1.0.0"` or in `global.json`)
+1. Verify the version is specified (either inline `Sdk="JD.Efcpt.Sdk/PACKAGE_VERSION"` or in `global.json`)
 2. Check that the version matches an available package version
 3. Ensure the package is available in your NuGet sources
 
@@ -295,7 +295,7 @@ If the SQL project isn't building:
 
 If you need different SDK versions for different projects:
 
-1. Specify the version inline in each project file: `Sdk="JD.Efcpt.Sdk/1.0.0"`
+1. Specify the version inline in each project file: `Sdk="JD.Efcpt.Sdk/PACKAGE_VERSION"`
 2. Or use JD.Efcpt.Build via PackageReference instead
 
 ## Next Steps

@@ -31,7 +31,7 @@ dotnet build
 ### Option B: SDK Approach (Recommended)
 
 ```xml
-<Project Sdk="JD.Efcpt.Sdk/1.0.0">
+<Project Sdk="JD.Efcpt.Sdk/PACKAGE_VERSION">
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
     </PropertyGroup>
