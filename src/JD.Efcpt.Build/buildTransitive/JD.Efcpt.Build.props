@@ -56,6 +56,10 @@
     <EfcptStampFile Condition="'$(EfcptStampFile)'==''">$(EfcptOutput).efcpt.stamp</EfcptStampFile>
     <EfcptDetectGeneratedFileChanges Condition="'$(EfcptDetectGeneratedFileChanges)'==''">false</EfcptDetectGeneratedFileChanges>
 
+    <!-- SQL File Fingerprinting: Include/exclude patterns for SQL files from SQL project -->
+    <EfcptSqlFileIncludePatterns Condition="'$(EfcptSqlFileIncludePatterns)'==''">**/*.sql</EfcptSqlFileIncludePatterns>
+    <EfcptSqlFileExcludePatterns Condition="'$(EfcptSqlFileExcludePatterns)'==''">bin/**;obj/**;**/generated/**</EfcptSqlFileExcludePatterns>
+
     <!-- Diagnostics -->
     <EfcptLogVerbosity Condition="'$(EfcptLogVerbosity)'==''">minimal</EfcptLogVerbosity>
     <EfcptDumpResolvedInputs Condition="'$(EfcptDumpResolvedInputs)'==''">false</EfcptDumpResolvedInputs>

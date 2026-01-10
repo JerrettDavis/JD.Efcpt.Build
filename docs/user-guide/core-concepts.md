@@ -94,7 +94,7 @@ The pipeline consists of seven stages that run before C# compilation:
 **What it does**:
 - Computes an XxHash64 (fast, non-cryptographic) hash of:
   - The DACPAC file contents (or schema fingerprint)
-  - All SQL source files from the SQL project directory (normalized for whitespace)
+  - All SQL source files from the SQL project directory with intelligent normalization
   - The staged configuration file
   - The staged renaming file
   - All files in the staged template directory
@@ -140,7 +140,12 @@ The fingerprint includes multiple sources to ensure regeneration when any releva
 - **Library version** - Version of JD.Efcpt.Build.Tasks assembly
 - **Tool version** - EF Core Power Tools CLI version (`EfcptToolVersion`)
 - **DACPAC content** (in .sqlproj mode) or **schema metadata** (in connection string mode)
-- **SQL source files** - All *.sql files from the SQL project directory (normalized for whitespace to detect only material changes)
+- **SQL source files** - Configurable patterns (`EfcptSqlFileIncludePatterns` / `EfcptSqlFileExcludePatterns`)
+  - Default includes: `**/*.sql`
+  - Default excludes: `bin/**;obj/**;**/generated/**`
+  - Smart normalization: whitespace and comments ignored, string literals preserved
+  - Only material SQL changes (schema modifications) trigger regeneration
+  - Formatting changes (indentation, line breaks) are ignored
 - **efcpt-config.json** - Generation options, namespaces, table selection
 - **MSBuild property overrides** - All `EfcptConfig*` properties set in the .csproj
 - **efcpt.renaming.json** - Custom naming rules
@@ -148,6 +153,45 @@ The fingerprint includes multiple sources to ensure regeneration when any releva
 - **Generated files** (optional) - When `EfcptDetectGeneratedFileChanges=true`, includes fingerprints of generated `.g.cs` files
 
 **Important**: The fingerprint is computed after MSBuild property overrides are applied, so changing any `EfcptConfig*` property (like `EfcptConfigRootNamespace`) will automatically trigger regeneration.
+
+### SQL File Fingerprinting
+
+SQL source files from the SQL project are fingerprinted using intelligent normalization to detect only material changes:
+
+**What Triggers Regeneration (Material Changes)**:
+- Adding or removing tables, views, stored procedures
+- Adding, removing, or modifying columns
+- Changing data types or constraints
+- Modifying string literal content in SQL
+- Any structural schema changes
+
+**What Does NOT Trigger Regeneration (Formatting Changes)**:
+- Adding or removing whitespace (spaces, tabs, newlines)
+- Reformatting code (indentation, alignment)
+- Adding or removing SQL comments (both `--` and `/* */`)
+- Changing comment content
+- Case changes in SQL keywords (optional normalization)
+
+**Customizing SQL File Patterns**:
+
+```xml
+<PropertyGroup>
+  <!-- Include custom file extensions -->
+  <EfcptSqlFileIncludePatterns>**/*.sql;**/*.tsql</EfcptSqlFileIncludePatterns>
+  
+  <!-- Exclude additional directories -->
+  <EfcptSqlFileExcludePatterns>bin/**;obj/**;**/generated/**;**/migrations/**</EfcptSqlFileExcludePatterns>
+</PropertyGroup>
+```
+
+**Normalization Process**:
+1. Extract string literals and preserve them exactly (e.g., `'Product   Name'` kept as-is)
+2. Remove all SQL comments (`--` line comments and `/* */` block comments)
+3. Normalize all whitespace outside strings to single spaces
+4. Restore string literals to their original positions
+5. Compute hash of normalized content
+
+This approach ensures that only substantive SQL changes trigger model regeneration, while developers remain free to format their SQL code however they prefer without causing unnecessary rebuilds.
 
 **Enhanced Change Detection**: Starting with this release, the fingerprinting logic also includes all SQL source files from the SQL project directory. This means that when you modify a `.sql` file (such as adding a column, changing a constraint, or updating a stored procedure), the models will be regenerated automatically - even if the SQL project hasn't been rebuilt yet to create a new DACPAC. The system normalizes whitespace in SQL files, so only material changes (non-whitespace modifications) trigger regeneration, preventing unnecessary rebuilds due to formatting changes.
 

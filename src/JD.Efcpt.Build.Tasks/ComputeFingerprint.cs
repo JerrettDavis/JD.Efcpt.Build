@@ -49,11 +49,56 @@ public sealed class ComputeFingerprint : Task
     /// Path to the SQL project (.sqlproj) to include SQL files in the fingerprint.
     /// </summary>
     /// <remarks>
-    /// When provided, all .sql files in the SQL project directory are included in the fingerprint.
+    /// <para>
+    /// When provided, SQL files matching <see cref="SqlFileIncludePatterns"/> and not matching
+    /// <see cref="SqlFileExcludePatterns"/> are included in the fingerprint calculation.
+    /// </para>
+    /// <para>
     /// This ensures model regeneration when SQL files change, even if the DACPAC hasn't been rebuilt yet.
-    /// Only non-whitespace changes are detected by computing a normalized hash of each SQL file.
+    /// Only material SQL changes (schema modifications, data changes) are detected using normalized
+    /// hashing that ignores whitespace and comment differences while preserving string literals.
+    /// </para>
     /// </remarks>
     public string SqlProjectPath { get; set; } = "";
+
+    /// <summary>
+    /// Semicolon-separated glob patterns for SQL files to include in fingerprinting.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Default value is <c>**/*.sql</c> which includes all .sql files in the SQL project directory and subdirectories.
+    /// </para>
+    /// <para>
+    /// Examples:
+    /// <list type="bullet">
+    ///   <item><description><c>**/*.sql</c> - All SQL files (default)</description></item>
+    ///   <item><description><c>**/*.sql;**/*.tsql</c> - SQL and TSQL files</description></item>
+    ///   <item><description><c>Tables/**/*.sql;Views/**/*.sql</c> - Only tables and views</description></item>
+    /// </list>
+    /// </para>
+    /// </remarks>
+    public string SqlFileIncludePatterns { get; set; } = "**/*.sql";
+
+    /// <summary>
+    /// Semicolon-separated glob patterns for SQL files to exclude from fingerprinting.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Default value is <c>bin/**;obj/**;**/generated/**</c> which excludes build artifacts and generated files.
+    /// </para>
+    /// <para>
+    /// These patterns prevent build outputs and generated files from affecting the fingerprint,
+    /// ensuring only source SQL files trigger regeneration.
+    /// </para>
+    /// <para>
+    /// Examples:
+    /// <list type="bullet">
+    ///   <item><description><c>bin/**;obj/**</c> - Exclude build directories</description></item>
+    ///   <item><description><c>**/generated/**;**/migrations/**</c> - Exclude generated and migration files</description></item>
+    /// </list>
+    /// </para>
+    /// </remarks>
+    public string SqlFileExcludePatterns { get; set; } = "bin/**;obj/**;**/generated/**";
 
     /// <summary>
     /// Schema fingerprint from QuerySchemaMetadata (used in connection string mode).
@@ -187,17 +232,56 @@ public sealed class ComputeFingerprint : Task
                 if (!string.IsNullOrWhiteSpace(sqlProjDir) && Directory.Exists(sqlProjDir))
                 {
                     log.Detail($"Including SQL files from SQL project: {SqlProjectPath}");
-                    manifest = Directory
-                        .EnumerateFiles(sqlProjDir, "*.sql", SearchOption.AllDirectories)
-                        .Select(p => p.Replace('\u005C', '/'))
-                        .OrderBy(p => p, StringComparer.Ordinal)
+                    
+                    // Parse include and exclude patterns
+                    var includePatterns = (SqlFileIncludePatterns ?? "**/*.sql")
+                        .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(p => p.Trim())
+                        .Where(p => !string.IsNullOrWhiteSpace(p))
+                        .ToArray();
+                    var excludePatterns = (SqlFileExcludePatterns ?? "bin/**;obj/**;**/generated/**")
+                        .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(p => p.Trim())
+                        .Where(p => !string.IsNullOrWhiteSpace(p))
+                        .ToArray();
+
+                    // Get all SQL files matching include patterns
+                    var sqlFiles = includePatterns
+                        .SelectMany(pattern => 
+                        {
+                            try
+                            {
+                                return Directory.EnumerateFiles(sqlProjDir, "*", SearchOption.AllDirectories)
+                                    .Where(f => MatchesGlobPattern(f, sqlProjDir, pattern));
+                            }
+                            catch (UnauthorizedAccessException)
+                            {
+                                // Skip directories we don't have access to
+                                return Enumerable.Empty<string>();
+                            }
+                        })
+                        .Distinct()
+                        .ToList();
+
+                    // Filter out files matching exclude patterns
+                    sqlFiles = sqlFiles
+                        .Where(f => !excludePatterns.Any(pattern => MatchesGlobPattern(f, sqlProjDir, pattern)))
+                        .ToList();
+
+                    log.Detail($"Found {sqlFiles.Count} SQL file(s) after applying include/exclude patterns");
+
+                    // Add SQL files to manifest with normalized hashing
+                    // Normalize paths to forward slashes for cross-platform consistency
+                    manifest = sqlFiles
+                        .Select(f => f.Replace('\\', '/'))
+                        .OrderBy(f => f, StringComparer.Ordinal)  // Stable ordering for deterministic fingerprint
                         .Select(file => (
 #if NETFRAMEWORK
-                            rel: NetFrameworkPolyfills.GetRelativePath(sqlProjDir, file).Replace('\u005C', '/'),
+                            rel: NetFrameworkPolyfills.GetRelativePath(sqlProjDir, file).Replace('\\', '/'),
 #else
-                            rel: Path.GetRelativePath(sqlProjDir, file).Replace('\u005C', '/'),
+                            rel: Path.GetRelativePath(sqlProjDir, file).Replace('\\', '/'),
 #endif
-                            h: FileHash.HashFileNormalized(file)))
+                            h: FileHash.HashSqlFileNormalized(file)))
                         .Aggregate(manifest, (builder, data)
                             => builder.Append("sql/")
                                 .Append(data.rel).Append('\0')
@@ -293,5 +377,54 @@ public sealed class ComputeFingerprint : Task
         var full = Path.GetFullPath(path);
         var h = FileHash.HashFile(full);
         manifest.Append(label).Append('\0').Append(h).Append('\n');
+    }
+
+    /// <summary>
+    /// Simple glob pattern matching for file paths.
+    /// </summary>
+    /// <param name="filePath">The absolute file path to test.</param>
+    /// <param name="basePath">The base directory path.</param>
+    /// <param name="pattern">The glob pattern (supports * and ** wildcards).</param>
+    /// <returns>True if the file matches the pattern, false otherwise.</returns>
+    /// <remarks>
+    /// <para>
+    /// Supported patterns:
+    /// <list type="bullet">
+    ///   <item><description><c>*.sql</c> - Files ending with .sql in base directory</description></item>
+    ///   <item><description><c>**/*.sql</c> - Files ending with .sql in any subdirectory</description></item>
+    ///   <item><description><c>Tables/*.sql</c> - Files in Tables subdirectory</description></item>
+    ///   <item><description><c>bin/**</c> - All files under bin directory</description></item>
+    /// </list>
+    /// </para>
+    /// </remarks>
+    private static bool MatchesGlobPattern(string filePath, string basePath, string pattern)
+    {
+        try
+        {
+#if NETFRAMEWORK
+            var relativePath = NetFrameworkPolyfills.GetRelativePath(basePath, filePath).Replace('\\', '/');
+#else
+            var relativePath = Path.GetRelativePath(basePath, filePath).Replace('\\', '/');
+#endif
+
+            // Convert glob pattern to regex
+            // ** matches any number of directories
+            // * matches anything except directory separator
+            var regexPattern = "^" + System.Text.RegularExpressions.Regex.Escape(pattern)
+                .Replace("\\*\\*/", ".*")      // **/ matches any path
+                .Replace("/\\*\\*", "/.*")      // /** matches any path
+                .Replace("\\*\\*", ".*")        // ** at start/end
+                .Replace("\\*", "[^/]*")        // * matches non-slash chars
+                .Replace("\\?", ".")            // ? matches single char
+                + "$";
+
+            return System.Text.RegularExpressions.Regex.IsMatch(relativePath, regexPattern, 
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        }
+        catch
+        {
+            // If pattern matching fails, exclude the file to be safe
+            return false;
+        }
     }
 }

@@ -185,4 +185,94 @@ public sealed class FileHashTests(ITestOutputHelper output) : TinyBddXunitBase(o
             .Finally(t => t.folder.Dispose())
             .AssertPassed();
     }
+
+    [Scenario("HashSqlFileNormalized produces deterministic hash for SQL file")]
+    [Fact]
+    public async Task HashSqlFileNormalized_produces_deterministic_hash()
+    {
+        await Given("a temporary SQL file with content", () =>
+            {
+                var folder = new TestFolder();
+                var path = folder.WriteFile("test.sql", "CREATE TABLE Users (Id INT PRIMARY KEY)");
+                return (folder, path);
+            })
+            .When("hash is computed twice", t => (t.folder, FileHash.HashSqlFileNormalized(t.path), FileHash.HashSqlFileNormalized(t.path)))
+            .Then("hashes match", t => t.Item2 == t.Item3)
+            .Finally(t => t.folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("HashSqlFileNormalized ignores whitespace changes")]
+    [Fact]
+    public async Task HashSqlFileNormalized_ignores_whitespace()
+    {
+        await Given("two SQL files with same content but different whitespace", () =>
+            {
+                var folder = new TestFolder();
+                var path1 = folder.WriteFile("test1.sql", "CREATE TABLE Users (Id INT PRIMARY KEY)");
+                var path2 = folder.WriteFile("test2.sql", @"CREATE  TABLE  Users  
+                    (Id    INT    PRIMARY KEY)");
+                return (folder, path1, path2);
+            })
+            .When("both files are hashed", t =>
+                (FileHash.HashSqlFileNormalized(t.path1), FileHash.HashSqlFileNormalized(t.path2), t.folder))
+            .Then("hashes match", t => t.Item1 == t.Item2)
+            .Finally(t => t.folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("HashSqlFileNormalized detects material SQL changes")]
+    [Fact]
+    public async Task HashSqlFileNormalized_detects_material_changes()
+    {
+        await Given("two SQL files with different content", () =>
+            {
+                var folder = new TestFolder();
+                var path1 = folder.WriteFile("test1.sql", "CREATE TABLE Users (Id INT PRIMARY KEY)");
+                var path2 = folder.WriteFile("test2.sql", "CREATE TABLE Users (Id INT PRIMARY KEY, Name NVARCHAR(100))");
+                return (folder, path1, path2);
+            })
+            .When("both files are hashed", t =>
+                (FileHash.HashSqlFileNormalized(t.path1), FileHash.HashSqlFileNormalized(t.path2), t.folder))
+            .Then("hashes differ", t => t.Item1 != t.Item2)
+            .Finally(t => t.folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("HashSqlFileNormalized preserves string literal content")]
+    [Fact]
+    public async Task HashSqlFileNormalized_preserves_string_literals()
+    {
+        await Given("two SQL files with different string literals", () =>
+            {
+                var folder = new TestFolder();
+                var path1 = folder.WriteFile("test1.sql", "INSERT INTO Products (Name) VALUES ('Product A')");
+                var path2 = folder.WriteFile("test2.sql", "INSERT INTO Products (Name) VALUES ('Product B')");
+                return (folder, path1, path2);
+            })
+            .When("both files are hashed", t =>
+                (FileHash.HashSqlFileNormalized(t.path1), FileHash.HashSqlFileNormalized(t.path2), t.folder))
+            .Then("hashes differ", t => t.Item1 != t.Item2)
+            .Finally(t => t.folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("HashSqlFileNormalized ignores SQL comments")]
+    [Fact]
+    public async Task HashSqlFileNormalized_ignores_comments()
+    {
+        await Given("two SQL files with same content but different comments", () =>
+            {
+                var folder = new TestFolder();
+                var path1 = folder.WriteFile("test1.sql", "CREATE TABLE Users (Id INT PRIMARY KEY)");
+                var path2 = folder.WriteFile("test2.sql", @"-- Table for users
+                    CREATE TABLE Users (Id INT PRIMARY KEY) -- Primary key");
+                return (folder, path1, path2);
+            })
+            .When("both files are hashed", t =>
+                (FileHash.HashSqlFileNormalized(t.path1), FileHash.HashSqlFileNormalized(t.path2), t.folder))
+            .Then("hashes match", t => t.Item1 == t.Item2)
+            .Finally(t => t.folder.Dispose())
+            .AssertPassed();
+    }
 }

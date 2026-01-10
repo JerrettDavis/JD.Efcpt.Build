@@ -742,6 +742,8 @@ in duplicate builds or suboptimal performance in complex solutions.
     <ComputeFingerprint
         DacpacPath="$(_EfcptDacpacPath)"
         SqlProjectPath="$(_EfcptSqlProj)"
+        SqlFileIncludePatterns="$(EfcptSqlFileIncludePatterns)"
+        SqlFileExcludePatterns="$(EfcptSqlFileExcludePatterns)"
         SchemaFingerprint="$(_EfcptSchemaFingerprint)"
         UseConnectionStringMode="$(_EfcptUseConnectionString)"
         ConfigPath="$(_EfcptStagedConfig)"
