@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using JD.Efcpt.Build.Tasks.Chains;
@@ -48,11 +49,6 @@ public sealed class ResolveSqlProjAndInputs : Task
     /// </summary>
     [Required]
     public string ProjectFullPath { get; set; } = "";
-
-    /// <summary>
-    /// Full path to the MSBuild project file (used for profiling).
-    /// </summary>
-    public string ProjectPath { get; set; } = "";
 
     /// <summary>
     /// Directory that contains the consuming project file.
@@ -304,7 +300,7 @@ public sealed class ResolveSqlProjAndInputs : Task
     /// <inheritdoc />
     public override bool Execute()
     {
-        var profiler = ProfilingHelper.GetProfiler(ProjectPath);
+        var profiler = ProfilingHelper.GetProfiler(ProjectFullPath);
         var decorator = TaskExecutionDecorator.Create(ExecuteCore);
         var ctx = new TaskExecutionContext(Log, nameof(ResolveSqlProjAndInputs), profiler);
         return decorator.Execute(in ctx);
@@ -315,7 +311,7 @@ public sealed class ResolveSqlProjAndInputs : Task
         using var taskTracker = ctx.Profiler?.BeginTask(
             nameof(ResolveSqlProjAndInputs),
             initiator: "EfcptPipeline",
-            inputs: new System.Collections.Generic.Dictionary<string, object?>
+            inputs: new Dictionary<string, object?>
             {
                 ["ProjectFullPath"] = ProjectFullPath,
                 ["Configuration"] = Configuration,
@@ -359,7 +355,7 @@ public sealed class ResolveSqlProjAndInputs : Task
             : $"Resolved SQL project: {SqlProjPath}");
 
         // Capture outputs for profiling
-        taskTracker?.SetOutputs(new System.Collections.Generic.Dictionary<string, object?>
+        taskTracker?.SetOutputs(new Dictionary<string, object?>
         {
             ["SqlProjPath"] = SqlProjPath,
             ["ResolvedConfigPath"] = ResolvedConfigPath,
