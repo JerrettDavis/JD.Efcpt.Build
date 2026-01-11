@@ -291,6 +291,7 @@
           Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptDacpac)' == ''">
     <ResolveSqlProjAndInputs
         ProjectFullPath="$(MSBuildProjectFullPath)"
+        ProjectPath="$(MSBuildProjectFullPath)"
         ProjectDirectory="$(MSBuildProjectDirectory)"
         Configuration="$(Configuration)"
         ProjectReferences="@(ProjectReference)"

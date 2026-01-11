@@ -50,6 +50,11 @@ public sealed class ResolveSqlProjAndInputs : Task
     public string ProjectFullPath { get; set; } = "";
 
     /// <summary>
+    /// Full path to the MSBuild project file (used for profiling).
+    /// </summary>
+    public string ProjectPath { get; set; } = "";
+
+    /// <summary>
     /// Directory that contains the consuming project file.
     /// </summary>
     [Required]
@@ -299,13 +304,27 @@ public sealed class ResolveSqlProjAndInputs : Task
     /// <inheritdoc />
     public override bool Execute()
     {
+        var profiler = ProfilingHelper.GetProfiler(ProjectPath);
         var decorator = TaskExecutionDecorator.Create(ExecuteCore);
-        var ctx = new TaskExecutionContext(Log, nameof(ResolveSqlProjAndInputs));
+        var ctx = new TaskExecutionContext(Log, nameof(ResolveSqlProjAndInputs), profiler);
         return decorator.Execute(in ctx);
     }
 
     private bool ExecuteCore(TaskExecutionContext ctx)
     {
+        using var taskTracker = ctx.Profiler?.BeginTask(
+            nameof(ResolveSqlProjAndInputs),
+            initiator: "EfcptPipeline",
+            inputs: new System.Collections.Generic.Dictionary<string, object?>
+            {
+                ["ProjectFullPath"] = ProjectFullPath,
+                ["Configuration"] = Configuration,
+                ["SqlProjOverride"] = SqlProjOverride,
+                ["ConfigOverride"] = ConfigOverride,
+                ["RenamingOverride"] = RenamingOverride,
+                ["TemplateDirOverride"] = TemplateDirOverride
+            });
+
         // Normalize all string properties to empty string if null.
         // MSBuild on .NET Framework can set properties to null instead of empty string,
         // which causes NullReferenceExceptions in downstream code.
@@ -338,6 +357,17 @@ public sealed class ResolveSqlProjAndInputs : Task
         log.Detail(resolutionState.UseConnectionStringMode
             ? $"Resolved connection string from: {resolutionState.ConnectionString}"
             : $"Resolved SQL project: {SqlProjPath}");
+
+        // Capture outputs for profiling
+        taskTracker?.SetOutputs(new System.Collections.Generic.Dictionary<string, object?>
+        {
+            ["SqlProjPath"] = SqlProjPath,
+            ["ResolvedConfigPath"] = ResolvedConfigPath,
+            ["ResolvedRenamingPath"] = ResolvedRenamingPath,
+            ["ResolvedTemplateDir"] = ResolvedTemplateDir,
+            ["UseConnectionString"] = UseConnectionString,
+            ["IsUsingDefaultConfig"] = IsUsingDefaultConfig
+        });
 
         return true;
     }

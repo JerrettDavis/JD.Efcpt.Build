@@ -248,11 +248,20 @@ public sealed class BuildProfiler
         private readonly BuildProfiler _profiler;
         private readonly BuildGraphNode _node;
         private bool _disposed;
+        private Dictionary<string, object?>? _outputs;
 
         public TaskTracker(BuildProfiler profiler, BuildGraphNode node)
         {
             _profiler = profiler;
             _node = node;
+        }
+
+        /// <summary>
+        /// Sets the output parameters for this task.
+        /// </summary>
+        public void SetOutputs(Dictionary<string, object?> outputs)
+        {
+            _outputs = outputs;
         }
 
         public void Dispose()
@@ -261,7 +270,7 @@ public sealed class BuildProfiler
                 return;
 
             _disposed = true;
-            _profiler.EndTask(_node, success: true);
+            _profiler.EndTask(_node, success: true, outputs: _outputs);
         }
     }
 
