@@ -131,6 +131,33 @@
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.DetectSqlProject"
              AssemblyFile="$(_EfcptTaskAssembly)" />
 
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.InitializeBuildProfiling"
+             AssemblyFile="$(_EfcptTaskAssembly)" />
+
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.FinalizeBuildProfiling"
+             AssemblyFile="$(_EfcptTaskAssembly)" />
+
+  <!--
+    Build Profiling: Initialize profiling at the start of the build pipeline.
+    This target runs early to ensure the profiler is available for all subsequent tasks.
+  -->
+  <Target Name="_EfcptInitializeProfiling"
+          BeforeTargets="_EfcptDetectSqlProject"
+          Condition="'$(EfcptEnabled)' == 'true'">
+    <InitializeBuildProfiling
+        EnableProfiling="$(EfcptEnableProfiling)"
+        ProjectPath="$(MSBuildProjectFullPath)"
+        ProjectName="$(MSBuildProjectName)"
+        TargetFramework="$(TargetFramework)"
+        Configuration="$(Configuration)"
+        ConfigPath="$(_EfcptResolvedConfig)"
+        RenamingPath="$(_EfcptResolvedRenaming)"
+        TemplateDir="$(_EfcptResolvedTemplateDir)"
+        SqlProjectPath="$(_EfcptSqlProj)"
+        DacpacPath="$(_EfcptDacpacPath)"
+        Provider="$(EfcptProvider)" />
+  </Target>
+
   <!--
     SDK Version Check: Warns users when a newer SDK version is available.
     Opt-in via EfcptCheckForUpdates=true. Results are cached for 24 hours.
@@ -567,6 +594,7 @@
         TemplateDir="$(_EfcptStagedTemplateDir)"
         OutputDir="$(EfcptGeneratedDir)"
         TargetFramework="$(TargetFramework)"
+        ProjectPath="$(MSBuildProjectFullPath)"
         LogVerbosity="$(EfcptLogVerbosity)" />
     <RenameGeneratedFiles
         GeneratedDir="$(EfcptGeneratedDir)"
@@ -728,6 +756,19 @@
           Condition="'$(EfcptEnabled)' == 'true'">
     <Message Text="Cleaning efcpt output: $(EfcptOutput)" Importance="normal" />
     <RemoveDir Directories="$(EfcptOutput)" Condition="Exists('$(EfcptOutput)')" />
+  </Target>
+
+  <!--
+    Build Profiling: Finalize profiling at the end of the build pipeline.
+    This target runs last to capture the complete build graph and write the profile to disk.
+  -->
+  <Target Name="_EfcptFinalizeProfiling"
+          AfterTargets="Build"
+          Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptEnableProfiling)' == 'true'">
+    <FinalizeBuildProfiling
+        ProjectPath="$(MSBuildProjectFullPath)"
+        OutputPath="$(EfcptProfilingOutput)"
+        BuildSucceeded="true" />
   </Target>
 
 </Project>
