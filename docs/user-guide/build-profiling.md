@@ -64,48 +64,83 @@ obj/efcpt/build-profile.json
 
 ## Output Schema
 
-The profiling output follows a versioned JSON schema (currently `1.0.0`). Here's an example structure:
+The profiling output follows a versioned JSON schema (currently `1.0.0`). Here's an example structure showing the complete workflow:
 
 ```json
 {
   "schemaVersion": "1.0.0",
-  "runId": "unique-guid",
+  "runId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "startTime": "2024-01-11T12:00:00Z",
   "endTime": "2024-01-11T12:01:30Z",
   "duration": "PT1M30S",
   "status": "Success",
   "project": {
-    "path": "/path/to/project.csproj",
+    "path": "/path/to/MyProject.csproj",
     "name": "MyProject",
     "targetFramework": "net8.0",
     "configuration": "Debug"
   },
   "configuration": {
     "configPath": "/path/to/efcpt-config.json",
-    "dacpacPath": "/path/to/database.dacpac",
+    "renamingPath": "/path/to/efcpt.renaming.json",
+    "templateDir": "/path/to/Template",
+    "dacpacPath": "/path/to/Database.dacpac",
     "provider": "mssql"
   },
   "buildGraph": {
     "nodes": [
       {
-        "id": "node-guid",
+        "id": "node-1",
+        "parentId": null,
+        "task": {
+          "name": "ResolveSqlProjAndInputs",
+          "type": "MSBuild",
+          "startTime": "2024-01-11T12:00:00Z",
+          "endTime": "2024-01-11T12:00:05Z",
+          "duration": "PT5S",
+          "status": "Success",
+          "initiator": "EfcptPipeline",
+          "inputs": {
+            "ProjectFullPath": "/path/to/MyProject.csproj",
+            "Configuration": "Debug",
+            "SqlProjOverride": "",
+            "ConfigOverride": ""
+          },
+          "outputs": {
+            "SqlProjPath": "/path/to/Database.sqlproj",
+            "ResolvedConfigPath": "/path/to/efcpt-config.json",
+            "ResolvedRenamingPath": "/path/to/efcpt.renaming.json",
+            "ResolvedTemplateDir": "/path/to/Template",
+            "UseConnectionString": "false"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "node-2",
+        "parentId": null,
         "task": {
           "name": "RunEfcpt",
+          "type": "MSBuild",
           "startTime": "2024-01-11T12:00:30Z",
           "endTime": "2024-01-11T12:01:00Z",
           "duration": "PT30S",
           "status": "Success",
+          "initiator": "EfcptGenerateModels",
           "inputs": {
             "ToolMode": "auto",
-            "Provider": "mssql"
+            "Provider": "mssql",
+            "DacpacPath": "/path/to/Database.dacpac",
+            "ConfigPath": "/staged/efcpt-config.json",
+            "OutputDir": "/output/Generated"
           },
           "outputs": {}
         },
         "children": []
       }
     ],
-    "totalTasks": 1,
-    "successfulTasks": 1,
+    "totalTasks": 2,
+    "successfulTasks": 2,
     "failedTasks": 0,
     "skippedTasks": 0
   },
@@ -125,15 +160,59 @@ The profiling output follows a versioned JSON schema (currently `1.0.0`). Here's
 
 - **schemaVersion**: Semantic version of the schema (MAJOR.MINOR.PATCH)
 - **runId**: Unique identifier for this build run
-- **startTime** / **endTime**: UTC timestamps in ISO 8601 format
+- **startTime** / **endTime**: UTC timestamps in ISO 8601 format (DateTimeOffset)
 - **duration**: ISO 8601 duration format (e.g., `PT1M30S` for 1 minute 30 seconds)
 - **status**: Overall build status (`Success`, `Failed`, `Skipped`, `Canceled`)
 - **project**: Information about the project being built
 - **configuration**: Build configuration inputs
 - **buildGraph**: Complete graph of all tasks executed
+  - **nodes**: Array of task execution nodes with full workflow visibility
+  - Each node includes:
+    - **inputs**: Dictionary of all input parameters passed to the task
+    - **outputs**: Dictionary of all output parameters produced by the task
+    - **startTime** / **endTime**: Task-level UTC timestamps
+    - **duration**: Task execution time
+    - **initiator**: What triggered this task (target, parent task, or orchestration stage)
+    - **children**: Nested sub-tasks showing execution hierarchy
 - **artifacts**: All generated files and outputs
 - **metadata**: Custom key-value pairs for extensibility
 - **diagnostics**: Warnings and errors captured during the build
+
+### Workflow Traceability
+
+The profiling output provides **complete workflow visibility**. Reviewers can trace:
+
+1. **Execution order**: Tasks appear in the build graph in the order they executed
+2. **Input/output flow**: Each task's outputs become inputs to downstream tasks
+3. **Decision points**: Input parameters show configuration choices that affected execution
+4. **Timing breakdown**: Start/end times show exactly when each step ran and how long it took
+5. **Hierarchy**: Parent/child relationships show nested task execution
+
+**Example workflow analysis**:
+```json
+{
+  "buildGraph": {
+    "nodes": [
+      {
+        "task": {
+          "name": "ResolveSqlProjAndInputs",
+          "inputs": { "ProjectFullPath": "..." },
+          "outputs": { "SqlProjPath": "/path/Database.sqlproj" }
+        }
+      },
+      {
+        "task": {
+          "name": "RunEfcpt",
+          "inputs": { "DacpacPath": "/path/Database.dacpac" },
+          "outputs": {}
+        }
+      }
+    ]
+  }
+}
+```
+
+This shows ResolveSqlProjAndInputs resolved the SQL project path, which was then used by RunEfcpt.
 
 ## Use Cases
 
