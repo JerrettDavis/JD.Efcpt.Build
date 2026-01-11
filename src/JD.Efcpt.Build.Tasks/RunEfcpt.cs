@@ -239,6 +239,11 @@ public sealed class RunEfcpt : Task
     /// </value>
     public string TargetFramework { get; set; } = "";
 
+    /// <summary>
+    /// Full path to the MSBuild project file (used for profiling).
+    /// </summary>
+    public string ProjectPath { get; set; } = "";
+
     private readonly record struct ToolResolutionContext(
         string ToolPath,
         string ToolMode,
@@ -347,13 +352,31 @@ public sealed class RunEfcpt : Task
     /// <returns>>True on success; false on error.</returns>
     public override bool Execute()
     {
+        var profiler = ProfilingHelper.GetProfiler(ProjectPath);
         var decorator = TaskExecutionDecorator.Create(ExecuteCore);
-        var ctx = new TaskExecutionContext(Log, nameof(RunEfcpt));
+        var ctx = new TaskExecutionContext(Log, nameof(RunEfcpt), profiler);
         return decorator.Execute(in ctx);
     }
 
     private bool ExecuteCore(TaskExecutionContext ctx)
     {
+        using var taskTracker = ctx.Profiler?.BeginTask(
+            nameof(RunEfcpt),
+            initiator: "EfcptGenerateModels",
+            inputs: new System.Collections.Generic.Dictionary<string, object?>
+            {
+                ["ToolMode"] = ToolMode,
+                ["ToolPackageId"] = ToolPackageId,
+                ["Provider"] = Provider,
+                ["UseConnectionStringMode"] = UseConnectionStringMode,
+                ["DacpacPath"] = DacpacPath,
+                ["ConnectionString"] = ConnectionString != null ? "<redacted>" : null,
+                ["ConfigPath"] = ConfigPath,
+                ["RenamingPath"] = RenamingPath,
+                ["TemplateDir"] = TemplateDir,
+                ["OutputDir"] = OutputDir
+            });
+
         var log = new BuildLog(ctx.Logger, LogVerbosity);
 
         var workingDir = Path.GetFullPath(WorkingDirectory);
