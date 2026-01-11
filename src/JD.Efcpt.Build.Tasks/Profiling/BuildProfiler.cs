@@ -15,6 +15,8 @@ namespace JD.Efcpt.Build.Tasks.Profiling;
 /// </remarks>
 public sealed class BuildProfiler
 {
+    private static readonly BuildRunOutput EmptyRunOutput = new();
+    
     private readonly BuildRunOutput _runOutput;
     private readonly Stack<BuildGraphNode> _nodeStack = new();
     private readonly object _lock = new();
@@ -39,7 +41,7 @@ public sealed class BuildProfiler
         _enabled = enabled;
         if (!_enabled)
         {
-            _runOutput = new BuildRunOutput(); // Create empty instance to avoid null checks
+            _runOutput = EmptyRunOutput;
             return;
         }
 

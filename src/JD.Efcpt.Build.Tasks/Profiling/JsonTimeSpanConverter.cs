@@ -13,6 +13,8 @@ namespace JD.Efcpt.Build.Tasks.Profiling;
 /// </remarks>
 public sealed class JsonTimeSpanConverter : JsonConverter<TimeSpan>
 {
+    private const string Iso8601DurationPrefix = "PT";
+
     public override TimeSpan Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var value = reader.GetString();
@@ -20,7 +22,7 @@ public sealed class JsonTimeSpanConverter : JsonConverter<TimeSpan>
             return TimeSpan.Zero;
 
         // Support both ISO 8601 duration format and simple numeric seconds
-        if (value.StartsWith("PT", StringComparison.OrdinalIgnoreCase))
+        if (value.StartsWith(Iso8601DurationPrefix, StringComparison.OrdinalIgnoreCase))
         {
             return System.Xml.XmlConvert.ToTimeSpan(value);
         }
