@@ -1,3 +1,4 @@
+using JD.Efcpt.Build.Tasks.Profiling;
 using Microsoft.Build.Utilities;
 using PatternKit.Structural.Decorator;
 
@@ -8,7 +9,8 @@ namespace JD.Efcpt.Build.Tasks.Decorators;
 /// </summary>
 public readonly record struct TaskExecutionContext(
     TaskLoggingHelper Logger,
-    string TaskName
+    string TaskName,
+    BuildProfiler? Profiler = null
 );
 
 /// <summary>
