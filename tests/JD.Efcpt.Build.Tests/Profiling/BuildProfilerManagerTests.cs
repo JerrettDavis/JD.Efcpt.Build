@@ -13,16 +13,14 @@ namespace JD.Efcpt.Build.Tests.Profiling;
 [Collection(nameof(AssemblySetup))]
 public sealed class BuildProfilerManagerTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
-    // Clear any existing profilers before each test in the Setup method
-    private sealed record SetupState(string ProjectPath)
-    {
-        public SetupState() : this($"/test/project-{Guid.NewGuid()}.csproj")
-        {
-            BuildProfilerManager.Clear();
-        }
-    }
+    private sealed record SetupState(string ProjectPath);
 
-    private static SetupState Setup() => new();
+    private static SetupState Setup()
+    {
+        // Clear any existing profilers before each test
+        BuildProfilerManager.Clear();
+        return new SetupState($"/test/project-{Guid.NewGuid()}.csproj");
+    }
 
     [Scenario("GetOrCreate returns new profiler for new project")]
     [Fact]
