@@ -72,6 +72,7 @@ public sealed class InitializeBuildProfiling : Task
     /// </summary>
     public string? Provider { get; set; }
 
+    /// <inheritdoc />
     public override bool Execute()
     {
         var decorator = TaskExecutionDecorator.Create(ExecuteCore);

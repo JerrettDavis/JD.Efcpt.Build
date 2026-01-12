@@ -15,6 +15,7 @@ public sealed class JsonTimeSpanConverter : JsonConverter<TimeSpan>
 {
     private const string Iso8601DurationPrefix = "PT";
 
+    /// <inheritdoc />
     public override TimeSpan Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var value = reader.GetString();
@@ -36,6 +37,7 @@ public sealed class JsonTimeSpanConverter : JsonConverter<TimeSpan>
         throw new JsonException($"Unable to parse TimeSpan from value: {value}");
     }
 
+    /// <inheritdoc />
     public override void Write(Utf8JsonWriter writer, TimeSpan value, JsonSerializerOptions options)
     {
         // Write as ISO 8601 duration (e.g., "PT1H30M15.5S")

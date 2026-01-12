@@ -258,12 +258,12 @@ public sealed class BuildProfilerTests(ITestOutputHelper output) : TinyBddXunitB
     public async Task Profiler_captures_timing_information()
     {
         await Given("an enabled profiler", Setup)
-            .When("a task with delay is executed", async s =>
+            .When("a task with delay is executed", (Func<SetupState, Task<SetupState>>)(async s =>
             {
                 using var task = s.Profiler.BeginTask("SlowTask");
                 await Task.Delay(100); // Simulate work
                 return s;
-            })
+            }))
             .Then("task duration is captured", s =>
             {
                 var output = s.Profiler.GetRunOutput();

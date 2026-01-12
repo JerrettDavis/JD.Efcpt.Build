@@ -7,6 +7,17 @@ using System.Text.Json;
 namespace JD.Efcpt.Build.Tasks.Profiling;
 
 /// <summary>
+/// Interface for tracking task execution with the ability to set outputs.
+/// </summary>
+public interface ITaskTracker : IDisposable
+{
+    /// <summary>
+    /// Sets the output parameters for this task.
+    /// </summary>
+    void SetOutputs(Dictionary<string, object?> outputs);
+}
+
+/// <summary>
 /// Core profiler that captures task execution telemetry during a build run.
 /// </summary>
 /// <remarks>
@@ -68,10 +79,10 @@ public sealed class BuildProfiler
     /// <param name="initiator">What initiated this task.</param>
     /// <param name="inputs">Input parameters to the task.</param>
     /// <returns>A token to complete the task tracking.</returns>
-    public IDisposable BeginTask(string taskName, string? initiator = null, Dictionary<string, object?>? inputs = null)
+    public ITaskTracker BeginTask(string taskName, string? initiator = null, Dictionary<string, object?>? inputs = null)
     {
         if (!_enabled)
-            return NullDisposable.Instance;
+            return NullTaskTracker.Instance;
 
         lock (_lock)
         {
@@ -243,7 +254,7 @@ public sealed class BuildProfiler
     /// </summary>
     internal BuildRunOutput GetRunOutput() => _runOutput;
 
-    private sealed class TaskTracker : IDisposable
+    private sealed class TaskTracker : ITaskTracker
     {
         private readonly BuildProfiler _profiler;
         private readonly BuildGraphNode _node;
@@ -274,9 +285,10 @@ public sealed class BuildProfiler
         }
     }
 
-    private sealed class NullDisposable : IDisposable
+    private sealed class NullTaskTracker : ITaskTracker
     {
-        public static readonly NullDisposable Instance = new();
+        public static readonly NullTaskTracker Instance = new();
+        public void SetOutputs(Dictionary<string, object?> outputs) { }
         public void Dispose() { }
     }
 }

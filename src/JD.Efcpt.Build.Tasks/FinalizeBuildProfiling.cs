@@ -31,6 +31,7 @@ public sealed class FinalizeBuildProfiling : Task
     /// </summary>
     public bool BuildSucceeded { get; set; } = true;
 
+    /// <inheritdoc />
     public override bool Execute()
     {
         var decorator = TaskExecutionDecorator.Create(ExecuteCore);
