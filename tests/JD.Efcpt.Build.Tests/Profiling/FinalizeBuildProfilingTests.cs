@@ -115,25 +115,36 @@ public sealed class FinalizeBuildProfilingTests(ITestOutputHelper output) : Tiny
     public async Task Task_handles_exceptions_gracefully()
     {
         var result = false;
+        var blockerPath = Path.Combine(Path.GetTempPath(), $"blocker-{Guid.NewGuid()}");
 
-        await Given("a task with invalid output path", () =>
-            {
-                var state = Setup();
-                // Create an enabled profiler
-                BuildProfilerManager.GetOrCreate(state.ProjectPath, true, "TestProject");
-                // Set an invalid output path with illegal characters
-                state.Task.OutputPath = "C:\\invalid<>path\\profile.json";
-                return state;
-            })
-            .When("task is executed", s =>
-            {
-                result = s.Task.Execute();
-                return s;
-            })
-            .Then("result is still true", _ => result)
-            .And("warning is logged", s =>
-                s.Engine.Warnings.Any(w => w.Message != null && w.Message.Contains("Failed to write build profile")))
-            .AssertPassed();
+        try
+        {
+            await Given("a task with invalid output path", () =>
+                {
+                    var state = Setup();
+                    // Create an enabled profiler
+                    BuildProfilerManager.GetOrCreate(state.ProjectPath, true, "TestProject");
+                    // Create a file that will block directory creation
+                    File.WriteAllText(blockerPath, "blocker");
+                    // Set output path where a file exists instead of a directory
+                    state.Task.OutputPath = Path.Combine(blockerPath, "profile.json");
+                    return state;
+                })
+                .When("task is executed", s =>
+                {
+                    result = s.Task.Execute();
+                    return s;
+                })
+                .Then("result is still true", _ => result)
+                .And("warning is logged", s =>
+                    s.Engine.Warnings.Any(w => w.Message != null && w.Message.Contains("Failed to write build profile")))
+                .AssertPassed();
+        }
+        finally
+        {
+            if (File.Exists(blockerPath))
+                File.Delete(blockerPath);
+        }
     }
 
     [Scenario("BuildSucceeded property is accepted")]

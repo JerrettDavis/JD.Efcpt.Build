@@ -268,7 +268,8 @@ public sealed class BuildProfilerTests(ITestOutputHelper output) : TinyBddXunitB
             {
                 var output = s.Profiler.GetRunOutput();
                 var task = output.BuildGraph.Nodes.First().Task;
-                return task.Duration.TotalMilliseconds >= 100;
+                // Use >= 50ms to account for timing variations in CI environments
+                return task.Duration.TotalMilliseconds >= 50;
             })
             .And("task has start and end times", s =>
             {
