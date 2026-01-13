@@ -1,6 +1,8 @@
 using System.Net.Http;
 using System.Text.Json;
+using JD.Efcpt.Build.Tasks.Decorators;
 using Microsoft.Build.Framework;
+using Task = Microsoft.Build.Utilities.Task;
 
 namespace JD.Efcpt.Build.Tasks;
 
@@ -18,7 +20,7 @@ namespace JD.Efcpt.Build.Tasks;
 /// - Cache duration: 24 hours (configurable via CacheHours)
 /// </para>
 /// </remarks>
-public class CheckSdkVersion : Microsoft.Build.Utilities.Task
+public class CheckSdkVersion : Task
 {
     private static readonly HttpClient HttpClient = new()
     {
@@ -26,14 +28,21 @@ public class CheckSdkVersion : Microsoft.Build.Utilities.Task
     };
 
     /// <summary>
+    /// Full path to the MSBuild project file (used for profiling).
+    /// </summary>
+    public string ProjectPath { get; set; } = "";
+
+    /// <summary>
     /// The current SDK version being used.
     /// </summary>
     [Required]
+    [ProfileInput]
     public string CurrentVersion { get; set; } = "";
 
     /// <summary>
     /// The NuGet package ID to check.
     /// </summary>
+    [ProfileInput]
     public string PackageId { get; set; } = "JD.Efcpt.Sdk";
 
     /// <summary>
@@ -66,6 +75,10 @@ public class CheckSdkVersion : Microsoft.Build.Utilities.Task
 
     /// <inheritdoc />
     public override bool Execute()
+        => TaskExecutionDecorator.ExecuteWithProfiling(
+            this, ExecuteCore, ProfilingHelper.GetProfiler(ProjectPath));
+
+    private bool ExecuteCore(TaskExecutionContext ctx)
     {
         try
         {
@@ -93,7 +106,7 @@ public class CheckSdkVersion : Microsoft.Build.Utilities.Task
         catch (Exception ex)
         {
             // Don't fail the build for version check issues - just log and continue
-            Log.LogMessage(MessageImportance.Low,
+            ctx.Logger.LogMessage(MessageImportance.Low,
                 $"EFCPT: Unable to check for SDK updates: {ex.Message}");
             return true;
         }

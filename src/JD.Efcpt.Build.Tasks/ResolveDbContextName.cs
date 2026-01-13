@@ -28,12 +28,18 @@ namespace JD.Efcpt.Build.Tasks;
 public sealed class ResolveDbContextName : Task
 {
     /// <summary>
+    /// Full path to the MSBuild project file (used for profiling).
+    /// </summary>
+    public string ProjectPath { get; set; } = "";
+
+    /// <summary>
     /// Explicit DbContext name provided by the user (highest priority).
     /// </summary>
     /// <remarks>
     /// When set, this value is returned directly without any generation logic.
     /// This allows users to explicitly override the auto-generated name.
     /// </remarks>
+    [ProfileInput]
     public string ExplicitDbContextName { get; set; } = "";
 
     /// <summary>
@@ -43,6 +49,7 @@ public sealed class ResolveDbContextName : Task
     /// Used as the first source for name generation. The project filename
     /// (without extension) is humanized into a context name.
     /// </remarks>
+    [ProfileInput]
     public string SqlProjPath { get; set; } = "";
 
     /// <summary>
@@ -52,6 +59,7 @@ public sealed class ResolveDbContextName : Task
     /// Used as the second source for name generation. The DACPAC filename
     /// (without extension and special characters) is humanized into a context name.
     /// </remarks>
+    [ProfileInput]
     public string DacpacPath { get; set; } = "";
 
     /// <summary>
@@ -61,7 +69,14 @@ public sealed class ResolveDbContextName : Task
     /// Used as the third source for name generation. The database name is
     /// extracted from the connection string and humanized into a context name.
     /// </remarks>
+    [ProfileInput(Exclude = true)] // Excluded for security
     public string ConnectionString { get; set; } = "";
+
+    /// <summary>
+    /// Redacted connection string for profiling (only included if ConnectionString is set).
+    /// </summary>
+    [ProfileInput(Name = "ConnectionString")]
+    private string ConnectionStringRedacted => string.IsNullOrWhiteSpace(ConnectionString) ? "" : "<redacted>";
 
     /// <summary>
     /// Controls whether to use connection string mode for generation.
@@ -70,6 +85,7 @@ public sealed class ResolveDbContextName : Task
     /// When "true", the connection string is preferred over SQL project path.
     /// When "false", SQL project path takes precedence.
     /// </remarks>
+    [ProfileInput]
     public string UseConnectionStringMode { get; set; } = "false";
 
     /// <summary>
@@ -93,11 +109,8 @@ public sealed class ResolveDbContextName : Task
 
     /// <inheritdoc />
     public override bool Execute()
-    {
-        var decorator = TaskExecutionDecorator.Create(ExecuteCore);
-        var ctx = new TaskExecutionContext(Log, nameof(ResolveDbContextName));
-        return decorator.Execute(in ctx);
-    }
+        => TaskExecutionDecorator.ExecuteWithProfiling(
+            this, ExecuteCore, ProfilingHelper.GetProfiler(ProjectPath));
 
     private bool ExecuteCore(TaskExecutionContext ctx)
     {

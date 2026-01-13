@@ -23,9 +23,16 @@ namespace JD.Efcpt.Build.Tasks;
 public sealed class RenameGeneratedFiles : Task
 {
     /// <summary>
+    /// Full path to the MSBuild project file (used for profiling).
+    /// </summary>
+    public string ProjectPath { get; set; } = "";
+
+    /// <summary>
     /// Root directory that contains the generated C# files to be normalized.
     /// </summary>
-    [Required] public string GeneratedDir { get; set; } = "";
+    [Required]
+    [ProfileInput]
+    public string GeneratedDir { get; set; } = "";
 
     /// <summary>
     /// Controls how much diagnostic information the task writes to the MSBuild log.
@@ -37,11 +44,8 @@ public sealed class RenameGeneratedFiles : Task
 
     /// <inheritdoc />
     public override bool Execute()
-    {
-        var decorator = TaskExecutionDecorator.Create(ExecuteCore);
-        var ctx = new TaskExecutionContext(Log, nameof(RenameGeneratedFiles));
-        return decorator.Execute(in ctx);
-    }
+        => TaskExecutionDecorator.ExecuteWithProfiling(
+            this, ExecuteCore, ProfilingHelper.GetProfiler(ProjectPath));
 
     private bool ExecuteCore(TaskExecutionContext ctx)
     {

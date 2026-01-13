@@ -163,6 +163,20 @@
       SQL Project Detection: Moved to targets file to ensure properties are set.
       See _EfcptDetectSqlProject target in JD.Efcpt.Build.targets.
     -->
+
+    <!--
+      Build Profiling: Optional, configurable profiling framework to capture timing,
+      task execution, and diagnostics for performance analysis and benchmarking.
+      
+      EfcptEnableProfiling: Enable/disable profiling (default: false)
+      EfcptProfilingOutput: Path where the profiling JSON file will be written
+        (default: $(EfcptOutput)build-profile.json)
+      EfcptProfilingVerbosity: Controls the level of detail captured in the profile
+        (values: "minimal", "detailed"; default: "minimal")
+    -->
+    <EfcptEnableProfiling Condition="'$(EfcptEnableProfiling)'==''">false</EfcptEnableProfiling>
+    <EfcptProfilingOutput Condition="'$(EfcptProfilingOutput)'==''">$(EfcptOutput)build-profile.json</EfcptProfilingOutput>
+    <EfcptProfilingVerbosity Condition="'$(EfcptProfilingVerbosity)'==''">minimal</EfcptProfilingVerbosity>
   </PropertyGroup>
 
   <PropertyGroup>

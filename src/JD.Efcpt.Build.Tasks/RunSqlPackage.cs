@@ -57,6 +57,11 @@ public sealed class RunSqlPackage : Task
     private const string SqlPackageCommand = "sqlpackage";
 
     /// <summary>
+    /// Full path to the MSBuild project file (used for profiling).
+    /// </summary>
+    public string ProjectPath { get; set; } = "";
+
+    /// <summary>
     /// Optional version constraint for the sqlpackage tool package.
     /// </summary>
     public string ToolVersion { get; set; } = "";
@@ -69,6 +74,7 @@ public sealed class RunSqlPackage : Task
     /// <summary>
     /// Explicit path to the sqlpackage executable.
     /// </summary>
+    [ProfileInput]
     public string ToolPath { get; set; } = "";
 
     /// <summary>
@@ -80,23 +86,33 @@ public sealed class RunSqlPackage : Task
     /// Working directory for the sqlpackage invocation.
     /// </summary>
     [Required]
+    [ProfileInput]
     public string WorkingDirectory { get; set; } = "";
 
     /// <summary>
     /// Connection string for the source database.
     /// </summary>
     [Required]
+    [ProfileInput(Exclude = true)] // Excluded for security
     public string ConnectionString { get; set; } = "";
+
+    /// <summary>
+    /// Redacted connection string for profiling (only included if ConnectionString is set).
+    /// </summary>
+    [ProfileInput(Name = "ConnectionString")]
+    private string ConnectionStringRedacted => string.IsNullOrWhiteSpace(ConnectionString) ? "" : "<redacted>";
 
     /// <summary>
     /// Target directory where SQL scripts will be extracted.
     /// </summary>
     [Required]
+    [ProfileInput]
     public string TargetDirectory { get; set; } = "";
 
     /// <summary>
     /// Extract target mode: "Flat" for SQL scripts, "File" for DACPAC.
     /// </summary>
+    [ProfileInput]
     public string ExtractTarget { get; set; } = "Flat";
 
     /// <summary>
@@ -115,84 +131,77 @@ public sealed class RunSqlPackage : Task
     [Output]
     public string ExtractedPath { get; set; } = "";
 
-    /// <summary>
-    /// Executes the task.
-    /// </summary>
+    /// <inheritdoc />
     public override bool Execute()
+        => TaskExecutionDecorator.ExecuteWithProfiling(
+            this, ExecuteCore, ProfilingHelper.GetProfiler(ProjectPath));
+
+    private bool ExecuteCore(TaskExecutionContext ctx)
     {
-        var log = new BuildLog(Log, LogVerbosity);
+        var log = new BuildLog(ctx.Logger, LogVerbosity);
 
-        try
+        log.Info($"Starting SqlPackage extract operation (ExtractTarget={ExtractTarget})");
+
+        // Create target directory if it doesn't exist
+        if (!Directory.Exists(TargetDirectory))
         {
-            log.Info($"Starting SqlPackage extract operation (ExtractTarget={ExtractTarget})");
-
-            // Create target directory if it doesn't exist
-            if (!Directory.Exists(TargetDirectory))
+            try
             {
+                Directory.CreateDirectory(TargetDirectory);
+                log.Detail($"Created target directory: {TargetDirectory}");
+            }
+            catch (Exception ex)
+            {
+                log.Error("JD0024", $"Failed to create target directory '{TargetDirectory}': {ex.Message}");
+                return false;
+            }
+        }
+
+        // Set the output path
+        ExtractedPath = TargetDirectory;
+
+        // Resolve tool path
+        var toolInfo = ResolveToolPath(log);
+        if (toolInfo == null)
+        {
+            return false;
+        }
+
+        // Build sqlpackage command arguments
+        var args = BuildSqlPackageArguments(log);
+
+        // Execute sqlpackage
+        var success = ExecuteSqlPackage(toolInfo.Value, args, log);
+
+        if (success)
+        {
+            log.Info("SqlPackage extract completed successfully");
+
+            // Post-process: Move files from .dacpac/ subdirectory to target directory
+            var dacpacTempDir = Path.Combine(TargetDirectory, ".dacpac");
+            if (Directory.Exists(dacpacTempDir))
+            {
+                log.Detail($"Moving extracted files from {dacpacTempDir} to {TargetDirectory}");
+                MoveDirectoryContents(dacpacTempDir, TargetDirectory, log);
+
+                // Clean up temp directory
                 try
                 {
-                    Directory.CreateDirectory(TargetDirectory);
-                    log.Detail($"Created target directory: {TargetDirectory}");
+                    Directory.Delete(dacpacTempDir, recursive: true);
+                    log.Detail("Cleaned up temporary extraction directory");
                 }
                 catch (Exception ex)
                 {
-                    log.Error("JD0024", $"Failed to create target directory '{TargetDirectory}': {ex.Message}");
-                    return false;
+                    log.Warn($"Failed to delete temporary directory: {ex.Message}");
                 }
             }
-
-            // Set the output path
-            ExtractedPath = TargetDirectory;
-
-            // Resolve tool path
-            var toolInfo = ResolveToolPath(log);
-            if (toolInfo == null)
-            {
-                return false;
-            }
-
-            // Build sqlpackage command arguments
-            var args = BuildSqlPackageArguments(log);
-
-            // Execute sqlpackage
-            var success = ExecuteSqlPackage(toolInfo.Value, args, log);
-
-            if (success)
-            {
-                log.Info("SqlPackage extract completed successfully");
-
-                // Post-process: Move files from .dacpac/ subdirectory to target directory
-                var dacpacTempDir = Path.Combine(TargetDirectory, ".dacpac");
-                if (Directory.Exists(dacpacTempDir))
-                {
-                    log.Detail($"Moving extracted files from {dacpacTempDir} to {TargetDirectory}");
-                    MoveDirectoryContents(dacpacTempDir, TargetDirectory, log);
-
-                    // Clean up temp directory
-                    try
-                    {
-                        Directory.Delete(dacpacTempDir, recursive: true);
-                        log.Detail("Cleaned up temporary extraction directory");
-                    }
-                    catch (Exception ex)
-                    {
-                        log.Warn($"Failed to delete temporary directory: {ex.Message}");
-                    }
-                }
-            }
-            else
-            {
-                log.Error("JD0022", "SqlPackage extract failed");
-            }
-
-            return success;
         }
-        catch (Exception ex)
+        else
         {
-            log.Error("JD0023", $"SqlPackage execution failed: {ex.Message}");
-            log.Detail($"Exception details: {ex}");
-            return false;
+            log.Error("JD0022", "SqlPackage extract failed");
         }
+
+        return success;
     }
 
     /// <summary>

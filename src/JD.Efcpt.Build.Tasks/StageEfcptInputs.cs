@@ -27,28 +27,41 @@ namespace JD.Efcpt.Build.Tasks;
 public sealed class StageEfcptInputs : Task
 {
     /// <summary>
+    /// Full path to the MSBuild project file (used for profiling).
+    /// </summary>
+    public string ProjectPath { get; set; } = "";
+
+    /// <summary>
     /// Directory into which all efcpt input assets will be staged.
     /// </summary>
     /// <value>
     /// The directory is created if it does not exist. Existing files with the same names as staged
     /// assets are overwritten.
     /// </value>
-    [Required] public string OutputDir { get; set; } = "";
+    [Required]
+    [ProfileInput]
+    public string OutputDir { get; set; } = "";
 
     /// <summary>
     /// Path to the project that models are being generated into.
     /// </summary>
-    [Required] public string ProjectDirectory { get; set; } = "";
+    [Required]
+    [ProfileInput]
+    public string ProjectDirectory { get; set; } = "";
 
     /// <summary>
     /// Path to the efcpt configuration JSON file to copy.
     /// </summary>
-    [Required] public string ConfigPath { get; set; } = "";
+    [Required]
+    [ProfileInput]
+    public string ConfigPath { get; set; } = "";
 
     /// <summary>
     /// Path to the efcpt renaming JSON file to copy.
     /// </summary>
-    [Required] public string RenamingPath { get; set; } = "";
+    [Required]
+    [ProfileInput]
+    public string RenamingPath { get; set; } = "";
 
     /// <summary>
     /// Path to the template directory to copy.
@@ -57,7 +70,9 @@ public sealed class StageEfcptInputs : Task
     /// The entire directory tree is mirrored into <see cref="StagedTemplateDir"/>. If the resolved
     /// source and destination directories are the same, no copy is performed.
     /// </value>
-    [Required] public string TemplateDir { get; set; } = "";
+    [Required]
+    [ProfileInput]
+    public string TemplateDir { get; set; } = "";
 
     /// <summary>
     /// Subdirectory within OutputDir where templates should be staged.
@@ -104,11 +119,8 @@ public sealed class StageEfcptInputs : Task
 
     /// <inheritdoc />
     public override bool Execute()
-    {
-        var decorator = TaskExecutionDecorator.Create(ExecuteCore);
-        var ctx = new TaskExecutionContext(Log, nameof(StageEfcptInputs));
-        return decorator.Execute(in ctx);
-    }
+        => TaskExecutionDecorator.ExecuteWithProfiling(
+            this, ExecuteCore, ProfilingHelper.GetProfiler(ProjectPath));
 
     private bool ExecuteCore(TaskExecutionContext ctx)
     {
