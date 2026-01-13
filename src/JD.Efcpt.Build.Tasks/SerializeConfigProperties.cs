@@ -17,6 +17,11 @@ namespace JD.Efcpt.Build.Tasks;
 public sealed class SerializeConfigProperties : Task
 {
     /// <summary>
+    /// Full path to the MSBuild project file (used for profiling).
+    /// </summary>
+    public string ProjectPath { get; set; } = "";
+
+    /// <summary>
     /// Root namespace override.
     /// </summary>
     public string RootNamespace { get; set; } = "";
@@ -209,11 +214,8 @@ public sealed class SerializeConfigProperties : Task
 
     /// <inheritdoc />
     public override bool Execute()
-    {
-        var decorator = TaskExecutionDecorator.Create(ExecuteCore);
-        var ctx = new TaskExecutionContext(Log, nameof(SerializeConfigProperties));
-        return decorator.Execute(in ctx);
-    }
+        => TaskExecutionDecorator.ExecuteWithProfiling(
+            this, ExecuteCore, ProfilingHelper.GetProfiler(ProjectPath));
 
     private bool ExecuteCore(TaskExecutionContext ctx)
     {
