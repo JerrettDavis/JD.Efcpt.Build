@@ -121,8 +121,8 @@ public sealed class FinalizeBuildProfilingTests(ITestOutputHelper output) : Tiny
                 var state = Setup();
                 // Create an enabled profiler
                 BuildProfilerManager.GetOrCreate(state.ProjectPath, true, "TestProject");
-                // Set an invalid output path
-                state.Task.OutputPath = "/invalid/path/that/does/not/exist/profile.json";
+                // Set an invalid output path with illegal characters
+                state.Task.OutputPath = "C:\\invalid<>path\\profile.json";
                 return state;
             })
             .When("task is executed", s =>

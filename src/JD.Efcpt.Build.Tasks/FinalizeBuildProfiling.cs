@@ -54,7 +54,16 @@ public sealed class FinalizeBuildProfiling : Task
         }
         catch (System.Exception ex)
         {
-            ctx.Logger.LogWarning($"Failed to write build profile: {ex.Message}");
+            ctx.Logger.LogWarning(
+                subcategory: null,
+                warningCode: null,
+                helpKeyword: null,
+                file: null,
+                lineNumber: 0,
+                columnNumber: 0,
+                endLineNumber: 0,
+                endColumnNumber: 0,
+                message: $"Failed to write build profile: {ex.Message}");
         }
 
         return true;
