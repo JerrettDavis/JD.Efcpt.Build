@@ -18,14 +18,21 @@ namespace JD.Efcpt.Build.Tasks;
 public sealed class AddSqlFileWarnings : Task
 {
     /// <summary>
+    /// Full path to the MSBuild project file (used for profiling).
+    /// </summary>
+    public string ProjectPath { get; set; } = "";
+
+    /// <summary>
     /// Directory containing SQL script files.
     /// </summary>
     [Required]
+    [ProfileInput]
     public string ScriptsDirectory { get; set; } = "";
 
     /// <summary>
     /// Database name for the warning header.
     /// </summary>
+    [ProfileInput]
     public string DatabaseName { get; set; } = "";
 
     /// <summary>
@@ -39,49 +46,42 @@ public sealed class AddSqlFileWarnings : Task
     [Output]
     public int FilesProcessed { get; set; }
 
-    /// <summary>
-    /// Executes the task.
-    /// </summary>
+    /// <inheritdoc />
     public override bool Execute()
+        => TaskExecutionDecorator.ExecuteWithProfiling(
+            this, ExecuteCore, ProfilingHelper.GetProfiler(ProjectPath));
+
+    private bool ExecuteCore(TaskExecutionContext ctx)
     {
-        var log = new BuildLog(Log, LogVerbosity);
+        var log = new BuildLog(ctx.Logger, LogVerbosity);
 
-        try
+        log.Info("Adding auto-generation warnings to SQL files...");
+
+        if (!Directory.Exists(ScriptsDirectory))
         {
-            log.Info("Adding auto-generation warnings to SQL files...");
-
-            if (!Directory.Exists(ScriptsDirectory))
-            {
-                log.Warn($"Scripts directory not found: {ScriptsDirectory}");
-                return true; // Not an error
-            }
-
-            // Find all SQL files
-            var sqlFiles = Directory.GetFiles(ScriptsDirectory, "*.sql", SearchOption.AllDirectories);
-
-            FilesProcessed = 0;
-            foreach (var sqlFile in sqlFiles)
-            {
-                try
-                {
-                    AddWarningHeader(sqlFile, log);
-                    FilesProcessed++;
-                }
-                catch (Exception ex)
-                {
-                    log.Warn($"Failed to process {Path.GetFileName(sqlFile)}: {ex.Message}");
-                }
-            }
-
-            log.Info($"Processed {FilesProcessed} SQL files");
-            return true;
+            log.Warn($"Scripts directory not found: {ScriptsDirectory}");
+            return true; // Not an error
         }
-        catch (Exception ex)
+
+        // Find all SQL files
+        var sqlFiles = Directory.GetFiles(ScriptsDirectory, "*.sql", SearchOption.AllDirectories);
+
+        FilesProcessed = 0;
+        foreach (var sqlFile in sqlFiles)
         {
-            log.Error("JD0025", $"Failed to add SQL file warnings: {ex.Message}");
-            log.Detail($"Exception details: {ex}");
-            return false;
+            try
+            {
+                AddWarningHeader(sqlFile, log);
+                FilesProcessed++;
+            }
+            catch (Exception ex)
+            {
+                log.Warn($"Failed to process {Path.GetFileName(sqlFile)}: {ex.Message}");
+            }
         }
+
+        log.Info($"Processed {FilesProcessed} SQL files");
+        return true;
     }
 
     /// <summary>

@@ -94,6 +94,7 @@ public sealed class RunEfcpt : Task
     /// </list>
     /// </value>
     [Required]
+    [ProfileInput]
     public string ToolMode { get; set; } = "auto";
 
     /// <summary>
@@ -104,6 +105,7 @@ public sealed class RunEfcpt : Task
     /// global tool path and <see cref="ToolRestore"/> evaluates to <c>true</c>.
     /// </value>
     [Required]
+    [ProfileInput]
     public string ToolPackageId { get; set; } = "ErikEJ.EFCorePowerTools.Cli";
 
     /// <summary>
@@ -172,34 +174,46 @@ public sealed class RunEfcpt : Task
     /// <summary>
     /// Full path to the DACPAC file that efcpt will inspect (used in .sqlproj mode).
     /// </summary>
+    [ProfileInput]
     public string DacpacPath { get; set; } = "";
 
     /// <summary>
     /// Connection string for database connection (used in connection string mode).
     /// </summary>
+    [ProfileInput(Exclude = true)] // Excluded for security - use ConnectionStringRedacted instead
     public string ConnectionString { get; set; } = "";
 
     /// <summary>
     /// Indicates whether to use connection string mode (true) or DACPAC mode (false).
     /// </summary>
+    [ProfileInput]
     public string UseConnectionStringMode { get; set; } = "false";
+
+    /// <summary>
+    /// Redacted connection string for profiling (only included if ConnectionString is set).
+    /// </summary>
+    [ProfileInput(Name = "ConnectionString")]
+    private string ConnectionStringRedacted => string.IsNullOrWhiteSpace(ConnectionString) ? "" : "<redacted>";
 
     /// <summary>
     /// Full path to the efcpt configuration JSON file.
     /// </summary>
     [Required]
+    [ProfileInput]
     public string ConfigPath { get; set; } = "";
 
     /// <summary>
     /// Full path to the efcpt renaming JSON file.
     /// </summary>
     [Required]
+    [ProfileInput]
     public string RenamingPath { get; set; } = "";
 
     /// <summary>
     /// Path to the template directory that contains the C# template files used by efcpt.
     /// </summary>
     [Required]
+    [ProfileInput]
     public string TemplateDir { get; set; } = "";
 
     /// <summary>
@@ -210,6 +224,7 @@ public sealed class RunEfcpt : Task
     /// <c>.g.cs</c> and added to compilation by the <c>EfcptAddToCompile</c> target.
     /// </value>
     [Required]
+    [ProfileInput]
     public string OutputDir { get; set; } = "";
 
     /// <summary>
@@ -228,6 +243,7 @@ public sealed class RunEfcpt : Task
     /// Defaults to <c>mssql</c>. The concrete set of supported providers is determined by the efcpt
     /// CLI version in use.
     /// </value>
+    [ProfileInput]
     public string Provider { get; set; } = "mssql";
 
     /// <summary>
@@ -238,6 +254,11 @@ public sealed class RunEfcpt : Task
     /// If empty or not specified, falls back to runtime version detection.
     /// </value>
     public string TargetFramework { get; set; } = "";
+
+    /// <summary>
+    /// Full path to the MSBuild project file (used for profiling).
+    /// </summary>
+    public string ProjectPath { get; set; } = "";
 
     private readonly record struct ToolResolutionContext(
         string ToolPath,
@@ -346,11 +367,8 @@ public sealed class RunEfcpt : Task
     /// </summary>
     /// <returns>>True on success; false on error.</returns>
     public override bool Execute()
-    {
-        var decorator = TaskExecutionDecorator.Create(ExecuteCore);
-        var ctx = new TaskExecutionContext(Log, nameof(RunEfcpt));
-        return decorator.Execute(in ctx);
-    }
+        => TaskExecutionDecorator.ExecuteWithProfiling(
+            this, ExecuteCore, ProfilingHelper.GetProfiler(ProjectPath));
 
     private bool ExecuteCore(TaskExecutionContext ctx)
     {

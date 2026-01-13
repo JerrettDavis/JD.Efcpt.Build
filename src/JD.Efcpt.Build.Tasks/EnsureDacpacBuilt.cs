@@ -36,9 +36,15 @@ namespace JD.Efcpt.Build.Tasks;
 public sealed class EnsureDacpacBuilt : Task
 {
     /// <summary>
+    /// Full path to the MSBuild project file (used for profiling).
+    /// </summary>
+    public string ProjectPath { get; set; } = "";
+
+    /// <summary>
     /// Path to the SQL project that produces the DACPAC.
     /// </summary>
     [Required]
+    [ProfileInput]
     public string SqlProjPath { get; set; } = "";
 
     /// <summary>
@@ -46,6 +52,7 @@ public sealed class EnsureDacpacBuilt : Task
     /// </summary>
     /// <value>Typically <c>Debug</c> or <c>Release</c>, but any valid configuration is accepted.</value>
     [Required]
+    [ProfileInput]
     public string Configuration { get; set; } = "";
 
     /// <summary>Path to <c>msbuild.exe</c> when available (Windows/Visual Studio scenarios).</summary>
@@ -181,11 +188,8 @@ public sealed class EnsureDacpacBuilt : Task
 
     /// <inheritdoc />
     public override bool Execute()
-    {
-        var decorator = TaskExecutionDecorator.Create(ExecuteCore);
-        var ctx = new TaskExecutionContext(Log, nameof(EnsureDacpacBuilt));
-        return decorator.Execute(in ctx);
-    }
+        => TaskExecutionDecorator.ExecuteWithProfiling(
+            this, ExecuteCore, ProfilingHelper.GetProfiler(ProjectPath));
 
     private bool ExecuteCore(TaskExecutionContext ctx)
     {

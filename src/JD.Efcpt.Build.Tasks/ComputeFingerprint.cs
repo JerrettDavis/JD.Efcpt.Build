@@ -40,36 +40,47 @@ namespace JD.Efcpt.Build.Tasks;
 public sealed class ComputeFingerprint : Task
 {
     /// <summary>
+    /// Full path to the MSBuild project file (used for profiling).
+    /// </summary>
+    public string ProjectPath { get; set; } = "";
+
+    /// <summary>
     /// Path to the DACPAC file to include in the fingerprint (used in .sqlproj mode).
     /// </summary>
+    [ProfileInput]
     public string DacpacPath { get; set; } = "";
 
     /// <summary>
     /// Schema fingerprint from QuerySchemaMetadata (used in connection string mode).
     /// </summary>
+    [ProfileInput]
     public string SchemaFingerprint { get; set; } = "";
 
     /// <summary>
     /// Indicates whether we're in connection string mode.
     /// </summary>
+    [ProfileInput]
     public string UseConnectionStringMode { get; set; } = "false";
 
     /// <summary>
     /// Path to the efcpt configuration JSON file to include in the fingerprint.
     /// </summary>
     [Required]
+    [ProfileInput]
     public string ConfigPath { get; set; } = "";
 
     /// <summary>
     /// Path to the efcpt renaming JSON file to include in the fingerprint.
     /// </summary>
     [Required]
+    [ProfileInput]
     public string RenamingPath { get; set; } = "";
 
     /// <summary>
     /// Root directory containing template files to include in the fingerprint.
     /// </summary>
     [Required]
+    [ProfileInput]
     public string TemplateDir { get; set; } = "";
 
     /// <summary>
@@ -86,21 +97,25 @@ public sealed class ComputeFingerprint : Task
     /// <summary>
     /// Version of the EF Core Power Tools CLI tool package being used.
     /// </summary>
+    [ProfileInput]
     public string ToolVersion { get; set; } = "";
 
     /// <summary>
     /// Directory containing generated files to optionally include in the fingerprint.
     /// </summary>
+    [ProfileInput]
     public string GeneratedDir { get; set; } = "";
 
     /// <summary>
     /// Indicates whether to detect changes to generated files (default: false to avoid overwriting manual edits).
     /// </summary>
+    [ProfileInput]
     public string DetectGeneratedFileChanges { get; set; } = "false";
 
     /// <summary>
     /// Serialized JSON string containing MSBuild config property overrides.
     /// </summary>
+    [ProfileInput]
     public string ConfigPropertyOverrides { get; set; } = "";
 
     /// <summary>
@@ -121,11 +136,8 @@ public sealed class ComputeFingerprint : Task
 
     /// <inheritdoc />
     public override bool Execute()
-    {
-        var decorator = TaskExecutionDecorator.Create(ExecuteCore);
-        var ctx = new TaskExecutionContext(Log, nameof(ComputeFingerprint));
-        return decorator.Execute(in ctx);
-    }
+        => TaskExecutionDecorator.ExecuteWithProfiling(
+            this, ExecuteCore, ProfilingHelper.GetProfiler(ProjectPath));
 
     private bool ExecuteCore(TaskExecutionContext ctx)
     {

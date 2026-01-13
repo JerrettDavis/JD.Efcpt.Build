@@ -2,6 +2,17 @@
   "version": 1,
   "dependencies": {
     ".NETFramework,Version=v4.7.2": {
+      "AWSSDK.Core": {
+        "type": "Direct",
+        "requested": "[4.0.3.8, )",
+        "resolved": "4.0.3.8",
+        "contentHash": "nJyNzaz3pcD8c8hZvtJXuziJm1dkd3/BYmZvhf1TPNfMo3G3lsesGFZl1UVyQhGEfmQOS+efT0H8tf00PMmjug==",
+        "dependencies": {
+          "System.Buffers": "4.5.1",
+          "System.Memory": "4.5.5",
+          "System.Text.Json": "8.0.5"
+        }
+      },
       "FirebirdSql.Data.FirebirdClient": {
         "type": "Direct",
         "requested": "[10.3.2, )",
@@ -175,16 +186,6 @@
           "System.Memory": "4.5.5",
           "System.Runtime.CompilerServices.Unsafe": "4.7.1",
           "System.Threading.Tasks.Extensions": "4.5.4"
-        }
-      },
-      "AWSSDK.Core": {
-        "type": "Transitive",
-        "resolved": "4.0.0.14",
-        "contentHash": "GUCP2LozKSapBKvV/rZtnh2e9SFF/DO3e4Z+0UV7oo9LuVVa+0XDDUKMiC3Oz54FBq29K7s9OxegBQPIZbe4Yw==",
-        "dependencies": {
-          "System.Buffers": "4.5.1",
-          "System.Memory": "4.5.5",
-          "System.Text.Json": "8.0.5"
         }
       },
       "AWSSDK.S3": {
@@ -736,6 +737,12 @@
       }
     },
     "net10.0": {
+      "AWSSDK.Core": {
+        "type": "Direct",
+        "requested": "[4.0.3.8, )",
+        "resolved": "4.0.3.8",
+        "contentHash": "nJyNzaz3pcD8c8hZvtJXuziJm1dkd3/BYmZvhf1TPNfMo3G3lsesGFZl1UVyQhGEfmQOS+efT0H8tf00PMmjug=="
+      },
       "FirebirdSql.Data.FirebirdClient": {
         "type": "Direct",
         "requested": "[10.3.2, )",
@@ -853,11 +860,6 @@
         "type": "Transitive",
         "resolved": "14.0.2",
         "contentHash": "2xvo9q2ag/Ze7TKSMsZfcQFMk3zZKWcduttJXoYnoevZD2bv+lKnOPeleyxONuR1ZwhZ00D86pPM9TWx2GMY2w=="
-      },
-      "AWSSDK.Core": {
-        "type": "Transitive",
-        "resolved": "4.0.0.14",
-        "contentHash": "GUCP2LozKSapBKvV/rZtnh2e9SFF/DO3e4Z+0UV7oo9LuVVa+0XDDUKMiC3Oz54FBq29K7s9OxegBQPIZbe4Yw=="
       },
       "AWSSDK.S3": {
         "type": "Transitive",
@@ -1220,6 +1222,12 @@
       }
     },
     "net8.0": {
+      "AWSSDK.Core": {
+        "type": "Direct",
+        "requested": "[4.0.3.8, )",
+        "resolved": "4.0.3.8",
+        "contentHash": "nJyNzaz3pcD8c8hZvtJXuziJm1dkd3/BYmZvhf1TPNfMo3G3lsesGFZl1UVyQhGEfmQOS+efT0H8tf00PMmjug=="
+      },
       "FirebirdSql.Data.FirebirdClient": {
         "type": "Direct",
         "requested": "[10.3.2, )",
@@ -1333,11 +1341,6 @@
         "type": "Transitive",
         "resolved": "14.0.2",
         "contentHash": "2xvo9q2ag/Ze7TKSMsZfcQFMk3zZKWcduttJXoYnoevZD2bv+lKnOPeleyxONuR1ZwhZ00D86pPM9TWx2GMY2w=="
-      },
-      "AWSSDK.Core": {
-        "type": "Transitive",
-        "resolved": "4.0.0.14",
-        "contentHash": "GUCP2LozKSapBKvV/rZtnh2e9SFF/DO3e4Z+0UV7oo9LuVVa+0XDDUKMiC3Oz54FBq29K7s9OxegBQPIZbe4Yw=="
       },
       "AWSSDK.S3": {
         "type": "Transitive",
@@ -1701,6 +1704,12 @@
       }
     },
     "net9.0": {
+      "AWSSDK.Core": {
+        "type": "Direct",
+        "requested": "[4.0.3.8, )",
+        "resolved": "4.0.3.8",
+        "contentHash": "nJyNzaz3pcD8c8hZvtJXuziJm1dkd3/BYmZvhf1TPNfMo3G3lsesGFZl1UVyQhGEfmQOS+efT0H8tf00PMmjug=="
+      },
       "FirebirdSql.Data.FirebirdClient": {
         "type": "Direct",
         "requested": "[10.3.2, )",
@@ -1814,11 +1823,6 @@
         "type": "Transitive",
         "resolved": "14.0.2",
         "contentHash": "2xvo9q2ag/Ze7TKSMsZfcQFMk3zZKWcduttJXoYnoevZD2bv+lKnOPeleyxONuR1ZwhZ00D86pPM9TWx2GMY2w=="
-      },
-      "AWSSDK.Core": {
-        "type": "Transitive",
-        "resolved": "4.0.0.14",
-        "contentHash": "GUCP2LozKSapBKvV/rZtnh2e9SFF/DO3e4Z+0UV7oo9LuVVa+0XDDUKMiC3Oz54FBq29K7s9OxegBQPIZbe4Yw=="
       },
       "AWSSDK.S3": {
         "type": "Transitive",

@@ -49,6 +49,8 @@
     <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="9.0.1" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="10.3.2" />
     <PackageReference Include="Snowflake.Data" Version="5.2.1" />
+    <!-- Override vulnerable AWSSDK.Core transitive dependency from Snowflake.Data -->
+    <PackageReference Include="AWSSDK.Core" Version="4.0.3.8" />
   </ItemGroup>
 
   <!--

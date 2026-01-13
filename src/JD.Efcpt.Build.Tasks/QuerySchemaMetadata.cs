@@ -23,15 +23,28 @@ namespace JD.Efcpt.Build.Tasks;
 public sealed class QuerySchemaMetadata : Task
 {
     /// <summary>
+    /// Full path to the MSBuild project file (used for profiling).
+    /// </summary>
+    public string ProjectPath { get; set; } = "";
+
+    /// <summary>
     /// Database connection string.
     /// </summary>
     [Required]
+    [ProfileInput(Exclude = true)] // Excluded for security
     public string ConnectionString { get; set; } = "";
+
+    /// <summary>
+    /// Redacted connection string for profiling (only included if ConnectionString is set).
+    /// </summary>
+    [ProfileInput(Name = "ConnectionString")]
+    private string ConnectionStringRedacted => string.IsNullOrWhiteSpace(ConnectionString) ? "" : "<redacted>";
 
     /// <summary>
     /// Output directory for diagnostic files.
     /// </summary>
     [Required]
+    [ProfileInput]
     public string OutputDir { get; set; } = "";
 
     /// <summary>
@@ -40,6 +53,7 @@ public sealed class QuerySchemaMetadata : Task
     /// <remarks>
     /// Supported providers: mssql, postgres, mysql, sqlite, oracle, firebird, snowflake.
     /// </remarks>
+    [ProfileInput]
     public string Provider { get; set; } = "mssql";
 
     /// <summary>
@@ -55,11 +69,8 @@ public sealed class QuerySchemaMetadata : Task
 
     /// <inheritdoc/>
     public override bool Execute()
-    {
-        var decorator = TaskExecutionDecorator.Create(ExecuteCore);
-        var ctx = new TaskExecutionContext(Log, nameof(QuerySchemaMetadata));
-        return decorator.Execute(in ctx);
-    }
+        => TaskExecutionDecorator.ExecuteWithProfiling(
+            this, ExecuteCore, ProfilingHelper.GetProfiler(ProjectPath));
 
     private readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {

@@ -5,7 +5,6 @@ using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Extensions;
 using Microsoft.Build.Framework;
 using PatternKit.Behavioral.Strategy;
-using PatternKit.Creational.Builder;
 using Task = Microsoft.Build.Utilities.Task;
 
 namespace JD.Efcpt.Build.Tasks;
@@ -78,21 +77,25 @@ public sealed class ResolveSqlProjAndInputs : Task
     /// is resolved against <see cref="ProjectDirectory"/> and used instead of probing
     /// <see cref="ProjectReferences"/>.
     /// </value>
+    [ProfileInput]
     public string SqlProjOverride { get; set; } = "";
 
     /// <summary>
     /// Optional override path for the efcpt configuration JSON file.
     /// </summary>
+    [ProfileInput]
     public string ConfigOverride { get; set; } = "";
 
     /// <summary>
     /// Optional override path for the efcpt renaming JSON file.
     /// </summary>
+    [ProfileInput]
     public string RenamingOverride { get; set; } = "";
 
     /// <summary>
     /// Optional override path for the efcpt template directory.
     /// </summary>
+    [ProfileInput]
     public string TemplateDirOverride { get; set; } = "";
 
     /// <summary>
@@ -206,6 +209,7 @@ public sealed class ResolveSqlProjAndInputs : Task
     /// Resolved connection string (if using connection string mode).
     /// </summary>
     [Output]
+    [ProfileOutput(Exclude = true)] // Excluded for security - contains database credentials
     public string ResolvedConnectionString { get; set; } = "";
 
     /// <summary>
@@ -298,11 +302,8 @@ public sealed class ResolveSqlProjAndInputs : Task
 
     /// <inheritdoc />
     public override bool Execute()
-    {
-        var decorator = TaskExecutionDecorator.Create(ExecuteCore);
-        var ctx = new TaskExecutionContext(Log, nameof(ResolveSqlProjAndInputs));
-        return decorator.Execute(in ctx);
-    }
+        => TaskExecutionDecorator.ExecuteWithProfiling(
+            this, ExecuteCore, ProfilingHelper.GetProfiler(ProjectFullPath));
 
     private bool ExecuteCore(TaskExecutionContext ctx)
     {

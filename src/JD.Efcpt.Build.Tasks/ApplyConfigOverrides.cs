@@ -32,21 +32,29 @@ public sealed class ApplyConfigOverrides : Task
     #region Control Properties
 
     /// <summary>
+    /// Full path to the MSBuild project file (used for profiling).
+    /// </summary>
+    public string ProjectPath { get; set; } = "";
+
+    /// <summary>
     /// Path to the staged efcpt-config.json file to modify.
     /// </summary>
     [Required]
+    [ProfileInput]
     public string StagedConfigPath { get; set; } = "";
 
     /// <summary>
     /// Whether to apply MSBuild property overrides to user-provided config files.
     /// </summary>
     /// <value>Default is "true". Set to "false" to skip overrides for user-provided configs.</value>
+    [ProfileInput]
     public string ApplyOverrides { get; set; } = "true";
 
     /// <summary>
     /// Indicates whether the config file is the library default (not user-provided).
     /// </summary>
     /// <value>When "true", overrides are always applied regardless of <see cref="ApplyOverrides"/>.</value>
+    [ProfileInput]
     public string IsUsingDefaultConfig { get; set; } = "false";
 
     /// <summary>
@@ -189,11 +197,8 @@ public sealed class ApplyConfigOverrides : Task
 
     /// <inheritdoc />
     public override bool Execute()
-    {
-        var decorator = TaskExecutionDecorator.Create(ExecuteCore);
-        var ctx = new TaskExecutionContext(Log, nameof(ApplyConfigOverrides));
-        return decorator.Execute(in ctx);
-    }
+        => TaskExecutionDecorator.ExecuteWithProfiling(
+            this, ExecuteCore, ProfilingHelper.GetProfiler(ProjectPath));
 
     private bool ExecuteCore(TaskExecutionContext ctx)
     {
