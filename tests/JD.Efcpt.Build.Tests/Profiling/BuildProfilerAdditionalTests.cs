@@ -29,7 +29,7 @@ public sealed class BuildProfilerAdditionalTests(ITestOutputHelper output) : Tin
         await Given("an enabled profiler", () => Setup())
             .When("a task completes without setting outputs", s =>
             {
-                using (var task = s.Profiler.BeginTask("TestTask"))
+                using (s.Profiler.BeginTask("TestTask"))
                 {
                     // Don't set outputs
                 }
@@ -172,11 +172,11 @@ public sealed class BuildProfilerAdditionalTests(ITestOutputHelper output) : Tin
         await Given("an enabled profiler", () => Setup())
             .When("deeply nested tasks are executed", s =>
             {
-                using (var level1 = s.Profiler.BeginTask("Level1"))
+                using (s.Profiler.BeginTask("Level1"))
                 {
-                    using (var level2 = s.Profiler.BeginTask("Level2"))
+                    using (s.Profiler.BeginTask("Level2"))
                     {
-                        using (var level3 = s.Profiler.BeginTask("Level3"))
+                        using (s.Profiler.BeginTask("Level3"))
                         {
                             // Innermost task
                         }
@@ -279,7 +279,7 @@ public sealed class BuildProfilerAdditionalTests(ITestOutputHelper output) : Tin
                 return (s, output1, output2);
             })
             .Then("same instance is returned", t =>
-                ReferenceEquals(t.output1, t.output2))
+                !ReferenceEquals(t.output1, null) && ReferenceEquals(t.output1, t.output2))
             .AssertPassed();
     }
 

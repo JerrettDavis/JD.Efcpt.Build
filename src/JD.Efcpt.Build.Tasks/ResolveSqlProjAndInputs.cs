@@ -209,6 +209,7 @@ public sealed class ResolveSqlProjAndInputs : Task
     /// Resolved connection string (if using connection string mode).
     /// </summary>
     [Output]
+    [ProfileOutput(Exclude = true)] // Excluded for security - contains database credentials
     public string ResolvedConnectionString { get; set; } = "";
 
     /// <summary>

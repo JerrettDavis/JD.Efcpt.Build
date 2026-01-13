@@ -354,6 +354,34 @@ public override bool Execute()
 }
 ```
 
+## Security Considerations
+
+### Sensitive Data Protection
+
+JD.Efcpt.Build automatically excludes sensitive data from profiling output:
+
+- **Connection Strings**: All database connection strings are automatically redacted in profiling output. Properties containing connection strings show `"<redacted>"` instead of the actual value.
+- **Passwords**: Any properties marked with `[ProfileInput(Exclude = true)]` or `[ProfileOutput(Exclude = true)]` are excluded from capture.
+- **Custom Exclusions**: Use `[ProfileInput(Exclude = true)]` on task properties to prevent them from being captured in profiling output.
+
+**Example - Redacted Connection String:**
+```json
+{
+  "task": {
+    "name": "RunEfcpt",
+    "inputs": {
+      "ConnectionString": "<redacted>"
+    }
+  }
+}
+```
+
+### Best Practices
+
+1. **Review Profile Output**: Before sharing profiling output (e.g., as CI artifacts), review the JSON file to ensure no sensitive data is present.
+2. **Restrict Access**: Treat profiling output files with the same security level as build logs.
+3. **Custom Properties**: For custom tasks, use `[ProfileInput(Exclude = true)]` or `[ProfileOutput(Exclude = true)]` to exclude sensitive properties.
+
 ## Related Documentation
 
 - [API Reference](api-reference.md)
