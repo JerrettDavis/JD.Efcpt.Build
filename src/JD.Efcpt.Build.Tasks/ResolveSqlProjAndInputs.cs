@@ -419,7 +419,7 @@ public sealed class ResolveSqlProjAndInputs : Task
     {
         // Step 1: Determine mode using priority-based resolution
         log.Detail("BuildResolutionState: Step 1 - DetermineMode starting");
-        TargetContext? targetContext;
+        TargetContext? targetContext = null;
         try
         {
             targetContext = DetermineMode(log);
