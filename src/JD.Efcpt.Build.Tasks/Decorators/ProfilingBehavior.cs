@@ -236,6 +236,13 @@ public static class ProfilingBehavior
     /// <summary>
     /// Determines if a property should be auto-included as input based on naming conventions.
     /// </summary>
+    /// <remarks>
+    /// This method auto-includes properties based on common naming patterns (e.g., properties ending with 
+    /// "Path", "Dir", or "Directory"). If a property matching these patterns contains sensitive information
+    /// (e.g., paths to credential files, private keys, or sensitive configuration), developers should 
+    /// explicitly exclude it using [ProfileInput(Exclude = true)] attribute to prevent it from being 
+    /// captured in profiling output.
+    /// </remarks>
     private static bool ShouldAutoIncludeAsInput(PropertyInfo prop)
     {
         // Don't auto-include inherited Task properties
@@ -245,6 +252,8 @@ public static class ProfilingBehavior
         var name = prop.Name;
 
         // Include common input property patterns
+        // NOTE: If any of these properties contain sensitive paths (credentials, keys, etc.),
+        // use [ProfileInput(Exclude = true)] to prevent capture
         return name.EndsWith("Path", StringComparison.Ordinal) ||
                name.EndsWith("Dir", StringComparison.Ordinal) ||
                name.EndsWith("Directory", StringComparison.Ordinal) ||

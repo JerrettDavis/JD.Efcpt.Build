@@ -376,11 +376,31 @@ JD.Efcpt.Build automatically excludes sensitive data from profiling output:
 }
 ```
 
+### Auto-Included Properties
+
+The profiling framework automatically includes certain properties as inputs based on naming conventions:
+- Properties ending with `Path`, `Dir`, or `Directory`
+- `Configuration`, `ProjectPath`, and `ProjectFullPath` properties
+
+**Important**: If any auto-included property contains sensitive information (e.g., paths to credential files, private keys, or sensitive configuration files), you **must** explicitly exclude it using `[ProfileInput(Exclude = true)]` to prevent it from being captured in profiling output.
+
+**Example - Excluding Sensitive Path:**
+```csharp
+public class MyTask : MsBuildTask
+{
+    public string? SqlProjPath { get; set; }  // Auto-included (ends with "Path")
+    
+    [ProfileInput(Exclude = true)]
+    public string? CredentialsPath { get; set; }  // Explicitly excluded - contains sensitive data
+}
+```
+
 ### Best Practices
 
 1. **Review Profile Output**: Before sharing profiling output (e.g., as CI artifacts), review the JSON file to ensure no sensitive data is present.
 2. **Restrict Access**: Treat profiling output files with the same security level as build logs.
 3. **Custom Properties**: For custom tasks, use `[ProfileInput(Exclude = true)]` or `[ProfileOutput(Exclude = true)]` to exclude sensitive properties.
+4. **Sensitive Paths**: If a property ending with "Path", "Dir", or "Directory" points to sensitive files (credentials, keys, etc.), explicitly exclude it with `[ProfileInput(Exclude = true)]`.
 
 ## Related Documentation
 
