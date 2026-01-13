@@ -205,7 +205,7 @@ public static class ProfilingBehavior
     {
         var outputs = new Dictionary<string, object?>();
 
-        foreach (var prop in taskType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        foreach (var prop in taskType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
         {
             // Check for explicit profile attribute
             var profileAttr = prop.GetCustomAttribute<ProfileOutputAttribute>();
