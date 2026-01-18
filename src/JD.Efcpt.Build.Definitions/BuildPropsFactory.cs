@@ -1,5 +1,6 @@
 using JD.MSBuild.Fluent;
 using JD.MSBuild.Fluent.Fluent;
+using JD.MSBuild.Fluent.Typed;
 
 namespace JD.Efcpt.Build.Definitions;
 
@@ -13,17 +14,17 @@ public static class BuildPropsFactory
         return Package.Define("JD.Efcpt.Build")
             .Props(p =>
             {
-                p.Property("_EfcptIsDirectReference", "true");
+                p.Property<EfcptIsDirectReference>("true");
                 p.Import("..\\buildTransitive\\JD.Efcpt.Build.props");
             })
             .Build();
     }
 
-    // Strongly-typed names (optional - uncomment to use)
-
-    // Property names:
-    // public readonly struct EfcptIsDirectReference : IMsBuildPropertyName
-    // {
-    //     public string Name => "_EfcptIsDirectReference";
-    // }
+    // Strongly-typed property names
+    public readonly struct EfcptIsDirectReference : IMsBuildPropertyName
+    {
+        public string Name => "_EfcptIsDirectReference";
+    }
 }
+
+

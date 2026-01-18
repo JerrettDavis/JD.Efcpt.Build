@@ -1,5 +1,6 @@
 using JD.MSBuild.Fluent;
 using JD.MSBuild.Fluent.Fluent;
+using JD.MSBuild.Fluent.Typed;
 
 namespace JD.Efcpt.Build.Definitions;
 
@@ -15,8 +16,8 @@ public static class BuildTransitiveTargetsFactory
             {
                 p.PropertyGroup(null, group =>
                 {
-                    group.Property("EfcptConfigUseNullableReferenceTypes", "true", "'$(EfcptConfigUseNullableReferenceTypes)'=='' and ('$(Nullable)'=='enable' or '$(Nullable)'=='Enable')");
-                    group.Property("EfcptConfigUseNullableReferenceTypes", "false", "'$(EfcptConfigUseNullableReferenceTypes)'=='' and '$(Nullable)'!=''");
+                    group.Property<EfcptConfigUseNullableReferenceTypes>( "true", "'$(EfcptConfigUseNullableReferenceTypes)'=='' and ('$(Nullable)'=='enable' or '$(Nullable)'=='Enable')");
+                    group.Property<EfcptConfigUseNullableReferenceTypes>( "false", "'$(EfcptConfigUseNullableReferenceTypes)'=='' and '$(Nullable)'!=''");
                 });
                 p.PropertyGroup(null, group =>
                 {
@@ -34,8 +35,8 @@ public static class BuildTransitiveTargetsFactory
             {
                 t.PropertyGroup(null, group =>
                 {
-                    group.Property("EfcptConfigUseNullableReferenceTypes", "true", "'$(EfcptConfigUseNullableReferenceTypes)'=='' and ('$(Nullable)'=='enable' or '$(Nullable)'=='Enable')");
-                    group.Property("EfcptConfigUseNullableReferenceTypes", "false", "'$(EfcptConfigUseNullableReferenceTypes)'=='' and '$(Nullable)'!=''");
+                    group.Property<EfcptConfigUseNullableReferenceTypes>( "true", "'$(EfcptConfigUseNullableReferenceTypes)'=='' and ('$(Nullable)'=='enable' or '$(Nullable)'=='Enable')");
+                    group.Property<EfcptConfigUseNullableReferenceTypes>( "false", "'$(EfcptConfigUseNullableReferenceTypes)'=='' and '$(Nullable)'!=''");
                 });
                 t.Target("_EfcptDetectSqlProject", target =>
                 {
@@ -124,11 +125,11 @@ public static class BuildTransitiveTargetsFactory
                         task.OutputProperty("UpdateAvailable", "_EfcptUpdateAvailable");
                     });
                 });
-                t.Target("BeforeSqlProjGeneration", target =>
+                t.Target<BeforeSqlProjGenerationTarget>( target =>
                 {
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'");
                 });
-                t.Target("EfcptQueryDatabaseSchemaForSqlProj", target =>
+                t.Target<EfcptQueryDatabaseSchemaForSqlProjTarget>( target =>
                 {
                     target.DependsOnTargets("BeforeSqlProjGeneration");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'");
@@ -144,7 +145,7 @@ public static class BuildTransitiveTargetsFactory
                     });
                     target.Message("Database schema fingerprint: $(_EfcptSchemaFingerprint)", "normal");
                 });
-                t.Target("EfcptExtractDatabaseSchemaToScripts", target =>
+                t.Target<EfcptExtractDatabaseSchemaToScriptsTarget>( target =>
                 {
                     target.DependsOnTargets("EfcptQueryDatabaseSchemaForSqlProj");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'");
@@ -177,7 +178,7 @@ public static class BuildTransitiveTargetsFactory
                     });
                     target.Message("Extracted SQL scripts to: $(_EfcptExtractedScriptsPath)", "high");
                 });
-                t.Target("EfcptAddSqlFileWarnings", target =>
+                t.Target<EfcptAddSqlFileWarningsTarget>( target =>
                 {
                     target.DependsOnTargets("EfcptExtractDatabaseSchemaToScripts");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'");
@@ -194,7 +195,7 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("LogVerbosity", "$(EfcptLogVerbosity)");
                     });
                 });
-                t.Target("AfterSqlProjGeneration", target =>
+                t.Target<AfterSqlProjGenerationTarget>( target =>
                 {
                     target.BeforeTargets("Build");
                     target.DependsOnTargets("EfcptAddSqlFileWarnings");
@@ -202,7 +203,7 @@ public static class BuildTransitiveTargetsFactory
                     target.Message("_EfcptIsSqlProject: $(_EfcptIsSqlProject)", "high");
                     target.Message("SQL script generation complete. SQL project will build to DACPAC.", "high");
                 });
-                t.Target("EfcptResolveInputs", target =>
+                t.Target<EfcptResolveInputsTarget>( target =>
                 {
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptDacpac)' == ''");
                     target.Task("ResolveSqlProjAndInputs", task =>
@@ -235,7 +236,7 @@ public static class BuildTransitiveTargetsFactory
                         task.OutputProperty("IsUsingDefaultConfig", "_EfcptIsUsingDefaultConfig");
                     });
                 });
-                t.Target("EfcptResolveInputsForDirectDacpac", target =>
+                t.Target<EfcptResolveInputsForDirectDacpacTarget>( target =>
                 {
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(EfcptDacpac)' != ''");
                     target.PropertyGroup(null, group =>
@@ -254,7 +255,7 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("Directories", "$(EfcptOutput)");
                     });
                 });
-                t.Target("EfcptQuerySchemaMetadata", target =>
+                t.Target<EfcptQuerySchemaMetadataTarget>( target =>
                 {
                     target.BeforeTargets("EfcptStageInputs");
                     target.AfterTargets("EfcptResolveInputs");
@@ -268,7 +269,7 @@ public static class BuildTransitiveTargetsFactory
                         task.OutputProperty("SchemaFingerprint", "_EfcptSchemaFingerprint");
                     });
                 });
-                t.Target("EfcptUseDirectDacpac", target =>
+                t.Target<EfcptUseDirectDacpacTarget>( target =>
                 {
                     target.DependsOnTargets("EfcptResolveInputs;EfcptResolveInputsForDirectDacpac");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(EfcptDacpac)' != ''");
@@ -281,7 +282,7 @@ public static class BuildTransitiveTargetsFactory
                     target.Error("EfcptDacpac was specified but the file does not exist: $(_EfcptDacpacPath)", "!Exists('$(_EfcptDacpacPath)')");
                     target.Message("Using pre-built DACPAC: $(_EfcptDacpacPath)", "high");
                 });
-                t.Target("EfcptBuildSqlProj", target =>
+                t.Target<EfcptBuildSqlProjTarget>( target =>
                 {
                     target.DependsOnTargets("EfcptResolveInputs;EfcptUseDirectDacpac");
                     target.Condition("'$(EfcptEnabled)' == 'true'");
@@ -294,7 +295,7 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("BuildInParallel", "false");
                     }, "'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptSqlProj)' != ''");
                 });
-                t.Target("EfcptEnsureDacpac", target =>
+                t.Target<EfcptEnsureDacpacTarget>( target =>
                 {
                     target.DependsOnTargets("EfcptResolveInputs;EfcptUseDirectDacpac;EfcptBuildSqlProj");
                     target.Condition("'$(EfcptEnabled)' == 'true'");
@@ -308,7 +309,7 @@ public static class BuildTransitiveTargetsFactory
                         task.OutputProperty("DacpacPath", "_EfcptDacpacPath");
                     }, "'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptIsSqlProject)' != 'true'");
                 });
-                t.Target("EfcptResolveDbContextName", target =>
+                t.Target<EfcptResolveDbContextNameTarget>( target =>
                 {
                     target.DependsOnTargets("EfcptResolveInputs;EfcptEnsureDacpac;EfcptUseDirectDacpac");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
@@ -324,10 +325,10 @@ public static class BuildTransitiveTargetsFactory
                     });
                     target.PropertyGroup(null, group =>
                     {
-                        group.Property("EfcptConfigDbContextName", "$(_EfcptResolvedDbContextName)");
+                        group.Property<EfcptConfigDbContextName>( "$(_EfcptResolvedDbContextName)");
                     });
                 });
-                t.Target("EfcptStageInputs", target =>
+                t.Target<EfcptStageInputsTarget>( target =>
                 {
                     target.DependsOnTargets("EfcptResolveInputs;EfcptEnsureDacpac;EfcptUseDirectDacpac;EfcptResolveDbContextName");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
@@ -346,7 +347,7 @@ public static class BuildTransitiveTargetsFactory
                         task.OutputProperty("StagedTemplateDir", "_EfcptStagedTemplateDir");
                     });
                 });
-                t.Target("EfcptApplyConfigOverrides", target =>
+                t.Target<EfcptApplyConfigOverridesTarget>( target =>
                 {
                     target.DependsOnTargets("EfcptStageInputs");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
@@ -395,7 +396,7 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("PreserveCasingWithRegex", "$(EfcptConfigPreserveCasingWithRegex)");
                     });
                 });
-                t.Target("EfcptSerializeConfigProperties", target =>
+                t.Target<EfcptSerializeConfigPropertiesTarget>( target =>
                 {
                     target.DependsOnTargets("EfcptApplyConfigOverrides");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
@@ -441,7 +442,7 @@ public static class BuildTransitiveTargetsFactory
                         task.OutputProperty("SerializedProperties", "_EfcptSerializedConfigProperties");
                     });
                 });
-                t.Target("EfcptComputeFingerprint", target =>
+                t.Target<EfcptComputeFingerprintTarget>( target =>
                 {
                     target.DependsOnTargets("EfcptSerializeConfigProperties");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
@@ -463,12 +464,12 @@ public static class BuildTransitiveTargetsFactory
                         task.OutputProperty("HasChanged", "_EfcptFingerprintChanged");
                     });
                 });
-                t.Target("BeforeEfcptGeneration", target =>
+                t.Target<BeforeEfcptGenerationTarget>( target =>
                 {
                     target.DependsOnTargets("EfcptComputeFingerprint");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
                 });
-                t.Target("EfcptGenerateModels", target =>
+                t.Target<EfcptGenerateModelsTarget>( target =>
                 {
                     target.BeforeTargets("CoreCompile");
                     target.DependsOnTargets("BeforeEfcptGeneration");
@@ -513,12 +514,12 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("Overwrite", "true");
                     });
                 });
-                t.Target("AfterEfcptGeneration", target =>
+                t.Target<AfterEfcptGenerationTarget>( target =>
                 {
                     target.AfterTargets("EfcptGenerateModels");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
                 });
-                t.Target("EfcptValidateSplitOutputs", target =>
+                t.Target<EfcptValidateSplitOutputsTarget>( target =>
                 {
                     target.DependsOnTargets("EfcptGenerateModels");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptSplitOutputs)' == 'true'");
@@ -536,7 +537,7 @@ public static class BuildTransitiveTargetsFactory
                     });
                     target.Message("Split outputs enabled. DbContext and configurations will be copied to: $(_EfcptDataDestDir)", "high");
                 });
-                t.Target("EfcptCopyDataToDataProject", target =>
+                t.Target<EfcptCopyDataToDataProjectTarget>( target =>
                 {
                     target.DependsOnTargets("EfcptValidateSplitOutputs");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptSplitOutputs)' == 'true'");
@@ -591,7 +592,7 @@ public static class BuildTransitiveTargetsFactory
                     }, "'@(_EfcptConfigurationFiles)' != ''");
                     target.Message("Removed DbContext and configuration files from Models project", "normal", "'$(_EfcptHasFilesToCopy)' == 'true'");
                 });
-                t.Target("EfcptAddToCompile", target =>
+                t.Target<EfcptAddToCompileTarget>( target =>
                 {
                     target.BeforeTargets("CoreCompile");
                     target.DependsOnTargets("EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpac;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels;EfcptCopyDataToDataProject");
@@ -602,7 +603,7 @@ public static class BuildTransitiveTargetsFactory
                         group.Include("Compile", "$(EfcptGeneratedDir)**\\*.g.cs", null, "'$(EfcptSplitOutputs)' != 'true'");
                     });
                 });
-                t.Target("EfcptIncludeExternalData", target =>
+                t.Target<EfcptIncludeExternalDataTarget>( target =>
                 {
                     target.BeforeTargets("CoreCompile");
                     target.Condition("'$(EfcptExternalDataDir)' != '' and Exists('$(EfcptExternalDataDir)')");
@@ -612,7 +613,7 @@ public static class BuildTransitiveTargetsFactory
                     });
                     target.Message("Including external data files from: $(EfcptExternalDataDir)", "normal");
                 });
-                t.Target("EfcptClean", target =>
+                t.Target<EfcptCleanTarget>( target =>
                 {
                     target.AfterTargets("Clean");
                     target.Condition("'$(EfcptEnabled)' == 'true'");
@@ -637,215 +638,215 @@ public static class BuildTransitiveTargetsFactory
             .Build();
     }
 
-    // Strongly-typed names (optional - uncomment to use)
-
-    // Property names:
-    // public readonly struct EfcptDacpacPath : IMsBuildPropertyName
-    // {
-    //     public string Name => "_EfcptDacpacPath";
-    // }
-    // public readonly struct EfcptDatabaseName : IMsBuildPropertyName
-    // {
-    //     public string Name => "_EfcptDatabaseName";
-    // }
-    // public readonly struct EfcptDataDestDir : IMsBuildPropertyName
-    // {
-    //     public string Name => "_EfcptDataDestDir";
-    // }
-    // public readonly struct EfcptDataProjectDir : IMsBuildPropertyName
-    // {
-    //     public string Name => "_EfcptDataProjectDir";
-    // }
-    // public readonly struct EfcptDataProjectPath : IMsBuildPropertyName
-    // {
-    //     public string Name => "_EfcptDataProjectPath";
-    // }
-    // public readonly struct EfcptHasFilesToCopy : IMsBuildPropertyName
-    // {
-    //     public string Name => "_EfcptHasFilesToCopy";
-    // }
-    // public readonly struct EfcptIsSqlProject : IMsBuildPropertyName
-    // {
-    //     public string Name => "_EfcptIsSqlProject";
-    // }
-    // public readonly struct EfcptIsUsingDefaultConfig : IMsBuildPropertyName
-    // {
-    //     public string Name => "_EfcptIsUsingDefaultConfig";
-    // }
-    // public readonly struct EfcptResolvedConfig : IMsBuildPropertyName
-    // {
-    //     public string Name => "_EfcptResolvedConfig";
-    // }
-    // public readonly struct EfcptResolvedRenaming : IMsBuildPropertyName
-    // {
-    //     public string Name => "_EfcptResolvedRenaming";
-    // }
-    // public readonly struct EfcptResolvedTemplateDir : IMsBuildPropertyName
-    // {
-    //     public string Name => "_EfcptResolvedTemplateDir";
-    // }
-    // public readonly struct EfcptScriptsDir : IMsBuildPropertyName
-    // {
-    //     public string Name => "_EfcptScriptsDir";
-    // }
-    // public readonly struct EfcptTaskAssembly : IMsBuildPropertyName
-    // {
-    //     public string Name => "_EfcptTaskAssembly";
-    // }
-    // public readonly struct EfcptTasksFolder : IMsBuildPropertyName
-    // {
-    //     public string Name => "_EfcptTasksFolder";
-    // }
-    // public readonly struct EfcptUseConnectionString : IMsBuildPropertyName
-    // {
-    //     public string Name => "_EfcptUseConnectionString";
-    // }
-    // public readonly struct EfcptUseDirectDacpac : IMsBuildPropertyName
-    // {
-    //     public string Name => "_EfcptUseDirectDacpac";
-    // }
-    // public readonly struct EfcptConfigDbContextName : IMsBuildPropertyName
-    // {
-    //     public string Name => "EfcptConfigDbContextName";
-    // }
-    // public readonly struct EfcptConfigUseNullableReferenceTypes : IMsBuildPropertyName
-    // {
-    //     public string Name => "EfcptConfigUseNullableReferenceTypes";
-    // }
-
+    // Strongly-typed names
+  public readonly struct EfcptDacpacPath : IMsBuildPropertyName
+  {
+    public string Name => "_EfcptDacpacPath";
+  }
+  public readonly struct EfcptDatabaseName : IMsBuildPropertyName
+  {
+    public string Name => "_EfcptDatabaseName";
+  }
+  public readonly struct EfcptDataDestDir : IMsBuildPropertyName
+  {
+    public string Name => "_EfcptDataDestDir";
+  }
+  public readonly struct EfcptDataProjectDir : IMsBuildPropertyName
+  {
+    public string Name => "_EfcptDataProjectDir";
+  }
+  public readonly struct EfcptDataProjectPath : IMsBuildPropertyName
+  {
+    public string Name => "_EfcptDataProjectPath";
+  }
+  public readonly struct EfcptHasFilesToCopy : IMsBuildPropertyName
+  {
+    public string Name => "_EfcptHasFilesToCopy";
+  }
+  public readonly struct EfcptIsSqlProject : IMsBuildPropertyName
+  {
+    public string Name => "_EfcptIsSqlProject";
+  }
+  public readonly struct EfcptIsUsingDefaultConfig : IMsBuildPropertyName
+  {
+    public string Name => "_EfcptIsUsingDefaultConfig";
+  }
+  public readonly struct EfcptResolvedConfig : IMsBuildPropertyName
+  {
+    public string Name => "_EfcptResolvedConfig";
+  }
+  public readonly struct EfcptResolvedRenaming : IMsBuildPropertyName
+  {
+    public string Name => "_EfcptResolvedRenaming";
+  }
+  public readonly struct EfcptResolvedTemplateDir : IMsBuildPropertyName
+  {
+    public string Name => "_EfcptResolvedTemplateDir";
+  }
+  public readonly struct EfcptScriptsDir : IMsBuildPropertyName
+  {
+    public string Name => "_EfcptScriptsDir";
+  }
+  public readonly struct EfcptTaskAssembly : IMsBuildPropertyName
+  {
+    public string Name => "_EfcptTaskAssembly";
+  }
+  public readonly struct EfcptTasksFolder : IMsBuildPropertyName
+  {
+    public string Name => "_EfcptTasksFolder";
+  }
+  public readonly struct EfcptUseConnectionString : IMsBuildPropertyName
+  {
+    public string Name => "_EfcptUseConnectionString";
+  }
+  public readonly struct EfcptUseDirectDacpac : IMsBuildPropertyName
+  {
+    public string Name => "_EfcptUseDirectDacpac";
+  }
+  public readonly struct EfcptConfigDbContextName : IMsBuildPropertyName
+  {
+    public string Name => "EfcptConfigDbContextName";
+  }
+  public readonly struct EfcptConfigUseNullableReferenceTypes : IMsBuildPropertyName
+  {
+    public string Name => "EfcptConfigUseNullableReferenceTypes";
+  }
     // Item types:
-    // public readonly struct EfcptConfigurationFilesItem : IMsBuildItemTypeName
-    // {
-    //     public string Name => "_EfcptConfigurationFiles";
-    // }
-    // public readonly struct EfcptDbContextFilesItem : IMsBuildItemTypeName
-    // {
-    //     public string Name => "_EfcptDbContextFiles";
-    // }
-    // public readonly struct EfcptGeneratedScriptsItem : IMsBuildItemTypeName
-    // {
-    //     public string Name => "_EfcptGeneratedScripts";
-    // }
-    // public readonly struct CompileItem : IMsBuildItemTypeName
-    // {
-    //     public string Name => "Compile";
-    // }
-
-    // Target names:
-    // public readonly struct EfcptCheckForUpdatesTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "_EfcptCheckForUpdates";
-    // }
-    // public readonly struct EfcptDetectSqlProjectTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "_EfcptDetectSqlProject";
-    // }
-    // public readonly struct EfcptFinalizeProfilingTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "_EfcptFinalizeProfiling";
-    // }
-    // public readonly struct EfcptInitializeProfilingTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "_EfcptInitializeProfiling";
-    // }
-    // public readonly struct EfcptLogTaskAssemblyInfoTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "_EfcptLogTaskAssemblyInfo";
-    // }
-    // public readonly struct AfterEfcptGenerationTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "AfterEfcptGeneration";
-    // }
-    // public readonly struct AfterSqlProjGenerationTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "AfterSqlProjGeneration";
-    // }
-    // public readonly struct BeforeEfcptGenerationTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "BeforeEfcptGeneration";
-    // }
-    // public readonly struct BeforeSqlProjGenerationTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "BeforeSqlProjGeneration";
-    // }
-    // public readonly struct EfcptAddSqlFileWarningsTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "EfcptAddSqlFileWarnings";
-    // }
-    // public readonly struct EfcptAddToCompileTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "EfcptAddToCompile";
-    // }
-    // public readonly struct EfcptApplyConfigOverridesTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "EfcptApplyConfigOverrides";
-    // }
-    // public readonly struct EfcptBuildSqlProjTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "EfcptBuildSqlProj";
-    // }
-    // public readonly struct EfcptCleanTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "EfcptClean";
-    // }
-    // public readonly struct EfcptComputeFingerprintTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "EfcptComputeFingerprint";
-    // }
-    // public readonly struct EfcptCopyDataToDataProjectTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "EfcptCopyDataToDataProject";
-    // }
-    // public readonly struct EfcptEnsureDacpacTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "EfcptEnsureDacpac";
-    // }
-    // public readonly struct EfcptExtractDatabaseSchemaToScriptsTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "EfcptExtractDatabaseSchemaToScripts";
-    // }
-    // public readonly struct EfcptGenerateModelsTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "EfcptGenerateModels";
-    // }
-    // public readonly struct EfcptIncludeExternalDataTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "EfcptIncludeExternalData";
-    // }
-    // public readonly struct EfcptQueryDatabaseSchemaForSqlProjTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "EfcptQueryDatabaseSchemaForSqlProj";
-    // }
-    // public readonly struct EfcptQuerySchemaMetadataTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "EfcptQuerySchemaMetadata";
-    // }
-    // public readonly struct EfcptResolveDbContextNameTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "EfcptResolveDbContextName";
-    // }
-    // public readonly struct EfcptResolveInputsTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "EfcptResolveInputs";
-    // }
-    // public readonly struct EfcptResolveInputsForDirectDacpacTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "EfcptResolveInputsForDirectDacpac";
-    // }
-    // public readonly struct EfcptSerializeConfigPropertiesTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "EfcptSerializeConfigProperties";
-    // }
-    // public readonly struct EfcptStageInputsTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "EfcptStageInputs";
-    // }
-    // public readonly struct EfcptUseDirectDacpacTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "EfcptUseDirectDacpac";
-    // }
-    // public readonly struct EfcptValidateSplitOutputsTarget : IMsBuildTargetName
-    // {
-    //     public string Name => "EfcptValidateSplitOutputs";
-    // }
+  public readonly struct EfcptConfigurationFilesItem : IMsBuildItemTypeName
+  {
+    public string Name => "_EfcptConfigurationFiles";
+  }
+  public readonly struct EfcptDbContextFilesItem : IMsBuildItemTypeName
+  {
+    public string Name => "_EfcptDbContextFiles";
+  }
+  public readonly struct EfcptGeneratedScriptsItem : IMsBuildItemTypeName
+  {
+    public string Name => "_EfcptGeneratedScripts";
+  }
+  public readonly struct CompileItem : IMsBuildItemTypeName
+  {
+    public string Name => "Compile";
+  }
+  public readonly struct EfcptCheckForUpdatesTarget : IMsBuildTargetName
+  {
+    public string Name => "_EfcptCheckForUpdates";
+  }
+  public readonly struct EfcptDetectSqlProjectTarget : IMsBuildTargetName
+  {
+    public string Name => "_EfcptDetectSqlProject";
+  }
+  public readonly struct EfcptFinalizeProfilingTarget : IMsBuildTargetName
+  {
+    public string Name => "_EfcptFinalizeProfiling";
+  }
+  public readonly struct EfcptInitializeProfilingTarget : IMsBuildTargetName
+  {
+    public string Name => "_EfcptInitializeProfiling";
+  }
+  public readonly struct EfcptLogTaskAssemblyInfoTarget : IMsBuildTargetName
+  {
+    public string Name => "_EfcptLogTaskAssemblyInfo";
+  }
+  public readonly struct AfterEfcptGenerationTarget : IMsBuildTargetName
+  {
+    public string Name => "AfterEfcptGeneration";
+  }
+  public readonly struct AfterSqlProjGenerationTarget : IMsBuildTargetName
+  {
+    public string Name => "AfterSqlProjGeneration";
+  }
+  public readonly struct BeforeEfcptGenerationTarget : IMsBuildTargetName
+  {
+    public string Name => "BeforeEfcptGeneration";
+  }
+  public readonly struct BeforeSqlProjGenerationTarget : IMsBuildTargetName
+  {
+    public string Name => "BeforeSqlProjGeneration";
+  }
+  public readonly struct EfcptAddSqlFileWarningsTarget : IMsBuildTargetName
+  {
+    public string Name => "EfcptAddSqlFileWarnings";
+  }
+  public readonly struct EfcptAddToCompileTarget : IMsBuildTargetName
+  {
+    public string Name => "EfcptAddToCompile";
+  }
+  public readonly struct EfcptApplyConfigOverridesTarget : IMsBuildTargetName
+  {
+    public string Name => "EfcptApplyConfigOverrides";
+  }
+  public readonly struct EfcptBuildSqlProjTarget : IMsBuildTargetName
+  {
+    public string Name => "EfcptBuildSqlProj";
+  }
+  public readonly struct EfcptCleanTarget : IMsBuildTargetName
+  {
+    public string Name => "EfcptClean";
+  }
+  public readonly struct EfcptComputeFingerprintTarget : IMsBuildTargetName
+  {
+    public string Name => "EfcptComputeFingerprint";
+  }
+  public readonly struct EfcptCopyDataToDataProjectTarget : IMsBuildTargetName
+  {
+    public string Name => "EfcptCopyDataToDataProject";
+  }
+  public readonly struct EfcptEnsureDacpacTarget : IMsBuildTargetName
+  {
+    public string Name => "EfcptEnsureDacpac";
+  }
+  public readonly struct EfcptExtractDatabaseSchemaToScriptsTarget : IMsBuildTargetName
+  {
+    public string Name => "EfcptExtractDatabaseSchemaToScripts";
+  }
+  public readonly struct EfcptGenerateModelsTarget : IMsBuildTargetName
+  {
+    public string Name => "EfcptGenerateModels";
+  }
+  public readonly struct EfcptIncludeExternalDataTarget : IMsBuildTargetName
+  {
+    public string Name => "EfcptIncludeExternalData";
+  }
+  public readonly struct EfcptQueryDatabaseSchemaForSqlProjTarget : IMsBuildTargetName
+  {
+    public string Name => "EfcptQueryDatabaseSchemaForSqlProj";
+  }
+  public readonly struct EfcptQuerySchemaMetadataTarget : IMsBuildTargetName
+  {
+    public string Name => "EfcptQuerySchemaMetadata";
+  }
+  public readonly struct EfcptResolveDbContextNameTarget : IMsBuildTargetName
+  {
+    public string Name => "EfcptResolveDbContextName";
+  }
+  public readonly struct EfcptResolveInputsTarget : IMsBuildTargetName
+  {
+    public string Name => "EfcptResolveInputs";
+  }
+  public readonly struct EfcptResolveInputsForDirectDacpacTarget : IMsBuildTargetName
+  {
+    public string Name => "EfcptResolveInputsForDirectDacpac";
+  }
+  public readonly struct EfcptSerializeConfigPropertiesTarget : IMsBuildTargetName
+  {
+    public string Name => "EfcptSerializeConfigProperties";
+  }
+  public readonly struct EfcptStageInputsTarget : IMsBuildTargetName
+  {
+    public string Name => "EfcptStageInputs";
+  }
+  public readonly struct EfcptUseDirectDacpacTarget : IMsBuildTargetName
+  {
+    public string Name => "EfcptUseDirectDacpac";
+  }
+  public readonly struct EfcptValidateSplitOutputsTarget : IMsBuildTargetName
+  {
+    public string Name => "EfcptValidateSplitOutputs";
+  }
 }
+
+
+
+
+
