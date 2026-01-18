@@ -2,7 +2,7 @@ using JD.MSBuild.Fluent;
 using JD.MSBuild.Fluent.Fluent;
 using JD.MSBuild.Fluent.Typed;
 
-namespace JD.Efcpt.Build.Definitions;
+namespace JD.Efcpt.Build;
 
 /// <summary>
 /// MSBuild package definition scaffolded from JD.Efcpt.Build.xml
@@ -40,13 +40,13 @@ public static class BuildTransitiveTargetsFactory
                 });
                 t.Target("_EfcptDetectSqlProject", target =>
                 {
-                    target.BeforeTargets("BeforeBuild", "BeforeRebuild");
+                    target.BeforeTargets("BeforeBuild;BeforeRebuild");
                     target.Task("DetectSqlProject", task =>
                     {
                         task.Param("ProjectPath", "$(MSBuildProjectFullPath)");
                         task.Param("SqlServerVersion", "$(SqlServerVersion)");
                         task.Param("DSP", "$(DSP)");
-                        task.OutputProperty<IsSqlProject, EfcptIsSqlProject>();
+                        task.OutputProperty("IsSqlProject", "_EfcptIsSqlProject");
                     });
                     target.PropertyGroup(null, group =>
                     {
@@ -66,7 +66,7 @@ public static class BuildTransitiveTargetsFactory
                 });
                 t.Target("_EfcptLogTaskAssemblyInfo", target =>
                 {
-                    target.BeforeTargets(new EfcptResolveInputsTarget(), new EfcptResolveInputsForDirectDacpacTarget());
+                    target.BeforeTargets("EfcptResolveInputs;EfcptResolveInputsForDirectDacpac");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(EfcptLogVerbosity)' == 'detailed'");
                     target.Message("EFCPT Task Assembly Selection:", "high");
                     target.Message("  MSBuildRuntimeType: $(MSBuildRuntimeType)", "high");
@@ -121,8 +121,8 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("CacheHours", "$(EfcptUpdateCheckCacheHours)");
                         task.Param("ForceCheck", "$(EfcptForceUpdateCheck)");
                         task.Param("WarningLevel", "$(EfcptSdkVersionWarningLevel)");
-                        task.OutputProperty<LatestVersion, EfcptLatestVersion>();
-                        task.OutputProperty<UpdateAvailable, EfcptUpdateAvailable>();
+                        task.OutputProperty("LatestVersion", "_EfcptLatestVersion");
+                        task.OutputProperty("UpdateAvailable", "_EfcptUpdateAvailable");
                     });
                 });
                 t.Target<BeforeSqlProjGenerationTarget>( target =>
@@ -141,7 +141,7 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("OutputDir", "$(EfcptOutput)");
                         task.Param("Provider", "$(EfcptProvider)");
                         task.Param("LogVerbosity", "$(EfcptLogVerbosity)");
-                        task.OutputProperty<SchemaFingerprint, EfcptSchemaFingerprint>();
+                        task.OutputProperty("SchemaFingerprint", "_EfcptSchemaFingerprint");
                     });
                     target.Message("Database schema fingerprint: $(_EfcptSchemaFingerprint)", "normal");
                 });
@@ -174,7 +174,7 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("ExtractTarget", "SchemaObjectType");
                         task.Param("TargetFramework", "$(TargetFramework)");
                         task.Param("LogVerbosity", "$(EfcptLogVerbosity)");
-                        task.OutputProperty<ExtractedPath, EfcptExtractedScriptsPath>();
+                        task.OutputProperty("ExtractedPath", "_EfcptExtractedScriptsPath");
                     });
                     target.Message("Extracted SQL scripts to: $(_EfcptExtractedScriptsPath)", "high");
                 });
@@ -227,13 +227,13 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("EfcptAppConfig", "$(EfcptAppConfig)");
                         task.Param("EfcptConnectionStringName", "$(EfcptConnectionStringName)");
                         task.Param("AutoDetectWarningLevel", "$(EfcptAutoDetectWarningLevel)");
-                        task.OutputProperty<SqlProjPath, EfcptSqlProj>();
-                        task.OutputProperty<ResolvedConfigPath, EfcptResolvedConfig>();
-                        task.OutputProperty<ResolvedRenamingPath, EfcptResolvedRenaming>();
-                        task.OutputProperty<ResolvedTemplateDir, EfcptResolvedTemplateDir>();
-                        task.OutputProperty<ResolvedConnectionString, EfcptResolvedConnectionString>();
-                        task.OutputProperty<UseConnectionString, EfcptUseConnectionString>();
-                        task.OutputProperty<IsUsingDefaultConfig, EfcptIsUsingDefaultConfig>();
+                        task.OutputProperty("SqlProjPath", "_EfcptSqlProj");
+                        task.OutputProperty("ResolvedConfigPath", "_EfcptResolvedConfig");
+                        task.OutputProperty("ResolvedRenamingPath", "_EfcptResolvedRenaming");
+                        task.OutputProperty("ResolvedTemplateDir", "_EfcptResolvedTemplateDir");
+                        task.OutputProperty("ResolvedConnectionString", "_EfcptResolvedConnectionString");
+                        task.OutputProperty("UseConnectionString", "_EfcptUseConnectionString");
+                        task.OutputProperty("IsUsingDefaultConfig", "_EfcptIsUsingDefaultConfig");
                     });
                 });
                 t.Target<EfcptResolveInputsForDirectDacpacTarget>( target =>
@@ -257,8 +257,8 @@ public static class BuildTransitiveTargetsFactory
                 });
                 t.Target<EfcptQuerySchemaMetadataTarget>( target =>
                 {
-                    target.BeforeTargets(new EfcptStageInputsTarget());
-                    target.AfterTargets(new EfcptResolveInputsTarget());
+                    target.BeforeTargets("EfcptStageInputs");
+                    target.AfterTargets("EfcptResolveInputs");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' == 'true'");
                     target.Task("QuerySchemaMetadata", task =>
                     {
@@ -266,7 +266,7 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("OutputDir", "$(EfcptOutput)");
                         task.Param("Provider", "$(EfcptProvider)");
                         task.Param("LogVerbosity", "$(EfcptLogVerbosity)");
-                        task.OutputProperty<SchemaFingerprint, EfcptSchemaFingerprint>();
+                        task.OutputProperty("SchemaFingerprint", "_EfcptSchemaFingerprint");
                     });
                 });
                 t.Target<EfcptUseDirectDacpacTarget>( target =>
@@ -306,7 +306,7 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("MsBuildExe", "$(MSBuildBinPath)msbuild.exe");
                         task.Param("DotNetExe", "$(EfcptDotNetExe)");
                         task.Param("LogVerbosity", "$(EfcptLogVerbosity)");
-                        task.OutputProperty<DacpacPath, EfcptDacpacPath>();
+                        task.OutputProperty("DacpacPath", "_EfcptDacpacPath");
                     }, "'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptIsSqlProject)' != 'true'");
                 });
                 t.Target<EfcptResolveDbContextNameTarget>( target =>
@@ -321,7 +321,7 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("ConnectionString", "$(_EfcptResolvedConnectionString)");
                         task.Param("UseConnectionStringMode", "$(_EfcptUseConnectionString)");
                         task.Param("LogVerbosity", "$(EfcptLogVerbosity)");
-                        task.OutputProperty<ResolvedDbContextName, EfcptResolvedDbContextName>();
+                        task.OutputProperty("ResolvedDbContextName", "_EfcptResolvedDbContextName");
                     });
                     target.PropertyGroup(null, group =>
                     {
@@ -342,9 +342,9 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("TemplateOutputDir", "$(EfcptGeneratedDir)");
                         task.Param("TargetFramework", "$(TargetFramework)");
                         task.Param("LogVerbosity", "$(EfcptLogVerbosity)");
-                        task.OutputProperty<StagedConfigPath, EfcptStagedConfig>();
-                        task.OutputProperty<StagedRenamingPath, EfcptStagedRenaming>();
-                        task.OutputProperty<StagedTemplateDir, EfcptStagedTemplateDir>();
+                        task.OutputProperty("StagedConfigPath", "_EfcptStagedConfig");
+                        task.OutputProperty("StagedRenamingPath", "_EfcptStagedRenaming");
+                        task.OutputProperty("StagedTemplateDir", "_EfcptStagedTemplateDir");
                     });
                 });
                 t.Target<EfcptApplyConfigOverridesTarget>( target =>
@@ -439,7 +439,7 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("UseSpatial", "$(EfcptConfigUseSpatial)");
                         task.Param("UseNodaTime", "$(EfcptConfigUseNodaTime)");
                         task.Param("PreserveCasingWithRegex", "$(EfcptConfigPreserveCasingWithRegex)");
-                        task.OutputProperty<SerializedProperties, EfcptSerializedConfigProperties>();
+                        task.OutputProperty("SerializedProperties", "_EfcptSerializedConfigProperties");
                     });
                 });
                 t.Target<EfcptComputeFingerprintTarget>( target =>
@@ -460,8 +460,8 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("DetectGeneratedFileChanges", "$(EfcptDetectGeneratedFileChanges)");
                         task.Param("ConfigPropertyOverrides", "$(_EfcptSerializedConfigProperties)");
                         task.Param("LogVerbosity", "$(EfcptLogVerbosity)");
-                        task.OutputProperty<Fingerprint, EfcptFingerprint>();
-                        task.OutputProperty<HasChanged, EfcptFingerprintChanged>();
+                        task.OutputProperty("Fingerprint", "_EfcptFingerprint");
+                        task.OutputProperty("HasChanged", "_EfcptFingerprintChanged");
                     });
                 });
                 t.Target<BeforeEfcptGenerationTarget>( target =>
@@ -516,7 +516,7 @@ public static class BuildTransitiveTargetsFactory
                 });
                 t.Target<AfterEfcptGenerationTarget>( target =>
                 {
-                    target.AfterTargets(new EfcptGenerateModelsTarget());
+                    target.AfterTargets("EfcptGenerateModels");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
                 });
                 t.Target<EfcptValidateSplitOutputsTarget>( target =>
