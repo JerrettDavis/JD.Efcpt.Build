@@ -25,7 +25,15 @@
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <NoWarn>$(NoWarn);NU5128;NU5100</NoWarn>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    
+    <!-- JD.MSBuild.Fluent Integration - Auto-generate MSBuild XML from fluent C# definitions -->
+    <GenerateMSBuildAssets>true</GenerateMSBuildAssets>
+    <MSBuildAssetsOutputPath>$(BaseIntermediateOutputPath)msbuild\</MSBuildAssetsOutputPath>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JD.MSBuild.Fluent" Version="1.0.*" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../JD.Efcpt.Build.Tasks/JD.Efcpt.Build.Tasks.csproj"
@@ -35,6 +43,10 @@
   </ItemGroup>
 
   <!--
+    Pack auto-generated MSBuild assets from JD.MSBuild.Fluent.
+    The fluent C# definitions in Definitions/ are compiled and automatically generate
+    the XML .props and .targets files during build.
+    
     NOTE: We use build/ (not buildTransitive/) so that targets only apply to
     projects that DIRECTLY reference this package. This prevents transitive
     consumers (e.g., WebApi referencing DataAccess) from triggering model generation.
@@ -44,8 +56,10 @@
     - buildTransitive/ -> ALL consumers (direct and transitive)
   -->
   <ItemGroup>
-    <Content Include="buildTransitive/JD.Efcpt.Build.props" Pack="true" PackagePath="build" />
-    <Content Include="buildTransitive/JD.Efcpt.Build.targets" Pack="true" PackagePath="build" />
+    <Content Include="$(MSBuildAssetsOutputPath)build\JD.Efcpt.Build.props" Pack="true" PackagePath="build" />
+    <Content Include="$(MSBuildAssetsOutputPath)build\JD.Efcpt.Build.targets" Pack="true" PackagePath="build" />
+    <Content Include="$(MSBuildAssetsOutputPath)buildTransitive\JD.Efcpt.Build.props" Pack="true" PackagePath="buildTransitive" />
+    <Content Include="$(MSBuildAssetsOutputPath)buildTransitive\JD.Efcpt.Build.targets" Pack="true" PackagePath="buildTransitive" />
 
     <None Include="../../README.md" Pack="true" PackagePath="" />
     <None Update="defaults/Template/CodeTemplates/EfCore/net1000/DbContext.t4">
