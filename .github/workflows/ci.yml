@@ -58,6 +58,11 @@ jobs:
           dotnet build --configuration Release tests/TestAssets/SampleDatabase/Sample.Database.sqlproj
           dotnet build --configuration Release tests/TestAssets/SampleApp/Sample.App.csproj
 
+      - name: Clear NuGet cache for local packages
+        run: |
+          dotnet nuget locals all --clear
+          echo "NuGet cache cleared to ensure tests use freshly built local packages"
+
       - name: Test with coverage
         run: |
           dotnet test JD.Efcpt.Build.sln \
