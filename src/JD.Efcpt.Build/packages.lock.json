@@ -1,8 +1,29 @@
 {
   "version": 1,
   "dependencies": {
-    "net10.0": {},
-    "net8.0": {},
-    "net9.0": {}
+    "net10.0": {
+      "JD.MSBuild.Fluent": {
+        "type": "Direct",
+        "requested": "[1.3.6, )",
+        "resolved": "1.3.6",
+        "contentHash": "qhbWLRYnRI4TGkB3TFXvtlzWeTkIVQ3h9R32+/VOgBQWiIWQHna0p3Xpqv+EwQAk1dfMY6ZqKbsVv0fNU5tbrg=="
+      }
+    },
+    "net8.0": {
+      "JD.MSBuild.Fluent": {
+        "type": "Direct",
+        "requested": "[1.3.6, )",
+        "resolved": "1.3.6",
+        "contentHash": "qhbWLRYnRI4TGkB3TFXvtlzWeTkIVQ3h9R32+/VOgBQWiIWQHna0p3Xpqv+EwQAk1dfMY6ZqKbsVv0fNU5tbrg=="
+      }
+    },
+    "net9.0": {
+      "JD.MSBuild.Fluent": {
+        "type": "Direct",
+        "requested": "[1.3.6, )",
+        "resolved": "1.3.6",
+        "contentHash": "qhbWLRYnRI4TGkB3TFXvtlzWeTkIVQ3h9R32+/VOgBQWiIWQHna0p3Xpqv+EwQAk1dfMY6ZqKbsVv0fNU5tbrg=="
+      }
+    }
   }
 }
