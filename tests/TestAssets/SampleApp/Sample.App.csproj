@@ -7,7 +7,7 @@
     <EfcptBuildRoot Condition="'$(EfcptBuildRoot)'==''">$(MSBuildThisFileDirectory)..\..\..\src\JD.Efcpt.Build\</EfcptBuildRoot>
   </PropertyGroup>
 
-  <Import Project="$(EfcptBuildRoot)build\JD.Efcpt.Build.props" />
+  <Import Project="$(EfcptBuildRoot)JD.Efcpt.Build.props" />
 
   <PropertyGroup>
     <EfcptEnabled>true</EfcptEnabled>
@@ -30,7 +30,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.1" />
   </ItemGroup>
 
-  <Import Project="$(EfcptBuildRoot)build\JD.Efcpt.Build.targets" />
+  <Import Project="$(EfcptBuildRoot)JD.Efcpt.Build.targets" />
 
   <!-- Run the efcpt pipeline for this sample app on every build when enabled -->
   <Target Name="EfcptSamplePipeline"
