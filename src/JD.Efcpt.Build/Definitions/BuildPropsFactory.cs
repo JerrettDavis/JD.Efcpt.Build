@@ -23,7 +23,7 @@ public static class BuildPropsFactory
         // This eliminates duplication between build/ and buildTransitive/ folders.
         // The buildTransitive/ version is the canonical source.
         p.Comment("Import shared props from buildTransitive.\n    This eliminates duplication between build/ and buildTransitive/ folders.\n    The buildTransitive/ version is the canonical source.");
-        p.Import("..\\buildTransitive\\JD.Efcpt.Build.props");
+        p.Import("$(MSBuildThisFileDirectory)..\\buildTransitive\\JD.Efcpt.Build.props");
 
         return project;
     }
