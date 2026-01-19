@@ -55,10 +55,10 @@
   -->
   <ItemGroup>
     <!-- Package generated MSBuild files from fluent definitions -->
-    <Content Include="$(MSBuildAssetsOutputPath)build/JD.Efcpt.Build.props" Pack="true" PackagePath="build" Condition="Exists('$(MSBuildAssetsOutputPath)build/JD.Efcpt.Build.props')" />
-    <Content Include="$(MSBuildAssetsOutputPath)build/JD.Efcpt.Build.targets" Pack="true" PackagePath="build" Condition="Exists('$(MSBuildAssetsOutputPath)build/JD.Efcpt.Build.targets')" />
-    <Content Include="$(MSBuildAssetsOutputPath)buildTransitive/JD.Efcpt.Build.props" Pack="true" PackagePath="buildTransitive" Condition="Exists('$(MSBuildAssetsOutputPath)buildTransitive/JD.Efcpt.Build.props')" />
-    <Content Include="$(MSBuildAssetsOutputPath)buildTransitive/JD.Efcpt.Build.targets" Pack="true" PackagePath="buildTransitive" Condition="Exists('$(MSBuildAssetsOutputPath)buildTransitive/JD.Efcpt.Build.targets')" />
+    <Content Include="JD.Efcpt.Build.props" Pack="true" PackagePath="build" Condition="Exists('JD.Efcpt.Build.props')" />
+    <Content Include="JD.Efcpt.Build.targets" Pack="true" PackagePath="build" Condition="Exists('JD.Efcpt.Build.targets')" />
+    <Content Include="buildTransitive\JD.Efcpt.Build.props" Pack="true" PackagePath="buildTransitive" Condition="Exists('buildTransitive\JD.Efcpt.Build.props')" />
+    <Content Include="buildTransitive\JD.Efcpt.Build.targets" Pack="true" PackagePath="buildTransitive" Condition="Exists('buildTransitive\JD.Efcpt.Build.targets')" />
 
     <None Include="../../README.md" Pack="true" PackagePath="" />
     <None Update="defaults/Template/CodeTemplates/EfCore/net1000/DbContext.t4">
