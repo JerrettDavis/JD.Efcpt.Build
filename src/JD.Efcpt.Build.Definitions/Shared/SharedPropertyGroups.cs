@@ -28,7 +28,7 @@ public static class SharedPropertyGroups
     /// 3. Local Debug build output (for development)
     /// </para>
     /// </remarks>
-    public static void ConfigureTaskAssemblyResolution(IPropertyGroupBuilder group)
+    public static void ConfigureTaskAssemblyResolution(PropsGroupBuilder group)
     {
         // MSBuild 18.0+ (VS 2026+)
         group.Property("_EfcptTasksFolder", "net10.0", 
@@ -75,7 +75,7 @@ public static class SharedPropertyGroups
     /// <item>If Nullable is not set → leave EfcptConfigUseNullableReferenceTypes as-is (user override)</item>
     /// </list>
     /// </remarks>
-    public static void ConfigureNullableReferenceTypes(IPropertyGroupBuilder group)
+    public static void ConfigureNullableReferenceTypes(PropsGroupBuilder group)
     {
         group.Property<EfcptConfigUseNullableReferenceTypes>("true", 
             "'$(EfcptConfigUseNullableReferenceTypes)'=='' and ('$(Nullable)'=='enable' or '$(Nullable)'=='Enable')");

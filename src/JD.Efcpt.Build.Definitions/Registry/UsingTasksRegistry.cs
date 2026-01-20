@@ -37,7 +37,7 @@ public static class UsingTasksRegistry
     /// Uses the resolved task assembly path from SharedPropertyGroups.
     /// </summary>
     /// <param name="t">The targets builder to register tasks with.</param>
-    public static void RegisterAll(ITargetsBuilder t)
+    public static void RegisterAll(TargetsBuilder t)
     {
         const string assemblyPath = "$(_EfcptTaskAssembly)";
         
