@@ -11,3 +11,4 @@ coverage.cobertura.xml
 pkg/
 artifacts/
 *.bak
+tmpclaude-*

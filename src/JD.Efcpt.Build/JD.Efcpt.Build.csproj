@@ -3,12 +3,12 @@
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <IsPackable>true</IsPackable>
-    
+
     <!-- Package Identity -->
     <PackageId>JD.Efcpt.Build</PackageId>
     <Authors>Jerrett Davis</Authors>
     <Company>JDH Productions</Company>
-    
+
     <!-- Package Description -->
     <Title>MSBuild Integration for EF Core Power Tools</Title>
     <Description>Enterprise-grade MSBuild integration for EF Core Power Tools CLI. Automate database-first EF Core model generation as part of your build pipeline. Zero manual steps, full CI/CD support, reproducible builds. Automatically builds your SQL Server Database Project (.sqlproj) to a DACPAC, runs efcpt, and generates DbContext and entity classes during dotnet build.</Description>
@@ -19,15 +19,23 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    
+
     <!-- Build Configuration -->
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <NoWarn>$(NoWarn);NU5128;NU5100</NoWarn>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+    <!-- Enable JD.MSBuild.Fluent generation -->
+    <_JDMSBuildFluentDirectReference>true</_JDMSBuildFluentDirectReference>
+    <JDMSBuildFluentGenerateEnabled>true</JDMSBuildFluentGenerateEnabled>
+    <JDMSBuildFluentDefinitionType>JDEfcptBuild.DefinitionFactory</JDMSBuildFluentDefinitionType>
+    <JDMSBuildFluentDefinitionMethod>Create</JDMSBuildFluentDefinitionMethod>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="JD.MSBuild.Fluent" Version="1.3.9" />
+    
     <ProjectReference Include="../JD.Efcpt.Build.Tasks/JD.Efcpt.Build.Tasks.csproj"
                       ReferenceOutputAssembly="false"
                       PrivateAssets="All"
@@ -42,10 +50,14 @@
     NuGet folder behavior:
     - build/       -> Only direct PackageReference consumers
     - buildTransitive/ -> ALL consumers (direct and transitive)
+
+    Now using JD.MSBuild.Fluent to generate these files from C# definitions.
   -->
   <ItemGroup>
-    <Content Include="buildTransitive/JD.Efcpt.Build.props" Pack="true" PackagePath="build" />
-    <Content Include="buildTransitive/JD.Efcpt.Build.targets" Pack="true" PackagePath="build" />
+    <!-- Package buildTransitive files into build/ folder (not buildTransitive/) -->
+    <!-- This matches main branch: source has buildTransitive/, package has build/ -->
+    <Content Include="buildTransitive\JD.Efcpt.Build.props" Pack="true" PackagePath="build" />
+    <Content Include="buildTransitive\JD.Efcpt.Build.targets" Pack="true" PackagePath="build" />
 
     <None Include="../../README.md" Pack="true" PackagePath="" />
     <None Update="defaults/Template/CodeTemplates/EfCore/net1000/DbContext.t4">
@@ -90,3 +102,5 @@
   </ItemGroup>
 
 </Project>
+
+

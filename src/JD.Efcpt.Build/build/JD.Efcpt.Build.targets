@@ -1,8 +1,0 @@
-<Project>
-  <!--
-    Import shared targets from buildTransitive.
-    This eliminates duplication between build/ and buildTransitive/ folders.
-    The buildTransitive/ version is the canonical source.
-  -->
-  <Import Project="..\buildTransitive\JD.Efcpt.Build.targets" />
-</Project>
