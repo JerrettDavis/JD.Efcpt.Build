@@ -117,7 +117,7 @@
   <Target Name="BeforeSqlProjGeneration" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'" />
   <!--Query database schema for fingerprinting-->
   <Target Name="EfcptQueryDatabaseSchemaForSqlProj" DependsOnTargets="BeforeSqlProjGeneration" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'">
-    <Error Text="SqlProj generation requires a connection string. Set EfcptConnectionString, EfcptAppSettings, or EfcptAppConfig." Code="'$(EfcptConnectionString)' == '' and '$(EfcptAppSettings)' == '' and '$(EfcptAppConfig)' == ''" />
+    <Error Text="SqlProj generation requires a connection string. Set EfcptConnectionString, EfcptAppSettings, or EfcptAppConfig." Condition="'$(EfcptConnectionString)' == '' and '$(EfcptAppSettings)' == '' and '$(EfcptAppConfig)' == ''" />
     <Message Text="Querying database schema for fingerprinting..." Importance="high" />
     <QuerySchemaMetadata ConnectionString="$(EfcptConnectionString)" LogVerbosity="$(EfcptLogVerbosity)" OutputDir="$(EfcptOutput)" Provider="$(EfcptProvider)">
       <Output TaskParameter="SchemaFingerprint" PropertyName="_EfcptSchemaFingerprint" />
@@ -194,7 +194,7 @@
       <_EfcptDacpacPath>$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(EfcptDacpac)'))))</_EfcptDacpacPath>
       <_EfcptUseDirectDacpac>true</_EfcptUseDirectDacpac>
     </PropertyGroup>
-    <Error Text="EfcptDacpac was specified but the file does not exist: $(_EfcptDacpacPath)" Code="!Exists('$(_EfcptDacpacPath)')" />
+    <Error Text="EfcptDacpac was specified but the file does not exist: $(_EfcptDacpacPath)" Condition="!Exists('$(_EfcptDacpacPath)')" />
     <Message Text="Using pre-built DACPAC: $(_EfcptDacpacPath)" Importance="high" />
   </Target>
   <!--Build the SQL project using MSBuild's native task to ensure proper dependency ordering.
@@ -277,8 +277,8 @@
       <_EfcptDataProjectPath>$(EfcptDataProject)</_EfcptDataProjectPath>
       <_EfcptDataProjectPath>$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(EfcptDataProject)'))))</_EfcptDataProjectPath>
     </PropertyGroup>
-    <Error Text="EfcptSplitOutputs is enabled but EfcptDataProject is not set. Please specify the path to your Data project: &lt;EfcptDataProject&gt;..\MyProject.Data\MyProject.Data.csproj&lt;/EfcptDataProject&gt;" Code="'$(_EfcptDataProjectPath)' == ''" />
-    <Error Text="EfcptDataProject was specified but the file does not exist: $(_EfcptDataProjectPath)" Code="!Exists('$(_EfcptDataProjectPath)')" />
+    <Error Text="EfcptSplitOutputs is enabled but EfcptDataProject is not set. Please specify the path to your Data project: &lt;EfcptDataProject&gt;..\MyProject.Data\MyProject.Data.csproj&lt;/EfcptDataProject&gt;" Condition="'$(_EfcptDataProjectPath)' == ''" />
+    <Error Text="EfcptDataProject was specified but the file does not exist: $(_EfcptDataProjectPath)" Condition="!Exists('$(_EfcptDataProjectPath)')" />
     <PropertyGroup>
       <_EfcptDataDestDir>$(_EfcptDataProjectDir)$(EfcptDataProjectOutputSubdir)</_EfcptDataDestDir>
       <_EfcptDataProjectDir>$([System.IO.Path]::GetDirectoryName('$(_EfcptDataProjectPath)'))\</_EfcptDataProjectDir>
