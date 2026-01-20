@@ -58,30 +58,6 @@ jobs:
           dotnet build --configuration Release tests/TestAssets/SampleDatabase/Sample.Database.sqlproj
           dotnet build --configuration Release tests/TestAssets/SampleApp/Sample.App.csproj
 
-      - name: Clear NuGet cache for local packages
-        run: |
-          dotnet nuget locals all --clear
-          echo "NuGet cache cleared to ensure tests use freshly built local packages"
-
-      - name: Create coverlet.runsettings
-        run: |
-          cat > coverlet.runsettings << 'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <RunSettings>
-            <DataCollectionRunSettings>
-              <DataCollectors>
-                <DataCollector friendlyName="XPlat Code Coverage">
-                  <Configuration>
-                    <Format>cobertura</Format>
-                    <Include>[JD.Efcpt.Build*]*</Include>
-                    <Exclude>[*Tests]*</Exclude>
-                  </Configuration>
-                </DataCollector>
-              </DataCollectors>
-            </DataCollectionRunSettings>
-          </RunSettings>
-          EOF
-
       - name: Test with coverage
         run: |
           dotnet test JD.Efcpt.Build.sln \
@@ -89,7 +65,9 @@ jobs:
             --no-build \
             /p:EfcptToolMode=tool-manifest \
             --collect:"XPlat Code Coverage" \
-            --settings coverlet.runsettings
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Include="[JD.Efcpt.Build*]*" \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Exclude="[*Tests]*"
 
       - name: Install ReportGenerator
         run: dotnet tool update -g dotnet-reportgenerator-globaltool
@@ -297,4 +275,3 @@ jobs:
             --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
             --api-key "${{ secrets.GITHUB_TOKEN }}" \
             --skip-duplicate
-
