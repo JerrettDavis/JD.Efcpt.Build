@@ -133,7 +133,7 @@ public static class BuildTransitiveTargetsFactory
                 {
                     target.DependsOnTargets("BeforeSqlProjGeneration");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'");
-                    target.Error("SqlProj generation requires a connection string. Set EfcptConnectionString, EfcptAppSettings, or EfcptAppConfig.", "'$(EfcptConnectionString)' == '' and '$(EfcptAppSettings)' == '' and '$(EfcptAppConfig)' == ''");
+                    target.Error("SqlProj generation requires a connection string. Set EfcptConnectionString, EfcptAppSettings, or EfcptAppConfig.", null, "'$(EfcptConnectionString)' == '' and '$(EfcptAppSettings)' == '' and '$(EfcptAppConfig)' == ''");
                     target.Message("Querying database schema for fingerprinting...", "high");
                     target.Task("QuerySchemaMetadata", task =>
                     {
@@ -279,7 +279,7 @@ public static class BuildTransitiveTargetsFactory
                         group.Property("_EfcptDacpacPath", "$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(EfcptDacpac)'))))");
                         group.Property("_EfcptUseDirectDacpac", "true");
                     });
-                    target.Error("EfcptDacpac was specified but the file does not exist: $(_EfcptDacpacPath)", "!Exists('$(_EfcptDacpacPath)')");
+                    target.Error("EfcptDacpac was specified but the file does not exist: $(_EfcptDacpacPath)", null, "!Exists('$(_EfcptDacpacPath)')");
                     target.Message("Using pre-built DACPAC: $(_EfcptDacpacPath)", "high");
                 });
                 t.Target<EfcptBuildSqlProjTarget>( target =>
@@ -528,8 +528,8 @@ public static class BuildTransitiveTargetsFactory
                         group.Property("_EfcptDataProjectPath", "$(EfcptDataProject)");
                         group.Property("_EfcptDataProjectPath", "$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(EfcptDataProject)'))))");
                     });
-                    target.Error("EfcptSplitOutputs is enabled but EfcptDataProject is not set. Please specify the path to your Data project: <EfcptDataProject>..\\MyProject.Data\\MyProject.Data.csproj</EfcptDataProject>", "'$(_EfcptDataProjectPath)' == ''");
-                    target.Error("EfcptDataProject was specified but the file does not exist: $(_EfcptDataProjectPath)", "!Exists('$(_EfcptDataProjectPath)')");
+                    target.Error("EfcptSplitOutputs is enabled but EfcptDataProject is not set. Please specify the path to your Data project: <EfcptDataProject>..\\MyProject.Data\\MyProject.Data.csproj</EfcptDataProject>", null, "'$(_EfcptDataProjectPath)' == ''");
+                    target.Error("EfcptDataProject was specified but the file does not exist: $(_EfcptDataProjectPath)", null, "!Exists('$(_EfcptDataProjectPath)')");
                     target.PropertyGroup(null, group =>
                     {
                         group.Property("_EfcptDataProjectDir", "$([System.IO.Path]::GetDirectoryName('$(_EfcptDataProjectPath)'))\\");
