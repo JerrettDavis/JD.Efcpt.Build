@@ -21,7 +21,7 @@
     <DetectSqlProject DSP="$(DSP)" ProjectPath="$(MSBuildProjectFullPath)" SqlServerVersion="$(SqlServerVersion)">
       <Output TaskParameter="IsSqlProject" PropertyName="_EfcptIsSqlProject" />
     </DetectSqlProject>
-    <PropertyGroup>
+    <PropertyGroup Condition="'$(_EfcptIsSqlProject)' == ''">
       <_EfcptIsSqlProject>false</_EfcptIsSqlProject>
     </PropertyGroup>
   </Target>
