@@ -22,8 +22,10 @@ public static class BuildPropsFactory
         // Import shared props from buildTransitive.
         // This eliminates duplication between build/ and buildTransitive/ folders.
         // The buildTransitive/ version is the canonical source.
-        p.Comment("Import shared props from buildTransitive.\n    This eliminates duplication between build/ and buildTransitive/ folders.\n    The buildTransitive/ version is the canonical source.");
-        p.Import("$(MSBuildThisFileDirectory)..\\buildTransitive\\JD.Efcpt.Build.props");
+        // Conditional import handles both local dev (files at root) and NuGet package (files in build/).
+        p.Comment("Import shared props from buildTransitive.\n    This eliminates duplication between build/ and buildTransitive/ folders.\n    The buildTransitive/ version is the canonical source.\n    Conditional import handles both local dev (files at root) and NuGet package (files in build/).");
+        p.Import("$(MSBuildThisFileDirectory)buildTransitive\\JD.Efcpt.Build.props", "Exists('$(MSBuildThisFileDirectory)buildTransitive\\JD.Efcpt.Build.props')");
+        p.Import("$(MSBuildThisFileDirectory)..\\buildTransitive\\JD.Efcpt.Build.props", "!Exists('$(MSBuildThisFileDirectory)buildTransitive\\JD.Efcpt.Build.props')");
 
         return project;
     }
