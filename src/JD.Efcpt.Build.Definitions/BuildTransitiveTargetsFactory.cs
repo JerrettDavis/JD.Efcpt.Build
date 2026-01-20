@@ -1,6 +1,7 @@
 using JD.MSBuild.Fluent;
 using JD.MSBuild.Fluent.Fluent;
 using JD.MSBuild.Fluent.Typed;
+using JD.Efcpt.Build.Definitions.Shared;
 
 namespace JD.Efcpt.Build.Definitions;
 
@@ -14,30 +15,14 @@ public static class BuildTransitiveTargetsFactory
         return Package.Define("JD.Efcpt.Build")
             .Props(p =>
             {
-                p.PropertyGroup(null, group =>
-                {
-                    group.Property<EfcptConfigUseNullableReferenceTypes>( "true", "'$(EfcptConfigUseNullableReferenceTypes)'=='' and ('$(Nullable)'=='enable' or '$(Nullable)'=='Enable')");
-                    group.Property<EfcptConfigUseNullableReferenceTypes>( "false", "'$(EfcptConfigUseNullableReferenceTypes)'=='' and '$(Nullable)'!=''");
-                });
-                p.PropertyGroup(null, group =>
-                {
-                    group.Property("_EfcptTasksFolder", "net10.0", "'$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '18.0'))");
-                    group.Property("_EfcptTasksFolder", "net10.0", "'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.14'))");
-                    group.Property("_EfcptTasksFolder", "net9.0", "'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.12'))");
-                    group.Property("_EfcptTasksFolder", "net8.0", "'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core'");
-                    group.Property("_EfcptTasksFolder", "net472", "'$(_EfcptTasksFolder)' == ''");
-                    group.Property("_EfcptTaskAssembly", "$(MSBuildThisFileDirectory)..\\tasks\\$(_EfcptTasksFolder)\\JD.Efcpt.Build.Tasks.dll");
-                    group.Property("_EfcptTaskAssembly", "$(MSBuildThisFileDirectory)..\\..\\JD.Efcpt.Build.Tasks\\bin\\$(Configuration)\\$(_EfcptTasksFolder)\\JD.Efcpt.Build.Tasks.dll", "!Exists('$(_EfcptTaskAssembly)')");
-                    group.Property("_EfcptTaskAssembly", "$(MSBuildThisFileDirectory)..\\..\\JD.Efcpt.Build.Tasks\\bin\\Debug\\$(_EfcptTasksFolder)\\JD.Efcpt.Build.Tasks.dll", "!Exists('$(_EfcptTaskAssembly)') and '$(Configuration)' == ''");
-                });
+                p.PropertyGroup(null, SharedPropertyGroups.ConfigureNullableReferenceTypes);
+                p.PropertyGroup(null, SharedPropertyGroups.ConfigureTaskAssemblyResolution);
             })
             .Targets(t =>
             {
-                t.PropertyGroup(null, group =>
-                {
-                    group.Property<EfcptConfigUseNullableReferenceTypes>( "true", "'$(EfcptConfigUseNullableReferenceTypes)'=='' and ('$(Nullable)'=='enable' or '$(Nullable)'=='Enable')");
-                    group.Property<EfcptConfigUseNullableReferenceTypes>( "false", "'$(EfcptConfigUseNullableReferenceTypes)'=='' and '$(Nullable)'!=''");
-                });
+                t.PropertyGroup(null, SharedPropertyGroups.ConfigureNullableReferenceTypes);
+                t.PropertyGroup(null, SharedPropertyGroups.ConfigureTaskAssemblyResolution);
+                
                 t.Target("_EfcptDetectSqlProject", target =>
                 {
                     target.BeforeTargets("BeforeBuild", "BeforeRebuild");
@@ -52,17 +37,6 @@ public static class BuildTransitiveTargetsFactory
                     {
                         group.Property("_EfcptIsSqlProject", "false");
                     });
-                });
-                t.PropertyGroup(null, group =>
-                {
-                    group.Property("_EfcptTasksFolder", "net10.0", "'$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '18.0'))");
-                    group.Property("_EfcptTasksFolder", "net10.0", "'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.14'))");
-                    group.Property("_EfcptTasksFolder", "net9.0", "'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.12'))");
-                    group.Property("_EfcptTasksFolder", "net8.0", "'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core'");
-                    group.Property("_EfcptTasksFolder", "net472", "'$(_EfcptTasksFolder)' == ''");
-                    group.Property("_EfcptTaskAssembly", "$(MSBuildThisFileDirectory)..\\tasks\\$(_EfcptTasksFolder)\\JD.Efcpt.Build.Tasks.dll");
-                    group.Property("_EfcptTaskAssembly", "$(MSBuildThisFileDirectory)..\\..\\JD.Efcpt.Build.Tasks\\bin\\$(Configuration)\\$(_EfcptTasksFolder)\\JD.Efcpt.Build.Tasks.dll", "!Exists('$(_EfcptTaskAssembly)')");
-                    group.Property("_EfcptTaskAssembly", "$(MSBuildThisFileDirectory)..\\..\\JD.Efcpt.Build.Tasks\\bin\\Debug\\$(_EfcptTasksFolder)\\JD.Efcpt.Build.Tasks.dll", "!Exists('$(_EfcptTaskAssembly)') and '$(Configuration)' == ''");
                 });
                 t.Target("_EfcptLogTaskAssemblyInfo", target =>
                 {
