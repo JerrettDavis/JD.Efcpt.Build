@@ -45,7 +45,7 @@ public static class BuildTransitiveTargetsFactory
                 task.Param("DSP", "$(DSP)");
                 task.OutputProperty("IsSqlProject", "_EfcptIsSqlProject");
             });
-            target.PropertyGroup(null, group =>
+            target.PropertyGroup("'$(_EfcptIsSqlProject)' == ''", group =>
             {
                 group.Property("_EfcptIsSqlProject", "false");
             });
