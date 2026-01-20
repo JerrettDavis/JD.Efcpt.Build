@@ -18,7 +18,7 @@ public static class BuildTargetsFactory
         // This eliminates duplication between build/ and buildTransitive/ folders.
         // The buildTransitive/ version is the canonical source.
         p.Comment("Import shared targets from buildTransitive.\n    This eliminates duplication between build/ and buildTransitive/ folders.\n    The buildTransitive/ version is the canonical source.");
-        p.Import("$(MSBuildThisFileDirectory)buildTransitive\\JD.Efcpt.Build.targets");
+        p.Import("$(MSBuildThisFileDirectory)..\\buildTransitive\\JD.Efcpt.Build.targets");
 
         return project;
     }

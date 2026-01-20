@@ -9,5 +9,5 @@
   <!--Import shared props from buildTransitive.
     This eliminates duplication between build/ and buildTransitive/ folders.
     The buildTransitive/ version is the canonical source.-->
-  <Import Project="$(MSBuildThisFileDirectory)buildTransitive\JD.Efcpt.Build.props" />
+  <Import Project="$(MSBuildThisFileDirectory)..\buildTransitive\JD.Efcpt.Build.props" />
 </Project>
