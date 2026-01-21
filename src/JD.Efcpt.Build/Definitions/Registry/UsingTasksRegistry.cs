@@ -1,35 +1,36 @@
 using JD.MSBuild.Fluent.Fluent;
+using JD.Efcpt.Build.Tasks;
 
 namespace JDEfcptBuild.Registry;
 
 /// <summary>
 /// Centralized registry for all JD.Efcpt.Build custom MSBuild tasks.
-/// Automatically registers all task assemblies with MSBuild using a data-driven approach.
+/// Automatically registers all task assemblies with MSBuild using compile-time type safety via nameof().
 /// </summary>
 public static class UsingTasksRegistry
 {
     /// <summary>
-    /// All custom task names in the JD.Efcpt.Build.Tasks assembly.
-    /// Adding a new task only requires adding its name to this array.
+    /// All custom task types in the JD.Efcpt.Build.Tasks assembly.
+    /// Using nameof() provides compile-time safety and refactoring support.
     /// </summary>
     private static readonly string[] TaskNames =
     [
-        "AddSqlFileWarnings",
-        "ApplyConfigOverrides",
-        "CheckSdkVersion",
-        "ComputeFingerprint",
-        "DetectSqlProject",
-        "EnsureDacpacBuilt",
-        "FinalizeBuildProfiling",
-        "InitializeBuildProfiling",
-        "QuerySchemaMetadata",
-        "RenameGeneratedFiles",
-        "ResolveDbContextName",
-        "ResolveSqlProjAndInputs",
-        "RunEfcpt",
-        "RunSqlPackage",
-        "SerializeConfigProperties",
-        "StageEfcptInputs"
+        nameof(AddSqlFileWarnings),
+        nameof(ApplyConfigOverrides),
+        nameof(CheckSdkVersion),
+        nameof(ComputeFingerprint),
+        nameof(DetectSqlProject),
+        nameof(EnsureDacpacBuilt),
+        nameof(FinalizeBuildProfiling),
+        nameof(InitializeBuildProfiling),
+        nameof(QuerySchemaMetadata),
+        nameof(RenameGeneratedFiles),
+        nameof(ResolveDbContextName),
+        nameof(ResolveSqlProjAndInputs),
+        nameof(RunEfcpt),
+        nameof(RunSqlPackage),
+        nameof(SerializeConfigProperties),
+        nameof(StageEfcptInputs)
     ];
     
     /// <summary>

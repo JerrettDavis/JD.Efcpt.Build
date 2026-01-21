@@ -37,10 +37,11 @@
   <ItemGroup>
     <PackageReference Include="JD.MSBuild.Fluent" Version="1.3.9" />
     
+    <!-- Reference Tasks project to use nameof() for type safety -->
     <ProjectReference Include="../JD.Efcpt.Build.Tasks/JD.Efcpt.Build.Tasks.csproj"
-                      ReferenceOutputAssembly="false"
+                      ReferenceOutputAssembly="true"
                       PrivateAssets="All"
-                      IncludeAssets="None" />
+                      IncludeAssets="Compile" />
   </ItemGroup>
 
   <!--
