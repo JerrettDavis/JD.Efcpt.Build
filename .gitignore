@@ -12,3 +12,12 @@ pkg/
 artifacts/
 *.bak
 tmpclaude-*
+
+# Auto-generated SQL files in samples
+# These are generated during build and should not be tracked
+samples/**/DatabaseProject/**/Tables/*.sql
+samples/**/DatabaseProject/**/Views/*.sql
+samples/**/DatabaseProject/**/StoredProcedures/*.sql
+samples/**/DatabaseProject/**/*.sql
+!samples/**/DatabaseProject/**/*.sqlproj
+!samples/**/DatabaseProject/**/*.csproj
