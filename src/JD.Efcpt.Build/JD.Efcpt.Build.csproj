@@ -28,6 +28,7 @@
 
     <!-- Enable JD.MSBuild.Fluent generation (disabled in CI since files are pre-generated) -->
     <_JDMSBuildFluentDirectReference>true</_JDMSBuildFluentDirectReference>
+    <JDMSBuildFluentGenerateEnabled Condition="'$(ContinuousIntegrationBuild)' == 'true'">false</JDMSBuildFluentGenerateEnabled>
     <JDMSBuildFluentGenerateEnabled Condition="'$(ContinuousIntegrationBuild)' != 'true'">true</JDMSBuildFluentGenerateEnabled>
     <JDMSBuildFluentDefinitionType>JDEfcptBuild.DefinitionFactory</JDMSBuildFluentDefinitionType>
     <JDMSBuildFluentDefinitionMethod>Create</JDMSBuildFluentDefinitionMethod>
