@@ -529,7 +529,7 @@ public static class BuildTransitiveTargetsFactory
             .ForEfCoreGeneration()
             .DependsOn(
                 T.EfcptResolveInputs,
-                T.EfcptEnsureDacpac,
+                T.EfcptEnsureDacpacBuilt,
                 T.EfcptUseDirectDacpac)
             .Build()
             .Task(Tk.ResolveDbContextName, task =>
@@ -813,7 +813,7 @@ public static class BuildTransitiveTargetsFactory
             .DependsOn(
                 T.EfcptResolveInputs,
                 T.EfcptUseDirectDacpac,
-                T.EfcptEnsureDacpac,
+                T.EfcptEnsureDacpacBuilt,
                 T.EfcptStageInputs,
                 T.EfcptComputeFingerprint,
                 T.EfcptGenerateModels,

@@ -244,7 +244,6 @@ public static class EfcptTargets
     public const string EfcptBuildSqlProj = nameof(EfcptBuildSqlProj);
     public const string EfcptResolveDbContextName = nameof(EfcptResolveDbContextName);
     public const string EfcptComputeFingerprint = nameof(EfcptComputeFingerprint);
-    public const string EfcptEnsureDacpac = nameof(EfcptEnsureDacpac);
     public const string EfcptAddToCompile = nameof(EfcptAddToCompile);
     public const string EfcptCopyDataToDataProject = nameof(EfcptCopyDataToDataProject);
     public const string EfcptValidateSplitOutputs = nameof(EfcptValidateSplitOutputs);

@@ -161,7 +161,7 @@
     </EnsureDacpacBuilt>
   </Target>
   <!--Resolve DbContext name from SQL project, DACPAC, or connection string. This runs after DACPAC is ensured/resolved but before staging to allow the resolved name to be used as an override in ApplyConfigOverrides.-->
-  <Target Name="EfcptResolveDbContextName" DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpac;EfcptUseDirectDacpac" Condition="('$(EfcptEnabled)' == 'true') and ('$(_EfcptIsSqlProject)' != 'true')">
+  <Target Name="EfcptResolveDbContextName" DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpacBuilt;EfcptUseDirectDacpac" Condition="('$(EfcptEnabled)' == 'true') and ('$(_EfcptIsSqlProject)' != 'true')">
     <ResolveDbContextName ConnectionString="$(_EfcptResolvedConnectionString)" DacpacPath="$(_EfcptDacpacPath)" ExplicitDbContextName="$(EfcptConfigDbContextName)" LogVerbosity="$(EfcptLogVerbosity)" SqlProjPath="$(_EfcptSqlProj)" UseConnectionString="$(_EfcptUseConnectionString)">
       <Output TaskParameter="ResolvedDbContextName" PropertyName="_EfcptResolvedDbContextName" />
     </ResolveDbContextName>
@@ -169,7 +169,7 @@
       <EfcptConfigDbContextName>$(_EfcptResolvedDbContextName)</EfcptConfigDbContextName>
     </PropertyGroup>
   </Target>
-  <Target Name="EfcptStageInputs" DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpac;EfcptUseDirectDacpac;EfcptResolveDbContextName" Condition="('$(EfcptEnabled)' == 'true') and ('$(_EfcptIsSqlProject)' != 'true')">
+  <Target Name="EfcptStageInputs" DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpacBuilt;EfcptUseDirectDacpac;EfcptResolveDbContextName" Condition="('$(EfcptEnabled)' == 'true') and ('$(_EfcptIsSqlProject)' != 'true')">
     <StageEfcptInputs ConfigPath="$(_EfcptResolvedConfig)" LogVerbosity="$(EfcptLogVerbosity)" OutputDir="$(EfcptOutput)" ProjectDirectory="$(MSBuildProjectDirectory)" RenamingPath="$(_EfcptResolvedRenaming)" TargetFramework="$(TargetFramework)" TemplateDir="$(_EfcptResolvedTemplateDir)" TemplateOutputDir="$(EfcptGeneratedDir)">
       <Output TaskParameter="StagedConfigPath" PropertyName="_EfcptStagedConfig" />
       <Output TaskParameter="StagedRenamingPath" PropertyName="_EfcptStagedRenaming" />
@@ -245,7 +245,7 @@
     <Message Text="Removed DbContext and configuration files from Models project" Importance="normal" Condition="'$(_EfcptHasFilesToCopy)' == 'true'" />
   </Target>
   <!--Include generated files in compilation. In split outputs mode (Models project), only include model files (from Models folder). In normal mode, include all generated files.-->
-  <Target Name="EfcptAddToCompile" BeforeTargets="CoreCompile" DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpac;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels;EfcptCopyDataToDataProject" Condition="('$(EfcptEnabled)' == 'true') and ('$(_EfcptIsSqlProject)' != 'true')">
+  <Target Name="EfcptAddToCompile" BeforeTargets="CoreCompile" DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpacBuilt;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels;EfcptCopyDataToDataProject" Condition="('$(EfcptEnabled)' == 'true') and ('$(_EfcptIsSqlProject)' != 'true')">
     <ItemGroup>
       <Compile Include="$(EfcptGeneratedDir)**\*.g.cs" Condition="'$(EfcptSplitOutputs)' != 'true'" />
       <Compile Include="$(EfcptGeneratedDir)Models\**\*.g.cs" Condition="'$(EfcptSplitOutputs)' == 'true'" />
