@@ -376,7 +376,7 @@ public static class TaskParameters
     public const string SchemaFingerprint = nameof(SchemaFingerprint);
     
     // Connection parameters
-    public const string UseConnectionStringMode = nameof(UseConnectionStringMode);
+    public const string UseConnectionString = nameof(UseConnectionString);
     
     // Tool parameters
     public const string ToolCommand = nameof(ToolCommand);

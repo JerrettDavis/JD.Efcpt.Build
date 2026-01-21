@@ -152,7 +152,7 @@ public class TaskParameterMapper
     public TaskParameterMapper WithResolvedConnection()
     {
         _task.Param(TaskParameters.ConnectionString, MsBuildExpressions.Property(EfcptProperties._EfcptResolvedConnectionString));
-        _task.Param(TaskParameters.UseConnectionStringMode, MsBuildExpressions.Property(EfcptProperties._EfcptUseConnectionString));
+        _task.Param(TaskParameters.UseConnectionString, MsBuildExpressions.Property(EfcptProperties._EfcptUseConnectionString));
         _task.Param(TaskParameters.Provider, MsBuildExpressions.Property(EfcptProperties.EfcptProvider));
         return this;
     }
