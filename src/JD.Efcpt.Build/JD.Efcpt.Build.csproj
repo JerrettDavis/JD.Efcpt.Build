@@ -3,6 +3,9 @@
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <IsPackable>true</IsPackable>
+    
+    <!-- Build sequentially to avoid file locking from JD.MSBuild.Fluent generation -->
+    <BuildInParallel>false</BuildInParallel>
 
     <!-- Package Identity -->
     <PackageId>JD.Efcpt.Build</PackageId>
@@ -26,10 +29,10 @@
     <NoWarn>$(NoWarn);NU5128;NU5100</NoWarn>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
 
-    <!-- Enable JD.MSBuild.Fluent generation (disabled in CI since files are pre-generated) -->
+    <!-- Enable JD.MSBuild.Fluent generation (disabled due to file locking with multi-targeting) -->
     <_JDMSBuildFluentDirectReference>true</_JDMSBuildFluentDirectReference>
-    <JDMSBuildFluentGenerateEnabled Condition="'$(ContinuousIntegrationBuild)' == 'true'">false</JDMSBuildFluentGenerateEnabled>
-    <JDMSBuildFluentGenerateEnabled Condition="'$(ContinuousIntegrationBuild)' != 'true'">true</JDMSBuildFluentGenerateEnabled>
+    <!-- Disabled: File locking issue when multi-targeting. Generate manually: dotnet msbuild -t:JDMSBuildFluentGenerate -p:TargetFramework=net8.0 -->
+    <JDMSBuildFluentGenerateEnabled>false</JDMSBuildFluentGenerateEnabled>
     <JDMSBuildFluentDefinitionType>JDEfcptBuild.DefinitionFactory</JDMSBuildFluentDefinitionType>
     <JDMSBuildFluentDefinitionMethod>Create</JDMSBuildFluentDefinitionMethod>
   </PropertyGroup>
