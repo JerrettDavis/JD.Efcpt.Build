@@ -158,6 +158,36 @@ public class TaskParameterMapper
     }
 
     /// <summary>
+    /// Maps parameters for MSBuild task invocation.
+    /// </summary>
+    public TaskParameterMapper WithMsBuildInvocation()
+    {
+        _task.Param(TaskParameters.Projects, MsBuildExpressions.Property(EfcptProperties._EfcptSqlProj));
+        _task.Param("Targets", MsBuildTargets.Build);
+        _task.Param("Properties", PropertyValues.Configuration);
+        _task.Param("BuildInParallel", PropertyValues.False);
+        return this;
+    }
+
+    /// <summary>
+    /// Maps parameters for file operations.
+    /// </summary>
+    public TaskParameterMapper WithFileOperation(string sourceProperty, string destProperty)
+    {
+        _task.Param("SkipUnchangedFiles", PropertyValues.True);
+        return this;
+    }
+
+    /// <summary>
+    /// Maps parameters for directory operations.
+    /// </summary>
+    public TaskParameterMapper WithDirectoryOperation(string dirProperty)
+    {
+        _task.Param(TaskParameters.Directories, MsBuildExpressions.Property(dirProperty));
+        return this;
+    }
+
+    /// <summary>
     /// Returns the underlying task builder.
     /// </summary>
     public TaskInvocationBuilder Build()
