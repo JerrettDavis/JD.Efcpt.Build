@@ -163,9 +163,9 @@ public class TaskParameterMapper
     public TaskParameterMapper WithMsBuildInvocation()
     {
         _task.Param(TaskParameters.Projects, MsBuildExpressions.Property(EfcptProperties._EfcptSqlProj));
-        _task.Param("Targets", MsBuildTargets.Build);
-        _task.Param("Properties", PropertyValues.Configuration);
-        _task.Param("BuildInParallel", PropertyValues.False);
+        _task.Param(TaskParameters.Targets, MsBuildTargets.Build);
+        _task.Param(TaskParameters.Properties, PropertyValues.Configuration);
+        _task.Param(TaskParameters.BuildInParallel, PropertyValues.False);
         return this;
     }
 
@@ -174,7 +174,7 @@ public class TaskParameterMapper
     /// </summary>
     public TaskParameterMapper WithFileOperation(string sourceProperty, string destProperty)
     {
-        _task.Param("SkipUnchangedFiles", PropertyValues.True);
+        _task.Param(TaskParameters.SkipUnchangedFiles, PropertyValues.True);
         return this;
     }
 

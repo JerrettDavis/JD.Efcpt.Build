@@ -33,7 +33,7 @@
     <_JDMSBuildFluentDirectReference>true</_JDMSBuildFluentDirectReference>
     <!-- Disabled: File locking issue when multi-targeting. Generate manually: dotnet msbuild -t:JDMSBuildFluentGenerate -p:TargetFramework=net8.0 -->
     <JDMSBuildFluentGenerateEnabled>false</JDMSBuildFluentGenerateEnabled>
-    <JDMSBuildFluentDefinitionType>JDEfcptBuild.DefinitionFactory</JDMSBuildFluentDefinitionType>
+    <JDMSBuildFluentDefinitionType>JD.Efcpt.Build.Definitions.DefinitionFactory</JDMSBuildFluentDefinitionType>
     <JDMSBuildFluentDefinitionMethod>Create</JDMSBuildFluentDefinitionMethod>
   </PropertyGroup>
 

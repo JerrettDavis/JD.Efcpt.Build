@@ -762,7 +762,7 @@ public static class BuildTransitiveTargetsFactory
             {
                 task.Param(Pm.SourceFiles, "@(_EfcptDbContextFiles)");
                 task.Param(Pm.DestinationFolder, Property(E._EfcptDataDestDir));
-                task.Param("SkipUnchangedFiles", V.True);
+                task.Param(Pm.SkipUnchangedFiles, V.True);
                 task.OutputItem(Pm.CopiedFiles, E._EfcptCopiedDataFiles);
             }, "'@(_EfcptDbContextFiles)' != ''");
             target.Task(Mt.Copy, task =>
@@ -771,7 +771,7 @@ public static class BuildTransitiveTargetsFactory
                 task.Param(
                     Pm.DestinationFolder,
                     $"{Property(E._EfcptDataDestDir)}Configurations");
-                task.Param("SkipUnchangedFiles", V.True);
+                task.Param(Pm.SkipUnchangedFiles, V.True);
                 task.OutputItem(Pm.CopiedFiles, E._EfcptCopiedDataFiles);
             }, "'@(_EfcptConfigurationFiles)' != ''");
             target.Message(

@@ -514,6 +514,12 @@ public static class TaskParameters
     public const string DestDir = nameof(DestDir);
     public const string File = nameof(File);
     public const string Projects = nameof(Projects);
+    public const string SkipUnchangedFiles = nameof(SkipUnchangedFiles);
+    public const string Text = nameof(Text);
+    public const string Importance = nameof(Importance);
+    public const string Code = nameof(Code);
+    public const string Targets = nameof(Targets);
+    public const string Properties = nameof(Properties);
 }
 
 /// <summary>
