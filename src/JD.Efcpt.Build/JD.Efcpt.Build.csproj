@@ -26,9 +26,9 @@
     <NoWarn>$(NoWarn);NU5128;NU5100</NoWarn>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
 
-    <!-- Enable JD.MSBuild.Fluent generation -->
+    <!-- Enable JD.MSBuild.Fluent generation (disabled in CI since files are pre-generated) -->
     <_JDMSBuildFluentDirectReference>true</_JDMSBuildFluentDirectReference>
-    <JDMSBuildFluentGenerateEnabled>true</JDMSBuildFluentGenerateEnabled>
+    <JDMSBuildFluentGenerateEnabled Condition="'$(ContinuousIntegrationBuild)' != 'true'">true</JDMSBuildFluentGenerateEnabled>
     <JDMSBuildFluentDefinitionType>JDEfcptBuild.DefinitionFactory</JDMSBuildFluentDefinitionType>
     <JDMSBuildFluentDefinitionMethod>Create</JDMSBuildFluentDefinitionMethod>
   </PropertyGroup>
