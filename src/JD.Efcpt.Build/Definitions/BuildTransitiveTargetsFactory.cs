@@ -1,6 +1,8 @@
 using JD.MSBuild.Fluent;
 using JD.MSBuild.Fluent.Fluent;
 using JD.MSBuild.Fluent.IR;
+using JD.Efcpt.Build.Definitions.Builders;
+using JD.Efcpt.Build.Definitions.Constants;
 using JDEfcptBuild.Builders;
 using JDEfcptBuild.Constants;
 using JDEfcptBuild.Registry;
@@ -42,10 +44,11 @@ public static class BuildTransitiveTargetsFactory
             target.BeforeTargets(MsBuildExpressions.Path_Combine(MsBuildTargets.BeforeBuild, MsBuildTargets.BeforeRebuild));
             target.Task(EfcptTasks.DetectSqlProject, task =>
             {
-                task.Param(TaskParameters.ProjectPath, MsBuildExpressions.Property(MsBuildProperties.MSBuildProjectFullPath));
-                task.Param(TaskParameters.SqlServerVersion, MsBuildExpressions.Property(MsBuildProperties.SqlServerVersion));
-                task.Param(TaskParameters.DSP, MsBuildExpressions.Property(MsBuildProperties.DSP));
-                task.OutputProperty(TaskParameters.IsSqlProject, EfcptProperties._EfcptIsSqlProject);
+                task.MapProps(
+                    (TaskParameters.ProjectPath, MsBuildProperties.MSBuildProjectFullPath),
+                    (TaskParameters.SqlServerVersion, MsBuildProperties.SqlServerVersion),
+                    (TaskParameters.DSP, MsBuildProperties.DSP))
+                    .OutputProperty(TaskParameters.IsSqlProject, EfcptProperties._EfcptIsSqlProject);
             });
             target.PropertyGroup(MsBuildExpressions.Condition_IsEmpty(EfcptProperties._EfcptIsSqlProject), group =>
             {
@@ -90,13 +93,14 @@ public static class BuildTransitiveTargetsFactory
             target.Condition(MsBuildExpressions.Condition_And(MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptCheckForUpdates), MsBuildExpressions.Condition_NotEmpty(EfcptProperties.EfcptSdkVersion)));
             target.Task(EfcptTasks.CheckSdkVersion, task =>
             {
-                task.Param(TaskParameters.CurrentVersion, MsBuildExpressions.Property(EfcptProperties.EfcptSdkVersion));
-                task.Param(TaskParameters.PackageId, PropertyValues.JD_Efcpt_Sdk);
-                task.Param(TaskParameters.CacheHours, MsBuildExpressions.Property(EfcptProperties.EfcptUpdateCheckCacheHours));
-                task.Param(TaskParameters.ForceCheck, MsBuildExpressions.Property(EfcptProperties.EfcptForceUpdateCheck));
-                task.Param(TaskParameters.WarningLevel, MsBuildExpressions.Property(EfcptProperties.EfcptSdkVersionWarningLevel));
-                task.OutputProperty(TaskParameters.LatestVersion, EfcptProperties._EfcptLatestVersion);
-                task.OutputProperty(TaskParameters.UpdateAvailable, EfcptProperties._EfcptUpdateAvailable);
+                task.MapProps(
+                    (TaskParameters.CurrentVersion, EfcptProperties.EfcptSdkVersion),
+                    (TaskParameters.CacheHours, EfcptProperties.EfcptUpdateCheckCacheHours),
+                    (TaskParameters.ForceCheck, EfcptProperties.EfcptForceUpdateCheck),
+                    (TaskParameters.WarningLevel, EfcptProperties.EfcptSdkVersionWarningLevel))
+                    .Param(TaskParameters.PackageId, PropertyValues.JD_Efcpt_Sdk)
+                    .OutputProperty(TaskParameters.LatestVersion, EfcptProperties._EfcptLatestVersion)
+                    .OutputProperty(TaskParameters.UpdateAvailable, EfcptProperties._EfcptUpdateAvailable);
             });
         });
         t.Comment("SQL Project Generation Pipeline: Extract database schema to SQL scripts for SQL projects. Workflow: Database → SQL Scripts → DACPAC → EF Core Models");
@@ -147,17 +151,18 @@ public static class BuildTransitiveTargetsFactory
             }, MsBuildExpressions.ItemList_NotEmpty(EfcptProperties._EfcptGeneratedScripts))
             .Task(EfcptTasks.RunSqlPackage, task =>
             {
-                task.Param(TaskParameters.ToolVersion, MsBuildExpressions.Property(EfcptProperties.EfcptSqlPackageToolVersion));
-                task.Param(TaskParameters.ToolRestore, MsBuildExpressions.Property(EfcptProperties.EfcptSqlPackageToolRestore));
-                task.Param(TaskParameters.ToolPath, MsBuildExpressions.Property(EfcptProperties.EfcptSqlPackageToolPath));
-                task.Param(TaskParameters.DotNetExe, MsBuildExpressions.Property(EfcptProperties.EfcptDotNetExe));
-                task.Param(TaskParameters.WorkingDirectory, MsBuildExpressions.Property(EfcptProperties.EfcptOutput));
-                task.Param(TaskParameters.ConnectionString, MsBuildExpressions.Property(EfcptProperties.EfcptConnectionString));
-                task.Param(TaskParameters.TargetDirectory, MsBuildExpressions.Property(EfcptProperties._EfcptScriptsDir));
-                task.Param(TaskParameters.ExtractTarget, PropertyValues.SchemaObjectType);
-                task.Param(TaskParameters.TargetFramework, MsBuildExpressions.Property(MsBuildProperties.TargetFramework));
-                task.Param(TaskParameters.LogVerbosity, MsBuildExpressions.Property(EfcptProperties.EfcptLogVerbosity));
-                task.OutputProperty(TaskParameters.ExtractedPath, EfcptProperties._EfcptExtractedScriptsPath);
+                task.MapProps(
+                    (TaskParameters.ToolVersion, EfcptProperties.EfcptSqlPackageToolVersion),
+                    (TaskParameters.ToolRestore, EfcptProperties.EfcptSqlPackageToolRestore),
+                    (TaskParameters.ToolPath, EfcptProperties.EfcptSqlPackageToolPath),
+                    (TaskParameters.DotNetExe, EfcptProperties.EfcptDotNetExe),
+                    (TaskParameters.WorkingDirectory, EfcptProperties.EfcptOutput),
+                    (TaskParameters.ConnectionString, EfcptProperties.EfcptConnectionString),
+                    (TaskParameters.TargetDirectory, EfcptProperties._EfcptScriptsDir),
+                    (TaskParameters.TargetFramework, MsBuildProperties.TargetFramework),
+                    (TaskParameters.LogVerbosity, EfcptProperties.EfcptLogVerbosity))
+                    .Param(TaskParameters.ExtractTarget, PropertyValues.SchemaObjectType)
+                    .OutputProperty(TaskParameters.ExtractedPath, EfcptProperties._EfcptExtractedScriptsPath);
             })
             .Message($"Extracted SQL scripts to: {MsBuildExpressions.Property(EfcptProperties._EfcptExtractedScriptsPath)}", PropertyValues.High);
         t.Comment("Add auto-generation warnings to SQL files");
@@ -173,9 +178,10 @@ public static class BuildTransitiveTargetsFactory
             })
             .Task(EfcptTasks.AddSqlFileWarnings, task =>
             {
-                task.Param(TaskParameters.ScriptsDirectory, MsBuildExpressions.Property(EfcptProperties._EfcptScriptsDir));
-                task.Param(TaskParameters.DatabaseName, MsBuildExpressions.Property(EfcptProperties._EfcptDatabaseName));
-                task.Param(TaskParameters.LogVerbosity, MsBuildExpressions.Property(EfcptProperties.EfcptLogVerbosity));
+                task.MapProps(
+                    (TaskParameters.ScriptsDirectory, EfcptProperties._EfcptScriptsDir),
+                    (TaskParameters.DatabaseName, EfcptProperties._EfcptDatabaseName),
+                    (TaskParameters.LogVerbosity, EfcptProperties.EfcptLogVerbosity));
             });
         // Lifecycle hook: AfterSqlProjGeneration
         // This runs after SQL scripts are generated in the SQL project
@@ -204,32 +210,33 @@ public static class BuildTransitiveTargetsFactory
             ));
             target.Task(EfcptTasks.ResolveSqlProjAndInputs, task =>
             {
-                task.Param(TaskParameters.ProjectFullPath, MsBuildExpressions.Property(MsBuildProperties.MSBuildProjectFullPath));
-                task.Param(TaskParameters.ProjectDirectory, MsBuildExpressions.Property(MsBuildProperties.MSBuildProjectDirectory));
-                task.Param(TaskParameters.Configuration, MsBuildExpressions.Property(MsBuildProperties.Configuration));
-                task.Param(TaskParameters.ProjectReferences, MsBuildExpressions.ItemList(MsBuildItems.ProjectReference));
-                task.Param(TaskParameters.SqlProjOverride, MsBuildExpressions.Property(EfcptProperties.EfcptSqlProj));
-                task.Param(TaskParameters.ConfigOverride, MsBuildExpressions.Property(EfcptProperties.EfcptConfig));
-                task.Param(TaskParameters.RenamingOverride, MsBuildExpressions.Property(EfcptProperties.EfcptRenaming));
-                task.Param(TaskParameters.TemplateDirOverride, MsBuildExpressions.Property(EfcptProperties.EfcptTemplateDir));
-                task.Param(TaskParameters.SolutionDir, MsBuildExpressions.Property(EfcptProperties.EfcptSolutionDir));
-                task.Param(TaskParameters.SolutionPath, MsBuildExpressions.Property(EfcptProperties.EfcptSolutionPath));
-                task.Param(TaskParameters.ProbeSolutionDir, MsBuildExpressions.Property(EfcptProperties.EfcptProbeSolutionDir));
-                task.Param(TaskParameters.OutputDir, MsBuildExpressions.Property(EfcptProperties.EfcptOutput));
-                task.Param(TaskParameters.DefaultsRoot, $"{MsBuildExpressions.Property(MsBuildProperties.MSBuildThisFileDirectory)}{PropertyValues.Defaults}");
-                task.Param(TaskParameters.DumpResolvedInputs, MsBuildExpressions.Property(EfcptProperties.EfcptDumpResolvedInputs));
-                task.Param(TaskParameters.EfcptConnectionString, MsBuildExpressions.Property(EfcptProperties.EfcptConnectionString));
-                task.Param(TaskParameters.EfcptAppSettings, MsBuildExpressions.Property(EfcptProperties.EfcptAppSettings));
-                task.Param(TaskParameters.EfcptAppConfig, MsBuildExpressions.Property(EfcptProperties.EfcptAppConfig));
-                task.Param(TaskParameters.EfcptConnectionStringName, MsBuildExpressions.Property(EfcptProperties.EfcptConnectionStringName));
-                task.Param(TaskParameters.AutoDetectWarningLevel, MsBuildExpressions.Property(EfcptProperties.EfcptAutoDetectWarningLevel));
-                task.OutputProperty(TaskParameters.SqlProjPath, EfcptProperties._EfcptSqlProj);
-                task.OutputProperty(TaskParameters.ResolvedConfigPath, EfcptProperties._EfcptResolvedConfig);
-                task.OutputProperty(TaskParameters.ResolvedRenamingPath, EfcptProperties._EfcptResolvedRenaming);
-                task.OutputProperty(TaskParameters.ResolvedTemplateDir, EfcptProperties._EfcptResolvedTemplateDir);
-                task.OutputProperty(TaskParameters.ResolvedConnectionString, EfcptProperties._EfcptResolvedConnectionString);
-                task.OutputProperty(TaskParameters.UseConnectionStringMode, EfcptProperties._EfcptUseConnectionString);
-                task.OutputProperty(TaskParameters.IsUsingDefaultConfig, EfcptProperties._EfcptIsUsingDefaultConfig);
+                task.MapProps(
+                    (TaskParameters.ProjectFullPath, MsBuildProperties.MSBuildProjectFullPath),
+                    (TaskParameters.ProjectDirectory, MsBuildProperties.MSBuildProjectDirectory),
+                    (TaskParameters.Configuration, MsBuildProperties.Configuration),
+                    (TaskParameters.SqlProjOverride, EfcptProperties.EfcptSqlProj),
+                    (TaskParameters.ConfigOverride, EfcptProperties.EfcptConfig),
+                    (TaskParameters.RenamingOverride, EfcptProperties.EfcptRenaming),
+                    (TaskParameters.TemplateDirOverride, EfcptProperties.EfcptTemplateDir),
+                    (TaskParameters.SolutionDir, EfcptProperties.EfcptSolutionDir),
+                    (TaskParameters.SolutionPath, EfcptProperties.EfcptSolutionPath),
+                    (TaskParameters.ProbeSolutionDir, EfcptProperties.EfcptProbeSolutionDir),
+                    (TaskParameters.OutputDir, EfcptProperties.EfcptOutput),
+                    (TaskParameters.DumpResolvedInputs, EfcptProperties.EfcptDumpResolvedInputs),
+                    (TaskParameters.EfcptConnectionString, EfcptProperties.EfcptConnectionString),
+                    (TaskParameters.EfcptAppSettings, EfcptProperties.EfcptAppSettings),
+                    (TaskParameters.EfcptAppConfig, EfcptProperties.EfcptAppConfig),
+                    (TaskParameters.EfcptConnectionStringName, EfcptProperties.EfcptConnectionStringName),
+                    (TaskParameters.AutoDetectWarningLevel, EfcptProperties.EfcptAutoDetectWarningLevel))
+                    .Param(TaskParameters.ProjectReferences, MsBuildExpressions.ItemList(MsBuildItems.ProjectReference))
+                    .Param(TaskParameters.DefaultsRoot, $"{MsBuildExpressions.Property(MsBuildProperties.MSBuildThisFileDirectory)}{PropertyValues.Defaults}")
+                    .OutputProperty(TaskParameters.SqlProjPath, EfcptProperties._EfcptSqlProj)
+                    .OutputProperty(TaskParameters.ResolvedConfigPath, EfcptProperties._EfcptResolvedConfig)
+                    .OutputProperty(TaskParameters.ResolvedRenamingPath, EfcptProperties._EfcptResolvedRenaming)
+                    .OutputProperty(TaskParameters.ResolvedTemplateDir, EfcptProperties._EfcptResolvedTemplateDir)
+                    .OutputProperty(TaskParameters.ResolvedConnectionString, EfcptProperties._EfcptResolvedConnectionString)
+                    .OutputProperty(TaskParameters.UseConnectionStringMode, EfcptProperties._EfcptUseConnectionString)
+                    .OutputProperty(TaskParameters.IsUsingDefaultConfig, EfcptProperties._EfcptIsUsingDefaultConfig);
             });
         });
         t.Comment("Simplified resolution for direct DACPAC mode (bypass SQL project detection)");
@@ -329,12 +336,13 @@ public static class BuildTransitiveTargetsFactory
                 MsBuildExpressions.Condition_IsFalse(EfcptProperties._EfcptIsSqlProject));
             target.Task(EfcptTasks.EnsureDacpacBuilt, task =>
             {
-                task.Param(TaskParameters.SqlProjPath, MsBuildExpressions.Property(EfcptProperties._EfcptSqlProj));
-                task.Param(TaskParameters.Configuration, MsBuildExpressions.Property(MsBuildProperties.Configuration));
-                task.Param(TaskParameters.MsBuildExe, $"{MsBuildExpressions.Property(MsBuildProperties.MSBuildBinPath)}{PropertyValues.MsBuildExe}");
-                task.Param(TaskParameters.DotNetExe, MsBuildExpressions.Property(EfcptProperties.EfcptDotNetExe));
-                task.Param(TaskParameters.LogVerbosity, MsBuildExpressions.Property(EfcptProperties.EfcptLogVerbosity));
-                task.OutputProperty(TaskParameters.DacpacPath, EfcptProperties._EfcptDacpacPath);
+                task.MapProps(
+                    (TaskParameters.SqlProjPath, EfcptProperties._EfcptSqlProj),
+                    (TaskParameters.Configuration, MsBuildProperties.Configuration),
+                    (TaskParameters.DotNetExe, EfcptProperties.EfcptDotNetExe),
+                    (TaskParameters.LogVerbosity, EfcptProperties.EfcptLogVerbosity))
+                    .Param(TaskParameters.MsBuildExe, $"{MsBuildExpressions.Property(MsBuildProperties.MSBuildBinPath)}{PropertyValues.MsBuildExe}")
+                    .OutputProperty(TaskParameters.DacpacPath, EfcptProperties._EfcptDacpacPath);
             }, ensureCondition);
         });
         // Resolve DbContext name from SQL project, DACPAC, or connection string.
@@ -346,37 +354,34 @@ public static class BuildTransitiveTargetsFactory
             .Build()
             .Task(EfcptTasks.ResolveDbContextName, task =>
             {
-                task.Param(TaskParameters.ExplicitDbContextName, MsBuildExpressions.Property(EfcptProperties.EfcptConfigDbContextName));
-                task.Param(TaskParameters.SqlProjPath, MsBuildExpressions.Property(EfcptProperties._EfcptSqlProj));
-                task.Param(TaskParameters.DacpacPath, MsBuildExpressions.Property(EfcptProperties._EfcptDacpacPath));
-                task.Param(TaskParameters.ConnectionString, MsBuildExpressions.Property(EfcptProperties._EfcptResolvedConnectionString));
-                task.Param(TaskParameters.UseConnectionStringMode, MsBuildExpressions.Property(EfcptProperties._EfcptUseConnectionString));
-                task.Param(TaskParameters.LogVerbosity, MsBuildExpressions.Property(EfcptProperties.EfcptLogVerbosity));
-                task.OutputProperty(TaskParameters.ResolvedDbContextName, EfcptProperties._EfcptResolvedDbContextName);
+                task.MapProps(
+                    (TaskParameters.ExplicitDbContextName, EfcptProperties.EfcptConfigDbContextName),
+                    (TaskParameters.SqlProjPath, EfcptProperties._EfcptSqlProj),
+                    (TaskParameters.DacpacPath, EfcptProperties._EfcptDacpacPath),
+                    (TaskParameters.ConnectionString, EfcptProperties._EfcptResolvedConnectionString),
+                    (TaskParameters.UseConnectionStringMode, EfcptProperties._EfcptUseConnectionString),
+                    (TaskParameters.LogVerbosity, EfcptProperties.EfcptLogVerbosity))
+                    .OutputProperty(TaskParameters.ResolvedDbContextName, EfcptProperties._EfcptResolvedDbContextName);
             })
             .PropertyGroup(null, group =>
             {
                 group.Property(EfcptProperties.EfcptConfigDbContextName, MsBuildExpressions.Property(EfcptProperties._EfcptResolvedDbContextName));
             });
-        t.AddEfcptTarget(EfcptTargets.EfcptStageInputs)
-            .ForEfCoreGeneration()
-            .DependsOn(EfcptTargets.EfcptResolveInputs, EfcptTargets.EfcptEnsureDacpac, 
-                       EfcptTargets.EfcptUseDirectDacpac, EfcptTargets.EfcptResolveDbContextName)
-            .Build()
-            .Task(EfcptTasks.StageEfcptInputs, task =>
-            {
-                task.Param(TaskParameters.OutputDir, MsBuildExpressions.Property(EfcptProperties.EfcptOutput));
-                task.Param(TaskParameters.ProjectDirectory, MsBuildExpressions.Property(MsBuildProperties.MSBuildProjectDirectory));
-                task.Param(TaskParameters.ConfigPath, MsBuildExpressions.Property(EfcptProperties._EfcptResolvedConfig));
-                task.Param(TaskParameters.RenamingPath, MsBuildExpressions.Property(EfcptProperties._EfcptResolvedRenaming));
-                task.Param(TaskParameters.TemplateDir, MsBuildExpressions.Property(EfcptProperties._EfcptResolvedTemplateDir));
-                task.Param(TaskParameters.TemplateOutputDir, MsBuildExpressions.Property(EfcptProperties.EfcptGeneratedDir));
-                task.Param(TaskParameters.TargetFramework, MsBuildExpressions.Property(MsBuildProperties.TargetFramework));
-                task.Param(TaskParameters.LogVerbosity, MsBuildExpressions.Property(EfcptProperties.EfcptLogVerbosity));
-                task.OutputProperty(TaskParameters.StagedConfigPath, EfcptProperties._EfcptStagedConfig);
-                task.OutputProperty(TaskParameters.StagedRenamingPath, EfcptProperties._EfcptStagedRenaming);
-                task.OutputProperty(TaskParameters.StagedTemplateDir, EfcptProperties._EfcptStagedTemplateDir);
-            });
+        t.SingleTask(EfcptTargets.EfcptStageInputs, PipelineConstants.PreGenChain, EfcptTasks.StageEfcptInputs, task =>
+        {
+            task.MapProps(
+                (TaskParameters.OutputDir, EfcptProperties.EfcptOutput),
+                (TaskParameters.ProjectDirectory, MsBuildProperties.MSBuildProjectDirectory),
+                (TaskParameters.ConfigPath, EfcptProperties._EfcptResolvedConfig),
+                (TaskParameters.RenamingPath, EfcptProperties._EfcptResolvedRenaming),
+                (TaskParameters.TemplateDir, EfcptProperties._EfcptResolvedTemplateDir),
+                (TaskParameters.TemplateOutputDir, EfcptProperties.EfcptGeneratedDir),
+                (TaskParameters.TargetFramework, MsBuildProperties.TargetFramework),
+                (TaskParameters.LogVerbosity, EfcptProperties.EfcptLogVerbosity))
+                .OutputProperty(TaskParameters.StagedConfigPath, EfcptProperties._EfcptStagedConfig)
+                .OutputProperty(TaskParameters.StagedRenamingPath, EfcptProperties._EfcptStagedRenaming)
+                .OutputProperty(TaskParameters.StagedTemplateDir, EfcptProperties._EfcptStagedTemplateDir);
+        });
         // Apply MSBuild property overrides to the staged efcpt-config.json file.
         t.Comment("Apply MSBuild property overrides to the staged efcpt-config.json file. Runs after staging but before fingerprinting to ensure overrides are included in the hash.");
         t.AddEfcptTarget(EfcptTargets.EfcptApplyConfigOverrides)
@@ -406,27 +411,26 @@ public static class BuildTransitiveTargetsFactory
                     .Build()
                     .OutputProperty(TaskParameters.SerializedProperties, EfcptProperties._EfcptSerializedConfigProperties);
             });
-        t.AddEfcptTarget(EfcptTargets.EfcptComputeFingerprint)
-            .ForEfCoreGeneration()
-            .DependsOn(EfcptTargets.EfcptSerializeConfigProperties)
-            .Build()
-            .Task(EfcptTasks.ComputeFingerprint, task =>
-            {
-                task.Param(TaskParameters.DacpacPath, MsBuildExpressions.Property(EfcptProperties._EfcptDacpacPath));
-                task.Param(TaskParameters.SchemaFingerprint, MsBuildExpressions.Property(EfcptProperties._EfcptSchemaFingerprint));
-                task.Param(TaskParameters.UseConnectionStringMode, MsBuildExpressions.Property(EfcptProperties._EfcptUseConnectionString));
-                task.Param(TaskParameters.ConfigPath, MsBuildExpressions.Property(EfcptProperties._EfcptStagedConfig));
-                task.Param(TaskParameters.RenamingPath, MsBuildExpressions.Property(EfcptProperties._EfcptStagedRenaming));
-                task.Param(TaskParameters.TemplateDir, MsBuildExpressions.Property(EfcptProperties._EfcptStagedTemplateDir));
-                task.Param(TaskParameters.FingerprintFile, MsBuildExpressions.Property(EfcptProperties.EfcptFingerprintFile));
-                task.Param(TaskParameters.ToolVersion, MsBuildExpressions.Property(EfcptProperties.EfcptToolVersion));
-                task.Param(TaskParameters.GeneratedDir, MsBuildExpressions.Property(EfcptProperties.EfcptGeneratedDir));
-                task.Param(TaskParameters.DetectGeneratedFileChanges, MsBuildExpressions.Property(EfcptProperties.EfcptDetectGeneratedFileChanges));
-                task.Param(TaskParameters.ConfigPropertyOverrides, MsBuildExpressions.Property(EfcptProperties._EfcptSerializedConfigProperties));
-                task.Param(TaskParameters.LogVerbosity, MsBuildExpressions.Property(EfcptProperties.EfcptLogVerbosity));
-                task.OutputProperty(TaskParameters.Fingerprint, EfcptProperties._EfcptFingerprint);
-                task.OutputProperty(TaskParameters.HasChanged, EfcptProperties._EfcptFingerprintChanged);
-            });
+        t.SingleTask(EfcptTargets.EfcptComputeFingerprint, 
+            string.Join(";", EfcptTargets.EfcptSerializeConfigProperties), 
+            EfcptTasks.ComputeFingerprint, task =>
+        {
+            task.MapProps(
+                (TaskParameters.DacpacPath, EfcptProperties._EfcptDacpacPath),
+                (TaskParameters.SchemaFingerprint, EfcptProperties._EfcptSchemaFingerprint),
+                (TaskParameters.UseConnectionStringMode, EfcptProperties._EfcptUseConnectionString),
+                (TaskParameters.ConfigPath, EfcptProperties._EfcptStagedConfig),
+                (TaskParameters.RenamingPath, EfcptProperties._EfcptStagedRenaming),
+                (TaskParameters.TemplateDir, EfcptProperties._EfcptStagedTemplateDir),
+                (TaskParameters.FingerprintFile, EfcptProperties.EfcptFingerprintFile),
+                (TaskParameters.ToolVersion, EfcptProperties.EfcptToolVersion),
+                (TaskParameters.GeneratedDir, EfcptProperties.EfcptGeneratedDir),
+                (TaskParameters.DetectGeneratedFileChanges, EfcptProperties.EfcptDetectGeneratedFileChanges),
+                (TaskParameters.ConfigPropertyOverrides, EfcptProperties._EfcptSerializedConfigProperties),
+                (TaskParameters.LogVerbosity, EfcptProperties.EfcptLogVerbosity))
+                .OutputProperty(TaskParameters.Fingerprint, EfcptProperties._EfcptFingerprint)
+                .OutputProperty(TaskParameters.HasChanged, EfcptProperties._EfcptFingerprintChanged);
+        });
         t.Comment("Lifecycle hook: BeforeEfcptGeneration");
         TargetFactory.CreateLifecycleHook(t, EfcptTargets.BeforeEfcptGeneration,
             condition: MsBuildExpressions.Condition_And(
@@ -462,14 +466,15 @@ public static class BuildTransitiveTargetsFactory
             });
             target.Task(EfcptTasks.RenameGeneratedFiles, task =>
             {
-                task.Param(TaskParameters.GeneratedDir, MsBuildExpressions.Property(EfcptProperties.EfcptGeneratedDir));
-                task.Param(TaskParameters.LogVerbosity, MsBuildExpressions.Property(EfcptProperties.EfcptLogVerbosity));
+                task.MapProps(
+                    (TaskParameters.GeneratedDir, EfcptProperties.EfcptGeneratedDir),
+                    (TaskParameters.LogVerbosity, EfcptProperties.EfcptLogVerbosity));
             });
             target.Task(MsBuildTasks.WriteLinesToFile, task =>
             {
-                task.Param(TaskParameters.File, MsBuildExpressions.Property(EfcptProperties.EfcptStampFile));
-                task.Param(TaskParameters.Lines, MsBuildExpressions.Property(EfcptProperties._EfcptFingerprint));
-                task.Param(TaskParameters.Overwrite, PropertyValues.True);
+                task.MapProps((TaskParameters.Lines, EfcptProperties._EfcptFingerprint))
+                    .Map(TaskParameters.File, EfcptProperties.EfcptStampFile)
+                    .Param(TaskParameters.Overwrite, PropertyValues.True);
             });
         });
         t.Comment("Lifecycle hook: AfterEfcptGeneration");
