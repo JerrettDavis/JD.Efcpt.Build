@@ -15,42 +15,42 @@
 
       To explicitly disable, set:
         <EfcptEnabled>false</EfcptEnabled>-->
-    <EfcptEnabled Condition="'$(EfcptEnabled)'==''">true</EfcptEnabled>
+    <EfcptEnabled Condition="'$(EfcptEnabled)' == ''">true</EfcptEnabled>
     <!--Output-->
-    <EfcptOutput Condition="'$(EfcptOutput)'==''">$(BaseIntermediateOutputPath)efcpt\</EfcptOutput>
-    <EfcptGeneratedDir Condition="'$(EfcptGeneratedDir)'==''">$(EfcptOutput)Generated\</EfcptGeneratedDir>
+    <EfcptOutput Condition="'$(EfcptOutput)' == ''">$(BaseIntermediateOutputPath)efcpt\</EfcptOutput>
+    <EfcptGeneratedDir Condition="'$(EfcptGeneratedDir)' == ''">$(EfcptOutput)Generated\</EfcptGeneratedDir>
     <!--Input overrides-->
-    <EfcptSqlProj Condition="'$(EfcptSqlProj)'==''"></EfcptSqlProj>
-    <EfcptDacpac Condition="'$(EfcptDacpac)'==''"></EfcptDacpac>
-    <EfcptConfig Condition="'$(EfcptConfig)'==''">efcpt-config.json</EfcptConfig>
-    <EfcptRenaming Condition="'$(EfcptRenaming)'==''">efcpt.renaming.json</EfcptRenaming>
-    <EfcptTemplateDir Condition="'$(EfcptTemplateDir)'==''">Template</EfcptTemplateDir>
+    <EfcptSqlProj Condition="'$(EfcptSqlProj)' == ''"></EfcptSqlProj>
+    <EfcptDacpac Condition="'$(EfcptDacpac)' == ''"></EfcptDacpac>
+    <EfcptConfig Condition="'$(EfcptConfig)' == ''">efcpt-config.json</EfcptConfig>
+    <EfcptRenaming Condition="'$(EfcptRenaming)' == ''">efcpt.renaming.json</EfcptRenaming>
+    <EfcptTemplateDir Condition="'$(EfcptTemplateDir)' == ''">Template</EfcptTemplateDir>
     <!--Connection String Configuration-->
-    <EfcptConnectionString Condition="'$(EfcptConnectionString)'==''"></EfcptConnectionString>
-    <EfcptAppSettings Condition="'$(EfcptAppSettings)'==''"></EfcptAppSettings>
-    <EfcptAppConfig Condition="'$(EfcptAppConfig)'==''"></EfcptAppConfig>
-    <EfcptConnectionStringName Condition="'$(EfcptConnectionStringName)'==''">DefaultConnection</EfcptConnectionStringName>
+    <EfcptConnectionString Condition="'$(EfcptConnectionString)' == ''"></EfcptConnectionString>
+    <EfcptAppSettings Condition="'$(EfcptAppSettings)' == ''"></EfcptAppSettings>
+    <EfcptAppConfig Condition="'$(EfcptAppConfig)' == ''"></EfcptAppConfig>
+    <EfcptConnectionStringName Condition="'$(EfcptConnectionStringName)' == ''">DefaultConnection</EfcptConnectionStringName>
     <!--Database provider: mssql (default), postgres, mysql, sqlite, oracle, firebird, snowflake-->
-    <EfcptProvider Condition="'$(EfcptProvider)'==''">mssql</EfcptProvider>
+    <EfcptProvider Condition="'$(EfcptProvider)' == ''">mssql</EfcptProvider>
     <!--Solution probing-->
-    <EfcptSolutionDir Condition="'$(EfcptSolutionDir)'==''">$(SolutionDir)</EfcptSolutionDir>
-    <EfcptSolutionPath Condition="'$(EfcptSolutionPath)'==''">$(SolutionPath)</EfcptSolutionPath>
-    <EfcptProbeSolutionDir Condition="'$(EfcptProbeSolutionDir)'==''">true</EfcptProbeSolutionDir>
+    <EfcptSolutionDir Condition="'$(EfcptSolutionDir)' == ''">$(SolutionDir)</EfcptSolutionDir>
+    <EfcptSolutionPath Condition="'$(EfcptSolutionPath)' == ''">$(SolutionPath)</EfcptSolutionPath>
+    <EfcptProbeSolutionDir Condition="'$(EfcptProbeSolutionDir)' == ''">true</EfcptProbeSolutionDir>
     <!--Tooling-->
-    <EfcptToolMode Condition="'$(EfcptToolMode)'==''">auto</EfcptToolMode>
-    <EfcptToolPackageId Condition="'$(EfcptToolPackageId)'==''">ErikEJ.EFCorePowerTools.Cli</EfcptToolPackageId>
-    <EfcptToolVersion Condition="'$(EfcptToolVersion)'==''">10.*</EfcptToolVersion>
-    <EfcptToolRestore Condition="'$(EfcptToolRestore)'==''">true</EfcptToolRestore>
-    <EfcptToolCommand Condition="'$(EfcptToolCommand)'==''">efcpt</EfcptToolCommand>
-    <EfcptToolPath Condition="'$(EfcptToolPath)'==''"></EfcptToolPath>
-    <EfcptDotNetExe Condition="'$(EfcptDotNetExe)'==''">dotnet</EfcptDotNetExe>
+    <EfcptToolMode Condition="'$(EfcptToolMode)' == ''">auto</EfcptToolMode>
+    <EfcptToolPackageId Condition="'$(EfcptToolPackageId)' == ''">ErikEJ.EFCorePowerTools.Cli</EfcptToolPackageId>
+    <EfcptToolVersion Condition="'$(EfcptToolVersion)' == ''">10.*</EfcptToolVersion>
+    <EfcptToolRestore Condition="'$(EfcptToolRestore)' == ''">true</EfcptToolRestore>
+    <EfcptToolCommand Condition="'$(EfcptToolCommand)' == ''">efcpt</EfcptToolCommand>
+    <EfcptToolPath Condition="'$(EfcptToolPath)' == ''"></EfcptToolPath>
+    <EfcptDotNetExe Condition="'$(EfcptDotNetExe)' == ''">dotnet</EfcptDotNetExe>
     <!--Fingerprinting-->
-    <EfcptFingerprintFile Condition="'$(EfcptFingerprintFile)'==''">$(EfcptOutput)fingerprint.txt</EfcptFingerprintFile>
-    <EfcptStampFile Condition="'$(EfcptStampFile)'==''">$(EfcptOutput).efcpt.stamp</EfcptStampFile>
-    <EfcptDetectGeneratedFileChanges Condition="'$(EfcptDetectGeneratedFileChanges)'==''">false</EfcptDetectGeneratedFileChanges>
+    <EfcptFingerprintFile Condition="'$(EfcptFingerprintFile)' == ''">$(EfcptOutput)fingerprint.txt</EfcptFingerprintFile>
+    <EfcptStampFile Condition="'$(EfcptStampFile)' == ''">$(EfcptOutput).efcpt.stamp</EfcptStampFile>
+    <EfcptDetectGeneratedFileChanges Condition="'$(EfcptDetectGeneratedFileChanges)' == ''">false</EfcptDetectGeneratedFileChanges>
     <!--Diagnostics-->
-    <EfcptLogVerbosity Condition="'$(EfcptLogVerbosity)'==''">minimal</EfcptLogVerbosity>
-    <EfcptDumpResolvedInputs Condition="'$(EfcptDumpResolvedInputs)'==''">false</EfcptDumpResolvedInputs>
+    <EfcptLogVerbosity Condition="'$(EfcptLogVerbosity)' == ''">minimal</EfcptLogVerbosity>
+    <EfcptDumpResolvedInputs Condition="'$(EfcptDumpResolvedInputs)' == ''">false</EfcptDumpResolvedInputs>
     <!--Warning Level Configuration: Controls the severity of build-time diagnostic messages.
       
       EfcptAutoDetectWarningLevel: Severity for SQL project or connection string auto-detection.
@@ -58,15 +58,15 @@
       
       EfcptSdkVersionWarningLevel: Severity for SDK version update notifications.
       Valid values: "None", "Info", "Warn", "Error". Defaults to "Warn".-->
-    <EfcptAutoDetectWarningLevel Condition="'$(EfcptAutoDetectWarningLevel)'==''">Info</EfcptAutoDetectWarningLevel>
-    <EfcptSdkVersionWarningLevel Condition="'$(EfcptSdkVersionWarningLevel)'==''">Warn</EfcptSdkVersionWarningLevel>
+    <EfcptAutoDetectWarningLevel Condition="'$(EfcptAutoDetectWarningLevel)' == ''">Info</EfcptAutoDetectWarningLevel>
+    <EfcptSdkVersionWarningLevel Condition="'$(EfcptSdkVersionWarningLevel)' == ''">Warn</EfcptSdkVersionWarningLevel>
     <!--SDK Version Check: Opt-in feature to check for newer SDK versions on NuGet.
       Enable with EfcptCheckForUpdates=true. Results are cached to avoid network
       calls on every build. This helps SDK users stay up-to-date since NuGet's
       SDK resolver doesn't support floating versions or automatic update notifications.-->
-    <EfcptCheckForUpdates Condition="'$(EfcptCheckForUpdates)'==''">false</EfcptCheckForUpdates>
-    <EfcptUpdateCheckCacheHours Condition="'$(EfcptUpdateCheckCacheHours)'==''">24</EfcptUpdateCheckCacheHours>
-    <EfcptForceUpdateCheck Condition="'$(EfcptForceUpdateCheck)'==''">false</EfcptForceUpdateCheck>
+    <EfcptCheckForUpdates Condition="'$(EfcptCheckForUpdates)' == ''">false</EfcptCheckForUpdates>
+    <EfcptUpdateCheckCacheHours Condition="'$(EfcptUpdateCheckCacheHours)' == ''">24</EfcptUpdateCheckCacheHours>
+    <EfcptForceUpdateCheck Condition="'$(EfcptForceUpdateCheck)' == ''">false</EfcptForceUpdateCheck>
     <!--Split Outputs: separate a primary Models project from a secondary Data project.
       Enable EfcptSplitOutputs in the Models project (with EfcptEnabled=true) and
       set EfcptDataProject to the target Data project that should receive DbContext
@@ -75,11 +75,11 @@
       The Models project runs efcpt and generates all files. It keeps the entity
       model classes (for example, in a Models/ subdirectory), and copies DbContext
       and configuration classes to the configured Data project.-->
-    <EfcptSplitOutputs Condition="'$(EfcptSplitOutputs)'==''">false</EfcptSplitOutputs>
-    <EfcptDataProject Condition="'$(EfcptDataProject)'==''"></EfcptDataProject>
-    <EfcptDataProjectOutputSubdir Condition="'$(EfcptDataProjectOutputSubdir)'==''">obj\efcpt\Generated\</EfcptDataProjectOutputSubdir>
+    <EfcptSplitOutputs Condition="'$(EfcptSplitOutputs)' == ''">false</EfcptSplitOutputs>
+    <EfcptDataProject Condition="'$(EfcptDataProject)' == ''"></EfcptDataProject>
+    <EfcptDataProjectOutputSubdir Condition="'$(EfcptDataProjectOutputSubdir)' == ''">obj\efcpt\Generated\</EfcptDataProjectOutputSubdir>
     <!--External Data: for Data project to include DbContext/configs copied from Models project-->
-    <EfcptExternalDataDir Condition="'$(EfcptExternalDataDir)'==''"></EfcptExternalDataDir>
+    <EfcptExternalDataDir Condition="'$(EfcptExternalDataDir)' == ''"></EfcptExternalDataDir>
     <!--Config Overrides: Apply MSBuild properties to override efcpt-config.json values.
       When EfcptApplyMsBuildOverrides is true (default), properties set below will override
       the corresponding values in the config file. This allows configuration via MSBuild
@@ -87,51 +87,51 @@
 
       When using the library default config, overrides are ALWAYS applied.
       When using a user-provided config, overrides are only applied if EfcptApplyMsBuildOverrides=true.-->
-    <EfcptApplyMsBuildOverrides Condition="'$(EfcptApplyMsBuildOverrides)'==''">true</EfcptApplyMsBuildOverrides>
+    <EfcptApplyMsBuildOverrides Condition="'$(EfcptApplyMsBuildOverrides)' == ''">true</EfcptApplyMsBuildOverrides>
     <!--Names section overrides-->
     <!--Use RootNamespace if defined, otherwise fall back to project name for zero-config scenarios-->
-    <EfcptConfigRootNamespace Condition="'$(EfcptConfigRootNamespace)'=='' and '$(RootNamespace)'!=''">$(RootNamespace)</EfcptConfigRootNamespace>
-    <EfcptConfigRootNamespace Condition="'$(EfcptConfigRootNamespace)'==''">$(MSBuildProjectName)</EfcptConfigRootNamespace>
-    <EfcptConfigDbContextName Condition="'$(EfcptConfigDbContextName)'==''"></EfcptConfigDbContextName>
-    <EfcptConfigDbContextNamespace Condition="'$(EfcptConfigDbContextNamespace)'==''"></EfcptConfigDbContextNamespace>
-    <EfcptConfigModelNamespace Condition="'$(EfcptConfigModelNamespace)'==''"></EfcptConfigModelNamespace>
+    <EfcptConfigRootNamespace Condition="('$(EfcptConfigRootNamespace)' == '') and ('$(RootNamespace)' != '')">$(RootNamespace)</EfcptConfigRootNamespace>
+    <EfcptConfigRootNamespace Condition="'$(EfcptConfigRootNamespace)' == ''">$(MSBuildProjectName)</EfcptConfigRootNamespace>
+    <EfcptConfigDbContextName Condition="'$(EfcptConfigDbContextName)' == ''"></EfcptConfigDbContextName>
+    <EfcptConfigDbContextNamespace Condition="'$(EfcptConfigDbContextNamespace)' == ''"></EfcptConfigDbContextNamespace>
+    <EfcptConfigModelNamespace Condition="'$(EfcptConfigModelNamespace)' == ''"></EfcptConfigModelNamespace>
     <!--File layout section overrides-->
-    <EfcptConfigOutputPath Condition="'$(EfcptConfigOutputPath)'==''"></EfcptConfigOutputPath>
-    <EfcptConfigDbContextOutputPath Condition="'$(EfcptConfigDbContextOutputPath)'==''"></EfcptConfigDbContextOutputPath>
-    <EfcptConfigSplitDbContext Condition="'$(EfcptConfigSplitDbContext)'==''"></EfcptConfigSplitDbContext>
-    <EfcptConfigUseSchemaFolders Condition="'$(EfcptConfigUseSchemaFolders)'==''"></EfcptConfigUseSchemaFolders>
-    <EfcptConfigUseSchemaNamespaces Condition="'$(EfcptConfigUseSchemaNamespaces)'==''"></EfcptConfigUseSchemaNamespaces>
+    <EfcptConfigOutputPath Condition="'$(EfcptConfigOutputPath)' == ''"></EfcptConfigOutputPath>
+    <EfcptConfigDbContextOutputPath Condition="'$(EfcptConfigDbContextOutputPath)' == ''"></EfcptConfigDbContextOutputPath>
+    <EfcptConfigSplitDbContext Condition="'$(EfcptConfigSplitDbContext)' == ''"></EfcptConfigSplitDbContext>
+    <EfcptConfigUseSchemaFolders Condition="'$(EfcptConfigUseSchemaFolders)' == ''"></EfcptConfigUseSchemaFolders>
+    <EfcptConfigUseSchemaNamespaces Condition="'$(EfcptConfigUseSchemaNamespaces)' == ''"></EfcptConfigUseSchemaNamespaces>
     <!--Code generation section overrides-->
-    <EfcptConfigEnableOnConfiguring Condition="'$(EfcptConfigEnableOnConfiguring)'==''"></EfcptConfigEnableOnConfiguring>
-    <EfcptConfigGenerationType Condition="'$(EfcptConfigGenerationType)'==''"></EfcptConfigGenerationType>
-    <EfcptConfigUseDatabaseNames Condition="'$(EfcptConfigUseDatabaseNames)'==''"></EfcptConfigUseDatabaseNames>
-    <EfcptConfigUseDataAnnotations Condition="'$(EfcptConfigUseDataAnnotations)'==''"></EfcptConfigUseDataAnnotations>
+    <EfcptConfigEnableOnConfiguring Condition="'$(EfcptConfigEnableOnConfiguring)' == ''"></EfcptConfigEnableOnConfiguring>
+    <EfcptConfigGenerationType Condition="'$(EfcptConfigGenerationType)' == ''"></EfcptConfigGenerationType>
+    <EfcptConfigUseDatabaseNames Condition="'$(EfcptConfigUseDatabaseNames)' == ''"></EfcptConfigUseDatabaseNames>
+    <EfcptConfigUseDataAnnotations Condition="'$(EfcptConfigUseDataAnnotations)' == ''"></EfcptConfigUseDataAnnotations>
     <!--NOTE: UseNullableReferenceTypes is set in the targets file (not here) for proper property evaluation order-->
-    <EfcptConfigUseInflector Condition="'$(EfcptConfigUseInflector)'==''"></EfcptConfigUseInflector>
-    <EfcptConfigUseLegacyInflector Condition="'$(EfcptConfigUseLegacyInflector)'==''"></EfcptConfigUseLegacyInflector>
-    <EfcptConfigUseManyToManyEntity Condition="'$(EfcptConfigUseManyToManyEntity)'==''"></EfcptConfigUseManyToManyEntity>
-    <EfcptConfigUseT4 Condition="'$(EfcptConfigUseT4)'==''"></EfcptConfigUseT4>
-    <EfcptConfigUseT4Split Condition="'$(EfcptConfigUseT4Split)'==''"></EfcptConfigUseT4Split>
-    <EfcptConfigRemoveDefaultSqlFromBool Condition="'$(EfcptConfigRemoveDefaultSqlFromBool)'==''"></EfcptConfigRemoveDefaultSqlFromBool>
-    <EfcptConfigSoftDeleteObsoleteFiles Condition="'$(EfcptConfigSoftDeleteObsoleteFiles)'==''"></EfcptConfigSoftDeleteObsoleteFiles>
-    <EfcptConfigDiscoverMultipleResultSets Condition="'$(EfcptConfigDiscoverMultipleResultSets)'==''"></EfcptConfigDiscoverMultipleResultSets>
-    <EfcptConfigUseAlternateResultSetDiscovery Condition="'$(EfcptConfigUseAlternateResultSetDiscovery)'==''"></EfcptConfigUseAlternateResultSetDiscovery>
-    <EfcptConfigT4TemplatePath Condition="'$(EfcptConfigT4TemplatePath)'==''"></EfcptConfigT4TemplatePath>
-    <EfcptConfigUseNoNavigations Condition="'$(EfcptConfigUseNoNavigations)'==''"></EfcptConfigUseNoNavigations>
-    <EfcptConfigMergeDacpacs Condition="'$(EfcptConfigMergeDacpacs)'==''"></EfcptConfigMergeDacpacs>
-    <EfcptConfigRefreshObjectLists Condition="'$(EfcptConfigRefreshObjectLists)'==''"></EfcptConfigRefreshObjectLists>
-    <EfcptConfigGenerateMermaidDiagram Condition="'$(EfcptConfigGenerateMermaidDiagram)'==''"></EfcptConfigGenerateMermaidDiagram>
-    <EfcptConfigUseDecimalAnnotationForSprocs Condition="'$(EfcptConfigUseDecimalAnnotationForSprocs)'==''"></EfcptConfigUseDecimalAnnotationForSprocs>
-    <EfcptConfigUsePrefixNavigationNaming Condition="'$(EfcptConfigUsePrefixNavigationNaming)'==''"></EfcptConfigUsePrefixNavigationNaming>
-    <EfcptConfigUseDatabaseNamesForRoutines Condition="'$(EfcptConfigUseDatabaseNamesForRoutines)'==''"></EfcptConfigUseDatabaseNamesForRoutines>
-    <EfcptConfigUseInternalAccessForRoutines Condition="'$(EfcptConfigUseInternalAccessForRoutines)'==''"></EfcptConfigUseInternalAccessForRoutines>
+    <EfcptConfigUseInflector Condition="'$(EfcptConfigUseInflector)' == ''"></EfcptConfigUseInflector>
+    <EfcptConfigUseLegacyInflector Condition="'$(EfcptConfigUseLegacyInflector)' == ''"></EfcptConfigUseLegacyInflector>
+    <EfcptConfigUseManyToManyEntity Condition="'$(EfcptConfigUseManyToManyEntity)' == ''"></EfcptConfigUseManyToManyEntity>
+    <EfcptConfigUseT4 Condition="'$(EfcptConfigUseT4)' == ''"></EfcptConfigUseT4>
+    <EfcptConfigUseT4Split Condition="'$(EfcptConfigUseT4Split)' == ''"></EfcptConfigUseT4Split>
+    <EfcptConfigRemoveDefaultSqlFromBool Condition="'$(EfcptConfigRemoveDefaultSqlFromBool)' == ''"></EfcptConfigRemoveDefaultSqlFromBool>
+    <EfcptConfigSoftDeleteObsoleteFiles Condition="'$(EfcptConfigSoftDeleteObsoleteFiles)' == ''"></EfcptConfigSoftDeleteObsoleteFiles>
+    <EfcptConfigDiscoverMultipleResultSets Condition="'$(EfcptConfigDiscoverMultipleResultSets)' == ''"></EfcptConfigDiscoverMultipleResultSets>
+    <EfcptConfigUseAlternateResultSetDiscovery Condition="'$(EfcptConfigUseAlternateResultSetDiscovery)' == ''"></EfcptConfigUseAlternateResultSetDiscovery>
+    <EfcptConfigT4TemplatePath Condition="'$(EfcptConfigT4TemplatePath)' == ''"></EfcptConfigT4TemplatePath>
+    <EfcptConfigUseNoNavigations Condition="'$(EfcptConfigUseNoNavigations)' == ''"></EfcptConfigUseNoNavigations>
+    <EfcptConfigMergeDacpacs Condition="'$(EfcptConfigMergeDacpacs)' == ''"></EfcptConfigMergeDacpacs>
+    <EfcptConfigRefreshObjectLists Condition="'$(EfcptConfigRefreshObjectLists)' == ''"></EfcptConfigRefreshObjectLists>
+    <EfcptConfigGenerateMermaidDiagram Condition="'$(EfcptConfigGenerateMermaidDiagram)' == ''"></EfcptConfigGenerateMermaidDiagram>
+    <EfcptConfigUseDecimalAnnotationForSprocs Condition="'$(EfcptConfigUseDecimalAnnotationForSprocs)' == ''"></EfcptConfigUseDecimalAnnotationForSprocs>
+    <EfcptConfigUsePrefixNavigationNaming Condition="'$(EfcptConfigUsePrefixNavigationNaming)' == ''"></EfcptConfigUsePrefixNavigationNaming>
+    <EfcptConfigUseDatabaseNamesForRoutines Condition="'$(EfcptConfigUseDatabaseNamesForRoutines)' == ''"></EfcptConfigUseDatabaseNamesForRoutines>
+    <EfcptConfigUseInternalAccessForRoutines Condition="'$(EfcptConfigUseInternalAccessForRoutines)' == ''"></EfcptConfigUseInternalAccessForRoutines>
     <!--Type mappings section overrides-->
-    <EfcptConfigUseDateOnlyTimeOnly Condition="'$(EfcptConfigUseDateOnlyTimeOnly)'==''"></EfcptConfigUseDateOnlyTimeOnly>
-    <EfcptConfigUseHierarchyId Condition="'$(EfcptConfigUseHierarchyId)'==''"></EfcptConfigUseHierarchyId>
-    <EfcptConfigUseSpatial Condition="'$(EfcptConfigUseSpatial)'==''"></EfcptConfigUseSpatial>
-    <EfcptConfigUseNodaTime Condition="'$(EfcptConfigUseNodaTime)'==''"></EfcptConfigUseNodaTime>
+    <EfcptConfigUseDateOnlyTimeOnly Condition="'$(EfcptConfigUseDateOnlyTimeOnly)' == ''"></EfcptConfigUseDateOnlyTimeOnly>
+    <EfcptConfigUseHierarchyId Condition="'$(EfcptConfigUseHierarchyId)' == ''"></EfcptConfigUseHierarchyId>
+    <EfcptConfigUseSpatial Condition="'$(EfcptConfigUseSpatial)' == ''"></EfcptConfigUseSpatial>
+    <EfcptConfigUseNodaTime Condition="'$(EfcptConfigUseNodaTime)' == ''"></EfcptConfigUseNodaTime>
     <!--Replacements section overrides-->
-    <EfcptConfigPreserveCasingWithRegex Condition="'$(EfcptConfigPreserveCasingWithRegex)'==''"></EfcptConfigPreserveCasingWithRegex>
+    <EfcptConfigPreserveCasingWithRegex Condition="'$(EfcptConfigPreserveCasingWithRegex)' == ''"></EfcptConfigPreserveCasingWithRegex>
     <!--SQL Project Detection: Moved to targets file to ensure properties are set.
       See _EfcptDetectSqlProject target in JD.Efcpt.Build.targets.-->
     <!--Build Profiling: Optional, configurable profiling framework to capture timing,
@@ -142,19 +142,19 @@
         (default: $(EfcptOutput)build-profile.json)
       EfcptProfilingVerbosity: Controls the level of detail captured in the profile
         (values: "minimal", "detailed"; default: "minimal")-->
-    <EfcptEnableProfiling Condition="'$(EfcptEnableProfiling)'==''">false</EfcptEnableProfiling>
-    <EfcptProfilingOutput Condition="'$(EfcptProfilingOutput)'==''">$(EfcptOutput)build-profile.json</EfcptProfilingOutput>
-    <EfcptProfilingVerbosity Condition="'$(EfcptProfilingVerbosity)'==''">minimal</EfcptProfilingVerbosity>
+    <EfcptEnableProfiling Condition="'$(EfcptEnableProfiling)' == ''">false</EfcptEnableProfiling>
+    <EfcptProfilingOutput Condition="'$(EfcptProfilingOutput)' == ''">$(EfcptOutput)build-profile.json</EfcptProfilingOutput>
+    <EfcptProfilingVerbosity Condition="'$(EfcptProfilingVerbosity)' == ''">minimal</EfcptProfilingVerbosity>
   </PropertyGroup>
   <PropertyGroup>
     <!--SQL Project Generation Configuration-->
-    <EfcptSqlProjType Condition="'$(EfcptSqlProjType)'==''">microsoft-build-sql</EfcptSqlProjType>
-    <EfcptSqlProjLanguage Condition="'$(EfcptSqlProjLanguage)'==''">csharp</EfcptSqlProjLanguage>
-    <EfcptSqlProjOutputDir Condition="'$(EfcptSqlProjOutputDir)'==''">$(MSBuildProjectDirectory)\</EfcptSqlProjOutputDir>
-    <EfcptSqlScriptsDir Condition="'$(EfcptSqlScriptsDir)'==''">$(MSBuildProjectDirectory)\</EfcptSqlScriptsDir>
-    <EfcptSqlServerVersion Condition="'$(EfcptSqlServerVersion)'==''">Sql160</EfcptSqlServerVersion>
-    <EfcptSqlPackageToolVersion Condition="'$(EfcptSqlPackageToolVersion)'==''"></EfcptSqlPackageToolVersion>
-    <EfcptSqlPackageToolRestore Condition="'$(EfcptSqlPackageToolRestore)'==''">true</EfcptSqlPackageToolRestore>
-    <EfcptSqlPackageToolPath Condition="'$(EfcptSqlPackageToolPath)'==''"></EfcptSqlPackageToolPath>
+    <EfcptSqlProjType Condition="'$(EfcptSqlProjType)' == ''">microsoft-build-sql</EfcptSqlProjType>
+    <EfcptSqlProjLanguage Condition="'$(EfcptSqlProjLanguage)' == ''">csharp</EfcptSqlProjLanguage>
+    <EfcptSqlProjOutputDir Condition="'$(EfcptSqlProjOutputDir)' == ''">$(MSBuildProjectDirectory)\</EfcptSqlProjOutputDir>
+    <EfcptSqlScriptsDir Condition="'$(EfcptSqlScriptsDir)' == ''">$(MSBuildProjectDirectory)\</EfcptSqlScriptsDir>
+    <EfcptSqlServerVersion Condition="'$(EfcptSqlServerVersion)' == ''">Sql160</EfcptSqlServerVersion>
+    <EfcptSqlPackageToolVersion Condition="'$(EfcptSqlPackageToolVersion)' == ''"></EfcptSqlPackageToolVersion>
+    <EfcptSqlPackageToolRestore Condition="'$(EfcptSqlPackageToolRestore)' == ''">true</EfcptSqlPackageToolRestore>
+    <EfcptSqlPackageToolPath Condition="'$(EfcptSqlPackageToolPath)' == ''"></EfcptSqlPackageToolPath>
   </PropertyGroup>
 </Project>
