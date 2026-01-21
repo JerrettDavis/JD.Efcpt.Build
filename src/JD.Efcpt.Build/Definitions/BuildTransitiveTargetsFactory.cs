@@ -1,28 +1,24 @@
-using JD.MSBuild.Fluent;
-using JD.MSBuild.Fluent.Fluent;
-using JD.MSBuild.Fluent.IR;
 using JD.Efcpt.Build.Definitions.Builders;
 using JD.Efcpt.Build.Definitions.Constants;
-using JDEfcptBuild.Builders;
-using JDEfcptBuild.Constants;
-using JDEfcptBuild.Registry;
-using JDEfcptBuild.Shared;
-using static JDEfcptBuild.Constants.MsBuildExpressions;
-using static JDEfcptBuild.Builders.TargetFactory;
-using static JDEfcptBuild.Builders.FileOperationBuilder;
-using static JD.Efcpt.Build.Definitions.Builders.TargetDSL;
+using JD.Efcpt.Build.Definitions.Registry;
+using JD.Efcpt.Build.Definitions.Shared;
+using JD.MSBuild.Fluent.Fluent;
+using JD.MSBuild.Fluent.IR;
+using static JD.Efcpt.Build.Definitions.Constants.MsBuildExpressions;
+using static JD.Efcpt.Build.Definitions.Builders.TargetFactory;
+using static JD.Efcpt.Build.Definitions.Builders.FileOperationBuilder;
 using static JD.Efcpt.Build.Definitions.Constants.PipelineConstants;
 
 // Type aliases for property classes (reduces line length)
-using P = JDEfcptBuild.Constants.MsBuildProperties;
-using E = JDEfcptBuild.Constants.EfcptProperties;
-using T = JDEfcptBuild.Constants.EfcptTargets;
-using Tk = JDEfcptBuild.Constants.EfcptTasks;
-using Pm = JDEfcptBuild.Constants.TaskParameters;
-using V = JDEfcptBuild.Constants.PropertyValues;
-using Mt = JDEfcptBuild.Constants.MsBuildTasks;
+using P = JD.Efcpt.Build.Definitions.Constants.MsBuildProperties;
+using E = JD.Efcpt.Build.Definitions.Constants.EfcptProperties;
+using T = JD.Efcpt.Build.Definitions.Constants.EfcptTargets;
+using Tk = JD.Efcpt.Build.Definitions.Constants.EfcptTasks;
+using Pm = JD.Efcpt.Build.Definitions.Constants.TaskParameters;
+using V = JD.Efcpt.Build.Definitions.Constants.PropertyValues;
+using Mt = JD.Efcpt.Build.Definitions.Constants.MsBuildTasks;
 
-namespace JDEfcptBuild;
+namespace JD.Efcpt.Build.Definitions;
 
 /// <summary>
 /// MSBuild package definition scaffolded from JD.Efcpt.Build.xml

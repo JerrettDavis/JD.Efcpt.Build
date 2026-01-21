@@ -1,7 +1,7 @@
+using JD.Efcpt.Build.Definitions.Constants;
 using JD.MSBuild.Fluent.Fluent;
-using JDEfcptBuild.Constants;
 
-namespace JDEfcptBuild.Shared;
+namespace JD.Efcpt.Build.Definitions.Shared;
 
 /// <summary>
 /// Shared property group configurations used across both Props and Targets.

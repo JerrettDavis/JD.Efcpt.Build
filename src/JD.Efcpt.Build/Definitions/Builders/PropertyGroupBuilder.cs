@@ -1,6 +1,6 @@
 using JD.MSBuild.Fluent.Fluent;
 
-namespace JDEfcptBuild.Builders;
+namespace JD.Efcpt.Build.Definitions.Builders;
 
 /// <summary>
 /// Simplifies complex PropertyGroup patterns in MSBuild targets.

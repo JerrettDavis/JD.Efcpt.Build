@@ -1,7 +1,6 @@
 using JD.MSBuild.Fluent;
-using JD.MSBuild.Fluent.Packaging;
 
-namespace JDEfcptBuild;
+namespace JD.Efcpt.Build.Definitions;
 
 public static class DefinitionFactory
 {

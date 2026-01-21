@@ -4,6 +4,6 @@
     This eliminates duplication between build/ and buildTransitive/ folders.
     The buildTransitive/ version is the canonical source.
     Conditional import handles both local dev (files at root) and NuGet package (files in build/).-->
-  <Import Project="$(MSBuildThisFileDirectory)buildTransitive\JD.Efcpt.Build.targets" Condition="Exists('$(MSBuildThisFileDirectory)buildTransitive\JD.Efcpt.Build.targets')" />
-  <Import Project="$(MSBuildThisFileDirectory)..\buildTransitive\JD.Efcpt.Build.targets" Condition="!Exists('$(MSBuildThisFileDirectory)buildTransitive\JD.Efcpt.Build.targets')" />
+  <Import Project="$(MSBuildThisFileDirectory)\buildTransitive\JD.Efcpt.Build.targets" Condition="Exists('$(MSBuildThisFileDirectory)\buildTransitive\JD.Efcpt.Build.targets')" />
+  <Import Project="$(MSBuildThisFileDirectory)\..\buildTransitive\JD.Efcpt.Build.targets" Condition="!Exists('$(MSBuildThisFileDirectory)\buildTransitive\JD.Efcpt.Build.targets')" />
 </Project>

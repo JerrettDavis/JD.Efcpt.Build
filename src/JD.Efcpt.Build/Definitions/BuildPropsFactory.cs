@@ -1,9 +1,8 @@
-using JD.MSBuild.Fluent;
+using JD.Efcpt.Build.Definitions.Constants;
 using JD.MSBuild.Fluent.Fluent;
 using JD.MSBuild.Fluent.IR;
-using JDEfcptBuild.Constants;
 
-namespace JDEfcptBuild;
+namespace JD.Efcpt.Build.Definitions;
 
 /// <summary>
 /// MSBuild package definition scaffolded from JD.Efcpt.Build.xml

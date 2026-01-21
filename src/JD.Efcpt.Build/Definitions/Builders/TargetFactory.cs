@@ -1,8 +1,6 @@
-using System;
 using JD.MSBuild.Fluent.Fluent;
-using JDEfcptBuild.Constants;
 
-namespace JDEfcptBuild.Builders;
+namespace JD.Efcpt.Build.Definitions.Builders;
 
 /// <summary>
 /// Factory for creating common target patterns in the Efcpt build pipeline.

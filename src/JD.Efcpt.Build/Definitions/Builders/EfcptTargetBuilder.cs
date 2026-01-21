@@ -1,7 +1,7 @@
+using JD.Efcpt.Build.Definitions.Constants;
 using JD.MSBuild.Fluent.Fluent;
-using JDEfcptBuild.Constants;
 
-namespace JDEfcptBuild.Builders;
+namespace JD.Efcpt.Build.Definitions.Builders;
 
 /// <summary>
 /// Fluent builder for creating Efcpt targets with common condition patterns.

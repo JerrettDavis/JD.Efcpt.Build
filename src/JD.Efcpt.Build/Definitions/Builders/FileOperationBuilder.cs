@@ -1,7 +1,7 @@
+using JD.Efcpt.Build.Definitions.Constants;
 using JD.MSBuild.Fluent.Fluent;
-using JDEfcptBuild.Constants;
 
-namespace JDEfcptBuild.Builders;
+namespace JD.Efcpt.Build.Definitions.Builders;
 
 /// <summary>
 /// Simplifies common file and directory operations in MSBuild targets.

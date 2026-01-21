@@ -1,7 +1,7 @@
-using JD.MSBuild.Fluent.Fluent;
 using JD.Efcpt.Build.Tasks;
+using JD.MSBuild.Fluent.Fluent;
 
-namespace JDEfcptBuild.Registry;
+namespace JD.Efcpt.Build.Definitions.Registry;
 
 /// <summary>
 /// Centralized registry for all JD.Efcpt.Build custom MSBuild tasks.

@@ -1,4 +1,4 @@
-namespace JDEfcptBuild.Constants;
+namespace JD.Efcpt.Build.Definitions.Constants;
 
 /// <summary>
 /// Well-known MSBuild property names.
