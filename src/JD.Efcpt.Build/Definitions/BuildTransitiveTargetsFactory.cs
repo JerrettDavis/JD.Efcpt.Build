@@ -1,6 +1,8 @@
 using JD.MSBuild.Fluent;
 using JD.MSBuild.Fluent.Fluent;
 using JD.MSBuild.Fluent.IR;
+using JDEfcptBuild.Registry;
+using JDEfcptBuild.Shared;
 
 namespace JDEfcptBuild;
 
@@ -51,41 +53,8 @@ public static class BuildTransitiveTargetsFactory
             });
         });
         // Determine the correct task assembly path based on MSBuild runtime and version.
-        //
-        // JD.Efcpt.Build supports both:
-        // - .NET Core MSBuild (MSBuildRuntimeType='Core') - Visual Studio 2019+ SDK-style projects
-        // - .NET Framework MSBuild (MSBuildRuntimeType='Full') - Visual Studio with Framework MSBuild
-        //
-        // The task assembly is multi-targeted:
-        // - net472: For .NET Framework MSBuild
-        // - net8.0/net9.0/net10.0: For .NET Core MSBuild (version-matched)
-        t.Comment("Determine the correct task assembly path based on MSBuild runtime and version.\n\n    JD.Efcpt.Build supports both:\n    - .NET Core MSBuild (MSBuildRuntimeType='Core') - Visual Studio 2019+ SDK-style projects\n    - .NET Framework MSBuild (MSBuildRuntimeType='Full') - Visual Studio with Framework MSBuild\n\n    The task assembly is multi-targeted:\n    - net472: For .NET Framework MSBuild\n    - net8.0/net9.0/net10.0: For .NET Core MSBuild (version-matched)");
-        t.PropertyGroup(null, group =>
-        {
-            // For .NET Core MSBuild, select task assembly based on MSBuild version:
-            // - MSBuild 18.0+ (VS 2026, .NET 10.0.1xx SDK) -> net10.0
-            // - MSBuild 17.14+ (VS 2022 17.14+, min VS for .NET 10 SDK) -> net10.0
-            // - MSBuild 17.12+ (VS 2022 17.12+, .NET 9.0.1xx SDK) -> net9.0
-            // - MSBuild 17.8+ (VS 2022 17.8+, .NET 8.0.1xx SDK) -> net8.0
-            //
-            // Version mapping reference:
-            // https://learn.microsoft.com/en-us/dotnet/core/porting/versioning-sdk-msbuild-vs
-            group.Comment("For .NET Core MSBuild, select task assembly based on MSBuild version:\n      - MSBuild 18.0+ (VS 2026, .NET 10.0.1xx SDK) -> net10.0\n      - MSBuild 17.14+ (VS 2022 17.14+, min VS for .NET 10 SDK) -> net10.0\n      - MSBuild 17.12+ (VS 2022 17.12+, .NET 9.0.1xx SDK) -> net9.0\n      - MSBuild 17.8+ (VS 2022 17.8+, .NET 8.0.1xx SDK) -> net8.0\n      \n      Version mapping reference:\n      https://learn.microsoft.com/en-us/dotnet/core/porting/versioning-sdk-msbuild-vs");
-            group.Property("_EfcptTasksFolder", "net10.0", "'$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '18.0'))");
-            group.Property("_EfcptTasksFolder", "net10.0", "'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.14'))");
-            group.Property("_EfcptTasksFolder", "net9.0", "'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.12'))");
-            group.Property("_EfcptTasksFolder", "net8.0", "'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core'");
-            // For .NET Framework MSBuild (Visual Studio with Framework MSBuild), use net472
-            group.Comment("For .NET Framework MSBuild (Visual Studio with Framework MSBuild), use net472");
-            group.Property("_EfcptTasksFolder", "net472", "'$(_EfcptTasksFolder)' == ''");
-            // Primary path: NuGet package location
-            group.Comment("Primary path: NuGet package location");
-            group.Property("_EfcptTaskAssembly", "$(MSBuildThisFileDirectory)..\\tasks\\$(_EfcptTasksFolder)\\JD.Efcpt.Build.Tasks.dll");
-            // Fallback path: Local development (when building from source)
-            group.Comment("Fallback path: Local development (when building from source)");
-            group.Property("_EfcptTaskAssembly", "$(MSBuildThisFileDirectory)..\\..\\JD.Efcpt.Build.Tasks\\bin\\$(Configuration)\\$(_EfcptTasksFolder)\\JD.Efcpt.Build.Tasks.dll", "!Exists('$(_EfcptTaskAssembly)')");
-            group.Property("_EfcptTaskAssembly", "$(MSBuildThisFileDirectory)..\\..\\JD.Efcpt.Build.Tasks\\bin\\Debug\\$(_EfcptTasksFolder)\\JD.Efcpt.Build.Tasks.dll", "!Exists('$(_EfcptTaskAssembly)') and '$(Configuration)' == ''");
-        });
+        t.Comment("Determine the correct task assembly path based on MSBuild runtime and version.");
+        t.PropertyGroup(null, SharedPropertyGroups.ConfigureTaskAssemblyResolution);
         // Diagnostic output for task assembly selection (when EfcptLogVerbosity=detailed)
         t.Comment("Diagnostic output for task assembly selection (when EfcptLogVerbosity=detailed)");
         t.Target("_EfcptLogTaskAssemblyInfo", target =>
@@ -99,26 +68,9 @@ public static class BuildTransitiveTargetsFactory
             target.Message("  TaskAssembly Path: $(_EfcptTaskAssembly)", "high");
             target.Message("  TaskAssembly Exists: $([System.IO.File]::Exists('$(_EfcptTaskAssembly)'))", "high");
         });
-        // Register MSBuild tasks.
-        // The task assembly is multi-targeted (net472 + net8.0+) so it loads natively
-        // on both .NET Framework MSBuild and .NET Core MSBuild.
-        t.Comment("Register MSBuild tasks.\n    The task assembly is multi-targeted (net472 + net8.0+) so it loads natively\n    on both .NET Framework MSBuild and .NET Core MSBuild.");
-        t.UsingTask("JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs", "$(_EfcptTaskAssembly)");
-        t.UsingTask("JD.Efcpt.Build.Tasks.EnsureDacpacBuilt", "$(_EfcptTaskAssembly)");
-        t.UsingTask("JD.Efcpt.Build.Tasks.StageEfcptInputs", "$(_EfcptTaskAssembly)");
-        t.UsingTask("JD.Efcpt.Build.Tasks.ComputeFingerprint", "$(_EfcptTaskAssembly)");
-        t.UsingTask("JD.Efcpt.Build.Tasks.RunEfcpt", "$(_EfcptTaskAssembly)");
-        t.UsingTask("JD.Efcpt.Build.Tasks.RenameGeneratedFiles", "$(_EfcptTaskAssembly)");
-        t.UsingTask("JD.Efcpt.Build.Tasks.QuerySchemaMetadata", "$(_EfcptTaskAssembly)");
-        t.UsingTask("JD.Efcpt.Build.Tasks.ApplyConfigOverrides", "$(_EfcptTaskAssembly)");
-        t.UsingTask("JD.Efcpt.Build.Tasks.ResolveDbContextName", "$(_EfcptTaskAssembly)");
-        t.UsingTask("JD.Efcpt.Build.Tasks.SerializeConfigProperties", "$(_EfcptTaskAssembly)");
-        t.UsingTask("JD.Efcpt.Build.Tasks.CheckSdkVersion", "$(_EfcptTaskAssembly)");
-        t.UsingTask("JD.Efcpt.Build.Tasks.RunSqlPackage", "$(_EfcptTaskAssembly)");
-        t.UsingTask("JD.Efcpt.Build.Tasks.AddSqlFileWarnings", "$(_EfcptTaskAssembly)");
-        t.UsingTask("JD.Efcpt.Build.Tasks.DetectSqlProject", "$(_EfcptTaskAssembly)");
-        t.UsingTask("JD.Efcpt.Build.Tasks.InitializeBuildProfiling", "$(_EfcptTaskAssembly)");
-        t.UsingTask("JD.Efcpt.Build.Tasks.FinalizeBuildProfiling", "$(_EfcptTaskAssembly)");
+        // Register MSBuild tasks using centralized registry.
+        t.Comment("Register MSBuild tasks using centralized registry.");
+        UsingTasksRegistry.RegisterAll(t);
         // Build Profiling: Initialize profiling at the start of the build pipeline.
         // This target runs early to ensure the profiler is available for all subsequent tasks.
         t.Comment("Build Profiling: Initialize profiling at the start of the build pipeline.\n    This target runs early to ensure the profiler is available for all subsequent tasks.");

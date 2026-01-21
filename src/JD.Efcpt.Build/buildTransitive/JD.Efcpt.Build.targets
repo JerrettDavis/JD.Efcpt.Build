@@ -25,33 +25,14 @@
       <_EfcptIsSqlProject>false</_EfcptIsSqlProject>
     </PropertyGroup>
   </Target>
-  <!--Determine the correct task assembly path based on MSBuild runtime and version.
-
-    JD.Efcpt.Build supports both:
-    - .NET Core MSBuild (MSBuildRuntimeType='Core') - Visual Studio 2019+ SDK-style projects
-    - .NET Framework MSBuild (MSBuildRuntimeType='Full') - Visual Studio with Framework MSBuild
-
-    The task assembly is multi-targeted:
-    - net472: For .NET Framework MSBuild
-    - net8.0/net9.0/net10.0: For .NET Core MSBuild (version-matched)-->
+  <!--Determine the correct task assembly path based on MSBuild runtime and version.-->
   <PropertyGroup>
-    <!--For .NET Core MSBuild, select task assembly based on MSBuild version:
-      - MSBuild 18.0+ (VS 2026, .NET 10.0.1xx SDK) -> net10.0
-      - MSBuild 17.14+ (VS 2022 17.14+, min VS for .NET 10 SDK) -> net10.0
-      - MSBuild 17.12+ (VS 2022 17.12+, .NET 9.0.1xx SDK) -> net9.0
-      - MSBuild 17.8+ (VS 2022 17.8+, .NET 8.0.1xx SDK) -> net8.0
-      
-      Version mapping reference:
-      https://learn.microsoft.com/en-us/dotnet/core/porting/versioning-sdk-msbuild-vs-->
     <_EfcptTasksFolder Condition="'$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '18.0'))">net10.0</_EfcptTasksFolder>
     <_EfcptTasksFolder Condition="'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.14'))">net10.0</_EfcptTasksFolder>
     <_EfcptTasksFolder Condition="'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.12'))">net9.0</_EfcptTasksFolder>
     <_EfcptTasksFolder Condition="'$(_EfcptTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core'">net8.0</_EfcptTasksFolder>
-    <!--For .NET Framework MSBuild (Visual Studio with Framework MSBuild), use net472-->
     <_EfcptTasksFolder Condition="'$(_EfcptTasksFolder)' == ''">net472</_EfcptTasksFolder>
-    <!--Primary path: NuGet package location-->
     <_EfcptTaskAssembly>$(MSBuildThisFileDirectory)..\tasks\$(_EfcptTasksFolder)\JD.Efcpt.Build.Tasks.dll</_EfcptTaskAssembly>
-    <!--Fallback path: Local development (when building from source)-->
     <_EfcptTaskAssembly Condition="!Exists('$(_EfcptTaskAssembly)')">$(MSBuildThisFileDirectory)..\..\JD.Efcpt.Build.Tasks\bin\$(Configuration)\$(_EfcptTasksFolder)\JD.Efcpt.Build.Tasks.dll</_EfcptTaskAssembly>
     <_EfcptTaskAssembly Condition="!Exists('$(_EfcptTaskAssembly)') and '$(Configuration)' == ''">$(MSBuildThisFileDirectory)..\..\JD.Efcpt.Build.Tasks\bin\Debug\$(_EfcptTasksFolder)\JD.Efcpt.Build.Tasks.dll</_EfcptTaskAssembly>
   </PropertyGroup>
@@ -64,25 +45,23 @@
     <Message Text="  TaskAssembly Path: $(_EfcptTaskAssembly)" Importance="high" />
     <Message Text="  TaskAssembly Exists: $([System.IO.File]::Exists('$(_EfcptTaskAssembly)'))" Importance="high" />
   </Target>
-  <!--Register MSBuild tasks.
-    The task assembly is multi-targeted (net472 + net8.0+) so it loads natively
-    on both .NET Framework MSBuild and .NET Core MSBuild.-->
-  <UsingTask TaskName="JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs" AssemblyFile="$(_EfcptTaskAssembly)" />
-  <UsingTask TaskName="JD.Efcpt.Build.Tasks.EnsureDacpacBuilt" AssemblyFile="$(_EfcptTaskAssembly)" />
-  <UsingTask TaskName="JD.Efcpt.Build.Tasks.StageEfcptInputs" AssemblyFile="$(_EfcptTaskAssembly)" />
-  <UsingTask TaskName="JD.Efcpt.Build.Tasks.ComputeFingerprint" AssemblyFile="$(_EfcptTaskAssembly)" />
-  <UsingTask TaskName="JD.Efcpt.Build.Tasks.RunEfcpt" AssemblyFile="$(_EfcptTaskAssembly)" />
-  <UsingTask TaskName="JD.Efcpt.Build.Tasks.RenameGeneratedFiles" AssemblyFile="$(_EfcptTaskAssembly)" />
-  <UsingTask TaskName="JD.Efcpt.Build.Tasks.QuerySchemaMetadata" AssemblyFile="$(_EfcptTaskAssembly)" />
-  <UsingTask TaskName="JD.Efcpt.Build.Tasks.ApplyConfigOverrides" AssemblyFile="$(_EfcptTaskAssembly)" />
-  <UsingTask TaskName="JD.Efcpt.Build.Tasks.ResolveDbContextName" AssemblyFile="$(_EfcptTaskAssembly)" />
-  <UsingTask TaskName="JD.Efcpt.Build.Tasks.SerializeConfigProperties" AssemblyFile="$(_EfcptTaskAssembly)" />
-  <UsingTask TaskName="JD.Efcpt.Build.Tasks.CheckSdkVersion" AssemblyFile="$(_EfcptTaskAssembly)" />
-  <UsingTask TaskName="JD.Efcpt.Build.Tasks.RunSqlPackage" AssemblyFile="$(_EfcptTaskAssembly)" />
+  <!--Register MSBuild tasks using centralized registry.-->
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.AddSqlFileWarnings" AssemblyFile="$(_EfcptTaskAssembly)" />
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.ApplyConfigOverrides" AssemblyFile="$(_EfcptTaskAssembly)" />
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.CheckSdkVersion" AssemblyFile="$(_EfcptTaskAssembly)" />
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.ComputeFingerprint" AssemblyFile="$(_EfcptTaskAssembly)" />
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.DetectSqlProject" AssemblyFile="$(_EfcptTaskAssembly)" />
-  <UsingTask TaskName="JD.Efcpt.Build.Tasks.InitializeBuildProfiling" AssemblyFile="$(_EfcptTaskAssembly)" />
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.EnsureDacpacBuilt" AssemblyFile="$(_EfcptTaskAssembly)" />
   <UsingTask TaskName="JD.Efcpt.Build.Tasks.FinalizeBuildProfiling" AssemblyFile="$(_EfcptTaskAssembly)" />
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.InitializeBuildProfiling" AssemblyFile="$(_EfcptTaskAssembly)" />
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.QuerySchemaMetadata" AssemblyFile="$(_EfcptTaskAssembly)" />
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.RenameGeneratedFiles" AssemblyFile="$(_EfcptTaskAssembly)" />
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.ResolveDbContextName" AssemblyFile="$(_EfcptTaskAssembly)" />
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs" AssemblyFile="$(_EfcptTaskAssembly)" />
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.RunEfcpt" AssemblyFile="$(_EfcptTaskAssembly)" />
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.RunSqlPackage" AssemblyFile="$(_EfcptTaskAssembly)" />
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.SerializeConfigProperties" AssemblyFile="$(_EfcptTaskAssembly)" />
+  <UsingTask TaskName="JD.Efcpt.Build.Tasks.StageEfcptInputs" AssemblyFile="$(_EfcptTaskAssembly)" />
   <!--Build Profiling: Initialize profiling at the start of the build pipeline.
     This target runs early to ensure the profiler is available for all subsequent tasks.-->
   <Target Name="_EfcptInitializeProfiling" BeforeTargets="_EfcptDetectSqlProject" Condition="'$(EfcptEnabled)' == 'true'">
