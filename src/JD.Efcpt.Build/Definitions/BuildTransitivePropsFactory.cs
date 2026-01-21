@@ -1,6 +1,7 @@
 using JD.MSBuild.Fluent;
 using JD.MSBuild.Fluent.Fluent;
 using JD.MSBuild.Fluent.IR;
+using JDEfcptBuild.Constants;
 
 namespace JDEfcptBuild;
 
@@ -31,50 +32,50 @@ public static class BuildTransitivePropsFactory
             // To explicitly disable, set:
             // <EfcptEnabled>false</EfcptEnabled>
             group.Comment("Enablement: Enabled by default for all consumers.\n\n      NOTE: This props file is imported from NuGet's build/ folder and therefore only applies to direct consumers of this package.\n      However, the actual code generation will only run if valid inputs are found:\n      - A SQL project reference (*.sqlproj or MSBuild.Sdk.SqlProj), OR\n      - An explicit DACPAC path (EfcptDacpac), OR\n      - Explicit connection string configuration (EfcptConnectionString, EfcptAppSettings, EfcptAppConfig)\n\n      Transitive consumers without SQL project references will NOT auto-discover connection\n      strings from their appsettings.json - this prevents WebApi projects from accidentally\n      triggering model generation.\n\n      To explicitly disable, set:\n        <EfcptEnabled>false</EfcptEnabled>");
-            group.Property("EfcptEnabled", "true", "'$(EfcptEnabled)'==''");
+            group.Property(EfcptProperties.EfcptEnabled, PropertyValues.True, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptEnabled));
             // Output
             group.Comment("Output");
-            group.Property("EfcptOutput", "$(BaseIntermediateOutputPath)efcpt\\", "'$(EfcptOutput)'==''");
-            group.Property("EfcptGeneratedDir", "$(EfcptOutput)Generated\\", "'$(EfcptGeneratedDir)'==''");
+            group.Property(EfcptProperties.EfcptOutput, PathPatterns.Output_Efcpt, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptOutput));
+            group.Property(EfcptProperties.EfcptGeneratedDir, PathPatterns.Output_Generated, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptGeneratedDir));
             // Input overrides
             group.Comment("Input overrides");
-            group.Property("EfcptSqlProj", "", "'$(EfcptSqlProj)'==''");
-            group.Property("EfcptDacpac", "", "'$(EfcptDacpac)'==''");
-            group.Property("EfcptConfig", "efcpt-config.json", "'$(EfcptConfig)'==''");
-            group.Property("EfcptRenaming", "efcpt.renaming.json", "'$(EfcptRenaming)'==''");
-            group.Property("EfcptTemplateDir", "Template", "'$(EfcptTemplateDir)'==''");
+            group.Property(EfcptProperties.EfcptSqlProj, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptSqlProj));
+            group.Property(EfcptProperties.EfcptDacpac, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptDacpac));
+            group.Property(EfcptProperties.EfcptConfig, PropertyValues.EfcptConfigJson, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfig));
+            group.Property(EfcptProperties.EfcptRenaming, PropertyValues.EfcptRenamingJson, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptRenaming));
+            group.Property(EfcptProperties.EfcptTemplateDir, PropertyValues.Template, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptTemplateDir));
             // Connection String Configuration
             group.Comment("Connection String Configuration");
-            group.Property("EfcptConnectionString", "", "'$(EfcptConnectionString)'==''");
-            group.Property("EfcptAppSettings", "", "'$(EfcptAppSettings)'==''");
-            group.Property("EfcptAppConfig", "", "'$(EfcptAppConfig)'==''");
-            group.Property("EfcptConnectionStringName", "DefaultConnection", "'$(EfcptConnectionStringName)'==''");
+            group.Property(EfcptProperties.EfcptConnectionString, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConnectionString));
+            group.Property(EfcptProperties.EfcptAppSettings, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptAppSettings));
+            group.Property(EfcptProperties.EfcptAppConfig, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptAppConfig));
+            group.Property(EfcptProperties.EfcptConnectionStringName, PropertyValues.DefaultConnection, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConnectionStringName));
             // Database provider: mssql (default), postgres, mysql, sqlite, oracle, firebird, snowflake
             group.Comment("Database provider: mssql (default), postgres, mysql, sqlite, oracle, firebird, snowflake");
-            group.Property("EfcptProvider", "mssql", "'$(EfcptProvider)'==''");
+            group.Property(EfcptProperties.EfcptProvider, PropertyValues.Mssql, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptProvider));
             // Solution probing
             group.Comment("Solution probing");
-            group.Property("EfcptSolutionDir", "$(SolutionDir)", "'$(EfcptSolutionDir)'==''");
-            group.Property("EfcptSolutionPath", "$(SolutionPath)", "'$(EfcptSolutionPath)'==''");
-            group.Property("EfcptProbeSolutionDir", "true", "'$(EfcptProbeSolutionDir)'==''");
+            group.Property(EfcptProperties.EfcptSolutionDir, MsBuildExpressions.Property(MsBuildProperties.SolutionDir), MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptSolutionDir));
+            group.Property(EfcptProperties.EfcptSolutionPath, MsBuildExpressions.Property(MsBuildProperties.SolutionPath), MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptSolutionPath));
+            group.Property(EfcptProperties.EfcptProbeSolutionDir, PropertyValues.True, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptProbeSolutionDir));
             // Tooling
             group.Comment("Tooling");
-            group.Property("EfcptToolMode", "auto", "'$(EfcptToolMode)'==''");
-            group.Property("EfcptToolPackageId", "ErikEJ.EFCorePowerTools.Cli", "'$(EfcptToolPackageId)'==''");
-            group.Property("EfcptToolVersion", "10.*", "'$(EfcptToolVersion)'==''");
-            group.Property("EfcptToolRestore", "true", "'$(EfcptToolRestore)'==''");
-            group.Property("EfcptToolCommand", "efcpt", "'$(EfcptToolCommand)'==''");
-            group.Property("EfcptToolPath", "", "'$(EfcptToolPath)'==''");
-            group.Property("EfcptDotNetExe", "dotnet", "'$(EfcptDotNetExe)'==''");
+            group.Property(EfcptProperties.EfcptToolMode, PropertyValues.Auto, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptToolMode));
+            group.Property(EfcptProperties.EfcptToolPackageId, PropertyValues.ErikEJ_EFCorePowerTools_Cli, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptToolPackageId));
+            group.Property(EfcptProperties.EfcptToolVersion, PropertyValues.Version_10_Wildcard, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptToolVersion));
+            group.Property(EfcptProperties.EfcptToolRestore, PropertyValues.True, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptToolRestore));
+            group.Property(EfcptProperties.EfcptToolCommand, PropertyValues.Efcpt, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptToolCommand));
+            group.Property(EfcptProperties.EfcptToolPath, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptToolPath));
+            group.Property(EfcptProperties.EfcptDotNetExe, PropertyValues.Dotnet, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptDotNetExe));
             // Fingerprinting
             group.Comment("Fingerprinting");
-            group.Property("EfcptFingerprintFile", "$(EfcptOutput)fingerprint.txt", "'$(EfcptFingerprintFile)'==''");
-            group.Property("EfcptStampFile", "$(EfcptOutput).efcpt.stamp", "'$(EfcptStampFile)'==''");
-            group.Property("EfcptDetectGeneratedFileChanges", "false", "'$(EfcptDetectGeneratedFileChanges)'==''");
+            group.Property(EfcptProperties.EfcptFingerprintFile, PathPatterns.Output_Fingerprint, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptFingerprintFile));
+            group.Property(EfcptProperties.EfcptStampFile, PathPatterns.Output_Stamp, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptStampFile));
+            group.Property(EfcptProperties.EfcptDetectGeneratedFileChanges, PropertyValues.False, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptDetectGeneratedFileChanges));
             // Diagnostics
             group.Comment("Diagnostics");
-            group.Property("EfcptLogVerbosity", "minimal", "'$(EfcptLogVerbosity)'==''");
-            group.Property("EfcptDumpResolvedInputs", "false", "'$(EfcptDumpResolvedInputs)'==''");
+            group.Property(EfcptProperties.EfcptLogVerbosity, PropertyValues.Minimal, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptLogVerbosity));
+            group.Property(EfcptProperties.EfcptDumpResolvedInputs, PropertyValues.False, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptDumpResolvedInputs));
             // Warning Level Configuration: Controls the severity of build-time diagnostic messages.
             //
             // EfcptAutoDetectWarningLevel: Severity for SQL project or connection string auto-detection.
@@ -83,16 +84,16 @@ public static class BuildTransitivePropsFactory
             // EfcptSdkVersionWarningLevel: Severity for SDK version update notifications.
             // Valid values: "None", "Info", "Warn", "Error". Defaults to "Warn".
             group.Comment("Warning Level Configuration: Controls the severity of build-time diagnostic messages.\n      \n      EfcptAutoDetectWarningLevel: Severity for SQL project or connection string auto-detection.\n      Valid values: \"None\", \"Info\", \"Warn\", \"Error\". Defaults to \"Info\".\n      \n      EfcptSdkVersionWarningLevel: Severity for SDK version update notifications.\n      Valid values: \"None\", \"Info\", \"Warn\", \"Error\". Defaults to \"Warn\".");
-            group.Property("EfcptAutoDetectWarningLevel", "Info", "'$(EfcptAutoDetectWarningLevel)'==''");
-            group.Property("EfcptSdkVersionWarningLevel", "Warn", "'$(EfcptSdkVersionWarningLevel)'==''");
+            group.Property(EfcptProperties.EfcptAutoDetectWarningLevel, PropertyValues.Info, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptAutoDetectWarningLevel));
+            group.Property(EfcptProperties.EfcptSdkVersionWarningLevel, PropertyValues.Warn, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptSdkVersionWarningLevel));
             // SDK Version Check: Opt-in feature to check for newer SDK versions on NuGet.
             // Enable with EfcptCheckForUpdates=true. Results are cached to avoid network
             // calls on every build. This helps SDK users stay up-to-date since NuGet's
             // SDK resolver doesn't support floating versions or automatic update notifications.
             group.Comment("SDK Version Check: Opt-in feature to check for newer SDK versions on NuGet.\n      Enable with EfcptCheckForUpdates=true. Results are cached to avoid network\n      calls on every build. This helps SDK users stay up-to-date since NuGet's\n      SDK resolver doesn't support floating versions or automatic update notifications.");
-            group.Property("EfcptCheckForUpdates", "false", "'$(EfcptCheckForUpdates)'==''");
-            group.Property("EfcptUpdateCheckCacheHours", "24", "'$(EfcptUpdateCheckCacheHours)'==''");
-            group.Property("EfcptForceUpdateCheck", "false", "'$(EfcptForceUpdateCheck)'==''");
+            group.Property(EfcptProperties.EfcptCheckForUpdates, PropertyValues.False, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptCheckForUpdates));
+            group.Property(EfcptProperties.EfcptUpdateCheckCacheHours, PropertyValues.CacheHours_24, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptUpdateCheckCacheHours));
+            group.Property(EfcptProperties.EfcptForceUpdateCheck, PropertyValues.False, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptForceUpdateCheck));
             // Split Outputs: separate a primary Models project from a secondary Data project.
             // Enable EfcptSplitOutputs in the Models project (with EfcptEnabled=true) and
             // set EfcptDataProject to the target Data project that should receive DbContext
@@ -102,12 +103,12 @@ public static class BuildTransitivePropsFactory
             // model classes (for example, in a Models/ subdirectory), and copies DbContext
             // and configuration classes to the configured Data project.
             group.Comment("Split Outputs: separate a primary Models project from a secondary Data project.\n      Enable EfcptSplitOutputs in the Models project (with EfcptEnabled=true) and\n      set EfcptDataProject to the target Data project that should receive DbContext\n      and configuration classes.\n\n      The Models project runs efcpt and generates all files. It keeps the entity\n      model classes (for example, in a Models/ subdirectory), and copies DbContext\n      and configuration classes to the configured Data project.");
-            group.Property("EfcptSplitOutputs", "false", "'$(EfcptSplitOutputs)'==''");
-            group.Property("EfcptDataProject", "", "'$(EfcptDataProject)'==''");
-            group.Property("EfcptDataProjectOutputSubdir", "obj\\efcpt\\Generated\\", "'$(EfcptDataProjectOutputSubdir)'==''");
+            group.Property(EfcptProperties.EfcptSplitOutputs, PropertyValues.False, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptSplitOutputs));
+            group.Property(EfcptProperties.EfcptDataProject, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptDataProject));
+            group.Property(EfcptProperties.EfcptDataProjectOutputSubdir, PathPatterns.Output_ObjEfcptGenerated, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptDataProjectOutputSubdir));
             // External Data: for Data project to include DbContext/configs copied from Models project
             group.Comment("External Data: for Data project to include DbContext/configs copied from Models project");
-            group.Property("EfcptExternalDataDir", "", "'$(EfcptExternalDataDir)'==''");
+            group.Property(EfcptProperties.EfcptExternalDataDir, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptExternalDataDir));
             // Config Overrides: Apply MSBuild properties to override efcpt-config.json values.
             // When EfcptApplyMsBuildOverrides is true (default), properties set below will override
             // the corresponding values in the config file. This allows configuration via MSBuild
@@ -116,58 +117,62 @@ public static class BuildTransitivePropsFactory
             // When using the library default config, overrides are ALWAYS applied.
             // When using a user-provided config, overrides are only applied if EfcptApplyMsBuildOverrides=true.
             group.Comment("Config Overrides: Apply MSBuild properties to override efcpt-config.json values.\n      When EfcptApplyMsBuildOverrides is true (default), properties set below will override\n      the corresponding values in the config file. This allows configuration via MSBuild\n      without editing JSON files directly.\n\n      When using the library default config, overrides are ALWAYS applied.\n      When using a user-provided config, overrides are only applied if EfcptApplyMsBuildOverrides=true.");
-            group.Property("EfcptApplyMsBuildOverrides", "true", "'$(EfcptApplyMsBuildOverrides)'==''");
+            group.Property(EfcptProperties.EfcptApplyMsBuildOverrides, PropertyValues.True, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptApplyMsBuildOverrides));
             // Names section overrides
             group.Comment("Names section overrides");
             // Use RootNamespace if defined, otherwise fall back to project name for zero-config scenarios
             group.Comment("Use RootNamespace if defined, otherwise fall back to project name for zero-config scenarios");
-            group.Property("EfcptConfigRootNamespace", "$(RootNamespace)", "'$(EfcptConfigRootNamespace)'=='' and '$(RootNamespace)'!=''");
-            group.Property("EfcptConfigRootNamespace", "$(MSBuildProjectName)", "'$(EfcptConfigRootNamespace)'==''");
-            group.Property("EfcptConfigDbContextName", "", "'$(EfcptConfigDbContextName)'==''");
-            group.Property("EfcptConfigDbContextNamespace", "", "'$(EfcptConfigDbContextNamespace)'==''");
-            group.Property("EfcptConfigModelNamespace", "", "'$(EfcptConfigModelNamespace)'==''");
+            group.Property(EfcptProperties.EfcptConfigRootNamespace, MsBuildExpressions.Property(MsBuildProperties.RootNamespace), 
+                MsBuildExpressions.Condition_And(
+                    MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigRootNamespace),
+                    MsBuildExpressions.Condition_NotEmpty(MsBuildProperties.RootNamespace)
+                ));
+            group.Property(EfcptProperties.EfcptConfigRootNamespace, MsBuildExpressions.Property(MsBuildProperties.MSBuildProjectName), MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigRootNamespace));
+            group.Property(EfcptProperties.EfcptConfigDbContextName, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigDbContextName));
+            group.Property(EfcptProperties.EfcptConfigDbContextNamespace, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigDbContextNamespace));
+            group.Property(EfcptProperties.EfcptConfigModelNamespace, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigModelNamespace));
             // File layout section overrides
             group.Comment("File layout section overrides");
-            group.Property("EfcptConfigOutputPath", "", "'$(EfcptConfigOutputPath)'==''");
-            group.Property("EfcptConfigDbContextOutputPath", "", "'$(EfcptConfigDbContextOutputPath)'==''");
-            group.Property("EfcptConfigSplitDbContext", "", "'$(EfcptConfigSplitDbContext)'==''");
-            group.Property("EfcptConfigUseSchemaFolders", "", "'$(EfcptConfigUseSchemaFolders)'==''");
-            group.Property("EfcptConfigUseSchemaNamespaces", "", "'$(EfcptConfigUseSchemaNamespaces)'==''");
+            group.Property(EfcptProperties.EfcptConfigOutputPath, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigOutputPath));
+            group.Property(EfcptProperties.EfcptConfigDbContextOutputPath, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigDbContextOutputPath));
+            group.Property(EfcptProperties.EfcptConfigSplitDbContext, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigSplitDbContext));
+            group.Property(EfcptProperties.EfcptConfigUseSchemaFolders, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUseSchemaFolders));
+            group.Property(EfcptProperties.EfcptConfigUseSchemaNamespaces, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUseSchemaNamespaces));
             // Code generation section overrides
             group.Comment("Code generation section overrides");
-            group.Property("EfcptConfigEnableOnConfiguring", "", "'$(EfcptConfigEnableOnConfiguring)'==''");
-            group.Property("EfcptConfigGenerationType", "", "'$(EfcptConfigGenerationType)'==''");
-            group.Property("EfcptConfigUseDatabaseNames", "", "'$(EfcptConfigUseDatabaseNames)'==''");
-            group.Property("EfcptConfigUseDataAnnotations", "", "'$(EfcptConfigUseDataAnnotations)'==''");
+            group.Property(EfcptProperties.EfcptConfigEnableOnConfiguring, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigEnableOnConfiguring));
+            group.Property(EfcptProperties.EfcptConfigGenerationType, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigGenerationType));
+            group.Property(EfcptProperties.EfcptConfigUseDatabaseNames, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUseDatabaseNames));
+            group.Property(EfcptProperties.EfcptConfigUseDataAnnotations, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUseDataAnnotations));
             // NOTE: UseNullableReferenceTypes is set in the targets file (not here) for proper property evaluation order
             group.Comment("NOTE: UseNullableReferenceTypes is set in the targets file (not here) for proper property evaluation order");
-            group.Property("EfcptConfigUseInflector", "", "'$(EfcptConfigUseInflector)'==''");
-            group.Property("EfcptConfigUseLegacyInflector", "", "'$(EfcptConfigUseLegacyInflector)'==''");
-            group.Property("EfcptConfigUseManyToManyEntity", "", "'$(EfcptConfigUseManyToManyEntity)'==''");
-            group.Property("EfcptConfigUseT4", "", "'$(EfcptConfigUseT4)'==''");
-            group.Property("EfcptConfigUseT4Split", "", "'$(EfcptConfigUseT4Split)'==''");
-            group.Property("EfcptConfigRemoveDefaultSqlFromBool", "", "'$(EfcptConfigRemoveDefaultSqlFromBool)'==''");
-            group.Property("EfcptConfigSoftDeleteObsoleteFiles", "", "'$(EfcptConfigSoftDeleteObsoleteFiles)'==''");
-            group.Property("EfcptConfigDiscoverMultipleResultSets", "", "'$(EfcptConfigDiscoverMultipleResultSets)'==''");
-            group.Property("EfcptConfigUseAlternateResultSetDiscovery", "", "'$(EfcptConfigUseAlternateResultSetDiscovery)'==''");
-            group.Property("EfcptConfigT4TemplatePath", "", "'$(EfcptConfigT4TemplatePath)'==''");
-            group.Property("EfcptConfigUseNoNavigations", "", "'$(EfcptConfigUseNoNavigations)'==''");
-            group.Property("EfcptConfigMergeDacpacs", "", "'$(EfcptConfigMergeDacpacs)'==''");
-            group.Property("EfcptConfigRefreshObjectLists", "", "'$(EfcptConfigRefreshObjectLists)'==''");
-            group.Property("EfcptConfigGenerateMermaidDiagram", "", "'$(EfcptConfigGenerateMermaidDiagram)'==''");
-            group.Property("EfcptConfigUseDecimalAnnotationForSprocs", "", "'$(EfcptConfigUseDecimalAnnotationForSprocs)'==''");
-            group.Property("EfcptConfigUsePrefixNavigationNaming", "", "'$(EfcptConfigUsePrefixNavigationNaming)'==''");
-            group.Property("EfcptConfigUseDatabaseNamesForRoutines", "", "'$(EfcptConfigUseDatabaseNamesForRoutines)'==''");
-            group.Property("EfcptConfigUseInternalAccessForRoutines", "", "'$(EfcptConfigUseInternalAccessForRoutines)'==''");
+            group.Property(EfcptProperties.EfcptConfigUseInflector, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUseInflector));
+            group.Property(EfcptProperties.EfcptConfigUseLegacyInflector, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUseLegacyInflector));
+            group.Property(EfcptProperties.EfcptConfigUseManyToManyEntity, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUseManyToManyEntity));
+            group.Property(EfcptProperties.EfcptConfigUseT4, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUseT4));
+            group.Property(EfcptProperties.EfcptConfigUseT4Split, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUseT4Split));
+            group.Property(EfcptProperties.EfcptConfigRemoveDefaultSqlFromBool, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigRemoveDefaultSqlFromBool));
+            group.Property(EfcptProperties.EfcptConfigSoftDeleteObsoleteFiles, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigSoftDeleteObsoleteFiles));
+            group.Property(EfcptProperties.EfcptConfigDiscoverMultipleResultSets, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigDiscoverMultipleResultSets));
+            group.Property(EfcptProperties.EfcptConfigUseAlternateResultSetDiscovery, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUseAlternateResultSetDiscovery));
+            group.Property(EfcptProperties.EfcptConfigT4TemplatePath, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigT4TemplatePath));
+            group.Property(EfcptProperties.EfcptConfigUseNoNavigations, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUseNoNavigations));
+            group.Property(EfcptProperties.EfcptConfigMergeDacpacs, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigMergeDacpacs));
+            group.Property(EfcptProperties.EfcptConfigRefreshObjectLists, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigRefreshObjectLists));
+            group.Property(EfcptProperties.EfcptConfigGenerateMermaidDiagram, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigGenerateMermaidDiagram));
+            group.Property(EfcptProperties.EfcptConfigUseDecimalAnnotationForSprocs, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUseDecimalAnnotationForSprocs));
+            group.Property(EfcptProperties.EfcptConfigUsePrefixNavigationNaming, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUsePrefixNavigationNaming));
+            group.Property(EfcptProperties.EfcptConfigUseDatabaseNamesForRoutines, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUseDatabaseNamesForRoutines));
+            group.Property(EfcptProperties.EfcptConfigUseInternalAccessForRoutines, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUseInternalAccessForRoutines));
             // Type mappings section overrides
             group.Comment("Type mappings section overrides");
-            group.Property("EfcptConfigUseDateOnlyTimeOnly", "", "'$(EfcptConfigUseDateOnlyTimeOnly)'==''");
-            group.Property("EfcptConfigUseHierarchyId", "", "'$(EfcptConfigUseHierarchyId)'==''");
-            group.Property("EfcptConfigUseSpatial", "", "'$(EfcptConfigUseSpatial)'==''");
-            group.Property("EfcptConfigUseNodaTime", "", "'$(EfcptConfigUseNodaTime)'==''");
+            group.Property(EfcptProperties.EfcptConfigUseDateOnlyTimeOnly, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUseDateOnlyTimeOnly));
+            group.Property(EfcptProperties.EfcptConfigUseHierarchyId, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUseHierarchyId));
+            group.Property(EfcptProperties.EfcptConfigUseSpatial, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUseSpatial));
+            group.Property(EfcptProperties.EfcptConfigUseNodaTime, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUseNodaTime));
             // Replacements section overrides
             group.Comment("Replacements section overrides");
-            group.Property("EfcptConfigPreserveCasingWithRegex", "", "'$(EfcptConfigPreserveCasingWithRegex)'==''");
+            group.Property(EfcptProperties.EfcptConfigPreserveCasingWithRegex, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigPreserveCasingWithRegex));
             // SQL Project Detection: Moved to targets file to ensure properties are set.
             // See _EfcptDetectSqlProject target in JD.Efcpt.Build.targets.
             group.Comment("SQL Project Detection: Moved to targets file to ensure properties are set.\n      See _EfcptDetectSqlProject target in JD.Efcpt.Build.targets.");
@@ -180,22 +185,22 @@ public static class BuildTransitivePropsFactory
             // EfcptProfilingVerbosity: Controls the level of detail captured in the profile
             // (values: "minimal", "detailed"; default: "minimal")
             group.Comment("Build Profiling: Optional, configurable profiling framework to capture timing,\n      task execution, and diagnostics for performance analysis and benchmarking.\n      \n      EfcptEnableProfiling: Enable/disable profiling (default: false)\n      EfcptProfilingOutput: Path where the profiling JSON file will be written\n        (default: $(EfcptOutput)build-profile.json)\n      EfcptProfilingVerbosity: Controls the level of detail captured in the profile\n        (values: \"minimal\", \"detailed\"; default: \"minimal\")");
-            group.Property("EfcptEnableProfiling", "false", "'$(EfcptEnableProfiling)'==''");
-            group.Property("EfcptProfilingOutput", "$(EfcptOutput)build-profile.json", "'$(EfcptProfilingOutput)'==''");
-            group.Property("EfcptProfilingVerbosity", "minimal", "'$(EfcptProfilingVerbosity)'==''");
+            group.Property(EfcptProperties.EfcptEnableProfiling, PropertyValues.False, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptEnableProfiling));
+            group.Property(EfcptProperties.EfcptProfilingOutput, PathPatterns.Output_BuildProfile, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptProfilingOutput));
+            group.Property(EfcptProperties.EfcptProfilingVerbosity, PropertyValues.Minimal, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptProfilingVerbosity));
         });
         p.PropertyGroup(null, group =>
         {
             // SQL Project Generation Configuration
             group.Comment("SQL Project Generation Configuration");
-            group.Property("EfcptSqlProjType", "microsoft-build-sql", "'$(EfcptSqlProjType)'==''");
-            group.Property("EfcptSqlProjLanguage", "csharp", "'$(EfcptSqlProjLanguage)'==''");
-            group.Property("EfcptSqlProjOutputDir", "$(MSBuildProjectDirectory)\\", "'$(EfcptSqlProjOutputDir)'==''");
-            group.Property("EfcptSqlScriptsDir", "$(MSBuildProjectDirectory)\\", "'$(EfcptSqlScriptsDir)'==''");
-            group.Property("EfcptSqlServerVersion", "Sql160", "'$(EfcptSqlServerVersion)'==''");
-            group.Property("EfcptSqlPackageToolVersion", "", "'$(EfcptSqlPackageToolVersion)'==''");
-            group.Property("EfcptSqlPackageToolRestore", "true", "'$(EfcptSqlPackageToolRestore)'==''");
-            group.Property("EfcptSqlPackageToolPath", "", "'$(EfcptSqlPackageToolPath)'==''");
+            group.Property(EfcptProperties.EfcptSqlProjType, PropertyValues.MicrosoftBuildSql, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptSqlProjType));
+            group.Property(EfcptProperties.EfcptSqlProjLanguage, PropertyValues.CSharp, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptSqlProjLanguage));
+            group.Property(EfcptProperties.EfcptSqlProjOutputDir, PathPatterns.SqlProj_OutputDir, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptSqlProjOutputDir));
+            group.Property(EfcptProperties.EfcptSqlScriptsDir, PathPatterns.SqlScripts_Dir, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptSqlScriptsDir));
+            group.Property(EfcptProperties.EfcptSqlServerVersion, PropertyValues.Sql160, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptSqlServerVersion));
+            group.Property(EfcptProperties.EfcptSqlPackageToolVersion, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptSqlPackageToolVersion));
+            group.Property(EfcptProperties.EfcptSqlPackageToolRestore, PropertyValues.True, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptSqlPackageToolRestore));
+            group.Property(EfcptProperties.EfcptSqlPackageToolPath, PropertyValues.Empty, MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptSqlPackageToolPath));
         });
 
         return project;

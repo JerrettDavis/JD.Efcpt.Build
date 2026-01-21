@@ -1,6 +1,7 @@
 using JD.MSBuild.Fluent;
 using JD.MSBuild.Fluent.Fluent;
 using JD.MSBuild.Fluent.IR;
+using JDEfcptBuild.Constants;
 
 namespace JDEfcptBuild;
 
@@ -18,14 +19,20 @@ public static class BuildPropsFactory
         // This marker is used by buildTransitive to only enable generation
         // for direct consumers, not transitive ones.
         p.Comment("Mark this as a direct package reference.\n    This marker is used by buildTransitive to only enable generation\n    for direct consumers, not transitive ones.");
-        p.Property("_EfcptIsDirectReference", "true");
+        p.Property(EfcptProperties._EfcptIsDirectReference, PropertyValues.True);
         // Import shared props from buildTransitive.
         // This eliminates duplication between build/ and buildTransitive/ folders.
         // The buildTransitive/ version is the canonical source.
         // Conditional import handles both local dev (files at root) and NuGet package (files in build/).
         p.Comment("Import shared props from buildTransitive.\n    This eliminates duplication between build/ and buildTransitive/ folders.\n    The buildTransitive/ version is the canonical source.\n    Conditional import handles both local dev (files at root) and NuGet package (files in build/).");
-        p.Import("$(MSBuildThisFileDirectory)buildTransitive\\JD.Efcpt.Build.props", "Exists('$(MSBuildThisFileDirectory)buildTransitive\\JD.Efcpt.Build.props')");
-        p.Import("$(MSBuildThisFileDirectory)..\\buildTransitive\\JD.Efcpt.Build.props", "!Exists('$(MSBuildThisFileDirectory)buildTransitive\\JD.Efcpt.Build.props')");
+        p.Import(
+            MsBuildExpressions.Path_Combine(MsBuildExpressions.Property(MsBuildProperties.MSBuildThisFileDirectory), PathPatterns.BuildTransitive_Props),
+            MsBuildExpressions.Condition_Exists(MsBuildExpressions.Path_Combine(MsBuildExpressions.Property(MsBuildProperties.MSBuildThisFileDirectory), PathPatterns.BuildTransitive_Props))
+        );
+        p.Import(
+            MsBuildExpressions.Path_Combine(MsBuildExpressions.Property(MsBuildProperties.MSBuildThisFileDirectory), PathPatterns.BuildTransitive_Props_Fallback),
+            MsBuildExpressions.Condition_NotExists(MsBuildExpressions.Path_Combine(MsBuildExpressions.Property(MsBuildProperties.MSBuildThisFileDirectory), PathPatterns.BuildTransitive_Props))
+        );
 
         return project;
     }

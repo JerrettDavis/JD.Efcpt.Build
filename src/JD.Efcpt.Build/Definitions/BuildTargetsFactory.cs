@@ -1,6 +1,7 @@
 using JD.MSBuild.Fluent;
 using JD.MSBuild.Fluent.Fluent;
 using JD.MSBuild.Fluent.IR;
+using JDEfcptBuild.Constants;
 
 namespace JDEfcptBuild;
 
@@ -19,8 +20,14 @@ public static class BuildTargetsFactory
         // The buildTransitive/ version is the canonical source.
         // Conditional import handles both local dev (files at root) and NuGet package (files in build/).
         p.Comment("Import shared targets from buildTransitive.\n    This eliminates duplication between build/ and buildTransitive/ folders.\n    The buildTransitive/ version is the canonical source.\n    Conditional import handles both local dev (files at root) and NuGet package (files in build/).");
-        p.Import("$(MSBuildThisFileDirectory)buildTransitive\\JD.Efcpt.Build.targets", "Exists('$(MSBuildThisFileDirectory)buildTransitive\\JD.Efcpt.Build.targets')");
-        p.Import("$(MSBuildThisFileDirectory)..\\buildTransitive\\JD.Efcpt.Build.targets", "!Exists('$(MSBuildThisFileDirectory)buildTransitive\\JD.Efcpt.Build.targets')");
+        p.Import(
+            MsBuildExpressions.Path_Combine(MsBuildExpressions.Property(MsBuildProperties.MSBuildThisFileDirectory), PathPatterns.BuildTransitive_Targets),
+            MsBuildExpressions.Condition_Exists(MsBuildExpressions.Path_Combine(MsBuildExpressions.Property(MsBuildProperties.MSBuildThisFileDirectory), PathPatterns.BuildTransitive_Targets))
+        );
+        p.Import(
+            MsBuildExpressions.Path_Combine(MsBuildExpressions.Property(MsBuildProperties.MSBuildThisFileDirectory), PathPatterns.BuildTransitive_Targets_Fallback),
+            MsBuildExpressions.Condition_NotExists(MsBuildExpressions.Path_Combine(MsBuildExpressions.Property(MsBuildProperties.MSBuildThisFileDirectory), PathPatterns.BuildTransitive_Targets))
+        );
 
         return project;
     }

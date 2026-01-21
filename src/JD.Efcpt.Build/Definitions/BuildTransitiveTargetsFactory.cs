@@ -1,6 +1,7 @@
 using JD.MSBuild.Fluent;
 using JD.MSBuild.Fluent.Fluent;
 using JD.MSBuild.Fluent.IR;
+using JDEfcptBuild.Builders;
 using JDEfcptBuild.Constants;
 using JDEfcptBuild.Registry;
 using JDEfcptBuild.Shared;
@@ -26,8 +27,19 @@ public static class BuildTransitiveTargetsFactory
         {
             // Derive UseNullableReferenceTypes from project's Nullable setting for zero-config scenarios
             group.Comment("Derive UseNullableReferenceTypes from project's Nullable setting for zero-config scenarios");
-            group.Property(EfcptProperties.EfcptConfigUseNullableReferenceTypes, PropertyValues.True, "'$(EfcptConfigUseNullableReferenceTypes)'=='' and ('$(Nullable)'=='enable' or '$(Nullable)'=='Enable')");
-            group.Property(EfcptProperties.EfcptConfigUseNullableReferenceTypes, PropertyValues.False, "'$(EfcptConfigUseNullableReferenceTypes)'=='' and '$(Nullable)'!=''");
+            group.Property(EfcptProperties.EfcptConfigUseNullableReferenceTypes, PropertyValues.True, 
+                MsBuildExpressions.Condition_And(
+                    MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUseNullableReferenceTypes),
+                    MsBuildExpressions.Condition_Or(
+                        MsBuildExpressions.Condition_Equals(MsBuildProperties.Nullable, PropertyValues.Enable),
+                        MsBuildExpressions.Condition_Equals(MsBuildProperties.Nullable, PropertyValues.Enable_Capitalized)
+                    )
+                ));
+            group.Property(EfcptProperties.EfcptConfigUseNullableReferenceTypes, PropertyValues.False, 
+                MsBuildExpressions.Condition_And(
+                    MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConfigUseNullableReferenceTypes),
+                    MsBuildExpressions.Condition_NotEmpty(MsBuildProperties.Nullable)
+                ));
         });
         // SQL Project Detection: Detect if this is a SQL database project (not an EF Core consumer project).
         //
@@ -40,15 +52,15 @@ public static class BuildTransitiveTargetsFactory
         t.Comment("SQL Project Detection: Detect if this is a SQL database project (not an EF Core consumer project).\n\n    Detection logic (in priority order):\n    1. Check if project file Sdk attribute references Microsoft.Build.Sql or MSBuild.Sdk.SqlProj\n    2. Fall back to MSBuild properties ($(SqlServerVersion) or $(DSP)) for legacy SSDT projects\n\n    This must be in the targets file (not props) because SDK properties like SqlServerVersion\n    are not available when props files are evaluated.");
         t.Target(EfcptTargets._EfcptDetectSqlProject, target =>
         {
-            target.BeforeTargets("BeforeBuild;BeforeRebuild");
-            target.Task("DetectSqlProject", task =>
+            target.BeforeTargets(MsBuildExpressions.Path_Combine(MsBuildTargets.BeforeBuild, MsBuildTargets.BeforeRebuild));
+            target.Task(EfcptTasks.DetectSqlProject, task =>
             {
-                task.Param(TaskParameters.ProjectPath, "$(MSBuildProjectFullPath)");
-                task.Param("SqlServerVersion", "$(SqlServerVersion)");
-                task.Param("DSP", "$(DSP)");
+                task.Param(TaskParameters.ProjectPath, MsBuildExpressions.Property(MsBuildProperties.MSBuildProjectFullPath));
+                task.Param(TaskParameters.SqlServerVersion, MsBuildExpressions.Property(MsBuildProperties.SqlServerVersion));
+                task.Param(TaskParameters.DSP, MsBuildExpressions.Property(MsBuildProperties.DSP));
                 task.OutputProperty(TaskParameters.IsSqlProject, EfcptProperties._EfcptIsSqlProject);
             });
-            target.PropertyGroup("'$(_EfcptIsSqlProject)' == ''", group =>
+            target.PropertyGroup(MsBuildExpressions.Condition_IsEmpty(EfcptProperties._EfcptIsSqlProject), group =>
             {
                 group.Property(EfcptProperties._EfcptIsSqlProject, PropertyValues.False);
             });
@@ -60,14 +72,17 @@ public static class BuildTransitiveTargetsFactory
         t.Comment("Diagnostic output for task assembly selection (when EfcptLogVerbosity=detailed)");
         t.Target(EfcptTargets._EfcptLogTaskAssemblyInfo, target =>
         {
-            target.BeforeTargets("EfcptResolveInputs;EfcptResolveInputsForDirectDacpac");
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(EfcptLogVerbosity)' == 'detailed'");
-            target.Message("EFCPT Task Assembly Selection:", PropertyValues.High);
-            target.Message("  MSBuildRuntimeType: $(MSBuildRuntimeType)", PropertyValues.High);
-            target.Message("  MSBuildVersion: $(MSBuildVersion)", PropertyValues.High);
-            target.Message("  Selected TasksFolder: $(_EfcptTasksFolder)", PropertyValues.High);
-            target.Message("  TaskAssembly Path: $(_EfcptTaskAssembly)", PropertyValues.High);
-            target.Message("  TaskAssembly Exists: $([System.IO.File]::Exists('$(_EfcptTaskAssembly)'))", PropertyValues.High);
+            target.BeforeTargets(MsBuildExpressions.Path_Combine(EfcptTargets.EfcptResolveInputs, EfcptTargets.EfcptResolveInputsForDirectDacpac));
+            target.Condition(MsBuildExpressions.Condition_And(
+                MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnabled),
+                MsBuildExpressions.Condition_Equals(EfcptProperties.EfcptLogVerbosity, PropertyValues.Detailed)
+            ));
+            target.Message($"EFCPT Task Assembly Selection:", PropertyValues.High);
+            target.Message($"  MSBuildRuntimeType: {MsBuildExpressions.Property(MsBuildProperties.MSBuildRuntimeType)}", PropertyValues.High);
+            target.Message($"  MSBuildVersion: {MsBuildExpressions.Property(MsBuildProperties.MSBuildVersion)}", PropertyValues.High);
+            target.Message($"  Selected TasksFolder: {MsBuildExpressions.Property(EfcptProperties._EfcptTasksFolder)}", PropertyValues.High);
+            target.Message($"  TaskAssembly Path: {MsBuildExpressions.Property(EfcptProperties._EfcptTaskAssembly)}", PropertyValues.High);
+            target.Message($"  TaskAssembly Exists: {MsBuildExpressions.FileExists(MsBuildExpressions.Property(EfcptProperties._EfcptTaskAssembly))}", PropertyValues.High);
         });
         // Register MSBuild tasks using centralized registry.
         t.Comment("Register MSBuild tasks using centralized registry.");
@@ -75,41 +90,39 @@ public static class BuildTransitiveTargetsFactory
         // Build Profiling: Initialize profiling at the start of the build pipeline.
         // This target runs early to ensure the profiler is available for all subsequent tasks.
         t.Comment("Build Profiling: Initialize profiling at the start of the build pipeline.\n    This target runs early to ensure the profiler is available for all subsequent tasks.");
-        t.Target(EfcptTargets._EfcptInitializeProfiling, target =>
-        {
-            target.BeforeTargets("_EfcptDetectSqlProject");
-            target.Condition("'$(EfcptEnabled)' == 'true'");
-            target.Task("InitializeBuildProfiling", task =>
+        t.AddEfcptTarget(EfcptTargets._EfcptInitializeProfiling)
+            .WhenEnabled()
+            .Before(EfcptTargets._EfcptDetectSqlProject)
+            .Build()
+            .Task(EfcptTasks.InitializeBuildProfiling, task =>
             {
-                task.Param("EnableProfiling", "$(EfcptEnableProfiling)");
-                task.Param(TaskParameters.ProjectPath, "$(MSBuildProjectFullPath)");
-                task.Param("ProjectName", "$(MSBuildProjectName)");
-                task.Param("TargetFramework", "$(TargetFramework)");
-                task.Param("Configuration", "$(Configuration)");
-                task.Param(TaskParameters.ConfigPath, "$(_EfcptResolvedConfig)");
-                task.Param(TaskParameters.RenamingPath, "$(_EfcptResolvedRenaming)");
-                task.Param(TaskParameters.TemplateDir, "$(_EfcptResolvedTemplateDir)");
-                task.Param("SqlProjectPath", "$(_EfcptSqlProj)");
-                task.Param(TaskParameters.DacpacPath, "$(_EfcptDacpacPath)");
-                task.Param(TaskParameters.Provider, "$(EfcptProvider)");
+                task.MapParameters()
+                    .WithProjectContext()
+                    .WithInputFiles()
+                    .WithDacpac()
+                    .Build()
+                    .Param(TaskParameters.EnableProfiling, MsBuildExpressions.Property(EfcptProperties.EfcptEnableProfiling))
+                    .Param(TaskParameters.Provider, MsBuildExpressions.Property(EfcptProperties.EfcptProvider));
             });
-        });
         // SDK Version Check: Warns users when a newer SDK version is available.
         // Opt-in via EfcptCheckForUpdates=true. Results are cached for 24 hours.
         t.Comment("SDK Version Check: Warns users when a newer SDK version is available.\n    Opt-in via EfcptCheckForUpdates=true. Results are cached for 24 hours.");
         t.Target(EfcptTargets._EfcptCheckForUpdates, target =>
         {
             target.BeforeTargets(MsBuildTargets.Build);
-            target.Condition("'$(EfcptCheckForUpdates)' == 'true' and '$(EfcptSdkVersion)' != ''");
-            target.Task("CheckSdkVersion", task =>
+            target.Condition(MsBuildExpressions.Condition_And(
+                MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptCheckForUpdates),
+                MsBuildExpressions.Condition_NotEmpty(EfcptProperties.EfcptSdkVersion)
+            ));
+            target.Task(EfcptTasks.CheckSdkVersion, task =>
             {
-                task.Param("CurrentVersion", "$(EfcptSdkVersion)");
-                task.Param("PackageId", "JD.Efcpt.Sdk");
-                task.Param("CacheHours", "$(EfcptUpdateCheckCacheHours)");
-                task.Param("ForceCheck", "$(EfcptForceUpdateCheck)");
-                task.Param("WarningLevel", "$(EfcptSdkVersionWarningLevel)");
-                task.OutputProperty("LatestVersion", "_EfcptLatestVersion");
-                task.OutputProperty("UpdateAvailable", "_EfcptUpdateAvailable");
+                task.Param(TaskParameters.CurrentVersion, MsBuildExpressions.Property(EfcptProperties.EfcptSdkVersion));
+                task.Param(TaskParameters.PackageId, PropertyValues.JD_Efcpt_Sdk);
+                task.Param(TaskParameters.CacheHours, MsBuildExpressions.Property(EfcptProperties.EfcptUpdateCheckCacheHours));
+                task.Param(TaskParameters.ForceCheck, MsBuildExpressions.Property(EfcptProperties.EfcptForceUpdateCheck));
+                task.Param(TaskParameters.WarningLevel, MsBuildExpressions.Property(EfcptProperties.EfcptSdkVersionWarningLevel));
+                task.OutputProperty(TaskParameters.LatestVersion, EfcptProperties._EfcptLatestVersion);
+                task.OutputProperty(TaskParameters.UpdateAvailable, EfcptProperties._EfcptUpdateAvailable);
             });
         });
         // ========================================================================
@@ -132,182 +145,212 @@ public static class BuildTransitiveTargetsFactory
         t.Comment("========================================================================\n    SQL Project Generation Pipeline: Extract database schema to SQL scripts\n    ========================================================================\n    When JD.Efcpt.Build is referenced within a SQL project (Microsoft.Build.Sql or \n    MSBuild.Sdk.SqlProj), this pipeline automatically extracts the database schema \n    into individual SQL script files within that SQL project.\n    \n    Detection is automatic based on SDK type - no configuration needed.\n    \n    This enables the workflow: \n    Database → SQL Scripts (in SQL Project) → Build to DACPAC → EF Core Models (in DataAccess Project)\n    \n    Lifecycle hooks:\n    - BeforeSqlProjGeneration: Custom target that runs before extraction\n    - AfterSqlProjGeneration: Custom target that runs after SQL scripts are generated\n    - BeforeEfcptGeneration: Custom target that runs before EF Core generation\n    - AfterEfcptGeneration: Custom target that runs after EF Core generation");
         // Lifecycle hook: BeforeSqlProjGeneration
         t.Comment("Lifecycle hook: BeforeSqlProjGeneration");
-        t.Target(EfcptTargets.BeforeSqlProjGeneration, target =>
-        {
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'");
-        });
+        TargetFactory.CreateLifecycleHook(t, EfcptTargets.BeforeSqlProjGeneration,
+            condition: MsBuildExpressions.Condition_And(
+                MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnabled),
+                MsBuildExpressions.Condition_IsTrue(EfcptProperties._EfcptIsSqlProject)));
         // Query database schema for fingerprinting
         t.Comment("Query database schema for fingerprinting");
-        t.Target(EfcptTargets.EfcptQueryDatabaseSchemaForSqlProj, target =>
-        {
-            target.DependsOnTargets(EfcptTargets.BeforeSqlProjGeneration);
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'");
-            target.Error("SqlProj generation requires a connection string. Set EfcptConnectionString, EfcptAppSettings, or EfcptAppConfig.", "'$(EfcptConnectionString)' == '' and '$(EfcptAppSettings)' == '' and '$(EfcptAppConfig)' == ''");
-            target.Message("Querying database schema for fingerprinting...", PropertyValues.High);
-            target.Task("QuerySchemaMetadata", task =>
+        t.AddEfcptTarget(EfcptTargets.EfcptQueryDatabaseSchemaForSqlProj)
+            .ForSqlProjectGeneration()
+            .DependsOn(EfcptTargets.BeforeSqlProjGeneration)
+            .Build()
+            .Error("SqlProj generation requires a connection string. Set EfcptConnectionString, EfcptAppSettings, or EfcptAppConfig.", 
+                MsBuildExpressions.Condition_And(
+                    MsBuildExpressions.Condition_And(
+                        MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptConnectionString),
+                        MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptAppSettings)
+                    ),
+                    MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptAppConfig)
+                ))
+            .Message("Querying database schema for fingerprinting...", PropertyValues.High)
+            .Task(EfcptTasks.QuerySchemaMetadata, task =>
             {
-                task.Param(TaskParameters.ConnectionString, "$(EfcptConnectionString)");
-                task.Param(TaskParameters.OutputDir, "$(EfcptOutput)");
-                task.Param(TaskParameters.Provider, "$(EfcptProvider)");
-                task.Param(TaskParameters.LogVerbosity, "$(EfcptLogVerbosity)");
-                task.OutputProperty("SchemaFingerprint", "_EfcptSchemaFingerprint");
-            });
-            target.Message("Database schema fingerprint: $(_EfcptSchemaFingerprint)", PropertyValues.Normal);
-        });
+                task.MapParameters()
+                    .WithDatabaseConnection()
+                    .WithOutput()
+                    .Build()
+                    .OutputProperty(TaskParameters.SchemaFingerprint, EfcptProperties._EfcptSchemaFingerprint);
+            })
+            .Message($"Database schema fingerprint: {MsBuildExpressions.Property(EfcptProperties._EfcptSchemaFingerprint)}", PropertyValues.Normal);
         // Extract database schema to SQL scripts using sqlpackage
         t.Comment("Extract database schema to SQL scripts using sqlpackage");
-        t.Target("EfcptExtractDatabaseSchemaToScripts", target =>
+        t.Target(EfcptTargets.EfcptExtractDatabaseSchemaToScripts, target =>
         {
             target.DependsOnTargets(EfcptTargets.EfcptQueryDatabaseSchemaForSqlProj);
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'");
+            target.Condition(MsBuildExpressions.Condition_And(
+                MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnabled),
+                MsBuildExpressions.Condition_IsTrue(EfcptProperties._EfcptIsSqlProject)
+            ));
             target.PropertyGroup(null, group =>
             {
-                group.Property("_EfcptScriptsDir", "$(EfcptSqlScriptsDir)");
+                group.Property(EfcptProperties._EfcptScriptsDir, MsBuildExpressions.Property(EfcptProperties.EfcptSqlScriptsDir));
             });
-            target.Message("Extracting database schema to SQL scripts in SQL project: $(_EfcptScriptsDir)", PropertyValues.High);
+            target.Message($"Extracting database schema to SQL scripts in SQL project: {MsBuildExpressions.Property(EfcptProperties._EfcptScriptsDir)}", PropertyValues.High);
             target.ItemGroup(null, group =>
             {
-                group.Include("_EfcptGeneratedScripts", "$(_EfcptScriptsDir)**\\*.sql");
+                group.Include(EfcptProperties._EfcptGeneratedScripts, $"{MsBuildExpressions.Property(EfcptProperties._EfcptScriptsDir)}**\\*.sql");
             });
             target.Task(MsBuildTasks.Delete, task =>
             {
-                task.Param(TaskParameters.Files, "@(_EfcptGeneratedScripts)");
-            }, "'@(_EfcptGeneratedScripts)' != ''");
-            target.Task("RunSqlPackage", task =>
+                task.Param(TaskParameters.Files, MsBuildExpressions.ItemList(EfcptProperties._EfcptGeneratedScripts));
+            }, MsBuildExpressions.ItemList_NotEmpty(EfcptProperties._EfcptGeneratedScripts));
+            target.Task(EfcptTasks.RunSqlPackage, task =>
             {
-                task.Param("ToolVersion", "$(EfcptSqlPackageToolVersion)");
-                task.Param("ToolRestore", "$(EfcptSqlPackageToolRestore)");
-                task.Param("ToolPath", "$(EfcptSqlPackageToolPath)");
-                task.Param("DotNetExe", "$(EfcptDotNetExe)");
-                task.Param("WorkingDirectory", "$(EfcptOutput)");
-                task.Param(TaskParameters.ConnectionString, "$(EfcptConnectionString)");
-                task.Param("TargetDirectory", "$(_EfcptScriptsDir)");
-                task.Param("ExtractTarget", "SchemaObjectType");
-                task.Param("TargetFramework", "$(TargetFramework)");
-                task.Param(TaskParameters.LogVerbosity, "$(EfcptLogVerbosity)");
-                task.OutputProperty("ExtractedPath", "_EfcptExtractedScriptsPath");
+                task.Param(TaskParameters.ToolVersion, MsBuildExpressions.Property(EfcptProperties.EfcptSqlPackageToolVersion));
+                task.Param(TaskParameters.ToolRestore, MsBuildExpressions.Property(EfcptProperties.EfcptSqlPackageToolRestore));
+                task.Param(TaskParameters.ToolPath, MsBuildExpressions.Property(EfcptProperties.EfcptSqlPackageToolPath));
+                task.Param(TaskParameters.DotNetExe, MsBuildExpressions.Property(EfcptProperties.EfcptDotNetExe));
+                task.Param(TaskParameters.WorkingDirectory, MsBuildExpressions.Property(EfcptProperties.EfcptOutput));
+                task.Param(TaskParameters.ConnectionString, MsBuildExpressions.Property(EfcptProperties.EfcptConnectionString));
+                task.Param(TaskParameters.TargetDirectory, MsBuildExpressions.Property(EfcptProperties._EfcptScriptsDir));
+                task.Param(TaskParameters.ExtractTarget, PropertyValues.SchemaObjectType);
+                task.Param(TaskParameters.TargetFramework, MsBuildExpressions.Property(MsBuildProperties.TargetFramework));
+                task.Param(TaskParameters.LogVerbosity, MsBuildExpressions.Property(EfcptProperties.EfcptLogVerbosity));
+                task.OutputProperty(TaskParameters.ExtractedPath, EfcptProperties._EfcptExtractedScriptsPath);
             });
-            target.Message("Extracted SQL scripts to: $(_EfcptExtractedScriptsPath)", PropertyValues.High);
+            target.Message($"Extracted SQL scripts to: {MsBuildExpressions.Property(EfcptProperties._EfcptExtractedScriptsPath)}", PropertyValues.High);
         });
         // Add auto-generation warnings to SQL files
         t.Comment("Add auto-generation warnings to SQL files");
         t.Target(EfcptTargets.EfcptAddSqlFileWarnings, target =>
         {
-            target.DependsOnTargets("EfcptExtractDatabaseSchemaToScripts");
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'");
+            target.DependsOnTargets(EfcptTargets.EfcptExtractDatabaseSchemaToScripts);
+            target.Condition(MsBuildExpressions.Condition_And(
+                MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnabled),
+                MsBuildExpressions.Condition_IsTrue(EfcptProperties._EfcptIsSqlProject)
+            ));
             target.Message("Adding auto-generation warnings to SQL files...", PropertyValues.High);
             target.PropertyGroup(null, group =>
             {
-                group.Property("_EfcptDatabaseName", "$([System.Text.RegularExpressions.Regex]::Match($(EfcptConnectionString), 'Database\\s*=\\s*\\\"?([^;\"]+)\\\"?').Groups[1].Value)");
-                group.Property("_EfcptDatabaseName", "$([System.Text.RegularExpressions.Regex]::Match($(EfcptConnectionString), 'Initial Catalog\\s*=\\s*\\\"?([^;\"]+)\\\"?').Groups[1].Value)");
+                group.Property(EfcptProperties._EfcptDatabaseName, "$([System.Text.RegularExpressions.Regex]::Match($(EfcptConnectionString), 'Database\\s*=\\s*\\\"?([^;\"]+)\\\"?').Groups[1].Value)");
+                group.Property(EfcptProperties._EfcptDatabaseName, "$([System.Text.RegularExpressions.Regex]::Match($(EfcptConnectionString), 'Initial Catalog\\s*=\\s*\\\"?([^;\"]+)\\\"?').Groups[1].Value)");
             });
-            target.Task("AddSqlFileWarnings", task =>
+            target.Task(EfcptTasks.AddSqlFileWarnings, task =>
             {
-                task.Param("ScriptsDirectory", "$(_EfcptScriptsDir)");
-                task.Param("DatabaseName", "$(_EfcptDatabaseName)");
-                task.Param(TaskParameters.LogVerbosity, "$(EfcptLogVerbosity)");
+                task.Param(TaskParameters.ScriptsDirectory, MsBuildExpressions.Property(EfcptProperties._EfcptScriptsDir));
+                task.Param(TaskParameters.DatabaseName, MsBuildExpressions.Property(EfcptProperties._EfcptDatabaseName));
+                task.Param(TaskParameters.LogVerbosity, MsBuildExpressions.Property(EfcptProperties.EfcptLogVerbosity));
             });
         });
         // Lifecycle hook: AfterSqlProjGeneration
-        t.Comment("Lifecycle hook: AfterSqlProjGeneration");
         // This runs after SQL scripts are generated in the SQL project
-        t.Comment("This runs after SQL scripts are generated in the SQL project");
         // The SQL project will build normally and create its DACPAC
-        t.Comment("The SQL project will build normally and create its DACPAC");
         // DataAccess projects that reference this SQL project will wait for this to complete
+        t.Comment("Lifecycle hook: AfterSqlProjGeneration");
+        t.Comment("This runs after SQL scripts are generated in the SQL project");
+        t.Comment("The SQL project will build normally and create its DACPAC");
         t.Comment("DataAccess projects that reference this SQL project will wait for this to complete");
-        t.Target(EfcptTargets.AfterSqlProjGeneration, target =>
-        {
-            target.BeforeTargets(MsBuildTargets.Build);
-            target.DependsOnTargets(EfcptTargets.EfcptAddSqlFileWarnings);
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'");
-            target.Message("_EfcptIsSqlProject: $(_EfcptIsSqlProject)", PropertyValues.High);
-            target.Message("SQL script generation complete. SQL project will build to DACPAC.", PropertyValues.High);
-        });
+        t.AddEfcptTarget(EfcptTargets.AfterSqlProjGeneration)
+            .ForSqlProjectGeneration()
+            .DependsOn(EfcptTargets.EfcptAddSqlFileWarnings)
+            .Before(MsBuildTargets.Build)
+            .LogInfo($"_EfcptIsSqlProject: {MsBuildExpressions.Property(EfcptProperties._EfcptIsSqlProject)}")
+            .LogInfo("SQL script generation complete. SQL project will build to DACPAC.")
+            .Build();
         // Main pipeline
         t.Comment("Main pipeline");
         // When NOT in a SQL project, resolve inputs normally
         t.Comment("When NOT in a SQL project, resolve inputs normally");
         t.Target(EfcptTargets.EfcptResolveInputs, target =>
         {
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptDacpac)' == ''");
-            target.Task("ResolveSqlProjAndInputs", task =>
+            target.Condition(MsBuildExpressions.Condition_And(
+                MsBuildExpressions.Condition_And(
+                    MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnabled),
+                    MsBuildExpressions.Condition_IsFalse(EfcptProperties._EfcptIsSqlProject)
+                ),
+                MsBuildExpressions.Condition_IsEmpty(EfcptProperties.EfcptDacpac)
+            ));
+            target.Task(EfcptTasks.ResolveSqlProjAndInputs, task =>
             {
-                task.Param("ProjectFullPath", "$(MSBuildProjectFullPath)");
-                task.Param("ProjectDirectory", "$(MSBuildProjectDirectory)");
-                task.Param(MsBuildProperties.Configuration, "$(Configuration)");
-                task.Param("ProjectReferences", "@(ProjectReference)");
-                task.Param("SqlProjOverride", "$(EfcptSqlProj)");
-                task.Param("ConfigOverride", "$(EfcptConfig)");
-                task.Param("RenamingOverride", "$(EfcptRenaming)");
-                task.Param("TemplateDirOverride", "$(EfcptTemplateDir)");
-                task.Param("SolutionDir", "$(EfcptSolutionDir)");
-                task.Param("SolutionPath", "$(EfcptSolutionPath)");
-                task.Param("ProbeSolutionDir", "$(EfcptProbeSolutionDir)");
-                task.Param(TaskParameters.OutputDir, "$(EfcptOutput)");
-                task.Param("DefaultsRoot", "$(MSBuildThisFileDirectory)Defaults");
-                task.Param("DumpResolvedInputs", "$(EfcptDumpResolvedInputs)");
-                task.Param("EfcptConnectionString", "$(EfcptConnectionString)");
-                task.Param("EfcptAppSettings", "$(EfcptAppSettings)");
-                task.Param("EfcptAppConfig", "$(EfcptAppConfig)");
-                task.Param("EfcptConnectionStringName", "$(EfcptConnectionStringName)");
-                task.Param("AutoDetectWarningLevel", "$(EfcptAutoDetectWarningLevel)");
+                task.Param(TaskParameters.ProjectFullPath, MsBuildExpressions.Property(MsBuildProperties.MSBuildProjectFullPath));
+                task.Param(TaskParameters.ProjectDirectory, MsBuildExpressions.Property(MsBuildProperties.MSBuildProjectDirectory));
+                task.Param(TaskParameters.Configuration, MsBuildExpressions.Property(MsBuildProperties.Configuration));
+                task.Param(TaskParameters.ProjectReferences, MsBuildExpressions.ItemList(MsBuildItems.ProjectReference));
+                task.Param(TaskParameters.SqlProjOverride, MsBuildExpressions.Property(EfcptProperties.EfcptSqlProj));
+                task.Param(TaskParameters.ConfigOverride, MsBuildExpressions.Property(EfcptProperties.EfcptConfig));
+                task.Param(TaskParameters.RenamingOverride, MsBuildExpressions.Property(EfcptProperties.EfcptRenaming));
+                task.Param(TaskParameters.TemplateDirOverride, MsBuildExpressions.Property(EfcptProperties.EfcptTemplateDir));
+                task.Param(TaskParameters.SolutionDir, MsBuildExpressions.Property(EfcptProperties.EfcptSolutionDir));
+                task.Param(TaskParameters.SolutionPath, MsBuildExpressions.Property(EfcptProperties.EfcptSolutionPath));
+                task.Param(TaskParameters.ProbeSolutionDir, MsBuildExpressions.Property(EfcptProperties.EfcptProbeSolutionDir));
+                task.Param(TaskParameters.OutputDir, MsBuildExpressions.Property(EfcptProperties.EfcptOutput));
+                task.Param(TaskParameters.DefaultsRoot, $"{MsBuildExpressions.Property(MsBuildProperties.MSBuildThisFileDirectory)}{PropertyValues.Defaults}");
+                task.Param(TaskParameters.DumpResolvedInputs, MsBuildExpressions.Property(EfcptProperties.EfcptDumpResolvedInputs));
+                task.Param(TaskParameters.EfcptConnectionString, MsBuildExpressions.Property(EfcptProperties.EfcptConnectionString));
+                task.Param(TaskParameters.EfcptAppSettings, MsBuildExpressions.Property(EfcptProperties.EfcptAppSettings));
+                task.Param(TaskParameters.EfcptAppConfig, MsBuildExpressions.Property(EfcptProperties.EfcptAppConfig));
+                task.Param(TaskParameters.EfcptConnectionStringName, MsBuildExpressions.Property(EfcptProperties.EfcptConnectionStringName));
+                task.Param(TaskParameters.AutoDetectWarningLevel, MsBuildExpressions.Property(EfcptProperties.EfcptAutoDetectWarningLevel));
                 task.OutputProperty(TaskParameters.SqlProjPath, EfcptProperties._EfcptSqlProj);
-                task.OutputProperty("ResolvedConfigPath", EfcptProperties._EfcptResolvedConfig);
-                task.OutputProperty("ResolvedRenamingPath", EfcptProperties._EfcptResolvedRenaming);
-                task.OutputProperty("ResolvedTemplateDir", EfcptProperties._EfcptResolvedTemplateDir);
-                task.OutputProperty("ResolvedConnectionString", "_EfcptResolvedConnectionString");
-                task.OutputProperty("UseConnectionString", "_EfcptUseConnectionString");
-                task.OutputProperty("IsUsingDefaultConfig", "_EfcptIsUsingDefaultConfig");
+                task.OutputProperty(TaskParameters.ResolvedConfigPath, EfcptProperties._EfcptResolvedConfig);
+                task.OutputProperty(TaskParameters.ResolvedRenamingPath, EfcptProperties._EfcptResolvedRenaming);
+                task.OutputProperty(TaskParameters.ResolvedTemplateDir, EfcptProperties._EfcptResolvedTemplateDir);
+                task.OutputProperty(TaskParameters.ResolvedConnectionString, EfcptProperties._EfcptResolvedConnectionString);
+                task.OutputProperty(TaskParameters.UseConnectionStringMode, EfcptProperties._EfcptUseConnectionString);
+                task.OutputProperty(TaskParameters.IsUsingDefaultConfig, EfcptProperties._EfcptIsUsingDefaultConfig);
             });
         });
         // Simplified resolution for direct DACPAC mode (bypass SQL project detection)
         t.Comment("Simplified resolution for direct DACPAC mode (bypass SQL project detection)");
         t.Target(EfcptTargets.EfcptResolveInputsForDirectDacpac, target =>
         {
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(EfcptDacpac)' != ''");
+            target.Condition(MsBuildExpressions.Condition_And(
+                MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnabled),
+                MsBuildExpressions.Condition_NotEmpty(EfcptProperties.EfcptDacpac)
+            ));
             target.PropertyGroup(null, group =>
             {
-                group.Property(EfcptProperties._EfcptResolvedConfig, "$(MSBuildProjectDirectory)\\$(EfcptConfig)");
-                group.Property(EfcptProperties._EfcptResolvedConfig, "$(MSBuildThisFileDirectory)Defaults\\efcpt-config.json");
-                group.Property(EfcptProperties._EfcptResolvedRenaming, "$(MSBuildProjectDirectory)\\$(EfcptRenaming)");
-                group.Property(EfcptProperties._EfcptResolvedRenaming, "$(MSBuildThisFileDirectory)Defaults\\efcpt.renaming.json");
-                group.Property(EfcptProperties._EfcptResolvedTemplateDir, "$(MSBuildProjectDirectory)\\$(EfcptTemplateDir)");
-                group.Property(EfcptProperties._EfcptResolvedTemplateDir, "$(MSBuildThisFileDirectory)Defaults\\Template");
-                group.Property("_EfcptIsUsingDefaultConfig", PropertyValues.True);
-                group.Property("_EfcptUseConnectionString", PropertyValues.False);
+                group.Property(EfcptProperties._EfcptResolvedConfig, $"{MsBuildExpressions.Property(MsBuildProperties.MSBuildProjectDirectory)}\\{MsBuildExpressions.Property(EfcptProperties.EfcptConfig)}");
+                group.Property(EfcptProperties._EfcptResolvedConfig, $"{MsBuildExpressions.Property(MsBuildProperties.MSBuildThisFileDirectory)}{PropertyValues.Defaults}\\{PropertyValues.EfcptConfigJson}");
+                group.Property(EfcptProperties._EfcptResolvedRenaming, $"{MsBuildExpressions.Property(MsBuildProperties.MSBuildProjectDirectory)}\\{MsBuildExpressions.Property(EfcptProperties.EfcptRenaming)}");
+                group.Property(EfcptProperties._EfcptResolvedRenaming, $"{MsBuildExpressions.Property(MsBuildProperties.MSBuildThisFileDirectory)}{PropertyValues.Defaults}\\{PropertyValues.EfcptRenamingJson}");
+                group.Property(EfcptProperties._EfcptResolvedTemplateDir, $"{MsBuildExpressions.Property(MsBuildProperties.MSBuildProjectDirectory)}\\{MsBuildExpressions.Property(EfcptProperties.EfcptTemplateDir)}");
+                group.Property(EfcptProperties._EfcptResolvedTemplateDir, $"{MsBuildExpressions.Property(MsBuildProperties.MSBuildThisFileDirectory)}{PropertyValues.Defaults}\\{PropertyValues.Template}");
+                group.Property(EfcptProperties._EfcptIsUsingDefaultConfig, PropertyValues.True);
+                group.Property(EfcptProperties._EfcptUseConnectionString, PropertyValues.False);
             });
             target.Task(MsBuildTasks.MakeDir, task =>
             {
-                task.Param(TaskParameters.Directories, "$(EfcptOutput)");
+                task.Param(TaskParameters.Directories, MsBuildExpressions.Property(EfcptProperties.EfcptOutput));
             });
         });
-        t.Target("EfcptQuerySchemaMetadata", target =>
+        t.Target(EfcptTargets.EfcptQuerySchemaMetadataForDb, target =>
         {
             target.BeforeTargets(EfcptTargets.EfcptStageInputs);
             target.AfterTargets(EfcptTargets.EfcptResolveInputs);
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' == 'true'");
-            target.Task("QuerySchemaMetadata", task =>
+            target.Condition(MsBuildExpressions.Condition_And(
+                MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnabled),
+                MsBuildExpressions.Condition_IsTrue(EfcptProperties._EfcptUseConnectionString)
+            ));
+            target.Task(EfcptTasks.QuerySchemaMetadata, task =>
             {
-                task.Param(TaskParameters.ConnectionString, "$(_EfcptResolvedConnectionString)");
-                task.Param(TaskParameters.OutputDir, "$(EfcptOutput)");
-                task.Param(TaskParameters.Provider, "$(EfcptProvider)");
-                task.Param(TaskParameters.LogVerbosity, "$(EfcptLogVerbosity)");
-                task.OutputProperty("SchemaFingerprint", "_EfcptSchemaFingerprint");
+                task.Param(TaskParameters.ConnectionString, MsBuildExpressions.Property(EfcptProperties._EfcptResolvedConnectionString));
+                task.MapParameters()
+                    .WithOutput()
+                    .Build()
+                    .OutputProperty(TaskParameters.SchemaFingerprint, EfcptProperties._EfcptSchemaFingerprint);
             });
         });
-        t.Target("EfcptUseDirectDacpac", target =>
+        t.Target(EfcptTargets.EfcptUseDirectDacpac, target =>
         {
-            target.DependsOnTargets("EfcptResolveInputs;EfcptResolveInputsForDirectDacpac");
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' != 'true' and '$(EfcptDacpac)' != ''");
+            target.DependsOnTargets($"{EfcptTargets.EfcptResolveInputs};{EfcptTargets.EfcptResolveInputsForDirectDacpac}");
+            target.Condition(MsBuildExpressions.Condition_And(
+                MsBuildExpressions.Condition_And(
+                    MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnabled),
+                    MsBuildExpressions.Condition_IsFalse(EfcptProperties._EfcptUseConnectionString)
+                ),
+                MsBuildExpressions.Condition_NotEmpty(EfcptProperties.EfcptDacpac)
+            ));
             target.PropertyGroup(null, group =>
             {
-                group.Property(EfcptProperties._EfcptDacpacPath, "$(EfcptDacpac)");
-                group.Property(EfcptProperties._EfcptDacpacPath, "$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(EfcptDacpac)'))))");
-                group.Property("_EfcptUseDirectDacpac", PropertyValues.True);
+                group.Property(EfcptProperties._EfcptDacpacPath, MsBuildExpressions.Property(EfcptProperties.EfcptDacpac));
+                group.Property(EfcptProperties._EfcptDacpacPath, $"$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('{MsBuildExpressions.Property(MsBuildProperties.MSBuildProjectDirectory)}', '{MsBuildExpressions.Property(EfcptProperties.EfcptDacpac)}'))))");
+                group.Property(EfcptProperties._EfcptUseDirectDacpac, PropertyValues.True);
             });
-            target.Error("EfcptDacpac was specified but the file does not exist: $(_EfcptDacpacPath)", "!Exists('$(_EfcptDacpacPath)')");
-            target.Message("Using pre-built DACPAC: $(_EfcptDacpacPath)", PropertyValues.High);
+            target.Error($"EfcptDacpac was specified but the file does not exist: {MsBuildExpressions.Property(EfcptProperties._EfcptDacpacPath)}", 
+                MsBuildExpressions.Condition_NotExists(MsBuildExpressions.Property(EfcptProperties._EfcptDacpacPath)));
+            target.Message($"Using pre-built DACPAC: {MsBuildExpressions.Property(EfcptProperties._EfcptDacpacPath)}", PropertyValues.High);
         });
         // Build the SQL project using MSBuild's native task to ensure proper dependency ordering.
         // This prevents race conditions when MSBuild runs in parallel mode - the SQL project
@@ -316,18 +359,31 @@ public static class BuildTransitiveTargetsFactory
         // MSBuild task, not the target, because target conditions evaluate before DependsOnTargets
         // complete. The target's EfcptEnabled condition is a simple enable/disable check.
         t.Comment("Build the SQL project using MSBuild's native task to ensure proper dependency ordering.\n    This prevents race conditions when MSBuild runs in parallel mode - the SQL project\n    build will complete before any targets that depend on this one can proceed.\n    Note: The mode-specific condition (checking connection string vs dacpac mode) is on the\n    MSBuild task, not the target, because target conditions evaluate before DependsOnTargets\n    complete. The target's EfcptEnabled condition is a simple enable/disable check.");
-        t.Target("EfcptBuildSqlProj", target =>
+        t.Target(EfcptTargets.EfcptBuildSqlProj, target =>
         {
-            target.DependsOnTargets("EfcptResolveInputs;EfcptUseDirectDacpac");
-            target.Condition("'$(EfcptEnabled)' == 'true'");
-            target.Message("Building SQL project: $(_EfcptSqlProj)", PropertyValues.Normal, "'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptSqlProj)' != ''");
-            target.Task("MSBuild", task =>
+            target.DependsOnTargets($"{EfcptTargets.EfcptResolveInputs};{EfcptTargets.EfcptUseDirectDacpac}");
+            target.Condition(MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnabled));
+            target.Message($"Building SQL project: {MsBuildExpressions.Property(EfcptProperties._EfcptSqlProj)}", PropertyValues.Normal, 
+                MsBuildExpressions.Condition_And(
+                    MsBuildExpressions.Condition_And(
+                        MsBuildExpressions.Condition_IsFalse(EfcptProperties._EfcptUseConnectionString),
+                        MsBuildExpressions.Condition_IsFalse(EfcptProperties._EfcptUseDirectDacpac)
+                    ),
+                    MsBuildExpressions.Condition_NotEmpty(EfcptProperties._EfcptSqlProj)
+                ));
+            target.Task(MsBuildTasks.MSBuild, task =>
             {
-                task.Param("Projects", "$(_EfcptSqlProj)");
+                task.Param(TaskParameters.Projects, MsBuildExpressions.Property(EfcptProperties._EfcptSqlProj));
                 task.Param("Targets", MsBuildTargets.Build);
-                task.Param("Properties", "Configuration=$(Configuration)");
+                task.Param("Properties", PropertyValues.Configuration);
                 task.Param("BuildInParallel", PropertyValues.False);
-            }, "'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptSqlProj)' != ''");
+            }, MsBuildExpressions.Condition_And(
+                MsBuildExpressions.Condition_And(
+                    MsBuildExpressions.Condition_IsFalse(EfcptProperties._EfcptUseConnectionString),
+                    MsBuildExpressions.Condition_IsFalse(EfcptProperties._EfcptUseDirectDacpac)
+                ),
+                MsBuildExpressions.Condition_NotEmpty(EfcptProperties._EfcptSqlProj)
+            ));
         });
         // EfcptEnsureDacpac: Build dacpac if needed (not in connection string mode).
         // Note: The condition check happens INSIDE the target (not on the target itself)
@@ -335,242 +391,177 @@ public static class BuildTransitiveTargetsFactory
         t.Comment("EfcptEnsureDacpac: Build dacpac if needed (not in connection string mode).\n    Note: The condition check happens INSIDE the target (not on the target itself)\n    because target conditions are evaluated before DependsOnTargets run.");
         t.Target(EfcptTargets.EfcptEnsureDacpacBuilt, target =>
         {
-            target.DependsOnTargets("EfcptResolveInputs;EfcptUseDirectDacpac;EfcptBuildSqlProj");
-            target.Condition("'$(EfcptEnabled)' == 'true'");
-            target.Task("EnsureDacpacBuilt", task =>
+            target.DependsOnTargets($"{EfcptTargets.EfcptResolveInputs};{EfcptTargets.EfcptUseDirectDacpac};{EfcptTargets.EfcptBuildSqlProj}");
+            target.Condition(MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnabled));
+            target.Task(EfcptTasks.EnsureDacpacBuilt, task =>
             {
-                task.Param(TaskParameters.SqlProjPath, "$(_EfcptSqlProj)");
-                task.Param(MsBuildProperties.Configuration, "$(Configuration)");
-                task.Param("MsBuildExe", "$(MSBuildBinPath)msbuild.exe");
-                task.Param("DotNetExe", "$(EfcptDotNetExe)");
-                task.Param(TaskParameters.LogVerbosity, "$(EfcptLogVerbosity)");
+                task.Param(TaskParameters.SqlProjPath, MsBuildExpressions.Property(EfcptProperties._EfcptSqlProj));
+                task.Param(TaskParameters.Configuration, MsBuildExpressions.Property(MsBuildProperties.Configuration));
+                task.Param(TaskParameters.MsBuildExe, $"{MsBuildExpressions.Property(MsBuildProperties.MSBuildBinPath)}{PropertyValues.MsBuildExe}");
+                task.Param(TaskParameters.DotNetExe, MsBuildExpressions.Property(EfcptProperties.EfcptDotNetExe));
+                task.Param(TaskParameters.LogVerbosity, MsBuildExpressions.Property(EfcptProperties.EfcptLogVerbosity));
                 task.OutputProperty(TaskParameters.DacpacPath, EfcptProperties._EfcptDacpacPath);
-            }, "'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptIsSqlProject)' != 'true'");
+            }, MsBuildExpressions.Condition_And(
+                MsBuildExpressions.Condition_And(
+                    MsBuildExpressions.Condition_IsFalse(EfcptProperties._EfcptUseConnectionString),
+                    MsBuildExpressions.Condition_IsFalse(EfcptProperties._EfcptUseDirectDacpac)
+                ),
+                MsBuildExpressions.Condition_IsFalse(EfcptProperties._EfcptIsSqlProject)
+            ));
         });
         // Resolve DbContext name from SQL project, DACPAC, or connection string.
         // This runs after DACPAC is ensured/resolved but before staging to allow
         // the resolved name to be used as an override in ApplyConfigOverrides.
         t.Comment("Resolve DbContext name from SQL project, DACPAC, or connection string.\n    This runs after DACPAC is ensured/resolved but before staging to allow\n    the resolved name to be used as an override in ApplyConfigOverrides.");
-        t.Target("EfcptResolveDbContextName", target =>
+        t.Target(EfcptTargets.EfcptResolveDbContextName, target =>
         {
-            target.DependsOnTargets("EfcptResolveInputs;EfcptEnsureDacpac;EfcptUseDirectDacpac");
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
-            target.Task("ResolveDbContextName", task =>
+            target.DependsOnTargets($"{EfcptTargets.EfcptResolveInputs};{EfcptTargets.EfcptEnsureDacpac};{EfcptTargets.EfcptUseDirectDacpac}");
+            target.Condition(MsBuildExpressions.Condition_And(
+                MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnabled),
+                MsBuildExpressions.Condition_IsFalse(EfcptProperties._EfcptIsSqlProject)
+            ));
+            target.Task(EfcptTasks.ResolveDbContextName, task =>
             {
-                task.Param("ExplicitDbContextName", "$(EfcptConfigDbContextName)");
-                task.Param(TaskParameters.SqlProjPath, "$(_EfcptSqlProj)");
-                task.Param(TaskParameters.DacpacPath, "$(_EfcptDacpacPath)");
-                task.Param(TaskParameters.ConnectionString, "$(_EfcptResolvedConnectionString)");
-                task.Param("UseConnectionStringMode", "$(_EfcptUseConnectionString)");
-                task.Param(TaskParameters.LogVerbosity, "$(EfcptLogVerbosity)");
-                task.OutputProperty("ResolvedDbContextName", "_EfcptResolvedDbContextName");
+                task.Param(TaskParameters.ExplicitDbContextName, MsBuildExpressions.Property(EfcptProperties.EfcptConfigDbContextName));
+                task.Param(TaskParameters.SqlProjPath, MsBuildExpressions.Property(EfcptProperties._EfcptSqlProj));
+                task.Param(TaskParameters.DacpacPath, MsBuildExpressions.Property(EfcptProperties._EfcptDacpacPath));
+                task.Param(TaskParameters.ConnectionString, MsBuildExpressions.Property(EfcptProperties._EfcptResolvedConnectionString));
+                task.Param(TaskParameters.UseConnectionStringMode, MsBuildExpressions.Property(EfcptProperties._EfcptUseConnectionString));
+                task.Param(TaskParameters.LogVerbosity, MsBuildExpressions.Property(EfcptProperties.EfcptLogVerbosity));
+                task.OutputProperty(TaskParameters.ResolvedDbContextName, EfcptProperties._EfcptResolvedDbContextName);
             });
             target.PropertyGroup(null, group =>
             {
-                group.Property("EfcptConfigDbContextName", "$(_EfcptResolvedDbContextName)");
+                group.Property(EfcptProperties.EfcptConfigDbContextName, MsBuildExpressions.Property(EfcptProperties._EfcptResolvedDbContextName));
             });
         });
-        t.Target(EfcptTargets.EfcptStageInputs, target =>
-        {
-            target.DependsOnTargets("EfcptResolveInputs;EfcptEnsureDacpac;EfcptUseDirectDacpac;EfcptResolveDbContextName");
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
-            target.Task("StageEfcptInputs", task =>
+        t.AddEfcptTarget(EfcptTargets.EfcptStageInputs)
+            .ForEfCoreGeneration()
+            .DependsOn(EfcptTargets.EfcptResolveInputs, EfcptTargets.EfcptEnsureDacpac, 
+                       EfcptTargets.EfcptUseDirectDacpac, EfcptTargets.EfcptResolveDbContextName)
+            .Build()
+            .Task(EfcptTasks.StageEfcptInputs, task =>
             {
-                task.Param(TaskParameters.OutputDir, "$(EfcptOutput)");
-                task.Param("ProjectDirectory", "$(MSBuildProjectDirectory)");
-                task.Param(TaskParameters.ConfigPath, "$(_EfcptResolvedConfig)");
-                task.Param(TaskParameters.RenamingPath, "$(_EfcptResolvedRenaming)");
-                task.Param(TaskParameters.TemplateDir, "$(_EfcptResolvedTemplateDir)");
-                task.Param("TemplateOutputDir", "$(EfcptGeneratedDir)");
-                task.Param("TargetFramework", "$(TargetFramework)");
-                task.Param(TaskParameters.LogVerbosity, "$(EfcptLogVerbosity)");
-                task.OutputProperty("StagedConfigPath", "_EfcptStagedConfig");
-                task.OutputProperty("StagedRenamingPath", "_EfcptStagedRenaming");
-                task.OutputProperty("StagedTemplateDir", "_EfcptStagedTemplateDir");
+                task.Param(TaskParameters.OutputDir, MsBuildExpressions.Property(EfcptProperties.EfcptOutput));
+                task.Param(TaskParameters.ProjectDirectory, MsBuildExpressions.Property(MsBuildProperties.MSBuildProjectDirectory));
+                task.Param(TaskParameters.ConfigPath, MsBuildExpressions.Property(EfcptProperties._EfcptResolvedConfig));
+                task.Param(TaskParameters.RenamingPath, MsBuildExpressions.Property(EfcptProperties._EfcptResolvedRenaming));
+                task.Param(TaskParameters.TemplateDir, MsBuildExpressions.Property(EfcptProperties._EfcptResolvedTemplateDir));
+                task.Param(TaskParameters.TemplateOutputDir, MsBuildExpressions.Property(EfcptProperties.EfcptGeneratedDir));
+                task.Param(TaskParameters.TargetFramework, MsBuildExpressions.Property(MsBuildProperties.TargetFramework));
+                task.Param(TaskParameters.LogVerbosity, MsBuildExpressions.Property(EfcptProperties.EfcptLogVerbosity));
+                task.OutputProperty(TaskParameters.StagedConfigPath, EfcptProperties._EfcptStagedConfig);
+                task.OutputProperty(TaskParameters.StagedRenamingPath, EfcptProperties._EfcptStagedRenaming);
+                task.OutputProperty(TaskParameters.StagedTemplateDir, EfcptProperties._EfcptStagedTemplateDir);
             });
-        });
         // Apply MSBuild property overrides to the staged efcpt-config.json file.
         // Runs after staging but before fingerprinting to ensure overrides are included in the hash.
         t.Comment("Apply MSBuild property overrides to the staged efcpt-config.json file.\n    Runs after staging but before fingerprinting to ensure overrides are included in the hash.");
-        t.Target(EfcptTargets.EfcptApplyConfigOverrides, target =>
-        {
-            target.DependsOnTargets(EfcptTargets.EfcptStageInputs);
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
-            target.Task("ApplyConfigOverrides", task =>
+        t.AddEfcptTarget(EfcptTargets.EfcptApplyConfigOverrides)
+            .ForEfCoreGeneration()
+            .DependsOn(EfcptTargets.EfcptStageInputs)
+            .Build()
+            .Task(EfcptTasks.ApplyConfigOverrides, task =>
             {
-                task.Param("StagedConfigPath", "$(_EfcptStagedConfig)");
-                task.Param("ApplyOverrides", "$(EfcptApplyMsBuildOverrides)");
-                task.Param("IsUsingDefaultConfig", "$(_EfcptIsUsingDefaultConfig)");
-                task.Param(TaskParameters.LogVerbosity, "$(EfcptLogVerbosity)");
-                task.Param("RootNamespace", "$(EfcptConfigRootNamespace)");
-                task.Param("DbContextName", "$(EfcptConfigDbContextName)");
-                task.Param("DbContextNamespace", "$(EfcptConfigDbContextNamespace)");
-                task.Param("ModelNamespace", "$(EfcptConfigModelNamespace)");
-                task.Param("OutputPath", "$(EfcptConfigOutputPath)");
-                task.Param("DbContextOutputPath", "$(EfcptConfigDbContextOutputPath)");
-                task.Param("SplitDbContext", "$(EfcptConfigSplitDbContext)");
-                task.Param("UseSchemaFolders", "$(EfcptConfigUseSchemaFolders)");
-                task.Param("UseSchemaNamespaces", "$(EfcptConfigUseSchemaNamespaces)");
-                task.Param("EnableOnConfiguring", "$(EfcptConfigEnableOnConfiguring)");
-                task.Param("GenerationType", "$(EfcptConfigGenerationType)");
-                task.Param("UseDatabaseNames", "$(EfcptConfigUseDatabaseNames)");
-                task.Param("UseDataAnnotations", "$(EfcptConfigUseDataAnnotations)");
-                task.Param("UseNullableReferenceTypes", "$(EfcptConfigUseNullableReferenceTypes)");
-                task.Param("UseInflector", "$(EfcptConfigUseInflector)");
-                task.Param("UseLegacyInflector", "$(EfcptConfigUseLegacyInflector)");
-                task.Param("UseManyToManyEntity", "$(EfcptConfigUseManyToManyEntity)");
-                task.Param("UseT4", "$(EfcptConfigUseT4)");
-                task.Param("UseT4Split", "$(EfcptConfigUseT4Split)");
-                task.Param("RemoveDefaultSqlFromBool", "$(EfcptConfigRemoveDefaultSqlFromBool)");
-                task.Param("SoftDeleteObsoleteFiles", "$(EfcptConfigSoftDeleteObsoleteFiles)");
-                task.Param("DiscoverMultipleResultSets", "$(EfcptConfigDiscoverMultipleResultSets)");
-                task.Param("UseAlternateResultSetDiscovery", "$(EfcptConfigUseAlternateResultSetDiscovery)");
-                task.Param("T4TemplatePath", "$(EfcptConfigT4TemplatePath)");
-                task.Param("UseNoNavigations", "$(EfcptConfigUseNoNavigations)");
-                task.Param("MergeDacpacs", "$(EfcptConfigMergeDacpacs)");
-                task.Param("RefreshObjectLists", "$(EfcptConfigRefreshObjectLists)");
-                task.Param("GenerateMermaidDiagram", "$(EfcptConfigGenerateMermaidDiagram)");
-                task.Param("UseDecimalAnnotationForSprocs", "$(EfcptConfigUseDecimalAnnotationForSprocs)");
-                task.Param("UsePrefixNavigationNaming", "$(EfcptConfigUsePrefixNavigationNaming)");
-                task.Param("UseDatabaseNamesForRoutines", "$(EfcptConfigUseDatabaseNamesForRoutines)");
-                task.Param("UseInternalAccessForRoutines", "$(EfcptConfigUseInternalAccessForRoutines)");
-                task.Param("UseDateOnlyTimeOnly", "$(EfcptConfigUseDateOnlyTimeOnly)");
-                task.Param("UseHierarchyId", "$(EfcptConfigUseHierarchyId)");
-                task.Param("UseSpatial", "$(EfcptConfigUseSpatial)");
-                task.Param("UseNodaTime", "$(EfcptConfigUseNodaTime)");
-                task.Param("PreserveCasingWithRegex", "$(EfcptConfigPreserveCasingWithRegex)");
+                task.MapParameters()
+                    .WithAllConfigOverrides()
+                    .Build()
+                    .Param(TaskParameters.StagedConfigPath, MsBuildExpressions.Property(EfcptProperties._EfcptStagedConfig))
+                    .Param(TaskParameters.ApplyOverrides, MsBuildExpressions.Property(EfcptProperties.EfcptApplyMsBuildOverrides))
+                    .Param(TaskParameters.IsUsingDefaultConfig, MsBuildExpressions.Property(EfcptProperties._EfcptIsUsingDefaultConfig))
+                    .Param(TaskParameters.LogVerbosity, MsBuildExpressions.Property(EfcptProperties.EfcptLogVerbosity));
             });
-        });
         // Serialize MSBuild config property overrides to a JSON string for fingerprinting.
         // This ensures that changes to EfcptConfig* properties trigger regeneration.
         t.Comment("Serialize MSBuild config property overrides to a JSON string for fingerprinting.\n    This ensures that changes to EfcptConfig* properties trigger regeneration.");
-        t.Target(EfcptTargets.EfcptSerializeConfigProperties, target =>
-        {
-            target.DependsOnTargets(EfcptTargets.EfcptApplyConfigOverrides);
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
-            target.Task("SerializeConfigProperties", task =>
+        t.AddEfcptTarget(EfcptTargets.EfcptSerializeConfigProperties)
+            .ForEfCoreGeneration()
+            .DependsOn(EfcptTargets.EfcptApplyConfigOverrides)
+            .Build()
+            .Task(EfcptTasks.SerializeConfigProperties, task =>
             {
-                task.Param("RootNamespace", "$(EfcptConfigRootNamespace)");
-                task.Param("DbContextName", "$(EfcptConfigDbContextName)");
-                task.Param("DbContextNamespace", "$(EfcptConfigDbContextNamespace)");
-                task.Param("ModelNamespace", "$(EfcptConfigModelNamespace)");
-                task.Param("OutputPath", "$(EfcptConfigOutputPath)");
-                task.Param("DbContextOutputPath", "$(EfcptConfigDbContextOutputPath)");
-                task.Param("SplitDbContext", "$(EfcptConfigSplitDbContext)");
-                task.Param("UseSchemaFolders", "$(EfcptConfigUseSchemaFolders)");
-                task.Param("UseSchemaNamespaces", "$(EfcptConfigUseSchemaNamespaces)");
-                task.Param("EnableOnConfiguring", "$(EfcptConfigEnableOnConfiguring)");
-                task.Param("GenerationType", "$(EfcptConfigGenerationType)");
-                task.Param("UseDatabaseNames", "$(EfcptConfigUseDatabaseNames)");
-                task.Param("UseDataAnnotations", "$(EfcptConfigUseDataAnnotations)");
-                task.Param("UseNullableReferenceTypes", "$(EfcptConfigUseNullableReferenceTypes)");
-                task.Param("UseInflector", "$(EfcptConfigUseInflector)");
-                task.Param("UseLegacyInflector", "$(EfcptConfigUseLegacyInflector)");
-                task.Param("UseManyToManyEntity", "$(EfcptConfigUseManyToManyEntity)");
-                task.Param("UseT4", "$(EfcptConfigUseT4)");
-                task.Param("UseT4Split", "$(EfcptConfigUseT4Split)");
-                task.Param("RemoveDefaultSqlFromBool", "$(EfcptConfigRemoveDefaultSqlFromBool)");
-                task.Param("SoftDeleteObsoleteFiles", "$(EfcptConfigSoftDeleteObsoleteFiles)");
-                task.Param("DiscoverMultipleResultSets", "$(EfcptConfigDiscoverMultipleResultSets)");
-                task.Param("UseAlternateResultSetDiscovery", "$(EfcptConfigUseAlternateResultSetDiscovery)");
-                task.Param("T4TemplatePath", "$(EfcptConfigT4TemplatePath)");
-                task.Param("UseNoNavigations", "$(EfcptConfigUseNoNavigations)");
-                task.Param("MergeDacpacs", "$(EfcptConfigMergeDacpacs)");
-                task.Param("RefreshObjectLists", "$(EfcptConfigRefreshObjectLists)");
-                task.Param("GenerateMermaidDiagram", "$(EfcptConfigGenerateMermaidDiagram)");
-                task.Param("UseDecimalAnnotationForSprocs", "$(EfcptConfigUseDecimalAnnotationForSprocs)");
-                task.Param("UsePrefixNavigationNaming", "$(EfcptConfigUsePrefixNavigationNaming)");
-                task.Param("UseDatabaseNamesForRoutines", "$(EfcptConfigUseDatabaseNamesForRoutines)");
-                task.Param("UseInternalAccessForRoutines", "$(EfcptConfigUseInternalAccessForRoutines)");
-                task.Param("UseDateOnlyTimeOnly", "$(EfcptConfigUseDateOnlyTimeOnly)");
-                task.Param("UseHierarchyId", "$(EfcptConfigUseHierarchyId)");
-                task.Param("UseSpatial", "$(EfcptConfigUseSpatial)");
-                task.Param("UseNodaTime", "$(EfcptConfigUseNodaTime)");
-                task.Param("PreserveCasingWithRegex", "$(EfcptConfigPreserveCasingWithRegex)");
-                task.OutputProperty("SerializedProperties", "_EfcptSerializedConfigProperties");
+                task.MapParameters()
+                    .WithAllConfigOverrides()
+                    .Build()
+                    .OutputProperty(TaskParameters.SerializedProperties, EfcptProperties._EfcptSerializedConfigProperties);
             });
-        });
-        t.Target("EfcptComputeFingerprint", target =>
+        t.Target(EfcptTargets.EfcptComputeFingerprint, target =>
         {
             target.DependsOnTargets(EfcptTargets.EfcptSerializeConfigProperties);
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
-            target.Task("ComputeFingerprint", task =>
+            target.Condition(MsBuildExpressions.Condition_And(MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnabled), MsBuildExpressions.Condition_IsFalse(EfcptProperties._EfcptIsSqlProject)));
+            target.Task(EfcptTasks.ComputeFingerprint, task =>
             {
-                task.Param(TaskParameters.DacpacPath, "$(_EfcptDacpacPath)");
-                task.Param("SchemaFingerprint", "$(_EfcptSchemaFingerprint)");
-                task.Param("UseConnectionStringMode", "$(_EfcptUseConnectionString)");
-                task.Param(TaskParameters.ConfigPath, "$(_EfcptStagedConfig)");
-                task.Param(TaskParameters.RenamingPath, "$(_EfcptStagedRenaming)");
-                task.Param(TaskParameters.TemplateDir, "$(_EfcptStagedTemplateDir)");
-                task.Param("FingerprintFile", "$(EfcptFingerprintFile)");
-                task.Param("ToolVersion", "$(EfcptToolVersion)");
-                task.Param("GeneratedDir", "$(EfcptGeneratedDir)");
-                task.Param("DetectGeneratedFileChanges", "$(EfcptDetectGeneratedFileChanges)");
-                task.Param("ConfigPropertyOverrides", "$(_EfcptSerializedConfigProperties)");
-                task.Param(TaskParameters.LogVerbosity, "$(EfcptLogVerbosity)");
+                task.Param(TaskParameters.DacpacPath, MsBuildExpressions.Property(EfcptProperties._EfcptDacpacPath));
+                task.Param(TaskParameters.SchemaFingerprint, MsBuildExpressions.Property(EfcptProperties._EfcptSchemaFingerprint));
+                task.Param(TaskParameters.UseConnectionStringMode, MsBuildExpressions.Property(EfcptProperties._EfcptUseConnectionString));
+                task.Param(TaskParameters.ConfigPath, MsBuildExpressions.Property(EfcptProperties._EfcptStagedConfig));
+                task.Param(TaskParameters.RenamingPath, MsBuildExpressions.Property(EfcptProperties._EfcptStagedRenaming));
+                task.Param(TaskParameters.TemplateDir, MsBuildExpressions.Property(EfcptProperties._EfcptStagedTemplateDir));
+                task.Param(TaskParameters.FingerprintFile, MsBuildExpressions.Property(EfcptProperties.EfcptFingerprintFile));
+                task.Param(TaskParameters.ToolVersion, MsBuildExpressions.Property(EfcptProperties.EfcptToolVersion));
+                task.Param(TaskParameters.GeneratedDir, MsBuildExpressions.Property(EfcptProperties.EfcptGeneratedDir));
+                task.Param(TaskParameters.DetectGeneratedFileChanges, MsBuildExpressions.Property(EfcptProperties.EfcptDetectGeneratedFileChanges));
+                task.Param(TaskParameters.ConfigPropertyOverrides, MsBuildExpressions.Property(EfcptProperties._EfcptSerializedConfigProperties));
+                task.Param(TaskParameters.LogVerbosity, MsBuildExpressions.Property(EfcptProperties.EfcptLogVerbosity));
                 task.OutputProperty(TaskParameters.Fingerprint, EfcptProperties._EfcptFingerprint);
-                task.OutputProperty("HasChanged", "_EfcptFingerprintChanged");
+                task.OutputProperty(TaskParameters.HasChanged, EfcptProperties._EfcptFingerprintChanged);
             });
         });
         // Lifecycle hook: BeforeEfcptGeneration
         t.Comment("Lifecycle hook: BeforeEfcptGeneration");
-        t.Target(EfcptTargets.BeforeEfcptGeneration, target =>
-        {
-            target.DependsOnTargets("EfcptComputeFingerprint");
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
-        });
+        TargetFactory.CreateLifecycleHook(t, EfcptTargets.BeforeEfcptGeneration,
+            condition: MsBuildExpressions.Condition_And(
+                MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnabled),
+                MsBuildExpressions.Condition_IsFalse(EfcptProperties._EfcptIsSqlProject)));
         t.Target(EfcptTargets.EfcptGenerateModels, target =>
         {
             target.BeforeTargets(MsBuildTargets.CoreCompile);
             target.DependsOnTargets(EfcptTargets.BeforeEfcptGeneration);
-            target.Inputs("$(_EfcptDacpacPath);$(_EfcptStagedConfig);$(_EfcptStagedRenaming)");
-            target.Outputs("$(EfcptStampFile)");
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and ('$(_EfcptFingerprintChanged)' == 'true' or !Exists('$(EfcptStampFile)'))");
+            target.Inputs($"{MsBuildExpressions.Property(EfcptProperties._EfcptDacpacPath)};{MsBuildExpressions.Property(EfcptProperties._EfcptStagedConfig)};{MsBuildExpressions.Property(EfcptProperties._EfcptStagedRenaming)}");
+            target.Outputs(MsBuildExpressions.Property(EfcptProperties.EfcptStampFile));
+            target.Condition(MsBuildExpressions.Condition_And(
+                MsBuildExpressions.Condition_And(
+                    MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnabled),
+                    MsBuildExpressions.Condition_IsFalse(EfcptProperties._EfcptIsSqlProject)
+                ),
+                $"({MsBuildExpressions.Condition_IsTrue(EfcptProperties._EfcptFingerprintChanged)} or !Exists({MsBuildExpressions.Property(EfcptProperties.EfcptStampFile)}))"
+            ));
             target.Task(MsBuildTasks.MakeDir, task =>
             {
-                task.Param(TaskParameters.Directories, "$(EfcptGeneratedDir)");
+                task.Param(TaskParameters.Directories, MsBuildExpressions.Property(EfcptProperties.EfcptGeneratedDir));
             });
-            target.Task("RunEfcpt", task =>
+            target.Task(EfcptTasks.RunEfcpt, task =>
             {
-                task.Param("ToolMode", "$(EfcptToolMode)");
-                task.Param("ToolPackageId", "$(EfcptToolPackageId)");
-                task.Param("ToolVersion", "$(EfcptToolVersion)");
-                task.Param("ToolRestore", "$(EfcptToolRestore)");
-                task.Param("ToolCommand", "$(EfcptToolCommand)");
-                task.Param("ToolPath", "$(EfcptToolPath)");
-                task.Param("DotNetExe", "$(EfcptDotNetExe)");
-                task.Param("WorkingDirectory", "$(EfcptOutput)");
-                task.Param(TaskParameters.DacpacPath, "$(_EfcptDacpacPath)");
-                task.Param(TaskParameters.ConnectionString, "$(_EfcptResolvedConnectionString)");
-                task.Param("UseConnectionStringMode", "$(_EfcptUseConnectionString)");
-                task.Param(TaskParameters.Provider, "$(EfcptProvider)");
-                task.Param(TaskParameters.ConfigPath, "$(_EfcptStagedConfig)");
-                task.Param(TaskParameters.RenamingPath, "$(_EfcptStagedRenaming)");
-                task.Param(TaskParameters.TemplateDir, "$(_EfcptStagedTemplateDir)");
-                task.Param(TaskParameters.OutputDir, "$(EfcptGeneratedDir)");
-                task.Param("TargetFramework", "$(TargetFramework)");
-                task.Param(TaskParameters.ProjectPath, "$(MSBuildProjectFullPath)");
-                task.Param(TaskParameters.LogVerbosity, "$(EfcptLogVerbosity)");
+                task.MapParameters()
+                    .WithToolConfiguration()
+                    .WithResolvedConnection()
+                    .WithStagedFiles()
+                    .Build()
+                    .Param(TaskParameters.WorkingDirectory, MsBuildExpressions.Property(EfcptProperties.EfcptOutput))
+                    .Param(TaskParameters.DacpacPath, MsBuildExpressions.Property(EfcptProperties._EfcptDacpacPath))
+                    .Param(TaskParameters.OutputDir, MsBuildExpressions.Property(EfcptProperties.EfcptGeneratedDir))
+                    .Param(TaskParameters.TargetFramework, MsBuildExpressions.Property(MsBuildProperties.TargetFramework))
+                    .Param(TaskParameters.ProjectPath, MsBuildExpressions.Property(MsBuildProperties.MSBuildProjectFullPath))
+                    .Param(TaskParameters.LogVerbosity, MsBuildExpressions.Property(EfcptProperties.EfcptLogVerbosity));
             });
-            target.Task("RenameGeneratedFiles", task =>
+            target.Task(EfcptTasks.RenameGeneratedFiles, task =>
             {
-                task.Param("GeneratedDir", "$(EfcptGeneratedDir)");
-                task.Param(TaskParameters.LogVerbosity, "$(EfcptLogVerbosity)");
+                task.Param(TaskParameters.GeneratedDir, MsBuildExpressions.Property(EfcptProperties.EfcptGeneratedDir));
+                task.Param(TaskParameters.LogVerbosity, MsBuildExpressions.Property(EfcptProperties.EfcptLogVerbosity));
             });
-            target.Task("WriteLinesToFile", task =>
+            target.Task(MsBuildTasks.WriteLinesToFile, task =>
             {
-                task.Param("File", "$(EfcptStampFile)");
-                task.Param("Lines", "$(_EfcptFingerprint)");
-                task.Param("Overwrite", PropertyValues.True);
+                task.Param(TaskParameters.File, MsBuildExpressions.Property(EfcptProperties.EfcptStampFile));
+                task.Param(TaskParameters.Lines, MsBuildExpressions.Property(EfcptProperties._EfcptFingerprint));
+                task.Param(TaskParameters.Overwrite, PropertyValues.True);
             });
         });
         // Lifecycle hook: AfterEfcptGeneration
         t.Comment("Lifecycle hook: AfterEfcptGeneration");
-        t.Target(EfcptTargets.AfterEfcptGeneration, target =>
-        {
-            target.AfterTargets(EfcptTargets.EfcptGenerateModels);
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
-        });
+        TargetFactory.CreateLifecycleHook(t, EfcptTargets.AfterEfcptGeneration,
+            condition: MsBuildExpressions.Condition_And(
+                MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnabled),
+                MsBuildExpressions.Condition_IsFalse(EfcptProperties._EfcptIsSqlProject)));
         // ========================================================================
         // Split Outputs: Separate Models project from Data project
         // ========================================================================
@@ -584,23 +575,29 @@ public static class BuildTransitiveTargetsFactory
         // Validate split outputs configuration and resolve Data project path.
         // Ensures the Data project exists and is properly configured.
         t.Comment("Validate split outputs configuration and resolve Data project path.\n    Ensures the Data project exists and is properly configured.");
-        t.Target("EfcptValidateSplitOutputs", target =>
+        t.Target(EfcptTargets.EfcptValidateSplitOutputs, target =>
         {
             target.DependsOnTargets(EfcptTargets.EfcptGenerateModels);
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptSplitOutputs)' == 'true'");
+            target.Condition(MsBuildExpressions.Condition_And(
+                MsBuildExpressions.Condition_And(
+                    MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnabled),
+                    MsBuildExpressions.Condition_IsFalse(EfcptProperties._EfcptIsSqlProject)
+                ),
+                MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptSplitOutputs)
+            ));
             target.PropertyGroup(null, group =>
             {
-                group.Property("_EfcptDataProjectPath", "$(EfcptDataProject)");
-                group.Property("_EfcptDataProjectPath", "$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(EfcptDataProject)'))))");
+                group.Property(EfcptProperties._EfcptDataProjectPath, MsBuildExpressions.Property(EfcptProperties.EfcptDataProject));
+                group.Property(EfcptProperties._EfcptDataProjectPath, $"$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine({MsBuildExpressions.Property(MsBuildProperties.MSBuildProjectDirectory)}, {MsBuildExpressions.Property(EfcptProperties.EfcptDataProject)}))))");
             });
-            target.Error("EfcptSplitOutputs is enabled but EfcptDataProject is not set. Please specify the path to your Data project: <EfcptDataProject>..\\MyProject.Data\\MyProject.Data.csproj</EfcptDataProject>", "'$(_EfcptDataProjectPath)' == ''");
-            target.Error("EfcptDataProject was specified but the file does not exist: $(_EfcptDataProjectPath)", "!Exists('$(_EfcptDataProjectPath)')");
+            target.Error("EfcptSplitOutputs is enabled but EfcptDataProject is not set. Please specify the path to your Data project: <EfcptDataProject>..\\MyProject.Data\\MyProject.Data.csproj</EfcptDataProject>", $"{MsBuildExpressions.Property(EfcptProperties._EfcptDataProjectPath)} == ''");
+            target.Error($"EfcptDataProject was specified but the file does not exist: {MsBuildExpressions.Property(EfcptProperties._EfcptDataProjectPath)}", $"!Exists({MsBuildExpressions.Property(EfcptProperties._EfcptDataProjectPath)})");
             target.PropertyGroup(null, group =>
             {
-                group.Property("_EfcptDataProjectDir", "$([System.IO.Path]::GetDirectoryName('$(_EfcptDataProjectPath)'))\\");
-                group.Property("_EfcptDataDestDir", "$(_EfcptDataProjectDir)$(EfcptDataProjectOutputSubdir)");
+                group.Property(EfcptProperties._EfcptDataProjectDir, $"$([System.IO.Path]::GetDirectoryName({MsBuildExpressions.Property(EfcptProperties._EfcptDataProjectPath)}))\\");
+                group.Property(EfcptProperties._EfcptDataDestDir, $"{MsBuildExpressions.Property(EfcptProperties._EfcptDataProjectDir)}{MsBuildExpressions.Property(EfcptProperties.EfcptDataProjectOutputSubdir)}");
             });
-            target.Message("Split outputs enabled. DbContext and configurations will be copied to: $(_EfcptDataDestDir)", PropertyValues.High);
+            target.Message($"Split outputs enabled. DbContext and configurations will be copied to: {MsBuildExpressions.Property(EfcptProperties._EfcptDataDestDir)}", PropertyValues.High);
         });
         // Copy generated DbContext and configuration files to the Data project.
         // - DbContext files go to the root of the destination
@@ -608,51 +605,57 @@ public static class BuildTransitiveTargetsFactory
         // - Files are deleted from the Models project after copying
         // Only runs when source files exist (i.e., when generation actually occurred).
         t.Comment("Copy generated DbContext and configuration files to the Data project.\n    - DbContext files go to the root of the destination\n    - Configuration files go to a Configurations subfolder\n    - Files are deleted from the Models project after copying\n    Only runs when source files exist (i.e., when generation actually occurred).");
-        t.Target("EfcptCopyDataToDataProject", target =>
+        t.Target(EfcptTargets.EfcptCopyDataToDataProject, target =>
         {
-            target.DependsOnTargets("EfcptValidateSplitOutputs");
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptSplitOutputs)' == 'true'");
+            target.DependsOnTargets(EfcptTargets.EfcptValidateSplitOutputs);
+            target.Condition(MsBuildExpressions.Condition_And(
+                MsBuildExpressions.Condition_And(
+                    MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnabled),
+                    MsBuildExpressions.Condition_IsFalse(EfcptProperties._EfcptIsSqlProject)
+                ),
+                MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptSplitOutputs)
+            ));
             target.ItemGroup(null, group =>
             {
-                group.Include("_EfcptDbContextFiles", "$(EfcptGeneratedDir)*.g.cs");
+                group.Include(EfcptProperties._EfcptDbContextFiles, $"{MsBuildExpressions.Property(EfcptProperties.EfcptGeneratedDir)}*.g.cs");
             });
             target.ItemGroup(null, group =>
             {
-                group.Include("_EfcptConfigurationFiles", "$(EfcptGeneratedDir)*Configuration.g.cs");
-                group.Include("_EfcptConfigurationFiles", "$(EfcptGeneratedDir)Configurations\\**\\*.g.cs");
+                group.Include(EfcptProperties._EfcptConfigurationFiles, $"{MsBuildExpressions.Property(EfcptProperties.EfcptGeneratedDir)}*Configuration.g.cs");
+                group.Include(EfcptProperties._EfcptConfigurationFiles, $"{MsBuildExpressions.Property(EfcptProperties.EfcptGeneratedDir)}Configurations\\**\\*.g.cs");
             });
             target.PropertyGroup(null, group =>
             {
-                group.Property("_EfcptHasFilesToCopy", PropertyValues.True);
+                group.Property(EfcptProperties._EfcptHasFilesToCopy, PropertyValues.True);
             });
-            target.Task("RemoveDir", task =>
+            target.Task(MsBuildTasks.RemoveDir, task =>
             {
-                task.Param(TaskParameters.Directories, "$(_EfcptDataDestDir)");
-            }, "'$(_EfcptHasFilesToCopy)' == 'true' and Exists('$(_EfcptDataDestDir)')");
+                task.Param(TaskParameters.Directories, MsBuildExpressions.Property(EfcptProperties._EfcptDataDestDir));
+            }, $"{MsBuildExpressions.Condition_IsTrue(EfcptProperties._EfcptHasFilesToCopy)} and Exists({MsBuildExpressions.Property(EfcptProperties._EfcptDataDestDir)})");
             target.Task(MsBuildTasks.MakeDir, task =>
             {
-                task.Param(TaskParameters.Directories, "$(_EfcptDataDestDir)");
-            }, "'$(_EfcptHasFilesToCopy)' == 'true'");
+                task.Param(TaskParameters.Directories, MsBuildExpressions.Property(EfcptProperties._EfcptDataDestDir));
+            }, MsBuildExpressions.Condition_IsTrue(EfcptProperties._EfcptHasFilesToCopy));
             target.Task(MsBuildTasks.MakeDir, task =>
             {
-                task.Param(TaskParameters.Directories, "$(_EfcptDataDestDir)Configurations");
+                task.Param(TaskParameters.Directories, $"{MsBuildExpressions.Property(EfcptProperties._EfcptDataDestDir)}Configurations");
             }, "'@(_EfcptConfigurationFiles)' != ''");
             target.Task(MsBuildTasks.Copy, task =>
             {
-                task.Param("SourceFiles", "@(_EfcptDbContextFiles)");
-                task.Param("DestinationFolder", "$(_EfcptDataDestDir)");
+                task.Param(TaskParameters.SourceFiles, "@(_EfcptDbContextFiles)");
+                task.Param(TaskParameters.DestinationFolder, MsBuildExpressions.Property(EfcptProperties._EfcptDataDestDir));
                 task.Param("SkipUnchangedFiles", PropertyValues.True);
-                task.OutputItem("CopiedFiles", "_EfcptCopiedDataFiles");
+                task.OutputItem(TaskParameters.CopiedFiles, EfcptProperties._EfcptCopiedDataFiles);
             }, "'@(_EfcptDbContextFiles)' != ''");
             target.Task(MsBuildTasks.Copy, task =>
             {
-                task.Param("SourceFiles", "@(_EfcptConfigurationFiles)");
-                task.Param("DestinationFolder", "$(_EfcptDataDestDir)Configurations");
+                task.Param(TaskParameters.SourceFiles, "@(_EfcptConfigurationFiles)");
+                task.Param(TaskParameters.DestinationFolder, $"{MsBuildExpressions.Property(EfcptProperties._EfcptDataDestDir)}Configurations");
                 task.Param("SkipUnchangedFiles", PropertyValues.True);
-                task.OutputItem("CopiedFiles", "_EfcptCopiedDataFiles");
+                task.OutputItem(TaskParameters.CopiedFiles, EfcptProperties._EfcptCopiedDataFiles);
             }, "'@(_EfcptConfigurationFiles)' != ''");
-            target.Message("Copied @(_EfcptCopiedDataFiles->Count()) data files to Data project: $(_EfcptDataDestDir)", PropertyValues.High, "'@(_EfcptCopiedDataFiles)' != ''");
-            target.Message("Split outputs: No new files to copy (generation was skipped)", PropertyValues.Normal, "'$(_EfcptHasFilesToCopy)' != 'true'");
+            target.Message($"Copied @(_EfcptCopiedDataFiles->Count()) data files to Data project: {MsBuildExpressions.Property(EfcptProperties._EfcptDataDestDir)}", PropertyValues.High, "'@(_EfcptCopiedDataFiles)' != ''");
+            target.Message("Split outputs: No new files to copy (generation was skipped)", PropertyValues.Normal, MsBuildExpressions.Condition_IsFalse(EfcptProperties._EfcptHasFilesToCopy));
             target.Task(MsBuildTasks.Delete, task =>
             {
                 task.Param(TaskParameters.Files, "@(_EfcptDbContextFiles)");
@@ -661,47 +664,50 @@ public static class BuildTransitiveTargetsFactory
             {
                 task.Param(TaskParameters.Files, "@(_EfcptConfigurationFiles)");
             }, "'@(_EfcptConfigurationFiles)' != ''");
-            target.Message("Removed DbContext and configuration files from Models project", PropertyValues.Normal, "'$(_EfcptHasFilesToCopy)' == 'true'");
+            target.Message($"Removed DbContext and configuration files from Models project", PropertyValues.Normal, MsBuildExpressions.Condition_IsTrue(EfcptProperties._EfcptHasFilesToCopy));
         });
         // Include generated files in compilation.
         // In split outputs mode (Models project), only include model files (from Models folder).
         // In normal mode, include all generated files.
         t.Comment("Include generated files in compilation.\n    In split outputs mode (Models project), only include model files (from Models folder).\n    In normal mode, include all generated files.");
-        t.Target("EfcptAddToCompile", target =>
+        t.Target(EfcptTargets.EfcptAddToCompile, target =>
         {
             target.BeforeTargets(MsBuildTargets.CoreCompile);
-            target.DependsOnTargets("EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpac;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels;EfcptCopyDataToDataProject");
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
+            target.DependsOnTargets($"{EfcptTargets.EfcptResolveInputs};{EfcptTargets.EfcptUseDirectDacpac};{EfcptTargets.EfcptEnsureDacpac};{EfcptTargets.EfcptStageInputs};{EfcptTargets.EfcptComputeFingerprint};{EfcptTargets.EfcptGenerateModels};{EfcptTargets.EfcptCopyDataToDataProject}");
+            target.Condition(MsBuildExpressions.Condition_And(MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnabled), MsBuildExpressions.Condition_IsFalse(EfcptProperties._EfcptIsSqlProject)));
             target.ItemGroup(null, group =>
             {
-                group.Include(MsBuildItems.Compile, "$(EfcptGeneratedDir)Models\\**\\*.g.cs", null, "'$(EfcptSplitOutputs)' == 'true'");
-                group.Include(MsBuildItems.Compile, "$(EfcptGeneratedDir)**\\*.g.cs", null, "'$(EfcptSplitOutputs)' != 'true'");
+                group.Include(MsBuildItems.Compile, $"{MsBuildExpressions.Property(EfcptProperties.EfcptGeneratedDir)}Models\\**\\*.g.cs", null, MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptSplitOutputs));
+                group.Include(MsBuildItems.Compile, $"{MsBuildExpressions.Property(EfcptProperties.EfcptGeneratedDir)}**\\*.g.cs", null, MsBuildExpressions.Condition_IsFalse(EfcptProperties.EfcptSplitOutputs));
             });
         });
         // Include external data files from another project (for Data project consumption).
         // Used when Data project has EfcptEnabled=false but needs to compile copied DbContext/configs.
         t.Comment("Include external data files from another project (for Data project consumption).\n    Used when Data project has EfcptEnabled=false but needs to compile copied DbContext/configs.");
-        t.Target("EfcptIncludeExternalData", target =>
+        t.Target(EfcptTargets.EfcptIncludeExternalData, target =>
         {
             target.BeforeTargets(MsBuildTargets.CoreCompile);
-            target.Condition("'$(EfcptExternalDataDir)' != '' and Exists('$(EfcptExternalDataDir)')");
+            target.Condition(MsBuildExpressions.Condition_And(
+                MsBuildExpressions.Condition_NotEmpty(EfcptProperties.EfcptExternalDataDir),
+                MsBuildExpressions.Condition_Exists(MsBuildExpressions.Property(EfcptProperties.EfcptExternalDataDir))
+            ));
             target.ItemGroup(null, group =>
             {
-                group.Include(MsBuildItems.Compile, "$(EfcptExternalDataDir)**\\*.g.cs");
+                group.Include(MsBuildItems.Compile, $"{MsBuildExpressions.Property(EfcptProperties.EfcptExternalDataDir)}**\\*.g.cs");
             });
-            target.Message("Including external data files from: $(EfcptExternalDataDir)", PropertyValues.Normal);
+            target.Message($"Including external data files from: {MsBuildExpressions.Property(EfcptProperties.EfcptExternalDataDir)}", PropertyValues.Normal);
         });
         // Clean target: remove efcpt output directory when 'dotnet clean' is run
         t.Comment("Clean target: remove efcpt output directory when 'dotnet clean' is run");
-        t.Target("EfcptClean", target =>
+        t.Target(EfcptTargets.EfcptClean, target =>
         {
             target.AfterTargets(MsBuildTargets.Clean);
-            target.Condition("'$(EfcptEnabled)' == 'true'");
-            target.Message("Cleaning efcpt output: $(EfcptOutput)", PropertyValues.Normal);
-            target.Task("RemoveDir", task =>
+            target.Condition(MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnabled));
+            target.Message($"Cleaning efcpt output: {MsBuildExpressions.Property(EfcptProperties.EfcptOutput)}", PropertyValues.Normal);
+            target.Task(MsBuildTasks.RemoveDir, task =>
             {
-                task.Param(TaskParameters.Directories, "$(EfcptOutput)");
-            }, "Exists('$(EfcptOutput)')");
+                task.Param(TaskParameters.Directories, MsBuildExpressions.Property(EfcptProperties.EfcptOutput));
+            }, MsBuildExpressions.Condition_Exists(MsBuildExpressions.Property(EfcptProperties.EfcptOutput)));
         });
         // Build Profiling: Finalize profiling at the end of the build pipeline.
         // This target runs last to capture the complete build graph and write the profile to disk.
@@ -709,12 +715,15 @@ public static class BuildTransitiveTargetsFactory
         t.Target(EfcptTargets._EfcptFinalizeProfiling, target =>
         {
             target.AfterTargets(MsBuildTargets.Build);
-            target.Condition("'$(EfcptEnabled)' == 'true' and '$(EfcptEnableProfiling)' == 'true'");
-            target.Task("FinalizeBuildProfiling", task =>
+            target.Condition(MsBuildExpressions.Condition_And(
+                MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnabled),
+                MsBuildExpressions.Condition_IsTrue(EfcptProperties.EfcptEnableProfiling)
+            ));
+            target.Task(EfcptTasks.FinalizeBuildProfiling, task =>
             {
-                task.Param(TaskParameters.ProjectPath, "$(MSBuildProjectFullPath)");
-                task.Param("OutputPath", "$(EfcptProfilingOutput)");
-                task.Param("BuildSucceeded", PropertyValues.True);
+                task.Param(TaskParameters.ProjectPath, MsBuildExpressions.Property(MsBuildProperties.MSBuildProjectFullPath));
+                task.Param(TaskParameters.OutputPath, MsBuildExpressions.Property(EfcptProperties.EfcptProfilingOutput));
+                task.Param(TaskParameters.BuildSucceeded, PropertyValues.True);
             });
         });
 
@@ -933,3 +942,5 @@ public static class BuildTransitiveTargetsFactory
     //     public string Name => "EfcptValidateSplitOutputs";
     // }
 }
+
+
