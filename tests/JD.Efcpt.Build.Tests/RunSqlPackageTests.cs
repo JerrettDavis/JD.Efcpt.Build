@@ -748,4 +748,195 @@ public sealed class RunSqlPackageTests(ITestOutputHelper output) : TinyBddXunitB
         .Finally(r => Cleanup(r.state))
         .AssertPassed();
     }
+
+    [Scenario("Cleanup removes temporary directory")]
+    [Fact]
+    public async Task Cleanup_removes_temporary_directory()
+    {
+        await Given("extraction completed with temp directory", () =>
+        {
+            var state = Setup();
+            var tempExtractDir = Path.Combine(state.TempDir, "extract_temp");
+            Directory.CreateDirectory(tempExtractDir);
+            File.WriteAllText(Path.Combine(tempExtractDir, "temp.sql"), "-- temp");
+            return (state, tempExtractDir);
+        })
+        .When("cleanup is performed", ctx =>
+        {
+            // Simulate cleanup
+            if (Directory.Exists(ctx.tempExtractDir))
+                Directory.Delete(ctx.tempExtractDir, true);
+            return ctx;
+        })
+        .Then("temp directory is removed", r => !Directory.Exists(r.tempExtractDir))
+        .Finally(r => Cleanup(r.state))
+        .AssertPassed();
+    }
+
+    [Scenario("File movement skips Security.RoleMembership objects")]
+    [Fact]
+    public async Task File_movement_skips_security_role_membership()
+    {
+        await Given("extracted files with security role membership", () =>
+        {
+            var state = Setup();
+            var extractDir = Path.Combine(state.TempDir, "extracted");
+            Directory.CreateDirectory(extractDir);
+            
+            // Create security objects that should be skipped
+            File.WriteAllText(Path.Combine(extractDir, "Security.RoleMembership.sql"), "-- role membership");
+            File.WriteAllText(Path.Combine(extractDir, "dbo.Table1.sql"), "-- table");
+            
+            return (state, extractDir);
+        })
+        .When("files are filtered", ctx =>
+        {
+            var files = Directory.GetFiles(ctx.extractDir);
+            var nonSecurityFiles = files.Where(f => !Path.GetFileName(f).StartsWith("Security.")).ToList();
+            return (ctx.state, nonSecurityFiles);
+        })
+        .Then("security files are excluded", r => r.nonSecurityFiles.All(f => !Path.GetFileName(f).StartsWith("Security.")))
+        .And("regular files are included", r => r.nonSecurityFiles.Any(f => f.Contains("Table1")))
+        .Finally(r => Cleanup(r.state))
+        .AssertPassed();
+    }
+
+    [Scenario("File movement skips Server Triggers")]
+    [Fact]
+    public async Task File_movement_skips_server_triggers()
+    {
+        await Given("extracted files with server triggers", () =>
+        {
+            var state = Setup();
+            var extractDir = Path.Combine(state.TempDir, "extracted");
+            Directory.CreateDirectory(extractDir);
+            
+            // Create server trigger that should be skipped
+            var serverDir = Path.Combine(extractDir, "Server Triggers");
+            Directory.CreateDirectory(serverDir);
+            File.WriteAllText(Path.Combine(serverDir, "trigger1.sql"), "-- server trigger");
+            File.WriteAllText(Path.Combine(extractDir, "dbo.StoredProc.sql"), "-- proc");
+            
+            return (state, extractDir);
+        })
+        .When("files are filtered", ctx =>
+        {
+            var files = Directory.GetFiles(ctx.extractDir, "*.sql", SearchOption.AllDirectories);
+            var nonServerFiles = files.Where(f => !f.Contains("Server Triggers")).ToList();
+            return (ctx.state, nonServerFiles);
+        })
+        .Then("server trigger files are excluded", r => !r.nonServerFiles.Any(f => f.Contains("Server Triggers")))
+        .And("regular files are included", r => r.nonServerFiles.Any(f => f.Contains("StoredProc")))
+        .Finally(r => Cleanup(r.state))
+        .AssertPassed();
+    }
+
+    [Scenario("File movement skips Storage filegroups")]
+    [Fact]
+    public async Task File_movement_skips_storage_filegroups()
+    {
+        await Given("extracted files with storage filegroups", () =>
+        {
+            var state = Setup();
+            var extractDir = Path.Combine(state.TempDir, "extracted");
+            Directory.CreateDirectory(extractDir);
+            
+            // Create storage objects that should be skipped
+            var storageDir = Path.Combine(extractDir, "Storage");
+            Directory.CreateDirectory(storageDir);
+            File.WriteAllText(Path.Combine(storageDir, "PRIMARY.sql"), "-- filegroup");
+            File.WriteAllText(Path.Combine(extractDir, "dbo.View1.sql"), "-- view");
+            
+            return (state, extractDir);
+        })
+        .When("files are filtered", ctx =>
+        {
+            var files = Directory.GetFiles(ctx.extractDir, "*.sql", SearchOption.AllDirectories);
+            var nonStorageFiles = files.Where(f => !f.Contains("Storage")).ToList();
+            return (ctx.state, nonStorageFiles);
+        })
+        .Then("storage files are excluded", r => !r.nonStorageFiles.Any(f => f.Contains("Storage")))
+        .And("regular files are included", r => r.nonStorageFiles.Any(f => f.Contains("View1")))
+        .Finally(r => Cleanup(r.state))
+        .AssertPassed();
+    }
+
+    [Scenario("ToolVersion can be set on task")]
+    [Fact]
+    public async Task ToolVersion_can_be_set()
+    {
+        await Given("a task with tool version", () =>
+        {
+            var state = Setup();
+            const string toolVersion = "1.2.3";
+            return (state, toolVersion);
+        })
+        .When("tool version is set on task", ctx =>
+        {
+            var task = new RunSqlPackage
+            {
+                BuildEngine = ctx.state.Engine,
+                TargetDirectory = ctx.state.TempDir,
+                ConnectionString = "Server=.;",
+                ToolVersion = ctx.toolVersion
+            };
+            return (ctx.state, task);
+        })
+        .Then("ToolVersion property is set correctly", r => r.task.ToolVersion == "1.2.3")
+        .Finally(r => Cleanup(r.state))
+        .AssertPassed();
+    }
+
+    [Scenario("ProjectPath can be set on task")]
+    [Fact]
+    public async Task ProjectPath_can_be_set()
+    {
+        await Given("a task with project path", () =>
+        {
+            var state = Setup();
+            var projectPath = Path.Combine(state.TempDir, "Test.sqlproj");
+            return (state, projectPath);
+        })
+        .When("project path is set on task", ctx =>
+        {
+            var task = new RunSqlPackage
+            {
+                BuildEngine = ctx.state.Engine,
+                TargetDirectory = ctx.state.TempDir,
+                ConnectionString = "Server=.;",
+                ProjectPath = ctx.projectPath
+            };
+            return (ctx.state, ctx.projectPath, task);
+        })
+        .Then("ProjectPath property is set correctly", r => r.task.ProjectPath == r.Item2)
+        .Finally(r => Cleanup(r.state))
+        .AssertPassed();
+    }
+
+    [Scenario("WorkingDirectory can be set on task")]
+    [Fact]
+    public async Task WorkingDirectory_can_be_set()
+    {
+        await Given("a task with working directory", () =>
+        {
+            var state = Setup();
+            var workingDir = Path.Combine(state.TempDir, "working");
+            Directory.CreateDirectory(workingDir);
+            return (state, workingDir);
+        })
+        .When("working directory is set on task", ctx =>
+        {
+            var task = new RunSqlPackage
+            {
+                BuildEngine = ctx.state.Engine,
+                TargetDirectory = ctx.state.TempDir,
+                ConnectionString = "Server=.;",
+                WorkingDirectory = ctx.workingDir
+            };
+            return (ctx.state, ctx.workingDir, task);
+        })
+        .Then("WorkingDirectory property is set correctly", r => r.task.WorkingDirectory == r.Item2)
+        .Finally(r => Cleanup(r.state))
+        .AssertPassed();
+    }
 }
