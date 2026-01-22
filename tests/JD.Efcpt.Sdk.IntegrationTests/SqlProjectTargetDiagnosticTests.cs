@@ -27,7 +27,7 @@ public class SqlProjectTargetDiagnosticTests : IAsyncDisposable
         _builder.Dispose();
     }
 
-    [Fact]
+    [Fact(Skip = "Diagnostic test - requires actual SQL Server database")]
     public async Task Diagnostic_SqlProject_ShowsAllTargetExecution()
     {
         // Arrange - Create SQL project using the proper API
