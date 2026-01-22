@@ -440,6 +440,12 @@ public sealed class RunEfcptTests(ITestOutputHelper output) : TinyBddXunitBase(o
         await Given("inputs with non-existent tool path", SetupForDacpacMode)
             .When("task executes without fake mode", s =>
             {
+                // Use an absolute path that's valid on both Windows and Unix
+                var nonExistentPath = Path.Combine(
+                    Path.GetTempPath(), 
+                    "nonexistent_dir_" + Guid.NewGuid().ToString("N"),
+                    "nonexistent_tool.exe");
+                
                 var task = new RunEfcpt
                 {
                     BuildEngine = s.Engine,
@@ -449,15 +455,18 @@ public sealed class RunEfcptTests(ITestOutputHelper output) : TinyBddXunitBase(o
                     RenamingPath = s.RenamingPath,
                     TemplateDir = s.TemplateDir,
                     OutputDir = s.OutputDir,
-                    ToolPath = @"C:\nonexistent\path\to\tool.exe"
+                    ToolPath = nonExistentPath
                 };
                 var success = task.Execute();
                 return new TaskResult(s, task, success);
             })
             .Then("task fails", r => !r.Success)
             .And("error is logged", r => r.Setup.Engine.Errors.Count > 0)
-            .And("error mentions tool path", r => 
-                r.Setup.Engine.Errors.Any(e => e.Message?.Contains("ToolPath") == true || e.Message?.Contains("tool.exe") == true))
+            .And("error mentions tool path or file not found", r => 
+                r.Setup.Engine.Errors.Any(e => 
+                    e.Message?.Contains("nonexistent_tool.exe", StringComparison.OrdinalIgnoreCase) == true ||
+                    e.Message?.Contains("cannot find", StringComparison.OrdinalIgnoreCase) == true ||
+                    e.Message?.Contains("No such file", StringComparison.OrdinalIgnoreCase) == true))
             .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
