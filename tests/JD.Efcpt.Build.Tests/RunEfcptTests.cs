@@ -238,9 +238,9 @@ public sealed class RunEfcptTests(ITestOutputHelper output) : TinyBddXunitBase(o
             .When("task executes with minimal verbosity", s => ExecuteTaskWithFakeMode(s, t => t.LogVerbosity = "minimal"))
             .Then("task succeeds", r => r.Success)
             .And("info message about working directory logged", r =>
-                r.Setup.Engine.Messages.Any(m => m.Message?.Contains("working directory") == true))
+                r.Setup.Engine.Messages.Any(m => m.Message?.Contains("working directory") ?? false))
             .And("info message about output logged", r =>
-                r.Setup.Engine.Messages.Any(m => m.Message?.Contains("Output") == true))
+                r.Setup.Engine.Messages.Any(m => m.Message?.Contains("Output") ?? false))
             .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
@@ -253,7 +253,7 @@ public sealed class RunEfcptTests(ITestOutputHelper output) : TinyBddXunitBase(o
             .When("task executes with detailed verbosity", s => ExecuteTaskWithFakeMode(s, t => t.LogVerbosity = "detailed"))
             .Then("task succeeds", r => r.Success)
             .And("detail message about fake mode logged", r =>
-                r.Setup.Engine.Messages.Any(m => m.Message?.Contains("EFCPT_FAKE_EFCPT") == true))
+                r.Setup.Engine.Messages.Any(m => m.Message?.Contains("EFCPT_FAKE_EFCPT") ?? false))
             .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
@@ -464,9 +464,9 @@ public sealed class RunEfcptTests(ITestOutputHelper output) : TinyBddXunitBase(o
             .And("error is logged", r => r.Setup.Engine.Errors.Count > 0)
             .And("error mentions tool path or file not found", r => 
                 r.Setup.Engine.Errors.Any(e => 
-                    e.Message?.Contains("nonexistent_tool.exe", StringComparison.OrdinalIgnoreCase) == true ||
-                    e.Message?.Contains("cannot find", StringComparison.OrdinalIgnoreCase) == true ||
-                    e.Message?.Contains("No such file", StringComparison.OrdinalIgnoreCase) == true))
+                    (e.Message?.Contains("nonexistent_tool.exe", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (e.Message?.Contains("cannot find", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (e.Message?.Contains("No such file", StringComparison.OrdinalIgnoreCase) ?? false)))
             .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }

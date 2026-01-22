@@ -17,7 +17,7 @@ public sealed class ProfileAttributeTests(ITestOutputHelper output) : TinyBddXun
     public async Task ProfileInputAttribute_defaults()
     {
         await Given("ProfileInputAttribute constructed", () => new ProfileInputAttribute())
-            .Then("Exclude is false by default", attr => attr.Exclude == false)
+            .Then("Exclude is false by default", attr => !attr.Exclude)
             .AssertPassed();
     }
 

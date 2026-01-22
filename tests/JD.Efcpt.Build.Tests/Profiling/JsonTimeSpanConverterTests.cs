@@ -169,7 +169,7 @@ public sealed class JsonTimeSpanConverterTests(ITestOutputHelper output) : TinyB
             })
             .Then("JsonException is thrown", r => !r.success && r.exception is JsonException)
             .And("exception message mentions parse error", r =>
-                r.exception?.Message?.Contains("Unable to parse") == true)
+                r.exception?.Message?.Contains("Unable to parse") ?? false)
             .AssertPassed();
     }
 
