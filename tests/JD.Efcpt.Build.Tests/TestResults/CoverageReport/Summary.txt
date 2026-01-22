@@ -1,0 +1,128 @@
+Summary
+  Generated on: 1/22/2026 - 12:05:42 AM
+  Coverage date: 12/20/2025 - 11:21:17 PM - 1/22/2026 - 12:05:28 AM
+  Parser: MultiReport (4x Cobertura)
+  Assemblies: 1
+  Classes: 106
+  Files: 66
+  Line coverage: 52.8%
+  Covered lines: 3900
+  Uncovered lines: 3480
+  Coverable lines: 7380
+  Total lines: 11688
+  Branch coverage: 44.6% (1557 of 3488)
+  Covered branches: 1557
+  Total branches: 3488
+  Method coverage: 76.2% (890 of 1167)
+  Full method coverage: 61.4% (717 of 1167)
+  Covered methods: 890
+  Fully covered methods: 717
+  Total methods: 1167
+
+JD.Efcpt.Build.Tasks                                                                                                                                             52.8%
+  JD.Efcpt.Build.Tasks.AddSqlFileWarnings                                                                                                                         100%
+  JD.Efcpt.Build.Tasks.ApplyConfigOverrides                                                                                                                       100%
+  JD.Efcpt.Build.Tasks.BuildLog                                                                                                                                    82%
+  JD.Efcpt.Build.Tasks.Chains.ConnectionStringResolutionChain                                                                                                      55%
+  JD.Efcpt.Build.Tasks.Chains.ConnectionStringResolutionContext                                                                                                   100%
+  JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionChain                                                                                                           18.3%
+  JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext                                                                                                          100%
+  JD.Efcpt.Build.Tasks.Chains.FileResolutionChain                                                                                                                19.3%
+  JD.Efcpt.Build.Tasks.Chains.FileResolutionContext                                                                                                               100%
+  JD.Efcpt.Build.Tasks.Chains.ResourceResolutionChain                                                                                                            93.1%
+  JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext                                                                                                           100%
+  JD.Efcpt.Build.Tasks.CheckSdkVersion                                                                                                                           40.9%
+  JD.Efcpt.Build.Tasks.ComputeFingerprint                                                                                                                        63.8%
+  JD.Efcpt.Build.Tasks.Config.CodeGenerationOverrides                                                                                                             100%
+  JD.Efcpt.Build.Tasks.Config.EfcptConfigGenerator                                                                                                               79.6%
+  JD.Efcpt.Build.Tasks.Config.EfcptConfigOverrideApplicator                                                                                                      93.1%
+  JD.Efcpt.Build.Tasks.Config.EfcptConfigOverrides                                                                                                                100%
+  JD.Efcpt.Build.Tasks.Config.FileLayoutOverrides                                                                                                                 100%
+  JD.Efcpt.Build.Tasks.Config.NamesOverrides                                                                                                                      100%
+  JD.Efcpt.Build.Tasks.Config.ReplacementsOverrides                                                                                                               100%
+  JD.Efcpt.Build.Tasks.Config.TypeMappingsOverrides                                                                                                               100%
+  JD.Efcpt.Build.Tasks.ConnectionStrings.AppConfigConnectionStringParser                                                                                         85.2%
+  JD.Efcpt.Build.Tasks.ConnectionStrings.AppSettingsConnectionStringParser                                                                                         75%
+  JD.Efcpt.Build.Tasks.ConnectionStrings.ConfigurationFileTypeValidator                                                                                          70.5%
+  JD.Efcpt.Build.Tasks.ConnectionStrings.ConnectionStringResult                                                                                                   100%
+  JD.Efcpt.Build.Tasks.DacpacFingerprint                                                                                                                         96.1%
+  JD.Efcpt.Build.Tasks.DbContextNameGenerator                                                                                                                    83.4%
+  JD.Efcpt.Build.Tasks.Decorators.ProfileInputAttribute                                                                                                           100%
+  JD.Efcpt.Build.Tasks.Decorators.ProfileOutputAttribute                                                                                                           50%
+  JD.Efcpt.Build.Tasks.Decorators.ProfilingBehavior                                                                                                              91.6%
+  JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext                                                                                                             75%
+  JD.Efcpt.Build.Tasks.Decorators.TaskExecutionDecorator                                                                                                          100%
+  JD.Efcpt.Build.Tasks.DetectSqlProject                                                                                                                            84%
+  JD.Efcpt.Build.Tasks.EnsureDacpacBuilt                                                                                                                         97.3%
+  JD.Efcpt.Build.Tasks.Extensions.DataRowExtensions                                                                                                                50%
+  JD.Efcpt.Build.Tasks.Extensions.EnumerableExtensions                                                                                                           83.3%
+  JD.Efcpt.Build.Tasks.Extensions.StringExtensions                                                                                                                 75%
+  JD.Efcpt.Build.Tasks.FileHash                                                                                                                                  44.4%
+  JD.Efcpt.Build.Tasks.FileSystemHelpers                                                                                                                          100%
+  JD.Efcpt.Build.Tasks.FinalizeBuildProfiling                                                                                                                     100%
+  JD.Efcpt.Build.Tasks.InitializeBuildProfiling                                                                                                                   100%
+  JD.Efcpt.Build.Tasks.MessageLevelHelpers                                                                                                                        100%
+  JD.Efcpt.Build.Tasks.ModuleInitializer                                                                                                                          100%
+  JD.Efcpt.Build.Tasks.MsBuildPropertyHelpers                                                                                                                     100%
+  JD.Efcpt.Build.Tasks.NullBuildLog                                                                                                                               100%
+  JD.Efcpt.Build.Tasks.PathUtils                                                                                                                                 68.7%
+  JD.Efcpt.Build.Tasks.ProcessResult                                                                                                                              100%
+  JD.Efcpt.Build.Tasks.ProcessRunner                                                                                                                               90%
+  JD.Efcpt.Build.Tasks.Profiling.ArtifactInfo                                                                                                                     100%
+  JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration                                                                                                               100%
+  JD.Efcpt.Build.Tasks.Profiling.BuildGraph                                                                                                                       100%
+  JD.Efcpt.Build.Tasks.Profiling.BuildGraphNode                                                                                                                   100%
+  JD.Efcpt.Build.Tasks.Profiling.BuildProfiler                                                                                                                   95.2%
+  JD.Efcpt.Build.Tasks.Profiling.BuildProfilerManager                                                                                                             100%
+  JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput                                                                                                                   100%
+  JD.Efcpt.Build.Tasks.Profiling.DiagnosticMessage                                                                                                                100%
+  JD.Efcpt.Build.Tasks.Profiling.JsonTimeSpanConverter                                                                                                            100%
+  JD.Efcpt.Build.Tasks.Profiling.ProjectInfo                                                                                                                      100%
+  JD.Efcpt.Build.Tasks.Profiling.TaskExecution                                                                                                                    100%
+  JD.Efcpt.Build.Tasks.ProfilingHelper                                                                                                                            100%
+  JD.Efcpt.Build.Tasks.QuerySchemaMetadata                                                                                                                          0%
+  JD.Efcpt.Build.Tasks.RenameGeneratedFiles                                                                                                                        60%
+  JD.Efcpt.Build.Tasks.ResolveDbContextName                                                                                                                      96.9%
+  JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs                                                                                                                   61.2%
+  JD.Efcpt.Build.Tasks.RunEfcpt                                                                                                                                  43.1%
+  JD.Efcpt.Build.Tasks.RunSqlPackage                                                                                                                               18%
+  JD.Efcpt.Build.Tasks.Schema.ColumnModel                                                                                                                         100%
+  JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping                                                                                                                     0%
+  JD.Efcpt.Build.Tasks.Schema.ConstraintModel                                                                                                                     100%
+  JD.Efcpt.Build.Tasks.Schema.DatabaseProviderFactory                                                                                                            94.1%
+  JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel                                                                                                               100%
+  JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel                                                                                                                      75%
+  JD.Efcpt.Build.Tasks.Schema.IndexColumnModel                                                                                                                    100%
+  JD.Efcpt.Build.Tasks.Schema.IndexModel                                                                                                                         81.2%
+  JD.Efcpt.Build.Tasks.Schema.Providers.FirebirdSchemaReader                                                                                                        0%
+  JD.Efcpt.Build.Tasks.Schema.Providers.MySqlSchemaReader                                                                                                           0%
+  JD.Efcpt.Build.Tasks.Schema.Providers.OracleSchemaReader                                                                                                          0%
+  JD.Efcpt.Build.Tasks.Schema.Providers.PostgreSqlSchemaReader                                                                                                      0%
+  JD.Efcpt.Build.Tasks.Schema.Providers.SqliteSchemaReader                                                                                                          0%
+  JD.Efcpt.Build.Tasks.Schema.Providers.SqlServerSchemaReader                                                                                                       0%
+  JD.Efcpt.Build.Tasks.Schema.SchemaFingerprinter                                                                                                                50.8%
+  JD.Efcpt.Build.Tasks.Schema.SchemaModel                                                                                                                        81.8%
+  JD.Efcpt.Build.Tasks.Schema.SchemaReaderBase                                                                                                                      0%
+  JD.Efcpt.Build.Tasks.Schema.SqlServerSchemaReader                                                                                                                 0%
+  JD.Efcpt.Build.Tasks.Schema.TableModel                                                                                                                           75%
+  JD.Efcpt.Build.Tasks.SerializeConfigProperties                                                                                                                  100%
+  JD.Efcpt.Build.Tasks.SqlProjectDetector                                                                                                                        91.1%
+  JD.Efcpt.Build.Tasks.StageEfcptInputs                                                                                                                          63.8%
+  JD.Efcpt.Build.Tasks.Strategies.CommandNormalizationStrategy                                                                                                    100%
+  JD.Efcpt.Build.Tasks.Strategies.ProcessCommand                                                                                                                  100%
+  JD.Efcpt.Build.Tasks.Utilities.DotNetToolUtilities                                                                                                             66.6%
+  System.Text.RegularExpressions.Generated                                                                                                                       80.3%
+  System.Text.RegularExpressions.Generated                                                                                                                          0%
+  System.Text.RegularExpressions.Generated                                                                                                                          0%
+  System.Text.RegularExpressions.Generated                                                                                                                          0%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>F264D0EC7B252B7CC5D91E2F32E86062E6858787D9F312E2FDF25F5CFB6474627__SolutionProjectLineRegex_0          0%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>F45CAE5245A64C5532C06C83AD929E1056D5887E9F32701B6972B628E37B672BC__SolutionProjectLineRegex_0          0%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>F796D35FD6939B20A83F3F5E2903EA95F9369D914FC3E3489536BF527685C61C0__AssemblySymbolsMetadataRegex_1   86.2%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>F796D35FD6939B20A83F3F5E2903EA95F9369D914FC3E3489536BF527685C61C0__DatabaseKeywordRegex_4           75.7%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>F796D35FD6939B20A83F3F5E2903EA95F9369D914FC3E3489536BF527685C61C0__DataSourceKeywordRegex_6         72.3%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>F796D35FD6939B20A83F3F5E2903EA95F9369D914FC3E3489536BF527685C61C0__FileNameMetadataRegex_0          86.2%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>F796D35FD6939B20A83F3F5E2903EA95F9369D914FC3E3489536BF527685C61C0__InitialCatalogKeywordRegex_5     71.2%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>F796D35FD6939B20A83F3F5E2903EA95F9369D914FC3E3489536BF527685C61C0__NonLetterRegex_2                  100%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>F796D35FD6939B20A83F3F5E2903EA95F9369D914FC3E3489536BF527685C61C0__SolutionProjectLineRegex_7       82.5%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>F796D35FD6939B20A83F3F5E2903EA95F9369D914FC3E3489536BF527685C61C0__TrailingDigitsRegex_3            95.2%
+  System.Text.RegularExpressions.Generated.<RegexGenerator_g>FDCDD50785207A93F3733C86C3611BAE885EB94F2ED385F3C066A4C6050540610__SolutionProjectLineRegex_0          0%
