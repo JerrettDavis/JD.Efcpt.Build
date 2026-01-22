@@ -539,7 +539,7 @@ public static class BuildTransitiveTargetsFactory
                     (Pm.SqlProjPath, E._EfcptSqlProj),
                     (Pm.DacpacPath, E._EfcptDacpacPath),
                     (Pm.ConnectionString, E._EfcptResolvedConnectionString),
-                    (Pm.UseConnectionString, E._EfcptUseConnectionString),
+                    (Pm.UseConnectionStringMode, E._EfcptUseConnectionString),
                     (Pm.LogVerbosity, E.EfcptLogVerbosity))
                     .OutputProperty(
                         Pm.ResolvedDbContextName,
@@ -602,7 +602,7 @@ public static class BuildTransitiveTargetsFactory
             task.MapProps(
                 (Pm.DacpacPath, E._EfcptDacpacPath),
                 (Pm.SchemaFingerprint, E._EfcptSchemaFingerprint),
-                (Pm.UseConnectionString, E._EfcptUseConnectionString),
+                (Pm.UseConnectionStringMode, E._EfcptUseConnectionString),
                 (Pm.ConfigPath, E._EfcptStagedConfig),
                 (Pm.RenamingPath, E._EfcptStagedRenaming),
                 (Pm.TemplateDir, E._EfcptStagedTemplateDir),

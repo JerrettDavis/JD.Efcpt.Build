@@ -162,7 +162,7 @@
   </Target>
   <!--Resolve DbContext name from SQL project, DACPAC, or connection string. This runs after DACPAC is ensured/resolved but before staging to allow the resolved name to be used as an override in ApplyConfigOverrides.-->
   <Target Name="EfcptResolveDbContextName" DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpacBuilt;EfcptUseDirectDacpac" Condition="('$(EfcptEnabled)' == 'true') and ('$(_EfcptIsSqlProject)' != 'true')">
-    <ResolveDbContextName ConnectionString="$(_EfcptResolvedConnectionString)" DacpacPath="$(_EfcptDacpacPath)" ExplicitDbContextName="$(EfcptConfigDbContextName)" LogVerbosity="$(EfcptLogVerbosity)" SqlProjPath="$(_EfcptSqlProj)" UseConnectionString="$(_EfcptUseConnectionString)">
+    <ResolveDbContextName ConnectionString="$(_EfcptResolvedConnectionString)" DacpacPath="$(_EfcptDacpacPath)" ExplicitDbContextName="$(EfcptConfigDbContextName)" LogVerbosity="$(EfcptLogVerbosity)" SqlProjPath="$(_EfcptSqlProj)" UseConnectionStringMode="$(_EfcptUseConnectionString)">
       <Output TaskParameter="ResolvedDbContextName" PropertyName="_EfcptResolvedDbContextName" />
     </ResolveDbContextName>
     <PropertyGroup>
@@ -187,7 +187,7 @@
     </SerializeConfigProperties>
   </Target>
   <Target Name="EfcptComputeFingerprint" DependsOnTargets="EfcptSerializeConfigProperties" Condition="('$(EfcptEnabled)' == 'true') and ('$(_EfcptIsSqlProject)' != 'true')">
-    <ComputeFingerprint ConfigPath="$(_EfcptStagedConfig)" ConfigPropertyOverrides="$(_EfcptSerializedConfigProperties)" DacpacPath="$(_EfcptDacpacPath)" DetectGeneratedFileChanges="$(EfcptDetectGeneratedFileChanges)" FingerprintFile="$(EfcptFingerprintFile)" GeneratedDir="$(EfcptGeneratedDir)" LogVerbosity="$(EfcptLogVerbosity)" RenamingPath="$(_EfcptStagedRenaming)" SchemaFingerprint="$(_EfcptSchemaFingerprint)" TemplateDir="$(_EfcptStagedTemplateDir)" ToolVersion="$(EfcptToolVersion)" UseConnectionString="$(_EfcptUseConnectionString)">
+    <ComputeFingerprint ConfigPath="$(_EfcptStagedConfig)" ConfigPropertyOverrides="$(_EfcptSerializedConfigProperties)" DacpacPath="$(_EfcptDacpacPath)" DetectGeneratedFileChanges="$(EfcptDetectGeneratedFileChanges)" FingerprintFile="$(EfcptFingerprintFile)" GeneratedDir="$(EfcptGeneratedDir)" LogVerbosity="$(EfcptLogVerbosity)" RenamingPath="$(_EfcptStagedRenaming)" SchemaFingerprint="$(_EfcptSchemaFingerprint)" TemplateDir="$(_EfcptStagedTemplateDir)" ToolVersion="$(EfcptToolVersion)" UseConnectionStringMode="$(_EfcptUseConnectionString)">
       <Output TaskParameter="Fingerprint" PropertyName="_EfcptFingerprint" />
       <Output TaskParameter="HasChanged" PropertyName="_EfcptFingerprintChanged" />
     </ComputeFingerprint>
@@ -196,7 +196,7 @@
   <Target Name="BeforeEfcptGeneration" Condition="('$(EfcptEnabled)' == 'true') and ('$(_EfcptIsSqlProject)' != 'true')" />
   <Target Name="EfcptGenerateModels" BeforeTargets="CoreCompile" DependsOnTargets="BeforeEfcptGeneration" Inputs="$(_EfcptDacpacPath);$(_EfcptStagedConfig);$(_EfcptStagedRenaming)" Outputs="$(EfcptStampFile)" Condition="(('$(EfcptEnabled)' == 'true') and ('$(_EfcptIsSqlProject)' != 'true')) and (('$(_EfcptFingerprintChanged)' == 'true' or !Exists($(EfcptStampFile))))">
     <MakeDir Directories="$(EfcptGeneratedDir)" />
-    <RunEfcpt ConfigPath="$(_EfcptStagedConfig)" ConnectionString="$(_EfcptResolvedConnectionString)" DacpacPath="$(_EfcptDacpacPath)" DotNetExe="$(EfcptDotNetExe)" LogVerbosity="$(EfcptLogVerbosity)" OutputDir="$(EfcptGeneratedDir)" ProjectPath="$(MSBuildProjectFullPath)" Provider="$(EfcptProvider)" RenamingPath="$(_EfcptStagedRenaming)" TargetFramework="$(TargetFramework)" TemplateDir="$(_EfcptStagedTemplateDir)" ToolCommand="$(EfcptToolCommand)" ToolMode="$(EfcptToolMode)" ToolPackageId="$(EfcptToolPackageId)" ToolPath="$(EfcptToolPath)" ToolRestore="$(EfcptToolRestore)" ToolVersion="$(EfcptToolVersion)" UseConnectionString="$(_EfcptUseConnectionString)" WorkingDirectory="$(EfcptOutput)" />
+    <RunEfcpt ConfigPath="$(_EfcptStagedConfig)" ConnectionString="$(_EfcptResolvedConnectionString)" DacpacPath="$(_EfcptDacpacPath)" DotNetExe="$(EfcptDotNetExe)" LogVerbosity="$(EfcptLogVerbosity)" OutputDir="$(EfcptGeneratedDir)" ProjectPath="$(MSBuildProjectFullPath)" Provider="$(EfcptProvider)" RenamingPath="$(_EfcptStagedRenaming)" TargetFramework="$(TargetFramework)" TemplateDir="$(_EfcptStagedTemplateDir)" ToolCommand="$(EfcptToolCommand)" ToolMode="$(EfcptToolMode)" ToolPackageId="$(EfcptToolPackageId)" ToolPath="$(EfcptToolPath)" ToolRestore="$(EfcptToolRestore)" ToolVersion="$(EfcptToolVersion)" UseConnectionStringMode="$(_EfcptUseConnectionString)" WorkingDirectory="$(EfcptOutput)" />
     <RenameGeneratedFiles GeneratedDir="$(EfcptGeneratedDir)" LogVerbosity="$(EfcptLogVerbosity)" />
     <WriteLinesToFile File="$(EfcptStampFile)" Lines="$(_EfcptFingerprint)" Overwrite="true" />
   </Target>
