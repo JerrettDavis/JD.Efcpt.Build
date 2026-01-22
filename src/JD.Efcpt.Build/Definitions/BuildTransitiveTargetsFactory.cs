@@ -63,7 +63,7 @@ public static class BuildTransitiveTargetsFactory
         t.Target(T._EfcptDetectSqlProject, target =>
         {
             target.BeforeTargets(
-                Path_Combine(MsBuildTargets.BeforeBuild, MsBuildTargets.BeforeRebuild));
+                TargetList(MsBuildTargets.BeforeBuild, MsBuildTargets.BeforeRebuild));
             target.Task(Tk.DetectSqlProject, task =>
             {
                 task.MapProps(
@@ -89,7 +89,7 @@ public static class BuildTransitiveTargetsFactory
         t.Target(T._EfcptLogTaskAssemblyInfo, target =>
         {
             target.BeforeTargets(
-                Path_Combine(T.EfcptResolveInputs, T.EfcptResolveInputsForDirectDacpac));
+                TargetList(T.EfcptResolveInputs, T.EfcptResolveInputsForDirectDacpac));
             target.Condition(
                 Condition_And(
                     Condition_IsTrue(E.EfcptEnabled),

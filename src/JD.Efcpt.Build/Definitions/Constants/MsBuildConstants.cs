@@ -738,4 +738,10 @@ public static class MsBuildExpressions
     /// Builds a path by combining components with MSBuild property references
     /// </summary>
     public static string Path_Combine(params string[] parts) => string.Join("\\", parts);
+    
+    /// <summary>
+    /// Combines MSBuild target names into a semicolon-delimited list.
+    /// Used for BeforeTargets, AfterTargets, and DependsOnTargets attributes.
+    /// </summary>
+    public static string TargetList(params string[] targets) => string.Join(";", targets);
 }

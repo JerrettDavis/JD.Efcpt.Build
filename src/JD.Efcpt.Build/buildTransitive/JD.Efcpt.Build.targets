@@ -7,7 +7,7 @@
     <EfcptConfigUseNullableReferenceTypes Condition="('$(EfcptConfigUseNullableReferenceTypes)' == '') and ('$(Nullable)' != '')">false</EfcptConfigUseNullableReferenceTypes>
   </PropertyGroup>
   <!--SQL Project Detection: Detect SQL database projects via SDK attribute or MSBuild properties. Must be in targets file for SDK property availability.-->
-  <Target Name="_EfcptDetectSqlProject" BeforeTargets="BeforeBuild\BeforeRebuild">
+  <Target Name="_EfcptDetectSqlProject" BeforeTargets="BeforeBuild;BeforeRebuild">
     <DetectSqlProject DSP="$(DSP)" ProjectPath="$(MSBuildProjectFullPath)" SqlServerVersion="$(SqlServerVersion)">
       <Output TaskParameter="IsSqlProject" PropertyName="_EfcptIsSqlProject" />
     </DetectSqlProject>
@@ -27,7 +27,7 @@
     <_EfcptTaskAssembly Condition="(!Exists('$(_EfcptTaskAssembly)')) and ('$(Configuration)' == '')">$(MSBuildThisFileDirectory)\..\..\JD.Efcpt.Build.Tasks\bin\Debug\$(_EfcptTasksFolder)\JD.Efcpt.Build.Tasks.dll</_EfcptTaskAssembly>
   </PropertyGroup>
   <!--Diagnostic output for task assembly selection (when EfcptLogVerbosity=detailed)-->
-  <Target Name="_EfcptLogTaskAssemblyInfo" BeforeTargets="EfcptResolveInputs\EfcptResolveInputsForDirectDacpac" Condition="('$(EfcptEnabled)' == 'true') and ('$(EfcptLogVerbosity)' == 'detailed')">
+  <Target Name="_EfcptLogTaskAssemblyInfo" BeforeTargets="EfcptResolveInputs;EfcptResolveInputsForDirectDacpac" Condition="('$(EfcptEnabled)' == 'true') and ('$(EfcptLogVerbosity)' == 'detailed')">
     <Message Text="EFCPT Task Assembly Selection:" Importance="high" />
     <Message Text="  MSBuildRuntimeType: $(MSBuildRuntimeType)" Importance="high" />
     <Message Text="  MSBuildVersion: $(MSBuildVersion)" Importance="high" />
