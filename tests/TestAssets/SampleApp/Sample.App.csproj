@@ -35,7 +35,7 @@
   <!-- Run the efcpt pipeline for this sample app on every build when enabled -->
   <Target Name="EfcptSamplePipeline"
           AfterTargets="Build"
-          DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpac;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels;EfcptAddToCompile"
+          DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpacBuilt;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels;EfcptAddToCompile"
           Condition="'$(EfcptEnabled)' == 'true'">
     <Message Text="EfcptSamplePipeline completed." Importance="High" />
   </Target>
