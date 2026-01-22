@@ -144,7 +144,7 @@ public sealed class DetectSqlProjectTests(ITestOutputHelper output) : TinyBddXun
             .When("detection runs", Execute)
             .Then("execution fails", r => !r.Success)
             .And("error is logged", r => r.Setup.Engine.Errors.Count > 0)
-            .And("error mentions ProjectPath", r => r.Setup.Engine.Errors[0].Message?.Contains("ProjectPath") == true)
+            .And("error mentions ProjectPath", r => r.Setup.Engine.Errors[0].Message?.Contains("ProjectPath") ?? false)
             .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
@@ -204,7 +204,7 @@ public sealed class DetectSqlProjectTests(ITestOutputHelper output) : TinyBddXun
             .When("detection runs", Execute)
             .Then("execution succeeds", r => r.Success)
             .And("IsSqlProject is false", r => !r.IsSqlProject)
-            .And("low importance message logged", r => r.Setup.Engine.Messages.Exists(m => m.Message?.Contains("Not a SQL project") == true))
+            .And("low importance message logged", r => r.Setup.Engine.Messages.Exists(m => m.Message?.Contains("Not a SQL project") ?? false))
             .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
@@ -220,7 +220,7 @@ public sealed class DetectSqlProjectTests(ITestOutputHelper output) : TinyBddXun
             .When("detection runs", Execute)
             .Then("execution succeeds", r => r.Success)
             .And("IsSqlProject is true", r => r.IsSqlProject)
-            .And("SDK detection message logged", r => r.Setup.Engine.Messages.Exists(m => m.Message?.Contains("SDK attribute") == true))
+            .And("SDK detection message logged", r => r.Setup.Engine.Messages.Exists(m => m.Message?.Contains("SDK attribute") ?? false))
             .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }

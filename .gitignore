@@ -12,6 +12,7 @@ pkg/
 artifacts/
 *.bak
 tmpclaude-*
+tests/**/TestResults/
 
 # Auto-generated SQL files in samples
 # These are generated during build and should not be tracked
