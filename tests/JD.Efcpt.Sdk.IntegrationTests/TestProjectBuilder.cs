@@ -175,6 +175,7 @@ public class TestProjectBuilder : IDisposable
     <PropertyGroup>
         <TargetFramework>{targetFramework}</TargetFramework>
         <SqlServerVersion>Sql160</SqlServerVersion>
+        <EfcptEnabled>true</EfcptEnabled>
         <EfcptConnectionString>{connectionString}</EfcptConnectionString>
         <EfcptSqlPackageToolRestore>true</EfcptSqlPackageToolRestore>
     </PropertyGroup>
