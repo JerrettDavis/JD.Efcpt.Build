@@ -1,5 +1,6 @@
 using JD.Efcpt.Build.Definitions.Constants;
 using JD.MSBuild.Fluent.Fluent;
+using JD.MSBuild.Fluent.IR;
 
 namespace JD.Efcpt.Build.Definitions.Builders;
 
