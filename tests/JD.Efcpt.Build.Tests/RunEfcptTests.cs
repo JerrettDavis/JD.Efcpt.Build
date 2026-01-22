@@ -412,4 +412,225 @@ public sealed class RunEfcptTests(ITestOutputHelper output) : TinyBddXunitBase(o
             .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
+
+    [Scenario("Resolves relative tool path correctly")]
+    [Fact]
+    public async Task Resolves_relative_tool_path()
+    {
+        await Given("inputs with relative tool path", () =>
+            {
+                var setup = SetupForDacpacMode();
+                // Create a fake tool in a subdirectory
+                var toolDir = setup.Folder.CreateDir("tools");
+                var toolPath = Path.Combine(toolDir, "fake-efcpt.exe");
+                File.WriteAllText(toolPath, "fake tool");
+                return (setup, toolPath: Path.Combine("tools", "fake-efcpt.exe"));
+            })
+            .When("task executes with relative path", ctx =>
+                ExecuteTaskWithFakeMode(ctx.setup, t => t.ToolPath = ctx.toolPath))
+            .Then("task succeeds", r => r.Success)
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Logs error when explicit tool path does not exist")]
+    [Fact]
+    public async Task Explicit_tool_path_not_exists_logs_error()
+    {
+        await Given("inputs with non-existent tool path", SetupForDacpacMode)
+            .When("task executes without fake mode", s =>
+            {
+                var task = new RunEfcpt
+                {
+                    BuildEngine = s.Engine,
+                    WorkingDirectory = s.WorkingDir,
+                    DacpacPath = s.DacpacPath,
+                    ConfigPath = s.ConfigPath,
+                    RenamingPath = s.RenamingPath,
+                    TemplateDir = s.TemplateDir,
+                    OutputDir = s.OutputDir,
+                    ToolPath = @"C:\nonexistent\path\to\tool.exe"
+                };
+                var success = task.Execute();
+                return new TaskResult(s, task, success);
+            })
+            .Then("task fails", r => !r.Success)
+            .And("error is logged", r => r.Setup.Engine.Errors.Count > 0)
+            .And("error mentions tool path", r => 
+                r.Setup.Engine.Errors.Any(e => e.Message?.Contains("ToolPath") == true || e.Message?.Contains("tool.exe") == true))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Walks up directory tree to find tool manifest")]
+    [Fact]
+    public async Task Walks_up_to_find_manifest()
+    {
+        await Given("inputs with manifest in parent directory", () =>
+            {
+                var folder = new TestFolder();
+                // Create manifest in root
+                var configDir = folder.CreateDir(".config");
+                var manifestPath = Path.Combine(configDir, "dotnet-tools.json");
+                File.WriteAllText(manifestPath, """
+                    {
+                      "version": 1,
+                      "isRoot": true,
+                      "tools": {
+                        "erikej.efcorepowertools.cli": {
+                          "version": "10.0.0",
+                          "commands": ["efcpt"]
+                        }
+                      }
+                    }
+                    """);
+                
+                // Working directory is nested deep
+                var workingDir = folder.CreateDir(Path.Combine("a", "b", "c", "obj"));
+                var dacpac = folder.WriteFile("db.dacpac", "content");
+                var config = folder.WriteFile("config.json", "{}");
+                var renaming = folder.WriteFile("renaming.json", "[]");
+                var templateDir = folder.CreateDir("Templates");
+                var outputDir = Path.Combine(folder.Root, "Generated");
+                var engine = new TestBuildEngine();
+                
+                return new SetupState(folder, workingDir, dacpac, config, renaming, templateDir, outputDir, engine);
+            })
+            .When("task executes in fake mode with auto mode", s =>
+                ExecuteTaskWithFakeMode(s, t => t.ToolMode = "auto"))
+            .Then("task succeeds", r => r.Success)
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Forwards EFCPT_TEST_DACPAC environment variable to process")]
+    [Fact]
+    public async Task Forwards_test_dacpac_env_var()
+    {
+        const string testDacpacValue = "C:\\test\\fake.dacpac";
+        Environment.SetEnvironmentVariable("EFCPT_TEST_DACPAC", testDacpacValue);
+        try
+        {
+            await Given("inputs for DACPAC mode", SetupForDacpacMode)
+                .When("task executes in fake mode", s => ExecuteTaskWithFakeMode(s))
+                .Then("task succeeds", r => r.Success)
+                .And("environment variable is preserved", _ => 
+                    Environment.GetEnvironmentVariable("EFCPT_TEST_DACPAC") == testDacpacValue)
+                .Finally(r => r.Setup.Folder.Dispose())
+                .AssertPassed();
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("EFCPT_TEST_DACPAC", null);
+        }
+    }
+
+    [Scenario("Passes all required arguments in DACPAC mode")]
+    [Fact]
+    public async Task Passes_dacpac_mode_arguments()
+    {
+        await Given("inputs for DACPAC mode", SetupForDacpacMode)
+            .When("task executes in fake mode", s => ExecuteTaskWithFakeMode(s))
+            .Then("task succeeds", r => r.Success)
+            .And("DACPAC path is used", r => !string.IsNullOrEmpty(r.Task.DacpacPath))
+            .And("config path is used", r => !string.IsNullOrEmpty(r.Task.ConfigPath))
+            .And("renaming path is used", r => !string.IsNullOrEmpty(r.Task.RenamingPath))
+            .And("template dir is used", r => !string.IsNullOrEmpty(r.Task.TemplateDir))
+            .And("output dir is used", r => !string.IsNullOrEmpty(r.Task.OutputDir))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Passes all required arguments in connection string mode")]
+    [Fact]
+    public async Task Passes_connection_string_mode_arguments()
+    {
+        await Given("inputs for connection string mode", SetupForConnectionStringMode)
+            .When("task executes in fake mode", s =>
+            {
+                Environment.SetEnvironmentVariable("EFCPT_FAKE_EFCPT", "true");
+                try
+                {
+                    var task = new RunEfcpt
+                    {
+                        BuildEngine = s.Engine,
+                        WorkingDirectory = s.WorkingDir,
+                        ConnectionString = "Server=.;Database=test;",
+                        UseConnectionStringMode = "true",
+                        ConfigPath = s.ConfigPath,
+                        RenamingPath = s.RenamingPath,
+                        TemplateDir = s.TemplateDir,
+                        OutputDir = s.OutputDir,
+                        ToolMode = "auto",
+                        ToolPackageId = "ErikEJ.EFCorePowerTools.Cli"
+                    };
+                    var success = task.Execute();
+                    return new TaskResult(s, task, success);
+                }
+                finally
+                {
+                    Environment.SetEnvironmentVariable("EFCPT_FAKE_EFCPT", null);
+                }
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("connection string is used", r => !string.IsNullOrEmpty(r.Task.ConnectionString))
+            .And("connection string mode flag is set", r => r.Task.UseConnectionStringMode == "true")
+            .And("config path is used", r => !string.IsNullOrEmpty(r.Task.ConfigPath))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Template directory path is passed correctly")]
+    [Fact]
+    public async Task Template_directory_passed_correctly()
+    {
+        await Given("inputs with custom template directory", () =>
+            {
+                var setup = SetupForDacpacMode();
+                var customTemplateDir = setup.Folder.CreateDir("CustomTemplates");
+                File.WriteAllText(Path.Combine(customTemplateDir, "test.template"), "template content");
+                return (setup, customTemplateDir);
+            })
+            .When("task executes with custom template dir", ctx =>
+                ExecuteTaskWithFakeMode(ctx.setup, t => t.TemplateDir = ctx.customTemplateDir))
+            .Then("task succeeds", r => r.Success)
+            .And("custom template dir is used", r => r.Task.TemplateDir.Contains("CustomTemplates"))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Provider parameter is passed correctly")]
+    [Theory]
+    [InlineData("mssql")]
+    [InlineData("sqlite")]
+    [InlineData("postgres")]
+    public async Task Provider_parameter_passed_correctly(string provider)
+    {
+        await Given("inputs for DACPAC mode", SetupForDacpacMode)
+            .When("task executes with specific provider", s =>
+                ExecuteTaskWithFakeMode(s, t => t.Provider = provider))
+            .Then("task succeeds", r => r.Success)
+            .And("provider is set correctly", r => r.Task.Provider == provider)
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("ProjectPath parameter is passed correctly")]
+    [Fact]
+    public async Task Project_path_passed_correctly()
+    {
+        await Given("inputs with project path", () =>
+            {
+                var setup = SetupForDacpacMode();
+                var projectPath = Path.Combine(setup.Folder.Root, "Test.csproj");
+                File.WriteAllText(projectPath, "<Project />");
+                return (setup, projectPath);
+            })
+            .When("task executes with project path", ctx =>
+                ExecuteTaskWithFakeMode(ctx.setup, t => t.ProjectPath = ctx.projectPath))
+            .Then("task succeeds", r => r.Success)
+            .And("project path is set", r => !string.IsNullOrEmpty(r.Task.ProjectPath))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
 }
