@@ -27,7 +27,7 @@ public class SqlProjectTargetDiagnosticTests : IAsyncDisposable
         _builder.Dispose();
     }
 
-    [Fact]
+    [Fact(Skip = "Requires SQL Server - skipped in CI environment")]
     public async Task Diagnostic_SqlProject_ShowsAllTargetExecution()
     {
         // Arrange - Create SQL project using the proper API
