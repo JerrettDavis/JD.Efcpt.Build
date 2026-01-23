@@ -556,11 +556,11 @@ public sealed class RunEfcpt : Task
 
                 // Extract version number (first part before space or bracket)
                 var spaceIndex = trimmed.IndexOf(' ');
-                var versionStr = spaceIndex >= 0 ? trimmed.AsSpan(0, spaceIndex) : trimmed.AsSpan();
+                var versionStr = spaceIndex >= 0 ? trimmed.Substring(0, spaceIndex) : trimmed;
 
                 // Parse major version
                 var dotIndex = versionStr.IndexOf('.');
-                if (dotIndex > 0 && int.TryParse(versionStr.Slice(0, dotIndex), out var major))
+                if (dotIndex > 0 && int.TryParse(versionStr.Substring(0, dotIndex), out var major))
                 {
                     if (major >= 10)
                         return true;

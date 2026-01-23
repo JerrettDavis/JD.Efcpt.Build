@@ -235,12 +235,11 @@ public sealed class RunSqlPackageTests(ITestOutputHelper output) : TinyBddXunitB
         .AssertPassed();
     }
 
-    private static readonly string[] stringArray = new[] { "Security", "ServerObjects", "Storage" };
-
     [Scenario("File movement handles nested directories")]
     [Fact]
     public async Task File_movement_handles_nested_directories()
     {
+        var excludedPaths = new[] { "Security", "ServerObjects", "Storage" };
         await Given("extracted files in nested directories", () =>
         {
             var state = Setup();
@@ -258,7 +257,6 @@ public sealed class RunSqlPackageTests(ITestOutputHelper output) : TinyBddXunitB
         })
         .When("MoveDirectoryContents logic is simulated", s =>
         {
-            var excludedPaths = stringArray;
             var sourceDirNormalized = s.sourceDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
 
             foreach (var file in Directory.GetFiles(s.sourceDir, "*", SearchOption.AllDirectories))
@@ -293,8 +291,6 @@ public sealed class RunSqlPackageTests(ITestOutputHelper output) : TinyBddXunitB
         .Finally(r => Cleanup(r.state))
         .AssertPassed();
     }
-
-    private static readonly string[] stringArray = new[] { "Security", "ServerObjects", "Storage" };
 
     [Scenario("File movement overwrites existing files")]
     [Fact]
