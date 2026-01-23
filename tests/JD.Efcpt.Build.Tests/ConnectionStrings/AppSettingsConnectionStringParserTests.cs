@@ -26,7 +26,7 @@ public sealed class AppSettingsConnectionStringParserTests(ITestOutputHelper out
     {
         var parser = new AppSettingsConnectionStringParser();
         var log = CreateTestLog();
-        var result = parser.Parse(setup.FilePath, setup.KeyName, log);
+        var result = AppSettingsConnectionStringParser.Parse(setup.FilePath, setup.KeyName, log);
         return new ParseResult(setup, result);
     }
 

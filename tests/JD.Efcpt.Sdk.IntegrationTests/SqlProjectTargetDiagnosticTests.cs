@@ -27,7 +27,7 @@ public class SqlProjectTargetDiagnosticTests : IAsyncDisposable
         _builder.Dispose();
     }
 
-    [Fact(Skip = "Diagnostic test - requires actual SQL Server database")]
+    [Fact]
     public async Task Diagnostic_SqlProject_ShowsAllTargetExecution()
     {
         // Arrange - Create SQL project using the proper API
@@ -117,8 +117,8 @@ public class SqlProjectTargetDiagnosticTests : IAsyncDisposable
     public async Task Diagnostic_CheckPackageContent()
     {
         // This test examines what's actually in the packed JD.Efcpt.Build package
-        _output.WriteLine($"Build package path: {_fixture.BuildPackagePath}");
-        _output.WriteLine($"Build package version: {_fixture.BuildVersion}");
+        _output.WriteLine($"Build package path: {SdkPackageTestFixture.BuildPackagePath}");
+        _output.WriteLine($"Build package version: {SdkPackageTestFixture.BuildVersion}");
 
         // Extract and check the targets file
         var tempDir = Path.Combine(Path.GetTempPath(), $"pkg_inspect_{Guid.NewGuid():N}");
@@ -127,7 +127,7 @@ public class SqlProjectTargetDiagnosticTests : IAsyncDisposable
         try
         {
             // Unzip the package
-            System.IO.Compression.ZipFile.ExtractToDirectory(_fixture.BuildPackagePath, tempDir);
+            System.IO.Compression.ZipFile.ExtractToDirectory(SdkPackageTestFixture.BuildPackagePath, tempDir);
 
             var targetsFile = Path.Combine(tempDir, "buildTransitive", "JD.Efcpt.Build.targets");
             if (File.Exists(targetsFile))

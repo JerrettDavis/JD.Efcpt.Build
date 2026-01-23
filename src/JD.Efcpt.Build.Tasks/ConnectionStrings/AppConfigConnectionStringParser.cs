@@ -16,7 +16,7 @@ internal sealed class AppConfigConnectionStringParser
     /// <param name="connectionStringName">The name of the connection string to retrieve.</param>
     /// <param name="log">The build log for warnings and errors.</param>
     /// <returns>A result indicating success or failure, along with the connection string if found.</returns>
-    public ConnectionStringResult Parse(string filePath, string connectionStringName, BuildLog log)
+    public static ConnectionStringResult Parse(string filePath, string connectionStringName, BuildLog log)
     {
         try
         {

@@ -140,6 +140,8 @@ public sealed class RunSqlPackageTests(ITestOutputHelper output) : TinyBddXunitB
         .AssertPassed();
     }
 
+    private static readonly string[] stringArray = new[] { "Security", "ServerObjects", "Storage" };
+
     [Scenario("File movement skips system security objects")]
     [Fact]
     public async Task File_movement_skips_system_objects()
@@ -178,7 +180,7 @@ public sealed class RunSqlPackageTests(ITestOutputHelper output) : TinyBddXunitB
         .When("MoveDirectoryContents logic is simulated", s =>
         {
             // Simulate the MoveDirectoryContents logic
-            var excludedPaths = new[] { "Security", "ServerObjects", "Storage" };
+            var excludedPaths = stringArray;
             var sourceDirNormalized = s.sourceDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
 
             foreach (var file in Directory.GetFiles(s.sourceDir, "*", SearchOption.AllDirectories))
@@ -233,6 +235,8 @@ public sealed class RunSqlPackageTests(ITestOutputHelper output) : TinyBddXunitB
         .AssertPassed();
     }
 
+    private static readonly string[] stringArray = new[] { "Security", "ServerObjects", "Storage" };
+
     [Scenario("File movement handles nested directories")]
     [Fact]
     public async Task File_movement_handles_nested_directories()
@@ -254,7 +258,7 @@ public sealed class RunSqlPackageTests(ITestOutputHelper output) : TinyBddXunitB
         })
         .When("MoveDirectoryContents logic is simulated", s =>
         {
-            var excludedPaths = new[] { "Security", "ServerObjects", "Storage" };
+            var excludedPaths = stringArray;
             var sourceDirNormalized = s.sourceDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
 
             foreach (var file in Directory.GetFiles(s.sourceDir, "*", SearchOption.AllDirectories))
@@ -290,6 +294,8 @@ public sealed class RunSqlPackageTests(ITestOutputHelper output) : TinyBddXunitB
         .AssertPassed();
     }
 
+    private static readonly string[] stringArray = new[] { "Security", "ServerObjects", "Storage" };
+
     [Scenario("File movement overwrites existing files")]
     [Fact]
     public async Task File_movement_overwrites_existing_files()
@@ -313,7 +319,7 @@ public sealed class RunSqlPackageTests(ITestOutputHelper output) : TinyBddXunitB
         })
         .When("MoveDirectoryContents logic is simulated with overwrite", s =>
         {
-            var excludedPaths = new[] { "Security", "ServerObjects", "Storage" };
+            var excludedPaths = stringArray;
             var sourceDirNormalized = s.sourceDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
 
             foreach (var file in Directory.GetFiles(s.sourceDir, "*", SearchOption.AllDirectories))

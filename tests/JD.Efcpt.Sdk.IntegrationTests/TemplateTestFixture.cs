@@ -17,10 +17,10 @@ public class TemplateTestFixture : IDisposable
     private static readonly object _packLock = new();
     private static int _instanceCount = 0;
 
-    public string TemplatePackagePath => GetTemplatePackagePath();
-    public string PackageOutputPath => GetPackageOutputPath();
-    public string SdkVersion => AssemblyFixture.SdkVersion;
-    public string BuildVersion => AssemblyFixture.BuildVersion;
+    public static string TemplatePackagePath => GetTemplatePackagePath();
+    public static string PackageOutputPath => GetPackageOutputPath();
+    public static string SdkVersion => AssemblyFixture.SdkVersion;
+    public static string BuildVersion => AssemblyFixture.BuildVersion;
 
     private static readonly string RepoRoot = TestUtilities.FindRepoRoot();
 
@@ -40,7 +40,7 @@ public class TemplateTestFixture : IDisposable
         EnsureTemplateInstalled();
     }
 
-    public string GetTestFixturesPath() => AssemblyFixture.TestFixturesPath;
+    public static string GetTestFixturesPath() => AssemblyFixture.TestFixturesPath;
 
     private static string GetTemplatePackagePath()
     {
@@ -231,7 +231,7 @@ public class TemplateTestFixture : IDisposable
     /// <summary>
     /// Uninstalls the template package using dotnet new uninstall.
     /// </summary>
-    public async Task<TestUtilities.CommandResult> UninstallTemplateAsync(string workingDirectory)
+    public static async Task<TestUtilities.CommandResult> UninstallTemplateAsync(string workingDirectory)
     {
         return await RunDotnetNewCommandAsync(workingDirectory, "uninstall JD.Efcpt.Build.Templates");
     }
@@ -242,7 +242,7 @@ public class TemplateTestFixture : IDisposable
     /// <param name="workingDirectory">Directory to create the project in</param>
     /// <param name="projectName">Name of the project to create</param>
     /// <param name="framework">Optional target framework (net8.0, net9.0, or net10.0). Defaults to net8.0 if not specified.</param>
-    public async Task<TestUtilities.CommandResult> CreateProjectFromTemplateAsync(
+    public static async Task<TestUtilities.CommandResult> CreateProjectFromTemplateAsync(
         string workingDirectory,
         string projectName,
         string? framework = null)

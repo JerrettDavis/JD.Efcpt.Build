@@ -20,10 +20,10 @@ public class TestProjectBuilder : IDisposable
 
     public TestProjectBuilder(SdkPackageTestFixture fixture)
     {
-        _packageSource = fixture.PackageOutputPath;
-        _sdkVersion = fixture.SdkVersion;
-        _buildVersion = fixture.BuildVersion;
-        _sharedDatabaseProjectPath = fixture.SharedDatabaseProjectPath;
+        _packageSource = SdkPackageTestFixture.PackageOutputPath;
+        _sdkVersion = SdkPackageTestFixture.SdkVersion;
+        _buildVersion = SdkPackageTestFixture.BuildVersion;
+        _sharedDatabaseProjectPath = SdkPackageTestFixture.SharedDatabaseProjectPath;
         _testDirectory = Path.Combine(Path.GetTempPath(), "SdkTests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_testDirectory);
     }
@@ -139,7 +139,7 @@ public class TestProjectBuilder : IDisposable
     /// This method is kept for backwards compatibility but does nothing.
     /// The database project is set up once by AssemblyFixture and referenced via absolute path.
     /// </summary>
-    public void CopyDatabaseProject(string fixturesPath)
+    public static void CopyDatabaseProject(string fixturesPath)
     {
         // No-op: The database project is now shared across all tests.
     }
@@ -295,7 +295,7 @@ public class TestProjectBuilder : IDisposable
         return null;
     }
 
-    private async Task<BuildResult> RunProcessAsync(string fileName, string args, string workingDirectory, int timeoutMs = 300000)
+    private static async Task<BuildResult> RunProcessAsync(string fileName, string args, string workingDirectory, int timeoutMs = 300000)
     {
         var psi = new ProcessStartInfo
         {
@@ -402,7 +402,7 @@ public class TestProjectBuilder : IDisposable
         return File.ReadAllText(Path.Combine(GeneratedDirectory, relativePath));
     }
 
-    private async Task<BuildResult> RunDotnetAsync(string args, string workingDirectory, int timeoutMs = 300000)
+    private static async Task<BuildResult> RunDotnetAsync(string args, string workingDirectory, int timeoutMs = 300000)
     {
         var psi = new ProcessStartInfo
         {
