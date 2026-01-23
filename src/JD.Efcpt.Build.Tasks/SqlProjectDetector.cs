@@ -9,6 +9,8 @@ internal static class SqlProjectDetector
         ["Microsoft.Build.Sql", "MSBuild.Sdk.SqlProj"],
         StringComparer.OrdinalIgnoreCase);
 
+    private static readonly char[] SemicolonSeparator = [';'];
+
     public static bool IsSqlProjectReference(string projectPath)
     {
         if (string.IsNullOrWhiteSpace(projectPath))
@@ -79,7 +81,7 @@ internal static class SqlProjectDetector
 
     private static IEnumerable<string> ParseSdkNames(string raw)
         => raw
-            .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+            .Split(SemicolonSeparator, StringSplitOptions.RemoveEmptyEntries)
             .Select(entry => entry.Trim())
             .Where(entry => entry.Length > 0)
             .Select(entry =>

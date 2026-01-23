@@ -40,7 +40,7 @@ internal sealed class AppConfigConnectionStringParser
                 return ConnectionStringResult.WithSuccess(match.ConnectionString!, filePath, match.Name!);
 
             // Fallback to first available
-            if (connectionStrings.Any())
+            if (connectionStrings.Count > 0)
             {
                 var first = connectionStrings.First();
                 log.Warn("JD0002",

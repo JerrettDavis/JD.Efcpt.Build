@@ -82,6 +82,8 @@ public sealed class RunEfcpt : Task
     /// </summary>
     private const int ProcessTimeoutMs = 5000;
 
+    private static readonly string[] NewLineSeparators = ["\r\n", "\n"];
+
     /// <summary>
     /// Controls how the efcpt dotnet tool is resolved.
     /// </summary>
@@ -546,7 +548,7 @@ public sealed class RunEfcpt : Task
 
             // Parse output like "10.0.100 [C:\Program Files\dotnet\sdk]"
             // Check if any line starts with "10." or higher
-            foreach (var line in output.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
+            foreach (var line in output.Split(NewLineSeparators, StringSplitOptions.RemoveEmptyEntries))
             {
                 var trimmed = line.Trim();
                 if (string.IsNullOrEmpty(trimmed))
@@ -554,11 +556,11 @@ public sealed class RunEfcpt : Task
 
                 // Extract version number (first part before space or bracket)
                 var spaceIndex = trimmed.IndexOf(' ');
-                var versionStr = spaceIndex >= 0 ? trimmed.Substring(0, spaceIndex) : trimmed;
+                var versionStr = spaceIndex >= 0 ? trimmed.AsSpan(0, spaceIndex) : trimmed.AsSpan();
 
                 // Parse major version
                 var dotIndex = versionStr.IndexOf('.');
-                if (dotIndex > 0 && int.TryParse(versionStr.Substring(0, dotIndex), out var major))
+                if (dotIndex > 0 && int.TryParse(versionStr.Slice(0, dotIndex), out var major))
                 {
                     if (major >= 10)
                         return true;
