@@ -130,40 +130,6 @@ public static class MsBuildNames
     }
     
     // ====================================================================================
-    // Task Parameter Names (Common)
-    // ====================================================================================
-    
-    public readonly struct TextParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "Text";
-    }
-    
-    public readonly struct ImportanceParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "Importance";
-    }
-    
-    public readonly struct ConditionParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "Condition";
-    }
-    
-    public readonly struct CodeParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "Code";
-    }
-    
-    public readonly struct FileParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "File";
-    }
-    
-    public readonly struct HelpKeywordParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "HelpKeyword";
-    }
-    
-    // ====================================================================================
     // JD.Efcpt.Build Tasks
     // ====================================================================================
     
@@ -245,84 +211,5 @@ public static class MsBuildNames
     public readonly struct FinalizeBuildProfilingTask : IMsBuildTaskName
     {
         public string Name => "FinalizeBuildProfiling";
-    }
-    
-    // ====================================================================================
-    // Task Output Parameter Names (JD.Efcpt.Build)
-    // ====================================================================================
-    
-    public readonly struct IsSqlProjectParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "IsSqlProject";
-    }
-    
-    public readonly struct SqlProjParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "SqlProj";
-    }
-    
-    public readonly struct UseConnectionStringParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "UseConnectionString";
-    }
-    
-    public readonly struct UseDirectDacpacParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "UseDirectDacpac";
-    }
-    
-    public readonly struct ResolvedConfigParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "ResolvedConfig";
-    }
-    
-    public readonly struct ResolvedRenamingParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "ResolvedRenaming";
-    }
-    
-    public readonly struct ResolvedTemplateDirParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "ResolvedTemplateDir";
-    }
-    
-    public readonly struct IsUsingDefaultConfigParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "IsUsingDefaultConfig";
-    }
-    
-    public readonly struct DacpacPathParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "DacpacPath";
-    }
-    
-    public readonly struct DatabaseNameParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "DatabaseName";
-    }
-    
-    public readonly struct FingerprintChangedParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "FingerprintChanged";
-    }
-    
-    public readonly struct HasFilesToCopyParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "HasFilesToCopy";
-    }
-    
-    public readonly struct DataDestDirParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "DataDestDir";
-    }
-    
-    public readonly struct DbContextNameParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "DbContextName";
-    }
-    
-    public readonly struct ScriptsDirParameter : IMsBuildTaskParameterName
-    {
-        public string Name => "ScriptsDir";
     }
 }
