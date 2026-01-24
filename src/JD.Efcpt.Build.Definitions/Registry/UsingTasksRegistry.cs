@@ -1,3 +1,4 @@
+using JD.MSBuild.Fluent.Common;
 using JD.MSBuild.Fluent.Fluent;
 
 namespace JD.Efcpt.Build.Definitions.Registry;
@@ -39,11 +40,9 @@ public static class UsingTasksRegistry
     /// <param name="t">The targets builder to register tasks with.</param>
     public static void RegisterAll(TargetsBuilder t)
     {
-        const string assemblyPath = "$(_EfcptTaskAssembly)";
-        
-        foreach (var taskName in TaskNames)
-        {
-            t.UsingTask($"JD.Efcpt.Build.Tasks.{taskName}", assemblyPath);
-        }
+        t.RegisterTasks(
+            assemblyPath: "$(_EfcptTaskAssembly)",
+            taskNamespace: "JD.Efcpt.Build.Tasks",
+            taskNames: TaskNames);
     }
 }

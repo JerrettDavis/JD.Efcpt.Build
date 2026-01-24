@@ -1,7 +1,10 @@
+using JD.Efcpt.Build.Definitions.Constants;
+using JD.Efcpt.Build.Definitions.Registry;
+using JD.Efcpt.Build.Definitions.Shared;
 using JD.MSBuild.Fluent;
+using JD.MSBuild.Fluent.Common;
 using JD.MSBuild.Fluent.Fluent;
 using JD.MSBuild.Fluent.Typed;
-using JD.Efcpt.Build.Definitions.Shared;
 
 namespace JD.Efcpt.Build.Definitions;
 
@@ -49,22 +52,9 @@ public static class BuildTransitiveTargetsFactory
                     target.Message("  TaskAssembly Path: $(_EfcptTaskAssembly)", "high");
                     target.Message("  TaskAssembly Exists: $([System.IO.File]::Exists('$(_EfcptTaskAssembly)'))", "high");
                 });
-                t.UsingTask("JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs", "$(_EfcptTaskAssembly)");
-                t.UsingTask("JD.Efcpt.Build.Tasks.EnsureDacpacBuilt", "$(_EfcptTaskAssembly)");
-                t.UsingTask("JD.Efcpt.Build.Tasks.StageEfcptInputs", "$(_EfcptTaskAssembly)");
-                t.UsingTask("JD.Efcpt.Build.Tasks.ComputeFingerprint", "$(_EfcptTaskAssembly)");
-                t.UsingTask("JD.Efcpt.Build.Tasks.RunEfcpt", "$(_EfcptTaskAssembly)");
-                t.UsingTask("JD.Efcpt.Build.Tasks.RenameGeneratedFiles", "$(_EfcptTaskAssembly)");
-                t.UsingTask("JD.Efcpt.Build.Tasks.QuerySchemaMetadata", "$(_EfcptTaskAssembly)");
-                t.UsingTask("JD.Efcpt.Build.Tasks.ApplyConfigOverrides", "$(_EfcptTaskAssembly)");
-                t.UsingTask("JD.Efcpt.Build.Tasks.ResolveDbContextName", "$(_EfcptTaskAssembly)");
-                t.UsingTask("JD.Efcpt.Build.Tasks.SerializeConfigProperties", "$(_EfcptTaskAssembly)");
-                t.UsingTask("JD.Efcpt.Build.Tasks.CheckSdkVersion", "$(_EfcptTaskAssembly)");
-                t.UsingTask("JD.Efcpt.Build.Tasks.RunSqlPackage", "$(_EfcptTaskAssembly)");
-                t.UsingTask("JD.Efcpt.Build.Tasks.AddSqlFileWarnings", "$(_EfcptTaskAssembly)");
-                t.UsingTask("JD.Efcpt.Build.Tasks.DetectSqlProject", "$(_EfcptTaskAssembly)");
-                t.UsingTask("JD.Efcpt.Build.Tasks.InitializeBuildProfiling", "$(_EfcptTaskAssembly)");
-                t.UsingTask("JD.Efcpt.Build.Tasks.FinalizeBuildProfiling", "$(_EfcptTaskAssembly)");
+                
+                UsingTasksRegistry.RegisterAll(t);
+                
                 t.Target("_EfcptInitializeProfiling", target =>
                 {
                     target.BeforeTargets("_EfcptDetectSqlProject");
