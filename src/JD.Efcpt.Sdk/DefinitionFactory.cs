@@ -14,11 +14,11 @@ public static class DefinitionFactory
             .Description("MSBuild SDK for Entity Framework Core power tools")
             // Sdk/Sdk.props - imports Microsoft.NET.Sdk then our props
             .SdkProps(p => p
-                .Import("Sdk.props", "Microsoft.NET.Sdk")
+                .Import("Sdk.props", sdk: "Microsoft.NET.Sdk")
                 .Import("$(MSBuildThisFileDirectory)..\\build\\JD.Efcpt.Sdk.props"))
             // Sdk/Sdk.targets - imports Microsoft.NET.Sdk then our targets
             .SdkTargets(t => t
-                .Import("Sdk.targets", "Microsoft.NET.Sdk")
+                .Import("Sdk.targets", sdk: "Microsoft.NET.Sdk")
                 .Import("$(MSBuildThisFileDirectory)..\\build\\JD.Efcpt.Sdk.targets"))
             // build/JD.Efcpt.Sdk.props - SDK-specific properties
             .BuildProps(p => p
