@@ -27,6 +27,11 @@ public interface ITaskTracker : IDisposable
 public sealed class BuildProfiler
 {
     private static readonly BuildRunOutput EmptyRunOutput = new();
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+    };
     
     private readonly BuildRunOutput _runOutput;
     private readonly Stack<BuildGraphNode> _nodeStack = new();
@@ -238,13 +243,7 @@ public sealed class BuildProfiler
             }
 
             // Write profile to file with indented JSON for human readability
-            var options = new JsonSerializerOptions
-            {
-                WriteIndented = true,
-                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-            };
-
-            var json = JsonSerializer.Serialize(_runOutput, options);
+            var json = JsonSerializer.Serialize(_runOutput, JsonOptions);
             File.WriteAllText(outputPath, json);
         }
     }

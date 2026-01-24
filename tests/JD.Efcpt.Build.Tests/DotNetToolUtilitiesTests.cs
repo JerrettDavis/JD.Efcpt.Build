@@ -220,4 +220,47 @@ public sealed class DotNetToolUtilitiesTests(ITestOutputHelper output) : TinyBdd
     // would require the .NET SDK to be installed, which is environment-dependent.
     // These tests would be better suited for integration tests.
     // The current tests verify error handling and invalid input scenarios.
+
+    [Scenario("IsDotNet10OrLater handles frameworks with modifiers")]
+    [Theory]
+    [InlineData("net10.0-windows", true)]
+    [InlineData("net10.0-macos", true)]
+    [InlineData("net10.0-android", true)]
+    [InlineData("net9.0-android", false)]
+    [InlineData("net8.0-ios", false)]
+    public async Task IsDotNet10OrLater_handles_framework_modifiers(string tfm, bool expected)
+    {
+        await Given($"target framework '{tfm}' with modifier", () => tfm)
+            .When("IsDotNet10OrLater is called", t => DotNetToolUtilities.IsDotNet10OrLater(t))
+            .Then($"returns {expected}", result => result == expected)
+            .AssertPassed();
+    }
+
+    [Scenario("IsDotNet10OrLater handles single-digit major version")]
+    [Theory]
+    [InlineData("net5", false)]
+    [InlineData("net6", false)]
+    [InlineData("net7", false)]
+    [InlineData("net8", false)]
+    [InlineData("net9", false)]
+    public async Task IsDotNet10OrLater_handles_single_digit_versions(string tfm, bool expected)
+    {
+        await Given($"target framework '{tfm}' without minor version", () => tfm)
+            .When("IsDotNet10OrLater is called", t => DotNetToolUtilities.IsDotNet10OrLater(t))
+            .Then($"returns {expected}", result => result == expected)
+            .AssertPassed();
+    }
+
+    [Scenario("IsDotNet10OrLater handles whitespace")]
+    [Theory]
+    [InlineData("  net10.0  ", true)]
+    [InlineData("\tnet10.0\t", true)]
+    [InlineData("  net9.0  ", false)]
+    public async Task IsDotNet10OrLater_handles_whitespace(string tfm, bool expected)
+    {
+        await Given($"target framework with whitespace", () => tfm)
+            .When("IsDotNet10OrLater is called", t => DotNetToolUtilities.IsDotNet10OrLater(t))
+            .Then($"returns {expected}", result => result == expected)
+            .AssertPassed();
+    }
 }

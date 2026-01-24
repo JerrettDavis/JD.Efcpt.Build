@@ -13,6 +13,9 @@ internal static class DotNetToolUtilities
     /// </summary>
     private const int ProcessTimeoutMs = 5000;
 
+    private static readonly char[] NewLineSeparator = ['\n'];
+    private static readonly char[] SpaceSeparator = [' ', '\t'];
+
     /// <summary>
     /// Checks if the .NET 10.0 (or later) SDK is installed by running `dotnet --list-sdks`.
     /// </summary>
@@ -61,7 +64,7 @@ internal static class DotNetToolUtilities
             var output = outputBuilder.ToString();
 
             // Parse SDK versions from output like "10.0.100 [C:\Program Files\dotnet\sdk]"
-            foreach (var line in output.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries))
+            foreach (var line in output.Split(NewLineSeparator, StringSplitOptions.RemoveEmptyEntries))
             {
                 var trimmed = line.Trim();
                 var firstSpace = trimmed.IndexOf(' ');
@@ -131,14 +134,14 @@ internal static class DotNetToolUtilities
             var output = outputBuilder.ToString();
 
             // If we can list runtimes and at least one .NET 10 runtime is present, dnx is available
-            foreach (var line in output.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries))
+            foreach (var line in output.Split(NewLineSeparator, StringSplitOptions.RemoveEmptyEntries))
             {
                 var trimmed = line.Trim();
                 if (string.IsNullOrEmpty(trimmed))
                     continue;
 
                 // Expected format: "<runtimeName> <version> [path]"
-                var parts = trimmed.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                var parts = trimmed.Split(SpaceSeparator, StringSplitOptions.RemoveEmptyEntries);
                 if (parts.Length < 2)
                     continue;
 

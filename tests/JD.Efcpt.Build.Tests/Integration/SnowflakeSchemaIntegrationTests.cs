@@ -241,9 +241,9 @@ public sealed class SnowflakeSchemaIntegrationTests(ITestOutputHelper output) : 
         await Given("a Snowflake container with test schema", SetupDatabaseWithSchema)
             .When("schema is read", ExecuteReadSchema)
             .Then("customers table has correct column count", r =>
-                r.Schema.Tables.First(t => t.Name.Equals("CUSTOMERS", StringComparison.OrdinalIgnoreCase)).Columns.Count() == 4)
+                r.Schema.Tables.First(t => t.Name.Equals("CUSTOMERS", StringComparison.OrdinalIgnoreCase)).Columns.Count == 4)
             .And("products table has correct column count", r =>
-                r.Schema.Tables.First(t => t.Name.Equals("PRODUCTS", StringComparison.OrdinalIgnoreCase)).Columns.Count() == 4)
+                r.Schema.Tables.First(t => t.Name.Equals("PRODUCTS", StringComparison.OrdinalIgnoreCase)).Columns.Count == 4)
             .Finally(r => r.Context.Dispose())
             .AssertPassed();
     }

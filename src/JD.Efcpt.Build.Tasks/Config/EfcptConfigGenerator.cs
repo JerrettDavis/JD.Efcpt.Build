@@ -17,6 +17,12 @@ public static class EfcptConfigGenerator
     private const string PrimarySchemaUrl = "https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/master/samples/efcpt-config.schema.json";
     private const string FallbackSchemaUrl = "https://raw.githubusercontent.com/JerrettDavis/JD.Efcpt.Build/refs/heads/main/lib/efcpt-config.schema.json";
 
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
     /// <summary>
     /// Generates a default efcpt-config.json from a schema URL.
     /// </summary>
@@ -109,13 +115,7 @@ public static class EfcptConfigGenerator
         // Don't process TypeMappings as it's not required
 
         // Serialize with indentation
-        var options = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        };
-
-        return JsonSerializer.Serialize(config, options);
+        return JsonSerializer.Serialize(config, JsonOptions);
     }
 
     private static void ProcessCodeGeneration(JsonObject config, JsonObject definitions)

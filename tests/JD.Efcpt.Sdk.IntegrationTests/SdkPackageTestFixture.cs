@@ -8,14 +8,14 @@ namespace JD.Efcpt.Sdk.IntegrationTests;
 /// </summary>
 public class SdkPackageTestFixture
 {
-    public string PackageOutputPath => AssemblyFixture.PackageOutputPath;
-    public string SdkPackagePath => AssemblyFixture.SdkPackagePath;
-    public string BuildPackagePath => AssemblyFixture.BuildPackagePath;
-    public string SdkVersion => AssemblyFixture.SdkVersion;
-    public string BuildVersion => AssemblyFixture.BuildVersion;
-    public string SharedDatabaseProjectPath => AssemblyFixture.SharedDatabaseProjectPath;
+    public static string PackageOutputPath => AssemblyFixture.PackageOutputPath;
+    public static string SdkPackagePath => AssemblyFixture.SdkPackagePath;
+    public static string BuildPackagePath => AssemblyFixture.BuildPackagePath;
+    public static string SdkVersion => AssemblyFixture.SdkVersion;
+    public static string BuildVersion => AssemblyFixture.BuildVersion;
+    public static string SharedDatabaseProjectPath => AssemblyFixture.SharedDatabaseProjectPath;
 
-    public string GetTestFixturesPath() => AssemblyFixture.TestFixturesPath;
+    public static string GetTestFixturesPath() => AssemblyFixture.TestFixturesPath;
 }
 
 // Collection definitions for parallel test execution

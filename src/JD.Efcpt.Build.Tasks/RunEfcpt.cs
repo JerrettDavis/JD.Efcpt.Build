@@ -82,6 +82,8 @@ public sealed class RunEfcpt : Task
     /// </summary>
     private const int ProcessTimeoutMs = 5000;
 
+    private static readonly string[] NewLineSeparators = ["\r\n", "\n"];
+
     /// <summary>
     /// Controls how the efcpt dotnet tool is resolved.
     /// </summary>
@@ -546,7 +548,7 @@ public sealed class RunEfcpt : Task
 
             // Parse output like "10.0.100 [C:\Program Files\dotnet\sdk]"
             // Check if any line starts with "10." or higher
-            foreach (var line in output.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
+            foreach (var line in output.Split(NewLineSeparators, StringSplitOptions.RemoveEmptyEntries))
             {
                 var trimmed = line.Trim();
                 if (string.IsNullOrEmpty(trimmed))

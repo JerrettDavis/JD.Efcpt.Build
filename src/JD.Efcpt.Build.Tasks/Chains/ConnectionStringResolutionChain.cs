@@ -131,7 +131,7 @@ internal static class ConnectionStringResolutionChain
         var fullPath = PathUtils.FullPath(explicitPath, projectDirectory);
 
         var validator = new ConfigurationFileTypeValidator();
-        validator.ValidateAndWarn(fullPath, propertyName, log);
+        ConfigurationFileTypeValidator.ValidateAndWarn(fullPath, propertyName, log);
 
         var result = ParseConnectionStringFromFile(fullPath, connectionStringName, log);
         return result.Success ? result.ConnectionString : null;
@@ -158,7 +158,7 @@ internal static class ConnectionStringResolutionChain
         foreach (var file in appSettingsFiles.OrderBy(f => f == Path.Combine(projectDirectory, "appsettings.json") ? 0 : 1))
         {
             var parser = new AppSettingsConnectionStringParser();
-            var result = parser.Parse(file, connectionStringName, log);
+            var result = AppSettingsConnectionStringParser.Parse(file, connectionStringName, log);
             if (!result.Success || string.IsNullOrWhiteSpace(result.ConnectionString))
                 continue;
 
@@ -186,7 +186,7 @@ internal static class ConnectionStringResolutionChain
                 continue;
 
             var parser = new AppConfigConnectionStringParser();
-            var result = parser.Parse(path, connectionStringName, log);
+            var result = AppConfigConnectionStringParser.Parse(path, connectionStringName, log);
             if (result.Success && !string.IsNullOrWhiteSpace(result.ConnectionString))
             {
                 log.Detail($"Resolved connection string from auto-discovered file: {configFile}");
@@ -205,8 +205,8 @@ internal static class ConnectionStringResolutionChain
         var ext = Path.GetExtension(filePath).ToLowerInvariant();
         return ext switch
         {
-            ".json" => new AppSettingsConnectionStringParser().Parse(filePath, connectionStringName, log),
-            ".config" => new AppConfigConnectionStringParser().Parse(filePath, connectionStringName, log),
+            ".json" => AppSettingsConnectionStringParser.Parse(filePath, connectionStringName, log),
+            ".config" => AppConfigConnectionStringParser.Parse(filePath, connectionStringName, log),
             _ => ConnectionStringResult.Failed()
         };
     }
