@@ -108,7 +108,7 @@ jobs:
             ```
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: |
             **/TestResults/*/coverage.cobertura.xml
@@ -219,7 +219,7 @@ jobs:
             ./artifacts/*.snupkg
 
       - name: Upload coverage to Codecov (Release)
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: |
             **/TestResults/*/coverage.cobertura.xml
