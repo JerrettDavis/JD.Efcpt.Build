@@ -56,8 +56,7 @@ public sealed class SnowflakeSchemaIntegrationTests(ITestOutputHelper output) : 
     private static async Task<TestContext> SetupEmptyDatabase()
     {
         // LocalStack Snowflake uses port 4566 and requires auth token
-        var container = new ContainerBuilder()
-            .WithImage("localstack/snowflake:latest")
+        var container = new ContainerBuilder("localstack/snowflake:latest")
             .WithPortBinding(4566, true)
             .WithEnvironment("LOCALSTACK_AUTH_TOKEN", LocalStackAuthToken!)
             .WithEnvironment("SF_DEFAULT_USER", "test")
