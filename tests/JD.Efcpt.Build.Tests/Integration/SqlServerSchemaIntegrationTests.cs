@@ -32,8 +32,7 @@ public sealed class SqlServerSchemaIntegrationTests(ITestOutputHelper output) : 
 
     private static async Task<TestContext> SetupEmptyDatabase()
     {
-        var container = new MsSqlBuilder()
-            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+        var container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
             .Build();
 
         await container.StartAsync();
