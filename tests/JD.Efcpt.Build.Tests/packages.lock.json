@@ -57,12 +57,12 @@
       },
       "SQLitePCLRaw.bundle_e_sqlite3": {
         "type": "Direct",
-        "requested": "[2.1.10, )",
-        "resolved": "2.1.10",
-        "contentHash": "UxWuisvZ3uVcVOLJQv7urM/JiQH+v3TmaJc1BLKl5Dxfm/nTzTUrqswCqg/INiYLi61AXnHo1M1JPmPqqLnAdg==",
+        "requested": "[3.0.2, )",
+        "resolved": "3.0.2",
+        "contentHash": "nzPPFpELY9U1scLvQpA1k1GIgR9ror83DCPmirT2/i5NCPdTBfhTDA6MZqFZonGDayye5mUQRQLOVyEiJNYr0g==",
         "dependencies": {
-          "SQLitePCLRaw.lib.e_sqlite3": "2.1.10",
-          "SQLitePCLRaw.provider.e_sqlite3": "2.1.10"
+          "SQLitePCLRaw.config.e_sqlite3": "3.0.2",
+          "SourceGear.sqlite3": "3.50.4.2"
         }
       },
       "Testcontainers.FirebirdSql": {
@@ -541,22 +541,30 @@
           "Tomlyn.Signed": "0.17.0"
         }
       },
+      "SourceGear.sqlite3": {
+        "type": "Transitive",
+        "resolved": "3.50.4.2",
+        "contentHash": "eV9HwQ88WyoU+reGVxJz1SwME9NbYnl9h2LOY15j0LGdXN4JkTJDk8JRRg/yNgt00O3Cn5/qnska10FEZNoU5g=="
+      },
+      "SQLitePCLRaw.config.e_sqlite3": {
+        "type": "Transitive",
+        "resolved": "3.0.2",
+        "contentHash": "QPHR1Axs8YCCapb0TnmT7PxY9DX3sg4I4T9HOSKeFBiT5l482mjrOIxuyt+xOCwEQ2Enq5h0tgDOXMnJi+i0sw==",
+        "dependencies": {
+          "SQLitePCLRaw.provider.e_sqlite3": "3.0.2"
+        }
+      },
       "SQLitePCLRaw.core": {
         "type": "Transitive",
-        "resolved": "2.1.10",
-        "contentHash": "Ii8JCbC7oiVclaE/mbDEK000EFIJ+ShRPwAvvV89GOZhQ+ZLtlnSWl6ksCNMKu/VGXA4Nfi2B7LhN/QFN9oBcw=="
-      },
-      "SQLitePCLRaw.lib.e_sqlite3": {
-        "type": "Transitive",
-        "resolved": "2.1.10",
-        "contentHash": "mAr69tDbnf3QJpRy2nJz8Qdpebdil00fvycyByR58Cn9eARvR+UiG2Vzsp+4q1tV3ikwiYIjlXCQFc12GfebbA=="
+        "resolved": "3.0.2",
+        "contentHash": "tnbRf0muOOSJK1RLCfyYK13jynFScgL4xMj7yC3oy8lrrGKXTKmOoWjfdV+cFfBRdppm4qST31hvp8ihgIgvMQ=="
       },
       "SQLitePCLRaw.provider.e_sqlite3": {
         "type": "Transitive",
-        "resolved": "2.1.10",
-        "contentHash": "uZVTi02C1SxqzgT0HqTWatIbWGb40iIkfc3FpFCpE/r7g6K0PqzDUeefL6P6HPhDtc6BacN3yQysfzP7ks+wSQ==",
+        "resolved": "3.0.2",
+        "contentHash": "RQIliDp47mQxGYNcBB6W+ezHbegkImrSZVTuWjQCSTTl3pQ37Q3rALkkkdTAMEmcIz71PEOCqNZMp7lXCnVqEQ==",
         "dependencies": {
-          "SQLitePCLRaw.core": "2.1.10"
+          "SQLitePCLRaw.core": "3.0.2"
         }
       },
       "SSH.NET": {
