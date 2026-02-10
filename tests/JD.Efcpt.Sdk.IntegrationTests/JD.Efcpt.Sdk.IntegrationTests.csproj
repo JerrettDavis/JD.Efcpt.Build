@@ -20,7 +20,7 @@
     </PackageReference>
     <PackageReference Include="FluentAssertions" Version="8.0.1" />
     <PackageReference Include="Testcontainers.MsSql" Version="4.4.0" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
   </ItemGroup>
 
   <!-- Include test fixtures as content -->
