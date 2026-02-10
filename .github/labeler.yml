@@ -1,0 +1,30 @@
+# Auto-labeling configuration for pull requests
+
+'area: core':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/**/*'
+
+'area: documentation':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*.md'
+      - 'docs/**/*'
+
+'area: tests':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'test/**/*'
+
+'area: ci/cd':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.github/**/*'
+
+'dependencies':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/packages.lock.json'
+      - '**/*.csproj'
+      - 'Directory.Build.props'
+      - 'Directory.Packages.props'

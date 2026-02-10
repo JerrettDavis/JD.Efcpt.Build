@@ -1,0 +1,18 @@
+# Code Owners for JD.Efcpt.Build
+# These users will be automatically requested for review when PRs are opened
+
+# Global owners
+* @jerrettdavis
+
+# Workflows and CI/CD
+/.github/ @jerrettdavis
+
+# Documentation
+/docs/ @jerrettdavis
+*.md @jerrettdavis
+
+# Core library
+/src/ @jerrettdavis
+
+# Tests
+/test/ @jerrettdavis
