@@ -103,11 +103,11 @@
       },
       "Testcontainers.PostgreSql": {
         "type": "Direct",
-        "requested": "[4.4.0, )",
-        "resolved": "4.4.0",
-        "contentHash": "AZan+H6m/jBR/qN4Dj3QA8NOqqiTo2Zq9/FswbXP6XADu9FVJU2sXPG3nQHxpBQ8ccHARCL3uxKg0BSR5YSTQw==",
+        "requested": "[4.10.0, )",
+        "resolved": "4.10.0",
+        "contentHash": "TP7j3N014O9MONT21lqZPzlVuP1LJYhkRKYZPbRdHl3VN+4RPk5Jt799WvLfxDsOFLVNibNO3B7tP1vcYQmXHA==",
         "dependencies": {
-          "Testcontainers": "4.4.0"
+          "Testcontainers": "4.10.0"
         }
       },
       "TinyBDD.Xunit": {

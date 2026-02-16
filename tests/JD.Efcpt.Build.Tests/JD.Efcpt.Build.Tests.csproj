@@ -33,12 +33,7 @@
       <ExcludeAssets>runtime</ExcludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Testcontainers.MsSql" Version="4.10.0" />
-    <PackageReference Include="Testcontainers.PostgreSql" Version="4.4.0" />
-    <PackageReference Include="Testcontainers.Oracle" Version="4.10.0" />
-    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.2" />
-    <!-- Updated to 0.19.2 with source generator disabled via Analyzer removal -->
-    <PackageReference Include="TinyBDD.Xunit" Version="0.19.2" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.10.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="Xunit.SkippableFact" Version="1.5.61" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
@@ -49,5 +44,6 @@
     <PackageReference Include="AWSSDK.Core" Version="4.0.3.14" />
   </ItemGroup>
 </Project>
+
 
 
