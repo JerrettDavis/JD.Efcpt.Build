@@ -94,11 +94,11 @@
       },
       "Testcontainers.Oracle": {
         "type": "Direct",
-        "requested": "[4.4.0, )",
-        "resolved": "4.4.0",
-        "contentHash": "4STZFI7GsDwPrVdZXRsUIqWqmvA9V21zXz2yq+SyO6l2CQU5Au/yyY3aEsVikAkRA7zDNK1lTlglF/qmH1PX7Q==",
+        "requested": "[4.10.0, )",
+        "resolved": "4.10.0",
+        "contentHash": "8iOvYfZho4CWl3/sBKUbyLH5kiahbq3O5O7hOL7egxIm7yNRBrlXp3DLxIglvMVsIhp4xge4ookhfWPGtwLcjA==",
         "dependencies": {
-          "Testcontainers": "4.4.0"
+          "Testcontainers": "4.10.0"
         }
       },
       "Testcontainers.PostgreSql": {
