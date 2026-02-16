@@ -33,6 +33,8 @@ public static class DbContextNameGenerator
 {
     private const string DefaultContextName = "MyDbContext";
     private const string ContextSuffix = "Context";
+    
+    private static readonly char[] DotSeparator = ['.'];
 
     /// <summary>
     /// Generates a DbContext name from the provided SQL project path.
@@ -209,7 +211,7 @@ public static class DbContextNameGenerator
             return DefaultContextName;
 
         // Handle dotted namespaces (e.g., "Org.Unit.SystemData" → "SystemData")
-        var dotParts = rawName.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+        var dotParts = rawName.Split(DotSeparator, StringSplitOptions.RemoveEmptyEntries);
         var baseName = dotParts.Length > 0 ? dotParts[^1] : rawName;
 
         // Remove digits at the end (common in DACPAC names like "MyDb20251225.dacpac")

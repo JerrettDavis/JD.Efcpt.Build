@@ -84,7 +84,7 @@ public sealed class BuildRunOutputTests(ITestOutputHelper output) : TinyBddXunit
     {
         await Given("a BuildStatus value", () => status)
             .When("value is checked", s => s)
-            .Then("value is defined", s => Enum.IsDefined(typeof(BuildStatus), s))
+            .Then("value is defined", s => Enum.IsDefined(s))
             .AssertPassed();
     }
 
@@ -98,7 +98,7 @@ public sealed class BuildRunOutputTests(ITestOutputHelper output) : TinyBddXunit
     {
         await Given("a TaskStatus value", () => status)
             .When("value is checked", s => s)
-            .Then("value is defined", s => Enum.IsDefined(typeof(ProfilingTaskStatus), s))
+            .Then("value is defined", s => Enum.IsDefined(s))
             .AssertPassed();
     }
 
@@ -111,7 +111,7 @@ public sealed class BuildRunOutputTests(ITestOutputHelper output) : TinyBddXunit
     {
         await Given("a DiagnosticLevel value", () => level)
             .When("value is checked", l => l)
-            .Then("value is defined", l => Enum.IsDefined(typeof(DiagnosticLevel), l))
+            .Then("value is defined", l => Enum.IsDefined(l))
             .AssertPassed();
     }
 

@@ -39,7 +39,7 @@ public class FrameworkMsBuildTests : IDisposable
             "MSBuild.exe not found - Visual Studio must be installed to run this test");
 
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_framework", "net8.0");
 
         // Act - Build with MSBuild.exe (Framework MSBuild)
@@ -67,7 +67,7 @@ public class FrameworkMsBuildTests : IDisposable
             "MSBuild.exe not found - Visual Studio must be installed to run this test");
 
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_framework_ctx", "net8.0");
 
         // Act - BuildWithMSBuildExeAsync passes -restore to MSBuild.exe
@@ -89,7 +89,7 @@ public class FrameworkMsBuildTests : IDisposable
             "MSBuild.exe not found - Visual Studio must be installed to run this test");
 
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateSdkProject("TestEfProject_sdk_framework", "net8.0");
 
         // Act - BuildWithMSBuildExeAsync passes -restore to MSBuild.exe
@@ -115,7 +115,7 @@ public class FrameworkMsBuildTests : IDisposable
             "MSBuild.exe not found - Visual Studio must be installed to run this test");
 
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_net472_check", "net8.0");
 
         // Add detailed logging to see task assembly selection
@@ -144,7 +144,7 @@ public class FrameworkMsBuildTests : IDisposable
             "MSBuild.exe not found - Visual Studio must be installed to run this test");
 
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_incremental", "net8.0");
 
         // Act - First build (BuildWithMSBuildExeAsync passes -restore to MSBuild.exe)

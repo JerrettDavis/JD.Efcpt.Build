@@ -11,7 +11,7 @@ internal sealed class ConfigurationFileTypeValidator
     /// <param name="filePath">The path to the configuration file.</param>
     /// <param name="parameterName">The name of the parameter (e.g., "EfcptAppSettings" or "EfcptAppConfig").</param>
     /// <param name="log">The build log for warnings.</param>
-    public void ValidateAndWarn(string filePath, string parameterName, BuildLog log)
+    public static void ValidateAndWarn(string filePath, string parameterName, BuildLog log)
     {
         var extension = Path.GetExtension(filePath).ToLowerInvariant();
         var isJson = extension == ".json";

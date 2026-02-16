@@ -61,7 +61,7 @@ public sealed class DetectSqlProject : Microsoft.Build.Utilities.Task
         }
 
         // Fall back to property-based detection for legacy SSDT projects
-        var hasLegacyProperties = !string.IsNullOrEmpty(SqlServerVersion) || !string.IsNullOrEmpty(DSP);
+        var hasLegacyProperties = !string.IsNullOrWhiteSpace(SqlServerVersion) || !string.IsNullOrWhiteSpace(DSP);
 
         if (hasLegacyProperties)
         {

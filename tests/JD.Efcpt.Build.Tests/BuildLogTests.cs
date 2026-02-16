@@ -206,6 +206,145 @@ public sealed class BuildLogTests(ITestOutputHelper output) : TinyBddXunitBase(o
                 s.Engine.Errors.Count == 1)
             .AssertPassed();
     }
+
+    [Scenario("Log with MessageLevel.None does nothing")]
+    [Fact]
+    public async Task Log_with_none_level_does_nothing()
+    {
+        await Given("a build engine", Setup)
+            .When("Log is called with None level", s =>
+            {
+                var log = new Tasks.BuildLog(s.Engine.TaskLoggingHelper, "minimal");
+                log.Log(Tasks.MessageLevel.None, "Should not appear");
+                return s;
+            })
+            .Then("no message is logged", s => s.Engine.Messages.All(m => m.Message != "Should not appear"))
+            .And("no warning is logged", s => s.Engine.Warnings.Count == 0)
+            .And("no error is logged", s => s.Engine.Errors.Count == 0)
+            .AssertPassed();
+    }
+
+    [Scenario("Log with MessageLevel.Info logs message")]
+    [Fact]
+    public async Task Log_with_info_level()
+    {
+        await Given("a build engine", Setup)
+            .When("Log is called with Info level", s =>
+            {
+                var log = new Tasks.BuildLog(s.Engine.TaskLoggingHelper, "minimal");
+                log.Log(Tasks.MessageLevel.Info, "Info via Log method");
+                return s;
+            })
+            .Then("message is logged", s =>
+                s.Engine.Messages.Any(m => m.Message == "Info via Log method"))
+            .And("importance is high", s =>
+                s.Engine.Messages.Any(m => m.Message == "Info via Log method" && m.Importance == MessageImportance.High))
+            .AssertPassed();
+    }
+
+    [Scenario("Log with MessageLevel.Warn logs warning")]
+    [Fact]
+    public async Task Log_with_warn_level()
+    {
+        await Given("a build engine", Setup)
+            .When("Log is called with Warn level", s =>
+            {
+                var log = new Tasks.BuildLog(s.Engine.TaskLoggingHelper, "minimal");
+                log.Log(Tasks.MessageLevel.Warn, "Warning via Log method");
+                return s;
+            })
+            .Then("warning is logged", s =>
+                s.Engine.Warnings.Any(w => w.Message == "Warning via Log method"))
+            .AssertPassed();
+    }
+
+    [Scenario("Log with MessageLevel.Warn and code logs warning with code")]
+    [Fact]
+    public async Task Log_with_warn_level_and_code()
+    {
+        await Given("a build engine", Setup)
+            .When("Log is called with Warn level and code", s =>
+            {
+                var log = new Tasks.BuildLog(s.Engine.TaskLoggingHelper, "minimal");
+                log.Log(Tasks.MessageLevel.Warn, "Warning with code via Log", "EFCPT100");
+                return s;
+            })
+            .Then("warning is logged", s =>
+                s.Engine.Warnings.Any(w => w.Message == "Warning with code via Log"))
+            .And("warning has code", s =>
+                s.Engine.Warnings.Any(w => w.Code == "EFCPT100"))
+            .AssertPassed();
+    }
+
+    [Scenario("Log with MessageLevel.Error logs error")]
+    [Fact]
+    public async Task Log_with_error_level()
+    {
+        await Given("a build engine", Setup)
+            .When("Log is called with Error level", s =>
+            {
+                var log = new Tasks.BuildLog(s.Engine.TaskLoggingHelper, "minimal");
+                log.Log(Tasks.MessageLevel.Error, "Error via Log method");
+                return s;
+            })
+            .Then("error is logged", s =>
+                s.Engine.Errors.Any(e => e.Message == "Error via Log method"))
+            .AssertPassed();
+    }
+
+    [Scenario("Log with MessageLevel.Error and code logs error with code")]
+    [Fact]
+    public async Task Log_with_error_level_and_code()
+    {
+        await Given("a build engine", Setup)
+            .When("Log is called with Error level and code", s =>
+            {
+                var log = new Tasks.BuildLog(s.Engine.TaskLoggingHelper, "minimal");
+                log.Log(Tasks.MessageLevel.Error, "Error with code via Log", "EFCPT200");
+                return s;
+            })
+            .Then("error is logged", s =>
+                s.Engine.Errors.Any(e => e.Message == "Error with code via Log"))
+            .And("error has code", s =>
+                s.Engine.Errors.Any(e => e.Code == "EFCPT200"))
+            .AssertPassed();
+    }
+
+    [Scenario("Log with empty code uses codeless variant")]
+    [Fact]
+    public async Task Log_with_empty_code_uses_codeless()
+    {
+        await Given("a build engine", Setup)
+            .When("Log is called with Error level and empty code", s =>
+            {
+                var log = new Tasks.BuildLog(s.Engine.TaskLoggingHelper, "minimal");
+                log.Log(Tasks.MessageLevel.Error, "Error without code", "");
+                return s;
+            })
+            .Then("error is logged", s =>
+                s.Engine.Errors.Any(e => e.Message == "Error without code"))
+            .And("error has no code", s =>
+                s.Engine.Errors.Any(e => e.Message == "Error without code" && string.IsNullOrEmpty(e.Code)))
+            .AssertPassed();
+    }
+
+    [Scenario("Log with null code uses codeless variant")]
+    [Fact]
+    public async Task Log_with_null_code_uses_codeless()
+    {
+        await Given("a build engine", Setup)
+            .When("Log is called with Warn level and null code", s =>
+            {
+                var log = new Tasks.BuildLog(s.Engine.TaskLoggingHelper, "minimal");
+                log.Log(Tasks.MessageLevel.Warn, "Warning without code", null);
+                return s;
+            })
+            .Then("warning is logged", s =>
+                s.Engine.Warnings.Any(w => w.Message == "Warning without code"))
+            .And("warning has no code", s =>
+                s.Engine.Warnings.Any(w => w.Message == "Warning without code" && string.IsNullOrEmpty(w.Code)))
+            .AssertPassed();
+    }
 }
 
 /// <summary>
@@ -340,6 +479,23 @@ public sealed class NullBuildLogTests(ITestOutputHelper output) : TinyBddXunitBa
         await Given("a NullBuildLog instance", () => Tasks.NullBuildLog.Instance)
             .When("checking interface", log => log is Tasks.IBuildLog)
             .Then("implements IBuildLog", result => result)
+            .AssertPassed();
+    }
+
+    [Scenario("Log method does not throw")]
+    [Fact]
+    public async Task Log_does_not_throw()
+    {
+        await Given("a NullBuildLog instance", () => Tasks.NullBuildLog.Instance)
+            .When("Log is called with various levels", log =>
+            {
+                log.Log(Tasks.MessageLevel.None, "None message");
+                log.Log(Tasks.MessageLevel.Info, "Info message");
+                log.Log(Tasks.MessageLevel.Warn, "Warn message", "CODE");
+                log.Log(Tasks.MessageLevel.Error, "Error message", null);
+                return true;
+            })
+            .Then("no exception is thrown", success => success)
             .AssertPassed();
     }
 }

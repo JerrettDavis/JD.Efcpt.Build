@@ -23,7 +23,7 @@ public class SdkNet80Tests : IDisposable
     public async Task Sdk_Net80_BuildsSuccessfully()
     {
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateSdkProject("TestEfProject_net80", "net8.0");
 
         // Act - BuildAsync handles restore automatically
@@ -37,7 +37,7 @@ public class SdkNet80Tests : IDisposable
     public async Task Sdk_Net80_GeneratesEntityModels()
     {
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateSdkProject("TestEfProject_net80", "net8.0");
 
         // Act - BuildAsync handles restore automatically
@@ -56,7 +56,7 @@ public class SdkNet80Tests : IDisposable
     public async Task Sdk_Net80_GeneratesDbContext()
     {
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateSdkProject("TestEfProject_net80", "net8.0");
 
         // Act - BuildAsync handles restore automatically
@@ -72,7 +72,7 @@ public class SdkNet80Tests : IDisposable
     public async Task Sdk_Net80_GeneratesEntityConfigurationsInDbContext()
     {
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateSdkProject("TestEfProject_net80", "net8.0");
 
         // Act - BuildAsync handles restore automatically
@@ -93,7 +93,7 @@ public class SdkNet80Tests : IDisposable
     public async Task Sdk_Net80_CleanRemovesGeneratedFiles()
     {
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateSdkProject("TestEfProject_clean_net80", "net8.0");
         var buildResult = await _builder.BuildAsync();
         buildResult.Success.Should().BeTrue($"Build should succeed.\n{buildResult}");
@@ -130,7 +130,7 @@ public class SdkNet90Tests : IDisposable
     public async Task Sdk_Net90_BuildsSuccessfully()
     {
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateSdkProject("TestEfProject_net90", "net9.0");
 
         // Act - BuildAsync handles restore automatically
@@ -144,7 +144,7 @@ public class SdkNet90Tests : IDisposable
     public async Task Sdk_Net90_GeneratesEntityModels()
     {
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateSdkProject("TestEfProject_net90", "net9.0");
 
         // Act - BuildAsync handles restore automatically
@@ -180,7 +180,7 @@ public class SdkNet100Tests : IDisposable
     public async Task Sdk_Net100_BuildsSuccessfully()
     {
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateSdkProject("TestEfProject_net100", "net10.0");
 
         // Act - BuildAsync handles restore automatically
@@ -194,7 +194,7 @@ public class SdkNet100Tests : IDisposable
     public async Task Sdk_Net100_GeneratesEntityModels()
     {
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateSdkProject("TestEfProject_net100", "net10.0");
 
         // Act - BuildAsync handles restore automatically
@@ -230,7 +230,7 @@ public class BuildPackageTests : IDisposable
     public async Task BuildPackage_Net80_BuildsSuccessfully()
     {
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_net80_pkg", "net8.0");
 
         // Act - BuildAsync handles restore automatically
@@ -244,7 +244,7 @@ public class BuildPackageTests : IDisposable
     public async Task BuildPackage_Net90_BuildsSuccessfully()
     {
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_net90_pkg", "net9.0");
 
         // Act - BuildAsync handles restore automatically
@@ -258,7 +258,7 @@ public class BuildPackageTests : IDisposable
     public async Task BuildPackage_Net100_BuildsSuccessfully()
     {
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_net100_pkg", "net10.0");
 
         // Act - BuildAsync handles restore automatically
@@ -276,7 +276,7 @@ public class BuildPackageTests : IDisposable
     public async Task BuildPackage_Net80_GeneratesEntityModels()
     {
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_net80_models", "net8.0");
 
         // Act - BuildAsync handles restore automatically
@@ -298,7 +298,7 @@ public class BuildPackageTests : IDisposable
     public async Task BuildPackage_Net80_GeneratesDbContext()
     {
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_net80_ctx", "net8.0");
 
         // Act - BuildAsync handles restore automatically
@@ -318,7 +318,7 @@ public class BuildPackageTests : IDisposable
     public async Task BuildPackage_DefaultEnablesEfcpt()
     {
         // Arrange - Create project WITHOUT explicitly setting EfcptEnabled
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_autoenable", "net8.0");
 
         // Act - BuildAsync handles restore automatically
@@ -338,7 +338,7 @@ public class BuildPackageTests : IDisposable
     public async Task BuildPackage_Net90_GeneratesEntityModels()
     {
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_net90_models", "net9.0");
 
         // Act - BuildAsync handles restore automatically
@@ -358,7 +358,7 @@ public class BuildPackageTests : IDisposable
     public async Task BuildPackage_Net100_GeneratesEntityModels()
     {
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateBuildPackageProject("TestEfProject_net100_models", "net10.0");
 
         // Act - BuildAsync handles restore automatically

@@ -24,9 +24,8 @@ public sealed class AppConfigConnectionStringParserTests(ITestOutputHelper outpu
 
     private static ParseResult ExecuteParse(SetupState setup)
     {
-        var parser = new AppConfigConnectionStringParser();
         var log = CreateTestLog();
-        var result = parser.Parse(setup.FilePath, setup.KeyName, log);
+        var result = AppConfigConnectionStringParser.Parse(setup.FilePath, setup.KeyName, log);
         return new ParseResult(setup, result);
     }
 

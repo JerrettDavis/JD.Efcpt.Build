@@ -9,6 +9,8 @@ internal static class SqlProjectDetector
         ["Microsoft.Build.Sql", "MSBuild.Sdk.SqlProj"],
         StringComparer.OrdinalIgnoreCase);
 
+    private static readonly char[] SemicolonSeparator = [';'];
+
     public static bool IsSqlProjectReference(string projectPath)
     {
         if (string.IsNullOrWhiteSpace(projectPath))
@@ -45,11 +47,24 @@ internal static class SqlProjectDetector
             if (HasSupportedSdkAttribute(project))
                 return true;
 
-            return project
+            // Check for <Sdk Name="..." /> elements
+            var hasSdkElement = project
                 .Descendants()
                 .Where(e => e.Name.LocalName == "Sdk")
                 .Select(e => e.Attributes().FirstOrDefault(a => a.Name.LocalName == "Name")?.Value)
                 .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Any(IsSupportedSdkName);
+
+            if (hasSdkElement)
+                return true;
+
+            // Check for <Import Sdk="..." /> elements
+            return project
+                .Descendants()
+                .Where(e => e.Name.LocalName == "Import")
+                .Select(e => e.Attributes().FirstOrDefault(a => a.Name.LocalName == "Sdk")?.Value)
+                .Where(sdk => !string.IsNullOrWhiteSpace(sdk))
+                .SelectMany(sdk => ParseSdkNames(sdk!))
                 .Any(IsSupportedSdkName);
         }
         catch
@@ -66,7 +81,7 @@ internal static class SqlProjectDetector
 
     private static IEnumerable<string> ParseSdkNames(string raw)
         => raw
-            .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+            .Split(SemicolonSeparator, StringSplitOptions.RemoveEmptyEntries)
             .Select(entry => entry.Trim())
             .Where(entry => entry.Length > 0)
             .Select(entry =>

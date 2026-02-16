@@ -34,7 +34,7 @@ public sealed class ConfigurationFileTypeValidatorTests(ITestOutputHelper output
         await Given("a validator context", CreateContext)
             .When("validating .config file for EfcptAppSettings", ctx =>
             {
-                ctx.Validator.ValidateAndWarn("/path/to/app.config", "EfcptAppSettings", ctx.Log);
+                ConfigurationFileTypeValidator.ValidateAndWarn("/path/to/app.config", "EfcptAppSettings", ctx.Log);
                 return ctx;
             })
             .Then("logs a warning about file type mismatch", ctx =>
@@ -51,7 +51,7 @@ public sealed class ConfigurationFileTypeValidatorTests(ITestOutputHelper output
         await Given("a validator context", CreateContext)
             .When("validating .json file for EfcptAppConfig", ctx =>
             {
-                ctx.Validator.ValidateAndWarn("/path/to/appsettings.json", "EfcptAppConfig", ctx.Log);
+                ConfigurationFileTypeValidator.ValidateAndWarn("/path/to/appsettings.json", "EfcptAppConfig", ctx.Log);
                 return ctx;
             })
             .Then("logs a warning about file type mismatch", ctx =>
@@ -68,7 +68,7 @@ public sealed class ConfigurationFileTypeValidatorTests(ITestOutputHelper output
         await Given("a validator context", CreateContext)
             .When("validating .json file for EfcptAppSettings", ctx =>
             {
-                ctx.Validator.ValidateAndWarn("/path/to/appsettings.json", "EfcptAppSettings", ctx.Log);
+                ConfigurationFileTypeValidator.ValidateAndWarn("/path/to/appsettings.json", "EfcptAppSettings", ctx.Log);
                 return ctx;
             })
             .Then("no warnings logged", ctx => ctx.BuildEngine.Warnings.Count == 0)
@@ -82,7 +82,7 @@ public sealed class ConfigurationFileTypeValidatorTests(ITestOutputHelper output
         await Given("a validator context", CreateContext)
             .When("validating .config file for EfcptAppConfig", ctx =>
             {
-                ctx.Validator.ValidateAndWarn("/path/to/app.config", "EfcptAppConfig", ctx.Log);
+                ConfigurationFileTypeValidator.ValidateAndWarn("/path/to/app.config", "EfcptAppConfig", ctx.Log);
                 return ctx;
             })
             .Then("no warnings logged", ctx => ctx.BuildEngine.Warnings.Count == 0)
@@ -99,7 +99,7 @@ public sealed class ConfigurationFileTypeValidatorTests(ITestOutputHelper output
         await Given("a validator context", CreateContext)
             .When("validating unknown file type", ctx =>
             {
-                ctx.Validator.ValidateAndWarn(filePath, parameterName, ctx.Log);
+                ConfigurationFileTypeValidator.ValidateAndWarn(filePath, parameterName, ctx.Log);
                 return ctx;
             })
             .Then("no warnings logged", ctx => ctx.BuildEngine.Warnings.Count == 0)
@@ -115,7 +115,7 @@ public sealed class ConfigurationFileTypeValidatorTests(ITestOutputHelper output
         await Given("a validator context", CreateContext)
             .When("validating file with mixed-case extension", ctx =>
             {
-                ctx.Validator.ValidateAndWarn(filePath, parameterName, ctx.Log);
+                ConfigurationFileTypeValidator.ValidateAndWarn(filePath, parameterName, ctx.Log);
                 return ctx;
             })
             .Then("logs appropriate warning", ctx => ctx.BuildEngine.Warnings.Count == 1)

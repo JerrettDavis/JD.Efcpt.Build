@@ -110,4 +110,40 @@ public sealed class SqlProjectDetectorTests(ITestOutputHelper output) : TinyBddX
             .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
     }
+
+    [Scenario("Import element with Sdk attribute is detected")]
+    [Fact]
+    public async Task Import_element_with_sdk_attribute_is_detected()
+    {
+        await Given("project with Import element and Sdk attribute", () =>
+                SetupProject("<Project><Import Project=\"Sdk.props\" Sdk=\"Microsoft.Build.Sql\" /><Import Project=\"Sdk.targets\" Sdk=\"Microsoft.Build.Sql\" /></Project>"))
+            .When("detect", ExecuteDetect)
+            .Then("returns true", r => r.IsSqlProject)
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Import element with versioned Sdk is detected")]
+    [Fact]
+    public async Task Import_element_with_versioned_sdk_is_detected()
+    {
+        await Given("project with Import element and versioned Sdk", () =>
+                SetupProject("<Project><Import Project=\"Sdk.props\" Sdk=\"MSBuild.Sdk.SqlProj/3.0.0\" /></Project>"))
+            .When("detect", ExecuteDetect)
+            .Then("returns true", r => r.IsSqlProject)
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Import element with multiple SDKs is detected")]
+    [Fact]
+    public async Task Import_element_with_multiple_sdks_is_detected()
+    {
+        await Given("project with Import element and multiple SDKs", () =>
+                SetupProject("<Project><Import Project=\"Sdk.props\" Sdk=\"Microsoft.NET.Sdk;Microsoft.Build.Sql\" /></Project>"))
+            .When("detect", ExecuteDetect)
+            .Then("returns true", r => r.IsSqlProject)
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
 }

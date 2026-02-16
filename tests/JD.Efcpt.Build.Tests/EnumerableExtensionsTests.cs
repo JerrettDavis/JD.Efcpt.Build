@@ -17,7 +17,8 @@ public sealed class EnumerableExtensionsTests(ITestOutputHelper output) : TinyBd
     [Fact]
     public async Task BuildCandidateNames_fallback_only()
     {
-        await Given("no override and two fallback names", () => ((string?)null, new[] { "file1.json", "file2.json" }))
+        var setup = new[] { "file1.json", "file2.json" };
+        await Given("no override and two fallback names", () => ((string?)null, setup))
             .When("BuildCandidateNames is called", t => EnumerableExtensions.BuildCandidateNames(t.Item1, t.Item2))
             .Then("result contains both fallbacks", r => r.Count == 2 && r[0] == "file1.json" && r[1] == "file2.json")
             .AssertPassed();
@@ -27,7 +28,8 @@ public sealed class EnumerableExtensionsTests(ITestOutputHelper output) : TinyBd
     [Fact]
     public async Task BuildCandidateNames_override_first()
     {
-        await Given("an override and fallback names", () => ("custom.json", new[] { "file1.json", "file2.json" }))
+        var setup = new[] { "file1.json", "file2.json" };
+        await Given("an override and fallback names", () => ("custom.json", setup))
             .When("BuildCandidateNames is called", t => EnumerableExtensions.BuildCandidateNames(t.Item1, t.Item2))
             .Then("override is first", r => r[0] == "custom.json")
             .And("result contains all names", r => r.Count == 3)
@@ -38,7 +40,8 @@ public sealed class EnumerableExtensionsTests(ITestOutputHelper output) : TinyBd
     [Fact]
     public async Task BuildCandidateNames_extracts_filename_from_path()
     {
-        await Given("an override path and fallback", () => ("path/to/custom.json", new[] { "default.json" }))
+        var setup = new[] { "default.json" };
+        await Given("an override path and fallback", () => ("path/to/custom.json", setup))
             .When("BuildCandidateNames is called", t => EnumerableExtensions.BuildCandidateNames(t.Item1, t.Item2))
             .Then("extracted filename is first", r => r[0] == "custom.json")
             .And("result contains default", r => r.Contains("default.json"))
@@ -49,7 +52,8 @@ public sealed class EnumerableExtensionsTests(ITestOutputHelper output) : TinyBd
     [Fact]
     public async Task BuildCandidateNames_deduplicates()
     {
-        await Given("override matching a fallback with different case", () => ("FILE.JSON", new[] { "file.json", "other.json" }))
+        var setup = new[] { "file.json", "other.json" };
+        await Given("override matching a fallback with different case", () => ("FILE.JSON", setup))
             .When("BuildCandidateNames is called", t => EnumerableExtensions.BuildCandidateNames(t.Item1, t.Item2))
             .Then("result is deduplicated", r => r.Count == 2)
             .And("first is override version", r => r[0] == "FILE.JSON")
@@ -70,7 +74,8 @@ public sealed class EnumerableExtensionsTests(ITestOutputHelper output) : TinyBd
     [Fact]
     public async Task BuildCandidateNames_filters_invalid_fallbacks()
     {
-        await Given("fallbacks with nulls and empties", () => ((string?)null, new[] { "valid.json", "", "  ", "also-valid.json" }))
+        var setup = new[] { "valid.json", "", "  ", "also-valid.json" };
+        await Given("fallbacks with nulls and empties", () => ((string?)null, setup))
             .When("BuildCandidateNames is called", t => EnumerableExtensions.BuildCandidateNames(t.Item1, t.Item2))
             .Then("only valid names included", r => r.Count == 2)
             .And("contains valid.json", r => r.Contains("valid.json"))
@@ -82,7 +87,8 @@ public sealed class EnumerableExtensionsTests(ITestOutputHelper output) : TinyBd
     [Fact]
     public async Task BuildCandidateNames_whitespace_override()
     {
-        await Given("whitespace override and fallbacks", () => ("   ", new[] { "file.json" }))
+        var setup = new[] { "file.json" };
+        await Given("whitespace override and fallbacks", () => ("   ", setup))
             .When("BuildCandidateNames is called", t => EnumerableExtensions.BuildCandidateNames(t.Item1, t.Item2))
             .Then("override is ignored", r => r.Count == 1 && r[0] == "file.json")
             .AssertPassed();
@@ -92,7 +98,8 @@ public sealed class EnumerableExtensionsTests(ITestOutputHelper output) : TinyBd
     [Fact]
     public async Task BuildCandidateNames_preserves_fallback_order()
     {
-        await Given("multiple fallbacks", () => ((string?)null, new[] { "first.json", "second.json", "third.json" }))
+        var setup = new[] { "first.json", "second.json", "third.json" };
+        await Given("multiple fallbacks", () => ((string?)null, setup))
             .When("BuildCandidateNames is called", t => EnumerableExtensions.BuildCandidateNames(t.Item1, t.Item2))
             .Then("order is preserved", r =>
                 r.Count == 3 && r[0] == "first.json" && r[1] == "second.json" && r[2] == "third.json")
@@ -110,7 +117,8 @@ public sealed class EnumerableExtensionsTests(ITestOutputHelper output) : TinyBd
             return; // Skip on non-Windows platforms
         }
 
-        await Given("Windows-style path override", () => (@"C:\path\to\custom.json", new[] { "default.json" }))
+        var setup = new[] { "default.json" };
+        await Given("Windows-style path override", () => (@"C:\path\to\custom.json", setup))
             .When("BuildCandidateNames is called", t => EnumerableExtensions.BuildCandidateNames(t.Item1, t.Item2))
             .Then("extracted filename is first", r => r[0] == "custom.json")
             .AssertPassed();
@@ -120,7 +128,8 @@ public sealed class EnumerableExtensionsTests(ITestOutputHelper output) : TinyBd
     [Fact]
     public async Task BuildCandidateNames_unix_path_override()
     {
-        await Given("Unix-style path override", () => ("/path/to/custom.json", new[] { "default.json" }))
+        var setup = new[] { "default.json" };
+        await Given("Unix-style path override", () => ("/path/to/custom.json", setup))
             .When("BuildCandidateNames is called", t => EnumerableExtensions.BuildCandidateNames(t.Item1, t.Item2))
             .Then("extracted filename is first", r => r[0] == "custom.json")
             .AssertPassed();

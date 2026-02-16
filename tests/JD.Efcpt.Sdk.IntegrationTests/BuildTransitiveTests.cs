@@ -22,42 +22,42 @@ public class BuildTransitiveTests
     [Fact]
     public void SdkPackage_ContainsSdkFolder()
     {
-        var entries = GetPackageEntries(_fixture.SdkPackagePath);
+        var entries = GetPackageEntries(SdkPackageTestFixture.SdkPackagePath);
         entries.Should().Contain(e => e.StartsWith("Sdk/"), "SDK package should contain Sdk folder");
     }
 
     [Fact]
     public void SdkPackage_ContainsSdkProps()
     {
-        var entries = GetPackageEntries(_fixture.SdkPackagePath);
+        var entries = GetPackageEntries(SdkPackageTestFixture.SdkPackagePath);
         entries.Should().Contain("Sdk/Sdk.props", "SDK package should contain Sdk/Sdk.props");
     }
 
     [Fact]
     public void SdkPackage_ContainsSdkTargets()
     {
-        var entries = GetPackageEntries(_fixture.SdkPackagePath);
+        var entries = GetPackageEntries(SdkPackageTestFixture.SdkPackagePath);
         entries.Should().Contain("Sdk/Sdk.targets", "SDK package should contain Sdk/Sdk.targets");
     }
 
     [Fact]
     public void SdkPackage_ContainsBuildFolder()
     {
-        var entries = GetPackageEntries(_fixture.SdkPackagePath);
+        var entries = GetPackageEntries(SdkPackageTestFixture.SdkPackagePath);
         entries.Should().Contain(e => e.StartsWith("build/"), "SDK package should contain build folder");
     }
 
     [Fact]
     public void SdkPackage_ContainsSharedBuildProps()
     {
-        var entries = GetPackageEntries(_fixture.SdkPackagePath);
+        var entries = GetPackageEntries(SdkPackageTestFixture.SdkPackagePath);
         entries.Should().Contain("build/JD.Efcpt.Build.props", "SDK package should contain shared build props in build folder");
     }
 
     [Fact]
     public void SdkPackage_ContainsSharedBuildTargets()
     {
-        var entries = GetPackageEntries(_fixture.SdkPackagePath);
+        var entries = GetPackageEntries(SdkPackageTestFixture.SdkPackagePath);
         entries.Should().Contain("build/JD.Efcpt.Build.targets", "SDK package should contain shared build targets in build folder");
     }
 
@@ -68,7 +68,7 @@ public class BuildTransitiveTests
     [Fact]
     public void SdkPackage_DoesNotContainBuildTransitiveFolder()
     {
-        var entries = GetPackageEntries(_fixture.SdkPackagePath);
+        var entries = GetPackageEntries(SdkPackageTestFixture.SdkPackagePath);
         entries.Should().NotContain(e => e.StartsWith("buildTransitive/"),
             "SDK package should NOT contain buildTransitive folder - we use build/ to prevent transitive propagation");
     }
@@ -76,14 +76,14 @@ public class BuildTransitiveTests
     [Fact]
     public void SdkPackage_ContainsTasksFolder()
     {
-        var entries = GetPackageEntries(_fixture.SdkPackagePath);
+        var entries = GetPackageEntries(SdkPackageTestFixture.SdkPackagePath);
         entries.Should().Contain(e => e.StartsWith("tasks/"), "SDK package should contain tasks folder");
     }
 
     [Fact]
     public void SdkPackage_ContainsNet80Tasks()
     {
-        var entries = GetPackageEntries(_fixture.SdkPackagePath);
+        var entries = GetPackageEntries(SdkPackageTestFixture.SdkPackagePath);
         entries.Should().Contain(e => e.StartsWith("tasks/net8.0/") && e.EndsWith(".dll"),
             "SDK package should contain net8.0 task assemblies");
     }
@@ -91,7 +91,7 @@ public class BuildTransitiveTests
     [Fact]
     public void SdkPackage_ContainsNet90Tasks()
     {
-        var entries = GetPackageEntries(_fixture.SdkPackagePath);
+        var entries = GetPackageEntries(SdkPackageTestFixture.SdkPackagePath);
         entries.Should().Contain(e => e.StartsWith("tasks/net9.0/") && e.EndsWith(".dll"),
             "SDK package should contain net9.0 task assemblies");
     }
@@ -99,7 +99,7 @@ public class BuildTransitiveTests
     [Fact]
     public void SdkPackage_ContainsNet100Tasks()
     {
-        var entries = GetPackageEntries(_fixture.SdkPackagePath);
+        var entries = GetPackageEntries(SdkPackageTestFixture.SdkPackagePath);
         entries.Should().Contain(e => e.StartsWith("tasks/net10.0/") && e.EndsWith(".dll"),
             "SDK package should contain net10.0 task assemblies");
     }
@@ -107,21 +107,21 @@ public class BuildTransitiveTests
     [Fact]
     public void SdkPackage_ContainsDefaultsFolder()
     {
-        var entries = GetPackageEntries(_fixture.SdkPackagePath);
+        var entries = GetPackageEntries(SdkPackageTestFixture.SdkPackagePath);
         entries.Should().Contain(e => e.Contains("Defaults/"), "SDK package should contain Defaults folder");
     }
 
     [Fact]
     public void SdkPackage_ContainsDefaultConfig()
     {
-        var entries = GetPackageEntries(_fixture.SdkPackagePath);
+        var entries = GetPackageEntries(SdkPackageTestFixture.SdkPackagePath);
         entries.Should().Contain(e => e.Contains("efcpt-config.json"), "SDK package should contain default config file");
     }
 
     [Fact]
     public void SdkPackage_ContainsT4Templates()
     {
-        var entries = GetPackageEntries(_fixture.SdkPackagePath);
+        var entries = GetPackageEntries(SdkPackageTestFixture.SdkPackagePath);
         entries.Should().Contain(e => e.EndsWith(".t4"), "SDK package should contain T4 templates");
     }
 
@@ -133,7 +133,7 @@ public class BuildTransitiveTests
     [Fact]
     public void BuildPackage_ContainsBuildFolder()
     {
-        var entries = GetPackageEntries(_fixture.BuildPackagePath);
+        var entries = GetPackageEntries(SdkPackageTestFixture.BuildPackagePath);
         entries.Should().Contain(e => e.StartsWith("build/"),
             "Build package should contain build folder for direct consumers only");
     }
@@ -145,7 +145,7 @@ public class BuildTransitiveTests
     [Fact]
     public void BuildPackage_DoesNotContainBuildTransitiveFolder()
     {
-        var entries = GetPackageEntries(_fixture.BuildPackagePath);
+        var entries = GetPackageEntries(SdkPackageTestFixture.BuildPackagePath);
         entries.Should().NotContain(e => e.StartsWith("buildTransitive/"),
             "Build package should NOT contain buildTransitive folder - we use build/ to prevent transitive propagation");
     }
@@ -154,12 +154,12 @@ public class BuildTransitiveTests
     public void SdkAndBuildPackages_HaveMatchingSharedBuildContent()
     {
         // Get shared build content from SDK (JD.Efcpt.Build.props and JD.Efcpt.Build.targets)
-        var sdkSharedEntries = GetPackageEntries(_fixture.SdkPackagePath)
+        var sdkSharedEntries = GetPackageEntries(SdkPackageTestFixture.SdkPackagePath)
             .Where(e => e.StartsWith("build/JD.Efcpt.Build.") && !e.EndsWith("/"))
             .Select(e => e.Replace("build/", ""))
             .ToHashSet();
 
-        var buildEntries = GetPackageEntries(_fixture.BuildPackagePath)
+        var buildEntries = GetPackageEntries(SdkPackageTestFixture.BuildPackagePath)
             .Where(e => e.StartsWith("build/JD.Efcpt.Build.") && !e.EndsWith("/"))
             .Select(e => e.Replace("build/", ""))
             .ToHashSet();
@@ -177,7 +177,7 @@ public class BuildTransitiveTests
     public void BuildPackage_BuildPropsEnablesByDefault()
     {
         // Arrange & Act
-        var propsContent = GetFileContentFromPackage(_fixture.BuildPackagePath, "build/JD.Efcpt.Build.props");
+        var propsContent = GetFileContentFromPackage(SdkPackageTestFixture.BuildPackagePath, "build/JD.Efcpt.Build.props");
 
         // Assert - Must enable EfcptEnabled by default
         propsContent.Should().Contain("EfcptEnabled",
@@ -194,7 +194,7 @@ public class BuildTransitiveTests
     public void BuildPackage_BuildTargetsHasTaskRegistrations()
     {
         // Arrange & Act
-        var targetsContent = GetFileContentFromPackage(_fixture.BuildPackagePath, "build/JD.Efcpt.Build.targets");
+        var targetsContent = GetFileContentFromPackage(SdkPackageTestFixture.BuildPackagePath, "build/JD.Efcpt.Build.targets");
 
         // Assert - Must have UsingTask elements
         targetsContent.Should().Contain("UsingTask",
@@ -210,7 +210,7 @@ public class BuildTransitiveTests
     public void BuildPackage_TaskAssemblyPathUsesMSBuildThisFileDirectory()
     {
         // Arrange & Act
-        var targetsContent = GetFileContentFromPackage(_fixture.BuildPackagePath, "build/JD.Efcpt.Build.targets");
+        var targetsContent = GetFileContentFromPackage(SdkPackageTestFixture.BuildPackagePath, "build/JD.Efcpt.Build.targets");
 
         // Assert - Task assembly path must be relative to the targets file
         targetsContent.Should().Contain("$(MSBuildThisFileDirectory)",

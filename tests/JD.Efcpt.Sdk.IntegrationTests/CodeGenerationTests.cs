@@ -150,7 +150,7 @@ public class CodeGenerationTests : IDisposable
     public async Task CustomRootNamespace_IsApplied()
     {
         // Arrange
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         var additionalContent = @"
     <PropertyGroup>
         <EfcptConfigRootNamespace>MyCustomNamespace</EfcptConfigRootNamespace>
@@ -169,7 +169,7 @@ public class CodeGenerationTests : IDisposable
 
     private async Task BuildSdkProject(string targetFramework)
     {
-        _builder.CopyDatabaseProject(_fixture.GetTestFixturesPath());
+        TestProjectBuilder.CopyDatabaseProject(SdkPackageTestFixture.GetTestFixturesPath());
         _builder.CreateSdkProject($"TestProject_{targetFramework.Replace(".", "")}", targetFramework);
         // BuildAsync handles restore automatically
         var buildResult = await _builder.BuildAsync();

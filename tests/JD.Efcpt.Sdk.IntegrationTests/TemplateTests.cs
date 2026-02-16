@@ -8,7 +8,7 @@ namespace JD.Efcpt.Sdk.IntegrationTests;
 /// Tests validate that the template creates projects with the expected structure and that they build correctly.
 /// </summary>
 [Collection("Template Tests")]
-public class TemplateTests : IDisposable
+public partial class TemplateTests : IDisposable
 {
     private readonly TemplateTestFixture _fixture;
     private readonly string _testDirectory;
@@ -51,7 +51,7 @@ public class TemplateTests : IDisposable
         var projectName = "TestEfcptProject";
 
         // Act
-        var createResult = await _fixture.CreateProjectFromTemplateAsync(_testDirectory, projectName);
+        var createResult = await TemplateTestFixture.CreateProjectFromTemplateAsync(_testDirectory, projectName);
 
         // Assert
         createResult.Success.Should().BeTrue($"Project creation should succeed.\n{createResult}");
@@ -70,7 +70,7 @@ public class TemplateTests : IDisposable
     {
         // Arrange - template is already installed by fixture
         var projectName = "TestSdkProject";
-        await _fixture.CreateProjectFromTemplateAsync(_testDirectory, projectName);
+        await TemplateTestFixture.CreateProjectFromTemplateAsync(_testDirectory, projectName);
 
         // Act
         var projectFile = Path.Combine(_testDirectory, projectName, $"{projectName}.csproj");
@@ -90,7 +90,7 @@ public class TemplateTests : IDisposable
     {
         // Arrange - template is already installed by fixture
         var projectName = "MyCustomProject";
-        await _fixture.CreateProjectFromTemplateAsync(_testDirectory, projectName);
+        await TemplateTestFixture.CreateProjectFromTemplateAsync(_testDirectory, projectName);
 
         // Act
         var configFile = Path.Combine(_testDirectory, projectName, "efcpt-config.json");
@@ -108,10 +108,10 @@ public class TemplateTests : IDisposable
     {
         // Arrange - template is already installed by fixture
         var projectName = "BuildableProject";
-        await _fixture.CreateProjectFromTemplateAsync(_testDirectory, projectName);
+        await TemplateTestFixture.CreateProjectFromTemplateAsync(_testDirectory, projectName);
 
         // Copy database project to test directory
-        var dbProjectSource = Path.Combine(_fixture.GetTestFixturesPath(), "DatabaseProject");
+        var dbProjectSource = Path.Combine(TemplateTestFixture.GetTestFixturesPath(), "DatabaseProject");
         var dbProjectDest = Path.Combine(_testDirectory, "DatabaseProject");
         CopyDirectory(dbProjectSource, dbProjectDest);
 
@@ -140,7 +140,7 @@ public class TemplateTests : IDisposable
 <configuration>
   <packageSources>
     <clear />
-    <add key=""TestPackages"" value=""{_fixture.PackageOutputPath}"" />
+    <add key=""TestPackages"" value=""{TemplateTestFixture.PackageOutputPath}"" />
     <add key=""nuget.org"" value=""https://api.nuget.org/v3/index.json"" />
   </packageSources>
 </configuration>";
@@ -149,7 +149,7 @@ public class TemplateTests : IDisposable
         // Create global.json
         var globalJson = $@"{{
   ""msbuild-sdks"": {{
-    ""JD.Efcpt.Sdk"": ""{_fixture.SdkVersion}""
+    ""JD.Efcpt.Sdk"": ""{TemplateTestFixture.SdkVersion}""
   }}
 }}";
         await File.WriteAllTextAsync(Path.Combine(_testDirectory, "global.json"), globalJson);
@@ -177,7 +177,7 @@ public class TemplateTests : IDisposable
     {
         // Arrange - template is already installed by fixture
         var projectName = "ReadmeTestProject";
-        await _fixture.CreateProjectFromTemplateAsync(_testDirectory, projectName);
+        await TemplateTestFixture.CreateProjectFromTemplateAsync(_testDirectory, projectName);
 
         // Act
         var readmePath = Path.Combine(_testDirectory, projectName, "README.md");
@@ -197,7 +197,7 @@ public class TemplateTests : IDisposable
         await _fixture.InstallTemplateAsync(_testDirectory);
 
         // Act
-        var result = await _fixture.UninstallTemplateAsync(_testDirectory);
+        var result = await TemplateTestFixture.UninstallTemplateAsync(_testDirectory);
 
         // Assert
         result.Success.Should().BeTrue($"Template uninstallation should succeed.\n{result}");
@@ -219,7 +219,7 @@ public class TemplateTests : IDisposable
         var projectName = $"TestFramework_{framework.Replace(".", "")}";
 
         // Act
-        var createResult = await _fixture.CreateProjectFromTemplateAsync(_testDirectory, projectName, framework);
+        var createResult = await TemplateTestFixture.CreateProjectFromTemplateAsync(_testDirectory, projectName, framework);
         createResult.Success.Should().BeTrue($"Project creation for {framework} should succeed.\n{createResult}");
 
         var projectFile = Path.Combine(_testDirectory, projectName, $"{projectName}.csproj");
@@ -240,7 +240,7 @@ public class TemplateTests : IDisposable
         var projectName = $"TestEFCore_{framework.Replace(".", "")}";
 
         // Act
-        var createResult = await _fixture.CreateProjectFromTemplateAsync(_testDirectory, projectName, framework);
+        var createResult = await TemplateTestFixture.CreateProjectFromTemplateAsync(_testDirectory, projectName, framework);
         createResult.Success.Should().BeTrue($"Project creation for {framework} should succeed.\n{createResult}");
 
         var projectFile = Path.Combine(_testDirectory, projectName, $"{projectName}.csproj");
@@ -260,11 +260,11 @@ public class TemplateTests : IDisposable
     {
         // Arrange
         var projectName = $"BuildTest_{framework.Replace(".", "")}";
-        var createResult = await _fixture.CreateProjectFromTemplateAsync(_testDirectory, projectName, framework);
+        var createResult = await TemplateTestFixture.CreateProjectFromTemplateAsync(_testDirectory, projectName, framework);
         createResult.Success.Should().BeTrue($"Project creation for {framework} should succeed.\n{createResult}");
 
         // Copy database project to test directory
-        var dbProjectSource = Path.Combine(_fixture.GetTestFixturesPath(), "DatabaseProject");
+        var dbProjectSource = Path.Combine(TemplateTestFixture.GetTestFixturesPath(), "DatabaseProject");
         var dbProjectDest = Path.Combine(_testDirectory, "DatabaseProject");
         if (!Directory.Exists(dbProjectDest))
         {
@@ -276,10 +276,7 @@ public class TemplateTests : IDisposable
         var projectContent = await File.ReadAllTextAsync(projectFile);
 
         // Replace floating version with specific version
-        projectContent = System.Text.RegularExpressions.Regex.Replace(
-            projectContent,
-            @"Version=""[0-9]+\.\*""",
-            $@"Version=""{efCoreVersion}""");
+        projectContent = MyRegex().Replace(projectContent, $@"Version=""{efCoreVersion}""");
 
         // Add ProjectReference to database project
         var projectReferenceBlock = @"
@@ -299,7 +296,7 @@ public class TemplateTests : IDisposable
 <configuration>
   <packageSources>
     <clear />
-    <add key=""TestPackages"" value=""{_fixture.PackageOutputPath}"" />
+    <add key=""TestPackages"" value=""{TemplateTestFixture.PackageOutputPath}"" />
     <add key=""nuget.org"" value=""https://api.nuget.org/v3/index.json"" />
   </packageSources>
 </configuration>";
@@ -312,7 +309,7 @@ public class TemplateTests : IDisposable
         // Create global.json
         var globalJson = $@"{{
   ""msbuild-sdks"": {{
-    ""JD.Efcpt.Sdk"": ""{_fixture.SdkVersion}""
+    ""JD.Efcpt.Sdk"": ""{TemplateTestFixture.SdkVersion}""
   }}
 }}";
         var globalJsonPath = Path.Combine(_testDirectory, "global.json");
@@ -357,7 +354,7 @@ public class TemplateTests : IDisposable
         var projectName = $"SdkCheck_{framework.Replace(".", "")}";
 
         // Act
-        var createResult = await _fixture.CreateProjectFromTemplateAsync(_testDirectory, projectName, framework);
+        var createResult = await TemplateTestFixture.CreateProjectFromTemplateAsync(_testDirectory, projectName, framework);
         createResult.Success.Should().BeTrue($"Project creation for {framework} should succeed.\n{createResult}");
 
         var projectFile = Path.Combine(_testDirectory, projectName, $"{projectName}.csproj");
@@ -380,7 +377,7 @@ public class TemplateTests : IDisposable
         var projectName = $"ConfigCheck_{framework.Replace(".", "")}";
 
         // Act
-        var createResult = await _fixture.CreateProjectFromTemplateAsync(_testDirectory, projectName, framework);
+        var createResult = await TemplateTestFixture.CreateProjectFromTemplateAsync(_testDirectory, projectName, framework);
         createResult.Success.Should().BeTrue($"Project creation for {framework} should succeed.\n{createResult}");
 
         var configFile = Path.Combine(_testDirectory, projectName, "efcpt-config.json");
@@ -487,4 +484,7 @@ public class TemplateTests : IDisposable
             process.ExitCode
         );
     }
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"Version=""[0-9]+\.\*""")]
+    private static partial System.Text.RegularExpressions.Regex MyRegex();
 }

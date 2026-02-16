@@ -42,13 +42,13 @@ public sealed class CleanTargetTests(ITestOutputHelper output) : TinyBddXunitBas
                 <Nullable>enable</Nullable>
               </PropertyGroup>
 
-              <Import Project="{efcptBuildRoot}/build/JD.Efcpt.Build.props" />
+              <Import Project="{efcptBuildRoot}/JD.Efcpt.Build.props" />
 
               <PropertyGroup>
                 <EfcptEnabled>true</EfcptEnabled>
               </PropertyGroup>
 
-              <Import Project="{efcptBuildRoot}/build/JD.Efcpt.Build.targets" />
+              <Import Project="{efcptBuildRoot}/JD.Efcpt.Build.targets" />
             </Project>
             """;
 

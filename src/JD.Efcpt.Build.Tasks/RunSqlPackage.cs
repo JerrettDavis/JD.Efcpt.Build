@@ -182,7 +182,7 @@ public sealed class RunSqlPackage : Task
             if (Directory.Exists(dacpacTempDir))
             {
                 log.Detail($"Moving extracted files from {dacpacTempDir} to {TargetDirectory}");
-                MoveDirectoryContents(dacpacTempDir, TargetDirectory, log);
+                RunSqlPackage.MoveDirectoryContents(dacpacTempDir, TargetDirectory, log);
 
                 // Clean up temp directory
                 try
@@ -428,7 +428,7 @@ public sealed class RunSqlPackage : Task
     /// <summary>
     /// Recursively moves all contents from source directory to destination directory.
     /// </summary>
-    private void MoveDirectoryContents(string sourceDir, string destDir, IBuildLog log)
+    private static void MoveDirectoryContents(string sourceDir, string destDir, IBuildLog log)
     {
         // Ensure source directory path ends with separator for proper substring
         var sourceDirNormalized = sourceDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
