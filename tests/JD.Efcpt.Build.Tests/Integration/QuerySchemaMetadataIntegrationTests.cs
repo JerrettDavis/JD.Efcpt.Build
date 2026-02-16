@@ -110,8 +110,7 @@ public sealed class QuerySchemaMetadataIntegrationTests(ITestOutputHelper output
 
     private static async Task<TestContext> SetupDatabaseWithSchema()
     {
-        var container = new MsSqlBuilder()
-            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+        var container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
             .Build();
 
         await container.StartAsync();
@@ -128,8 +127,7 @@ public sealed class QuerySchemaMetadataIntegrationTests(ITestOutputHelper output
 
     private static async Task<TestContext> SetupComprehensiveSchema()
     {
-        var container = new MsSqlBuilder()
-            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+        var container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
             .Build();
 
         await container.StartAsync();
@@ -146,8 +144,7 @@ public sealed class QuerySchemaMetadataIntegrationTests(ITestOutputHelper output
 
     private static async Task<TestContext> SetupEmptyDatabase()
     {
-        var container = new MsSqlBuilder()
-            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+        var container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
             .Build();
 
         await container.StartAsync();
@@ -164,8 +161,7 @@ public sealed class QuerySchemaMetadataIntegrationTests(ITestOutputHelper output
 
     private static Task<TestContext> SetupInvalidConnectionString()
     {
-        var container = new MsSqlBuilder()
-            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+        var container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
             .Build();
 
         // Don't start the container - connection will fail
