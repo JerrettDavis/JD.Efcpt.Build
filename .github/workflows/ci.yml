@@ -152,13 +152,13 @@ jobs:
         run: git fetch --prune --tags
 
       - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v1
+        uses: gittools/actions/gitversion/setup@v4
         with:
           versionSpec: '5.x'
 
       - name: Run GitVersion
         id: gitversion
-        uses: gittools/actions/gitversion/execute@v1
+        uses: gittools/actions/gitversion/execute@v4
 
       - name: Set version env vars
         run: |
