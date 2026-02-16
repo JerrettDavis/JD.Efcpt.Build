@@ -4,6 +4,13 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <!-- Disable TinyBDD source generator by removing analyzer DLLs -->
+  <Target Name="RemoveTinyBDDAnalyzers" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer)" Condition="$([System.String]::Copy('%(Analyzer.Filename)').Contains('TinyBDD'))" />
+    </ItemGroup>
+  </Target>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\JD.Efcpt.Build.Tasks\JD.Efcpt.Build.Tasks.csproj" />
   </ItemGroup>
@@ -32,7 +39,8 @@
     <PackageReference Include="Testcontainers.FirebirdSql" Version="4.4.0" />
     <PackageReference Include="Testcontainers.Oracle" Version="4.4.0" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.2" />
-    <PackageReference Include="TinyBDD.Xunit" Version="0.13.0" />
+    <!-- Updated to 0.19.2 with source generator disabled via Analyzer removal -->
+    <PackageReference Include="TinyBDD.Xunit" Version="0.19.2" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="Xunit.SkippableFact" Version="1.5.61" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
