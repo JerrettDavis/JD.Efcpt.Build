@@ -16,9 +16,9 @@
       },
       "Microsoft.Build.Framework": {
         "type": "Direct",
-        "requested": "[18.0.2, )",
-        "resolved": "18.0.2",
-        "contentHash": "sOSb+0J4G/jCBW/YqmRuL0eOMXgfw1KQLdC9TkbvfA5xs7uNm+PBQXJCOzSJGXtZcZrtXozcwxPmUiRUbmd7FA=="
+        "requested": "[18.3.3, )",
+        "resolved": "18.3.3",
+        "contentHash": "6lUd+/IQrxKz+++m2ehMnN+83bWrdvLf6S/iNH41d2RhuGE9etoCqosIBzjfkPwBoHih3touW/xl1ev+KUgkjw=="
       },
       "Microsoft.Build.Locator": {
         "type": "Direct",
@@ -28,22 +28,22 @@
       },
       "Microsoft.Build.Utilities.Core": {
         "type": "Direct",
-        "requested": "[18.0.2, )",
-        "resolved": "18.0.2",
-        "contentHash": "qsI2Mc8tbJEyg5m4oTvxlu5wY8te0TIVxObxILvrrPdeFUwH5V5UXUT2RV054b3S9msIR+7zViTWp4nRp0YGbQ==",
+        "requested": "[18.3.3, )",
+        "resolved": "18.3.3",
+        "contentHash": "jpqF191vbyUs9TU3oxT6xURHQhdH7CwECFMyItGoizbYVQMyk0Di2bF4fs2DrbJHN1o1eVfWZrC08tauDceG4g==",
         "dependencies": {
-          "Microsoft.Build.Framework": "18.0.2",
-          "Microsoft.NET.StringTools": "18.0.2",
-          "System.Configuration.ConfigurationManager": "9.0.0",
-          "System.Diagnostics.EventLog": "9.0.0",
-          "System.Security.Cryptography.ProtectedData": "9.0.6"
+          "Microsoft.Build.Framework": "18.3.3",
+          "Microsoft.NET.StringTools": "18.3.3",
+          "System.Configuration.ConfigurationManager": "9.0.11",
+          "System.Diagnostics.EventLog": "9.0.11",
+          "System.Security.Cryptography.ProtectedData": "9.0.11"
         }
       },
       "Microsoft.NET.StringTools": {
         "type": "Direct",
-        "requested": "[18.0.2, )",
-        "resolved": "18.0.2",
-        "contentHash": "cTZw3GHkAlqZACYGeQT3niS3UfVQ8CH0O5+zUdhxstrg1Z8Q2ViXYFKjSxHmEXTX85mrOT/QnHZOeQhhSsIrkQ=="
+        "requested": "[18.3.3, )",
+        "resolved": "18.3.3",
+        "contentHash": "y1qPJA/B7i+IGpS9yCBw64kOaDIC5x1pGIqKdcKfasj7kwRIWxbAoPCxRWLlP2p0ovLgLXae46KCEf3F+oMGyA=="
       },
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
@@ -591,17 +591,17 @@
       },
       "System.Configuration.ConfigurationManager": {
         "type": "Transitive",
-        "resolved": "9.0.4",
-        "contentHash": "dvjqKp+2LpGid6phzrdrS/2mmEPxFl3jE1+L7614q4ZChKbLJCpHXg6sBILlCCED1t//EE+un/UdAetzIMpqnw==",
+        "resolved": "9.0.11",
+        "contentHash": "vPinosRgEk1CGjohbv0pDuz6gPprkWo5xvBTjOJjks5JOgOEWvPndq5NngGxiTcBcy1+k9GwzZ1c3Bp2fU5ezw==",
         "dependencies": {
-          "System.Diagnostics.EventLog": "9.0.4",
-          "System.Security.Cryptography.ProtectedData": "9.0.4"
+          "System.Diagnostics.EventLog": "9.0.11",
+          "System.Security.Cryptography.ProtectedData": "9.0.11"
         }
       },
       "System.Diagnostics.EventLog": {
         "type": "Transitive",
-        "resolved": "9.0.4",
-        "contentHash": "getRQEXD8idlpb1KW56XuxImMy0FKp2WJPDf3Qr0kI/QKxxJSftqfDFVo0DZ3HCJRLU73qHSruv5q2l5O47jQQ=="
+        "resolved": "9.0.11",
+        "contentHash": "2Us/NchH6SM69NYWzf8NRyeftdv3ILso8LMiMdAjT7ECTiZKzddiXWhAyQj6ZzbddoAOHS9GdlPbAAkwCPID3Q=="
       },
       "System.Diagnostics.PerformanceCounter": {
         "type": "Transitive",
@@ -650,8 +650,8 @@
       },
       "System.Security.Cryptography.ProtectedData": {
         "type": "Transitive",
-        "resolved": "9.0.6",
-        "contentHash": "yErfw/3pZkJE/VKza/Cm5idTpIKOy/vsmVi59Ta5SruPVtubzxb8CtnE8tyUpzs5pr0Y28GUFfSVzAhCLN3F/Q=="
+        "resolved": "9.0.11",
+        "contentHash": "s8yUYuYYu+PAwvBdhLG1KyrGrk9gkYeuPxfAsXsTqqWyepwSyEw8hAaflW4nO98NG52YpYI1am2+9o+79h2RtQ=="
       },
       "Testcontainers": {
         "type": "Transitive",
