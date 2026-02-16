@@ -40,8 +40,7 @@ public sealed partial class OracleSchemaIntegrationTests(ITestOutputHelper outpu
 
     private static async Task<TestContext> SetupEmptyDatabase()
     {
-        var container = new OracleBuilder("gvenzl/oracle-xe:21-slim-faststart")
-            .WithImage("gvenzl/oracle-xe:21.3.0-slim-faststart")
+        var container = new OracleBuilder("gvenzl/oracle-xe:21.3.0-slim-faststart")
             .Build();
 
         await container.StartAsync();
