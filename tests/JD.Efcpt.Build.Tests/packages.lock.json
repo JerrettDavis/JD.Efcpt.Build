@@ -85,11 +85,11 @@
       },
       "Testcontainers.MySql": {
         "type": "Direct",
-        "requested": "[4.4.0, )",
-        "resolved": "4.4.0",
-        "contentHash": "qAbbBXbGtUwhnjVFIlN6Tze4dvsW71pThGe4vlTDUHfjar2WRSZ2iXUj+JJqsTrLA6YqWNViNQdEYi93jzHJkA==",
+        "requested": "[4.10.0, )",
+        "resolved": "4.10.0",
+        "contentHash": "aYAYccbOBXA6CDYGR7IxnVsfCMBuFx8hBC56bT6PxYSJ+ftNzOEdy0sUNVAa/3TaWV1n6AnxoJ9CKP/4OruSxQ==",
         "dependencies": {
-          "Testcontainers": "4.4.0"
+          "Testcontainers": "4.10.0"
         }
       },
       "Testcontainers.Oracle": {
