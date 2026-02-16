@@ -32,7 +32,6 @@ public sealed partial class MySqlSchemaIntegrationTests(ITestOutputHelper output
     private static async Task<TestContext> SetupEmptyDatabase()
     {
         var container = new MySqlBuilder("mysql:8.0")
-            .WithImage("mysql:8.0")
             .Build();
 
         await container.StartAsync();

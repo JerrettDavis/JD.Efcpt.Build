@@ -31,8 +31,7 @@ public sealed partial class PostgreSqlSchemaIntegrationTests(ITestOutputHelper o
 
     private static async Task<TestContext> SetupEmptyDatabase()
     {
-        var container = new PostgreSqlBuilder("postgres:16")
-            .WithImage("postgres:16-alpine")
+        var container = new PostgreSqlBuilder("postgres:16-alpine")
             .Build();
 
         await container.StartAsync();
