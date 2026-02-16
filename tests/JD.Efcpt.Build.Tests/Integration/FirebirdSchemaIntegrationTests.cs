@@ -36,8 +36,7 @@ public sealed class FirebirdSchemaIntegrationTests(ITestOutputHelper output) : T
 
     private static async Task<TestContext> SetupEmptyDatabase()
     {
-        var container = new FirebirdSqlBuilder()
-            .WithImage("jacobalberty/firebird:v4.0")
+        var container = new FirebirdSqlBuilder("jacobalberty/firebird:v4.0")
             .Build();
 
         await container.StartAsync();
