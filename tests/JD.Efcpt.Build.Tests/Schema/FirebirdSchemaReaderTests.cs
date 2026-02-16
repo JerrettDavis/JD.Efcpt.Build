@@ -15,7 +15,7 @@ namespace JD.Efcpt.Build.Tests.Schema;
 /// </summary>
 [Feature("FirebirdSchemaReader: parses Firebird GetSchema() DataTables")]
 [Collection(nameof(AssemblySetup))]
-public sealed class FirebirdSchemaReaderTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class FirebirdSchemaReaderTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     #region Test Helpers
 
@@ -585,3 +585,4 @@ public sealed class FirebirdSchemaReaderTests(ITestOutputHelper output) : TinyBd
 
     #endregion
 }
+

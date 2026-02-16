@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests.Integration;
 
 [Feature("PostgreSqlSchemaReader: reads and fingerprints PostgreSQL schema using Testcontainers")]
 [Collection(nameof(AssemblySetup))]
-public sealed class PostgreSqlSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class PostgreSqlSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record TestContext(
         PostgreSqlContainer Container,
@@ -31,7 +31,7 @@ public sealed class PostgreSqlSchemaIntegrationTests(ITestOutputHelper output) :
 
     private static async Task<TestContext> SetupEmptyDatabase()
     {
-        var container = new PostgreSqlBuilder()
+        var container = new PostgreSqlBuilder("postgres:16")
             .WithImage("postgres:16-alpine")
             .Build();
 
@@ -202,3 +202,4 @@ public sealed class PostgreSqlSchemaIntegrationTests(ITestOutputHelper output) :
             .AssertPassed();
     }
 }
+

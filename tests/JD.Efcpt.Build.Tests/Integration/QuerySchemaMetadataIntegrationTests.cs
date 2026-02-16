@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests.Integration;
 
 [Feature("QuerySchemaMetadata task: queries real SQL Server database schema")]
 [Collection(nameof(AssemblySetup))]
-public sealed class QuerySchemaMetadataIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class QuerySchemaMetadataIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record TestContext(
         MsSqlContainer Container,
@@ -298,3 +298,4 @@ public sealed class QuerySchemaMetadataIntegrationTests(ITestOutputHelper output
                json.Contains("Products");
     }
 }
+

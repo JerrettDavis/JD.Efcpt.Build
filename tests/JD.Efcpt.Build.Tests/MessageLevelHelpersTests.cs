@@ -11,7 +11,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("MessageLevelHelpers: parse and validate message severity levels")]
 [Collection(nameof(AssemblySetup))]
-public sealed class MessageLevelHelpersTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class MessageLevelHelpersTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     [Scenario("Parse valid level names (case-insensitive)")]
     [Theory]
@@ -95,3 +95,4 @@ public sealed class MessageLevelHelpersTests(ITestOutputHelper output) : TinyBdd
             .AssertPassed();
     }
 }
+

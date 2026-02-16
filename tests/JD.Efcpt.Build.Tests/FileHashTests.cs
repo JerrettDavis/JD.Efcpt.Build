@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("FileHash: XxHash64-based hashing utilities")]
 [Collection(nameof(AssemblySetup))]
-public sealed class FileHashTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class FileHashTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     [Scenario("HashString produces deterministic 16-character hex output")]
     [Fact]
@@ -186,3 +186,4 @@ public sealed class FileHashTests(ITestOutputHelper output) : TinyBddXunitBase(o
             .AssertPassed();
     }
 }
+

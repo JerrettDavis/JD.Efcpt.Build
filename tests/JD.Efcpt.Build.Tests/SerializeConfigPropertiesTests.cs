@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("SerializeConfigProperties: Serialize MSBuild config properties to JSON for fingerprinting")]
 [Collection(nameof(AssemblySetup))]
-public sealed class SerializeConfigPropertiesTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class SerializeConfigPropertiesTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SetupState(TestBuildEngine Engine);
 
@@ -278,3 +278,4 @@ public sealed class SerializeConfigPropertiesTests(ITestOutputHelper output) : T
             .AssertPassed();
     }
 }
+

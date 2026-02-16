@@ -11,7 +11,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("StringExtensions: string comparison and parsing utilities")]
 [Collection(nameof(AssemblySetup))]
-public sealed class StringExtensionsTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class StringExtensionsTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     #region EqualsIgnoreCase Tests
 
@@ -259,3 +259,4 @@ public sealed class StringExtensionsTests(ITestOutputHelper output) : TinyBddXun
 
     #endregion
 }
+

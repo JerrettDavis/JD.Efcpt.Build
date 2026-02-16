@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests.Integration;
 
 [Feature("SqliteSchemaReader: reads and fingerprints SQLite schema")]
 [Collection(nameof(AssemblySetup))]
-public sealed class SqliteSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class SqliteSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record TestContext(
         string ConnectionString,
@@ -300,3 +300,4 @@ public sealed class SqliteSchemaIntegrationTests(ITestOutputHelper output) : Tin
             .AssertPassed();
     }
 }
+

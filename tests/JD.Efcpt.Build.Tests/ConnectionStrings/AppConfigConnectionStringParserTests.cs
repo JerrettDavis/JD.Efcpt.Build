@@ -11,7 +11,7 @@ namespace JD.Efcpt.Build.Tests.ConnectionStrings;
 
 [Feature("AppConfigConnectionStringParser: parses connection strings from app.config/web.config files")]
 [Collection(nameof(AssemblySetup))]
-public sealed class AppConfigConnectionStringParserTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class AppConfigConnectionStringParserTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SetupState(TestFolder Folder, string FilePath, string KeyName);
     private sealed record ParseResult(SetupState Setup, ConnectionStringResult Result);
@@ -240,3 +240,4 @@ public sealed class AppConfigConnectionStringParserTests(ITestOutputHelper outpu
         public override bool Execute() => true;
     }
 }
+

@@ -11,7 +11,7 @@ namespace JD.Efcpt.Build.Tests;
 
 [Feature("Split Outputs: separate Models project from Data project")]
 [Collection(nameof(AssemblySetup))]
-public sealed class SplitOutputsTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class SplitOutputsTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SplitOutputsContext(
         TestFolder Folder,
@@ -233,3 +233,4 @@ public sealed class SplitOutputsTests(ITestOutputHelper output) : TinyBddXunitBa
             .AssertPassed();
     }
 }
+

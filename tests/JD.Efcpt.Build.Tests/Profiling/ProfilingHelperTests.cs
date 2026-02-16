@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests.Profiling;
 /// </summary>
 [Feature("ProfilingHelper: Helper methods for profiling")]
 [Collection(nameof(AssemblySetup))]
-public sealed class ProfilingHelperTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class ProfilingHelperTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     [Scenario("GetProfiler returns null for null project path")]
     [Fact]
@@ -109,3 +109,4 @@ public sealed class ProfilingHelperTests(ITestOutputHelper output) : TinyBddXuni
             .AssertPassed();
     }
 }
+

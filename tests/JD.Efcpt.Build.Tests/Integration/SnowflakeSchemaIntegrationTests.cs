@@ -31,7 +31,7 @@ namespace JD.Efcpt.Build.Tests.Integration;
 /// </remarks>
 [Feature("SnowflakeSchemaReader: reads and fingerprints Snowflake schema using LocalStack")]
 [Collection(nameof(AssemblySetup))]
-public sealed class SnowflakeSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class SnowflakeSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private static readonly string? LocalStackAuthToken =
         Environment.GetEnvironmentVariable("LOCALSTACK_AUTH_TOKEN");
@@ -316,3 +316,4 @@ public sealed class SnowflakeSchemaIntegrationTests(ITestOutputHelper output) : 
             .AssertPassed();
     }
 }
+

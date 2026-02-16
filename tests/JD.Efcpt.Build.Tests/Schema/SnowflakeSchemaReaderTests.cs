@@ -21,7 +21,7 @@ namespace JD.Efcpt.Build.Tests.Schema;
 /// </remarks>
 [Feature("SnowflakeSchemaReader: parses Snowflake GetSchema() DataTables")]
 [Collection(nameof(AssemblySetup))]
-public sealed class SnowflakeSchemaReaderTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class SnowflakeSchemaReaderTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     #region Test Helpers
 
@@ -598,3 +598,4 @@ public sealed class SnowflakeSchemaReaderTests(ITestOutputHelper output) : TinyB
 
     #endregion
 }
+

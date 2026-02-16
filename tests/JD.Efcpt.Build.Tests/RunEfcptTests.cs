@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("RunEfcpt: invoke efcpt CLI to generate EF Core models")]
 [Collection(nameof(AssemblySetup))]
-public sealed class RunEfcptTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class RunEfcptTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SetupState(
         TestFolder Folder,
@@ -643,3 +643,4 @@ public sealed class RunEfcptTests(ITestOutputHelper output) : TinyBddXunitBase(o
             .AssertPassed();
     }
 }
+

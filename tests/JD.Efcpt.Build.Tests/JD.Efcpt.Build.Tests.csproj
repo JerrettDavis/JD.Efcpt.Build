@@ -4,6 +4,13 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <!-- Disable TinyBDD source generator - produces broken code with sealed partial classes -->
+  <Target Name="RemoveTinyBDDAnalyzers" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer)" Condition="$([System.String]::Copy('%(Analyzer.Filename)').Contains('TinyBDD'))" />
+    </ItemGroup>
+  </Target>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\JD.Efcpt.Build.Tasks\JD.Efcpt.Build.Tasks.csproj" />
   </ItemGroup>

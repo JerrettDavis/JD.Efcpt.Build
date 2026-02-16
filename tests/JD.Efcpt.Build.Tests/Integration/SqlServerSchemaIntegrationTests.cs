@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests.Integration;
 
 [Feature("SqlServerSchemaReader: reads and fingerprints SQL Server schema using Testcontainers")]
 [Collection(nameof(AssemblySetup))]
-public sealed class SqlServerSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class SqlServerSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record TestContext(
         MsSqlContainer Container,
@@ -291,3 +291,4 @@ public sealed class SqlServerSchemaIntegrationTests(ITestOutputHelper output) : 
             .AssertPassed();
     }
 }
+

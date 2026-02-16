@@ -11,7 +11,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("PathUtils: path resolution and validation utilities")]
 [Collection(nameof(AssemblySetup))]
-public sealed class PathUtilsTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class PathUtilsTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     #region FullPath Tests
 
@@ -221,3 +221,4 @@ public sealed class PathUtilsTests(ITestOutputHelper output) : TinyBddXunitBase(
 
     #endregion
 }
+

@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests.Integration;
 
 [Feature("End-to-End Reverse Engineering: generates and compiles EF models from SQL Server using Testcontainers")]
 [Collection(nameof(AssemblySetup))]
-public sealed class EndToEndReverseEngineeringTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class EndToEndReverseEngineeringTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record TestContext(
         MsSqlContainer Container,
@@ -344,3 +344,4 @@ public sealed class EndToEndReverseEngineeringTests(ITestOutputHelper output) : 
         bool ModifiedRunSuccess,
         string ModifiedFingerprint);
 }
+

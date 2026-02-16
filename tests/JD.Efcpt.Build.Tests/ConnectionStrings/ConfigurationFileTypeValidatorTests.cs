@@ -13,7 +13,7 @@ namespace JD.Efcpt.Build.Tests.ConnectionStrings;
 /// </summary>
 [Feature("ConfigurationFileTypeValidator: Validates configuration file types and logs warnings")]
 [Collection(nameof(AssemblySetup))]
-public sealed class ConfigurationFileTypeValidatorTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class ConfigurationFileTypeValidatorTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record ValidationContext(
         ConfigurationFileTypeValidator Validator,
@@ -122,3 +122,4 @@ public sealed class ConfigurationFileTypeValidatorTests(ITestOutputHelper output
             .AssertPassed();
     }
 }
+

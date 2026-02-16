@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests.Profiling;
 /// </summary>
 [Feature("BuildProfiler: Task execution profiling and telemetry capture")]
 [Collection(nameof(AssemblySetup))]
-public sealed class BuildProfilerTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class BuildProfilerTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SetupState(
         BuildProfiler Profiler,
@@ -281,3 +281,4 @@ public sealed class BuildProfilerTests(ITestOutputHelper output) : TinyBddXunitB
             .AssertPassed();
     }
 }
+

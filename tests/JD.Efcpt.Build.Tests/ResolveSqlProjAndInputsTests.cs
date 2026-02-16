@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests;
 
 [Feature("ResolveSqlProjAndInputs task: discovers sqlproj and configuration files")]
 [Collection(nameof(AssemblySetup))]
-public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SetupState(
         TestFolder Folder,
@@ -960,3 +960,4 @@ public sealed class ResolveSqlProjAndInputsTests(ITestOutputHelper output) : Tin
         return new SolutionScanSetup(folder, projectDir, "", solutionPath, engine);
     }
 }
+

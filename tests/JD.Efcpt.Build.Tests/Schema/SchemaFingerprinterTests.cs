@@ -9,7 +9,7 @@ namespace JD.Efcpt.Build.Tests.Schema;
 
 [Feature("SchemaFingerprinter: computes deterministic fingerprints of database schemas")]
 [Collection(nameof(AssemblySetup))]
-public sealed class SchemaFingerprinterTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class SchemaFingerprinterTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record TestResult(
         string Fingerprint1,
@@ -388,3 +388,4 @@ public sealed class SchemaFingerprinterTests(ITestOutputHelper output) : TinyBdd
             .AssertPassed();
     }
 }
+

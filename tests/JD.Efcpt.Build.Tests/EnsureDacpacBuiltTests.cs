@@ -9,7 +9,7 @@ namespace JD.Efcpt.Build.Tests;
 
 [Feature("EnsureDacpacBuilt task: builds or reuses DACPAC based on timestamps")]
 [Collection(nameof(AssemblySetup))]
-public sealed class EnsureDacpacBuiltTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class EnsureDacpacBuiltTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SetupState(
         TestFolder Folder,
@@ -558,3 +558,4 @@ public sealed class EnsureDacpacBuiltTests(ITestOutputHelper output) : TinyBddXu
     }
 
 }
+

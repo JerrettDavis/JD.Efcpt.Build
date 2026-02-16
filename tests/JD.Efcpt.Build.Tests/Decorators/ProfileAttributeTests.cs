@@ -10,7 +10,7 @@ namespace JD.Efcpt.Build.Tests.Decorators;
 /// Tests for profile decorator attributes used in MSBuild property definitions.
 /// </summary>
 [Feature("ProfileAttribute: Decorators for mapping MSBuild properties to config overrides")]
-public sealed class ProfileAttributeTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class ProfileAttributeTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     [Scenario("ProfileInputAttribute has default values")]
     [Fact]
@@ -71,3 +71,4 @@ public sealed class ProfileAttributeTests(ITestOutputHelper output) : TinyBddXun
         public string? Output { get; set; }
     }
 }
+

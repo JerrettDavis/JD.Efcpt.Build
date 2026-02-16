@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("RenameGeneratedFiles: rename .cs files to .g.cs convention")]
 [Collection(nameof(AssemblySetup))]
-public sealed class RenameGeneratedFilesTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class RenameGeneratedFilesTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SetupState(
         TestFolder Folder,
