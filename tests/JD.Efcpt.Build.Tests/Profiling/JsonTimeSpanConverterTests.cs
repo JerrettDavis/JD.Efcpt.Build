@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests.Profiling;
 /// </summary>
 [Feature("JsonTimeSpanConverter: TimeSpan JSON serialization")]
 [Collection(nameof(AssemblySetup))]
-public sealed class JsonTimeSpanConverterTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class JsonTimeSpanConverterTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed class TestObject
     {
@@ -209,3 +209,4 @@ public sealed class JsonTimeSpanConverterTests(ITestOutputHelper output) : TinyB
             .AssertPassed();
     }
 }
+

@@ -13,7 +13,7 @@ namespace JD.Efcpt.Build.Tests.Profiling;
 /// </summary>
 [Feature("FinalizeBuildProfiling: Build profiling finalization")]
 [Collection(nameof(AssemblySetup))]
-public sealed class FinalizeBuildProfilingTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class FinalizeBuildProfilingTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SetupState(
         TestBuildEngine Engine,
@@ -197,3 +197,4 @@ public sealed class FinalizeBuildProfilingTests(ITestOutputHelper output) : Tiny
         }
     }
 }
+

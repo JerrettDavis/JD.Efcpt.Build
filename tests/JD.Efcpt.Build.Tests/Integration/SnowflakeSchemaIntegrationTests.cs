@@ -31,7 +31,7 @@ namespace JD.Efcpt.Build.Tests.Integration;
 /// </remarks>
 [Feature("SnowflakeSchemaReader: reads and fingerprints Snowflake schema using LocalStack")]
 [Collection(nameof(AssemblySetup))]
-public sealed class SnowflakeSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class SnowflakeSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private static readonly string? LocalStackAuthToken =
         Environment.GetEnvironmentVariable("LOCALSTACK_AUTH_TOKEN");
@@ -56,8 +56,7 @@ public sealed class SnowflakeSchemaIntegrationTests(ITestOutputHelper output) : 
     private static async Task<TestContext> SetupEmptyDatabase()
     {
         // LocalStack Snowflake uses port 4566 and requires auth token
-        var container = new ContainerBuilder()
-            .WithImage("localstack/snowflake:latest")
+        var container = new ContainerBuilder("localstack/snowflake:latest")
             .WithPortBinding(4566, true)
             .WithEnvironment("LOCALSTACK_AUTH_TOKEN", LocalStackAuthToken!)
             .WithEnvironment("SF_DEFAULT_USER", "test")
@@ -317,3 +316,4 @@ public sealed class SnowflakeSchemaIntegrationTests(ITestOutputHelper output) : 
             .AssertPassed();
     }
 }
+

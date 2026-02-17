@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("BuildLog: MSBuild logging with verbosity control")]
 [Collection(nameof(AssemblySetup))]
-public sealed class BuildLogTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class BuildLogTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SetupState(TestBuildEngine Engine);
 
@@ -352,7 +352,7 @@ public sealed class BuildLogTests(ITestOutputHelper output) : TinyBddXunitBase(o
 /// </summary>
 [Feature("NullBuildLog: no-op logging for testing")]
 [Collection(nameof(AssemblySetup))]
-public sealed class NullBuildLogTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class NullBuildLogTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     [Scenario("NullBuildLog.Instance is singleton")]
     [Fact]
@@ -499,3 +499,4 @@ public sealed class NullBuildLogTests(ITestOutputHelper output) : TinyBddXunitBa
             .AssertPassed();
     }
 }
+

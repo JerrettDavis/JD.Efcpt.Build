@@ -7,7 +7,7 @@ using Xunit;
 
 namespace JD.Efcpt.Build.Tests.Config;
 
-public class EfcptConfigGeneratorTests
+public partial class EfcptConfigGeneratorTests
 {
     private readonly string _schemaPath;
 
@@ -226,3 +226,4 @@ public class EfcptConfigGeneratorTests
         throw new DirectoryNotFoundException("Could not find repository root");
     }
 }
+

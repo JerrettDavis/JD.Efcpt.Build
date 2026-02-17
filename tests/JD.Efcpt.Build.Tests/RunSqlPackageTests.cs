@@ -14,7 +14,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("RunSqlPackage: SqlPackage execution and file processing")]
 [Collection(nameof(AssemblySetup))]
-public sealed class RunSqlPackageTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class RunSqlPackageTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SetupState(TestBuildEngine Engine, string TempDir);
 
@@ -942,3 +942,4 @@ public sealed class RunSqlPackageTests(ITestOutputHelper output) : TinyBddXunitB
         .AssertPassed();
     }
 }
+

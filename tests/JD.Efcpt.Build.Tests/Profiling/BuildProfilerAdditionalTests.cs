@@ -11,7 +11,7 @@ namespace JD.Efcpt.Build.Tests.Profiling;
 /// </summary>
 [Feature("BuildProfiler: Additional coverage for edge cases")]
 [Collection(nameof(AssemblySetup))]
-public sealed class BuildProfilerAdditionalTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class BuildProfilerAdditionalTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SetupState(BuildProfiler Profiler, string ProjectPath);
 
@@ -326,3 +326,4 @@ public sealed class BuildProfilerAdditionalTests(ITestOutputHelper output) : Tin
             .AssertPassed();
     }
 }
+

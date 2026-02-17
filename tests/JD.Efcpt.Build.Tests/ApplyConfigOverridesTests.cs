@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("ApplyConfigOverrides: MSBuild property overrides for efcpt-config.json")]
 [Collection(nameof(AssemblySetup))]
-public sealed class ApplyConfigOverridesTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class ApplyConfigOverridesTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SetupState(
         TestFolder Folder,
@@ -272,3 +272,4 @@ public sealed class ApplyConfigOverridesTests(ITestOutputHelper output) : TinyBd
             .AssertPassed();
     }
 }
+

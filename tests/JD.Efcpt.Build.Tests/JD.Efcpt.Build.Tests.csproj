@@ -4,7 +4,7 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
-  <!-- Disable TinyBDD source generator by removing analyzer DLLs -->
+  <!-- Disable TinyBDD source generator - produces broken code with sealed partial classes -->
   <Target Name="RemoveTinyBDDAnalyzers" BeforeTargets="CoreCompile">
     <ItemGroup>
       <Analyzer Remove="@(Analyzer)" Condition="$([System.String]::Copy('%(Analyzer.Filename)').Contains('TinyBDD'))" />
@@ -33,13 +33,12 @@
       <ExcludeAssets>runtime</ExcludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Testcontainers.MsSql" Version="4.4.0" />
-    <PackageReference Include="Testcontainers.PostgreSql" Version="4.4.0" />
-    <PackageReference Include="Testcontainers.MySql" Version="4.4.0" />
-    <PackageReference Include="Testcontainers.FirebirdSql" Version="4.4.0" />
-    <PackageReference Include="Testcontainers.Oracle" Version="4.4.0" />
+    <PackageReference Include="Testcontainers.MsSql" Version="4.10.0" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.10.0" />
+    <PackageReference Include="Testcontainers.MySql" Version="4.10.0" />
+    <PackageReference Include="Testcontainers.FirebirdSql" Version="4.10.0" />
+    <PackageReference Include="Testcontainers.Oracle" Version="4.10.0" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.2" />
-    <!-- Updated to 0.19.2 with source generator disabled via Analyzer removal -->
     <PackageReference Include="TinyBDD.Xunit" Version="0.19.2" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="Xunit.SkippableFact" Version="1.5.61" />

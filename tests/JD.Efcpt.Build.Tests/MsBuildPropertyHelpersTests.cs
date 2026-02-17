@@ -11,7 +11,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("MsBuildPropertyHelpers: MSBuild property value utilities")]
 [Collection(nameof(AssemblySetup))]
-public sealed class MsBuildPropertyHelpersTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class MsBuildPropertyHelpersTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     #region NullIfEmpty Tests
 
@@ -181,3 +181,4 @@ public sealed class MsBuildPropertyHelpersTests(ITestOutputHelper output) : Tiny
 
     #endregion
 }
+

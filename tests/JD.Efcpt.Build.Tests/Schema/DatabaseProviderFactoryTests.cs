@@ -17,7 +17,7 @@ namespace JD.Efcpt.Build.Tests.Schema;
 
 [Feature("DatabaseProviderFactory: creates connections and schema readers for all providers")]
 [Collection(nameof(AssemblySetup))]
-public sealed class DatabaseProviderFactoryTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     #region NormalizeProvider Tests
 
@@ -336,3 +336,4 @@ public sealed class DatabaseProviderFactoryTests(ITestOutputHelper output) : Tin
 
     #endregion
 }
+

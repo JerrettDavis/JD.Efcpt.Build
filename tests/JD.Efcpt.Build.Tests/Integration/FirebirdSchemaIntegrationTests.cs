@@ -17,7 +17,7 @@ namespace JD.Efcpt.Build.Tests.Integration;
 /// </summary>
 [Feature("FirebirdSchemaReader: reads and fingerprints Firebird schema using Testcontainers")]
 [Collection(nameof(AssemblySetup))]
-public sealed class FirebirdSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class FirebirdSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record TestContext(
         FirebirdSqlContainer Container,
@@ -36,8 +36,7 @@ public sealed class FirebirdSchemaIntegrationTests(ITestOutputHelper output) : T
 
     private static async Task<TestContext> SetupEmptyDatabase()
     {
-        var container = new FirebirdSqlBuilder()
-            .WithImage("jacobalberty/firebird:v4.0")
+        var container = new FirebirdSqlBuilder("jacobalberty/firebird:v4.0")
             .Build();
 
         await container.StartAsync();
@@ -257,3 +256,4 @@ public sealed class FirebirdSchemaIntegrationTests(ITestOutputHelper output) : T
             .AssertPassed();
     }
 }
+

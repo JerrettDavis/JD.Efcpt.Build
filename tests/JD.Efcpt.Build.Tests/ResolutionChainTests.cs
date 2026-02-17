@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("Resolution Chains: multi-tier fallback for locating files and directories")]
 [Collection(nameof(AssemblySetup))]
-public sealed class ResolutionChainTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class ResolutionChainTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     #region FileResolutionChain Tests
 
@@ -519,3 +519,4 @@ public sealed class ResolutionChainTests(ITestOutputHelper output) : TinyBddXuni
 
     #endregion
 }
+

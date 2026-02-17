@@ -21,7 +21,7 @@ namespace JD.Efcpt.Build.Tests.Integration;
 /// </remarks>
 [Feature("OracleSchemaReader: reads and fingerprints Oracle schema using Testcontainers")]
 [Collection(nameof(AssemblySetup))]
-public sealed class OracleSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class OracleSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record TestContext(
         OracleContainer Container,
@@ -40,8 +40,7 @@ public sealed class OracleSchemaIntegrationTests(ITestOutputHelper output) : Tin
 
     private static async Task<TestContext> SetupEmptyDatabase()
     {
-        var container = new OracleBuilder()
-            .WithImage("gvenzl/oracle-xe:21.3.0-slim-faststart")
+        var container = new OracleBuilder("gvenzl/oracle-xe:21.3.0-slim-faststart")
             .Build();
 
         await container.StartAsync();
@@ -261,3 +260,4 @@ public sealed class OracleSchemaIntegrationTests(ITestOutputHelper output) : Tin
             .AssertPassed();
     }
 }
+

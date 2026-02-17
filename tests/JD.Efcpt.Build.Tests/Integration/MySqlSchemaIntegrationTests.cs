@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests.Integration;
 
 [Feature("MySqlSchemaReader: reads and fingerprints MySQL schema using Testcontainers")]
 [Collection(nameof(AssemblySetup))]
-public sealed class MySqlSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class MySqlSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record TestContext(
         MySqlContainer Container,
@@ -31,8 +31,7 @@ public sealed class MySqlSchemaIntegrationTests(ITestOutputHelper output) : Tiny
 
     private static async Task<TestContext> SetupEmptyDatabase()
     {
-        var container = new MySqlBuilder()
-            .WithImage("mysql:8.0")
+        var container = new MySqlBuilder("mysql:8.0")
             .Build();
 
         await container.StartAsync();
@@ -244,3 +243,4 @@ public sealed class MySqlSchemaIntegrationTests(ITestOutputHelper output) : Tiny
             .AssertPassed();
     }
 }
+

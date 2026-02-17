@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("AddSqlFileWarnings: Adding auto-generation warnings to SQL files")]
 [Collection(nameof(AssemblySetup))]
-public sealed class AddSqlFileWarningsTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class AddSqlFileWarningsTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SetupState(TestBuildEngine Engine, string TempDir);
 
@@ -330,3 +330,4 @@ public sealed class AddSqlFileWarningsTests(ITestOutputHelper output) : TinyBddX
     // This error path exists for unexpected failures and is covered by the error handling
     // implementation in AddSqlFileWarnings.cs:79-84
 }
+

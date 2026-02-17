@@ -10,7 +10,7 @@ namespace JD.Efcpt.Build.Tests;
 
 [Feature("SqlProjectDetector: identifies supported SQL SDKs")]
 [Collection(nameof(AssemblySetup))]
-public sealed class SqlProjectDetectorTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class SqlProjectDetectorTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SetupState(TestFolder Folder, string ProjectPath);
     private sealed record DetectionResult(SetupState Setup, bool IsSqlProject);
@@ -147,3 +147,4 @@ public sealed class SqlProjectDetectorTests(ITestOutputHelper output) : TinyBddX
             .AssertPassed();
     }
 }
+

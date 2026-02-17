@@ -8,7 +8,7 @@ namespace JD.Efcpt.Build.Tests;
 /// Tests to validate that SQL project detection targets execute correctly in generated MSBuild XML.
 /// These tests validate our assumptions about the generated targets file structure.
 /// </summary>
-public sealed class SqlProjectTargetGenerationTests(ITestOutputHelper output)
+public sealed partial class SqlProjectTargetGenerationTests(ITestOutputHelper output)
 {
     private readonly ITestOutputHelper _output = output;
 
@@ -128,3 +128,4 @@ public sealed class SqlProjectTargetGenerationTests(ITestOutputHelper output)
         _output.WriteLine($"✓ Found {sqlTargetLines.Count} condition statements");
     }
 }
+

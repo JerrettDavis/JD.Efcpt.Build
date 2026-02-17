@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("DataRowExtensions: Provides safe access to DataRow values")]
 [Collection(nameof(AssemblySetup))]
-public sealed class DataRowExtensionsTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class DataRowExtensionsTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private static DataTable CreateTestTable()
     {
@@ -170,3 +170,4 @@ public sealed class DataRowExtensionsTests(ITestOutputHelper output) : TinyBddXu
             .AssertPassed();
     }
 }
+

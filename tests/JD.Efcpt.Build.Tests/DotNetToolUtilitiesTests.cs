@@ -11,7 +11,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("DotNetToolUtilities: .NET SDK and runtime detection")]
 [Collection(nameof(AssemblySetup))]
-public sealed class DotNetToolUtilitiesTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class DotNetToolUtilitiesTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     [Scenario("IsDotNet10OrLater recognizes .NET 10+ frameworks")]
     [Theory]
@@ -264,3 +264,4 @@ public sealed class DotNetToolUtilitiesTests(ITestOutputHelper output) : TinyBdd
             .AssertPassed();
     }
 }
+

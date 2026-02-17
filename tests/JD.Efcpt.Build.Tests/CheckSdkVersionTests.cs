@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("CheckSdkVersion: check for SDK updates on NuGet")]
 [Collection(nameof(AssemblySetup))]
-public sealed class CheckSdkVersionTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class CheckSdkVersionTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SetupState(
         TestFolder Folder,
@@ -513,3 +513,4 @@ public sealed class CheckSdkVersionTests(ITestOutputHelper output) : TinyBddXuni
         }
     }
 }
+

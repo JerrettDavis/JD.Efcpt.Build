@@ -15,7 +15,7 @@ namespace JD.Efcpt.Build.Tests.Schema;
 /// </summary>
 [Feature("OracleSchemaReader: parses Oracle GetSchema() DataTables")]
 [Collection(nameof(AssemblySetup))]
-public sealed class OracleSchemaReaderTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class OracleSchemaReaderTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     #region Test Helpers
 
@@ -675,3 +675,4 @@ public sealed class OracleSchemaReaderTests(ITestOutputHelper output) : TinyBddX
 
     #endregion
 }
+

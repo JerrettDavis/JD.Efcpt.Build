@@ -13,7 +13,7 @@ namespace JD.Efcpt.Build.Tests.Profiling;
 /// </summary>
 [Feature("InitializeBuildProfiling: Build profiling initialization")]
 [Collection(nameof(AssemblySetup))]
-public sealed class InitializeBuildProfilingTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class InitializeBuildProfilingTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SetupState(
         TestBuildEngine Engine,
@@ -175,3 +175,4 @@ public sealed class InitializeBuildProfilingTests(ITestOutputHelper output) : Ti
             .AssertPassed();
     }
 }
+

@@ -13,7 +13,7 @@ namespace JD.Efcpt.Build.Tests.Profiling;
 /// </summary>
 [Feature("BuildRunOutput: Data model serialization and structure")]
 [Collection(nameof(AssemblySetup))]
-public sealed class BuildRunOutputTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class BuildRunOutputTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     [Scenario("BuildRunOutput serializes to JSON")]
     [Fact]
@@ -328,3 +328,4 @@ public sealed class BuildRunOutputTests(ITestOutputHelper output) : TinyBddXunit
             .AssertPassed();
     }
 }
+
