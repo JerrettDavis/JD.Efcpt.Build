@@ -154,7 +154,7 @@ jobs:
       - name: Install GitVersion
         uses: gittools/actions/gitversion/setup@v4
         with:
-          versionSpec: '5.x'
+          versionSpec: '6.x'
 
       - name: Run GitVersion
         id: gitversion
@@ -162,7 +162,7 @@ jobs:
 
       - name: Set version env vars
         run: |
-          echo "PACKAGE_VERSION=${{ steps.gitversion.outputs.nuGetVersionV2 }}" >> $GITHUB_ENV
+          echo "PACKAGE_VERSION=${{ steps.gitversion.outputs.semVer }}" >> $GITHUB_ENV
           echo "ASSEMBLY_VERSION=${{ steps.gitversion.outputs.assemblySemVer }}" >> $GITHUB_ENV
           echo "FILE_VERSION=${{ steps.gitversion.outputs.assemblySemFileVer }}" >> $GITHUB_ENV
 

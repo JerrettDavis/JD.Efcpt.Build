@@ -1,4 +1,4 @@
-mode: MainLine
+workflow: GitHubFlow/v1
 tag-prefix: 'v'
 commit-message-incrementing: Enabled
 
