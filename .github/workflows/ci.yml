@@ -161,8 +161,12 @@ jobs:
         uses: gittools/actions/gitversion/execute@v4
 
       - name: Set version env vars
+        shell: bash
         run: |
-          echo "PACKAGE_VERSION=${{ steps.gitversion.outputs.semVer }}" >> $GITHUB_ENV
+          SEMVER="${{ steps.gitversion.outputs.semVer }}"
+          # Ensure pre-release label is NuGet-compatible (prefix bare numbers with 'ci.')
+          PACKAGE_VERSION=$(echo "$SEMVER" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+)-([0-9]+)$/\1-ci.\2/')
+          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
           echo "ASSEMBLY_VERSION=${{ steps.gitversion.outputs.assemblySemVer }}" >> $GITHUB_ENV
           echo "FILE_VERSION=${{ steps.gitversion.outputs.assemblySemFileVer }}" >> $GITHUB_ENV
 
