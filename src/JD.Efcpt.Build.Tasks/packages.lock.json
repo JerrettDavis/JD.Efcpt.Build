@@ -4,9 +4,9 @@
     ".NETFramework,Version=v4.7.2": {
       "AWSSDK.Core": {
         "type": "Direct",
-        "requested": "[4.0.3.14, )",
-        "resolved": "4.0.3.14",
-        "contentHash": "stcQQcJuUtJJgZYCPrl4Tb7X5sh5rSPEsNLSUXpplLFaGPe4EK43BMP2Ng+JadyasPLB2ahdESrQWDqyXJdzYQ==",
+        "requested": "[4.0.3.15, )",
+        "resolved": "4.0.3.15",
+        "contentHash": "1haLKyBjhwV34uafRco2du36ACf2k0pjKqhYj//y4TROSk3OW/faov0/+zGZidUyUuNP06hvUb8U/LgNPKsSeg==",
         "dependencies": {
           "System.Buffers": "4.5.1",
           "System.Memory": "4.5.5",
@@ -138,9 +138,9 @@
       },
       "PatternKit.Core": {
         "type": "Direct",
-        "requested": "[0.34.0, )",
-        "resolved": "0.34.0",
-        "contentHash": "FVkfNJQ6VW7kMdTLWzwzfksh8sCg3BlWzchyE0N6r0hJAGXsrgPRQ7NijaKCt17SXxr42NnvoDl2mwwcXoCQBg==",
+        "requested": "[0.34.1, )",
+        "resolved": "0.34.1",
+        "contentHash": "VVPUHdWF9OyYlqZ65Wha5AS8FAcHm6V6ym39n5p04WO72PcNwK3VnXAVMxdUIp1XU2qrzau7ds2t2y9/3S3fpQ==",
         "dependencies": {
           "System.Threading.Tasks.Extensions": "4.6.3"
         }
@@ -153,9 +153,9 @@
       },
       "Snowflake.Data": {
         "type": "Direct",
-        "requested": "[5.4.0, )",
-        "resolved": "5.4.0",
-        "contentHash": "LnKi1FDoDglSEJNZA8Re42iopxIcndOEavyDknC+4Yi9kSG980mGTXOAvUNvzljw8Lnoa8arkspOf3UhLZwICQ==",
+        "requested": "[5.4.1, )",
+        "resolved": "5.4.1",
+        "contentHash": "HQhtzfUfbdl1HG9cLo4VSQF3QEVHehY734y5/+82oPnXhE/qsNYAUpMxYZ91lTPWtnu51Z2wl0PzXWa4947z/Q==",
         "dependencies": {
           "AWSSDK.S3": "4.0.18.2",
           "Apache.Arrow": "14.0.2",
@@ -737,9 +737,9 @@
     "net10.0": {
       "AWSSDK.Core": {
         "type": "Direct",
-        "requested": "[4.0.3.14, )",
-        "resolved": "4.0.3.14",
-        "contentHash": "stcQQcJuUtJJgZYCPrl4Tb7X5sh5rSPEsNLSUXpplLFaGPe4EK43BMP2Ng+JadyasPLB2ahdESrQWDqyXJdzYQ=="
+        "requested": "[4.0.3.15, )",
+        "resolved": "4.0.3.15",
+        "contentHash": "1haLKyBjhwV34uafRco2du36ACf2k0pjKqhYj//y4TROSk3OW/faov0/+zGZidUyUuNP06hvUb8U/LgNPKsSeg=="
       },
       "FirebirdSql.Data.FirebirdClient": {
         "type": "Direct",
@@ -826,15 +826,15 @@
       },
       "PatternKit.Core": {
         "type": "Direct",
-        "requested": "[0.34.0, )",
-        "resolved": "0.34.0",
-        "contentHash": "FVkfNJQ6VW7kMdTLWzwzfksh8sCg3BlWzchyE0N6r0hJAGXsrgPRQ7NijaKCt17SXxr42NnvoDl2mwwcXoCQBg=="
+        "requested": "[0.34.1, )",
+        "resolved": "0.34.1",
+        "contentHash": "VVPUHdWF9OyYlqZ65Wha5AS8FAcHm6V6ym39n5p04WO72PcNwK3VnXAVMxdUIp1XU2qrzau7ds2t2y9/3S3fpQ=="
       },
       "Snowflake.Data": {
         "type": "Direct",
-        "requested": "[5.4.0, )",
-        "resolved": "5.4.0",
-        "contentHash": "LnKi1FDoDglSEJNZA8Re42iopxIcndOEavyDknC+4Yi9kSG980mGTXOAvUNvzljw8Lnoa8arkspOf3UhLZwICQ==",
+        "requested": "[5.4.1, )",
+        "resolved": "5.4.1",
+        "contentHash": "HQhtzfUfbdl1HG9cLo4VSQF3QEVHehY734y5/+82oPnXhE/qsNYAUpMxYZ91lTPWtnu51Z2wl0PzXWa4947z/Q==",
         "dependencies": {
           "AWSSDK.S3": "4.0.18.2",
           "Apache.Arrow": "14.0.2",
@@ -1218,9 +1218,9 @@
     "net8.0": {
       "AWSSDK.Core": {
         "type": "Direct",
-        "requested": "[4.0.3.14, )",
-        "resolved": "4.0.3.14",
-        "contentHash": "stcQQcJuUtJJgZYCPrl4Tb7X5sh5rSPEsNLSUXpplLFaGPe4EK43BMP2Ng+JadyasPLB2ahdESrQWDqyXJdzYQ=="
+        "requested": "[4.0.3.15, )",
+        "resolved": "4.0.3.15",
+        "contentHash": "1haLKyBjhwV34uafRco2du36ACf2k0pjKqhYj//y4TROSk3OW/faov0/+zGZidUyUuNP06hvUb8U/LgNPKsSeg=="
       },
       "FirebirdSql.Data.FirebirdClient": {
         "type": "Direct",
@@ -1303,15 +1303,15 @@
       },
       "PatternKit.Core": {
         "type": "Direct",
-        "requested": "[0.34.0, )",
-        "resolved": "0.34.0",
-        "contentHash": "FVkfNJQ6VW7kMdTLWzwzfksh8sCg3BlWzchyE0N6r0hJAGXsrgPRQ7NijaKCt17SXxr42NnvoDl2mwwcXoCQBg=="
+        "requested": "[0.34.1, )",
+        "resolved": "0.34.1",
+        "contentHash": "VVPUHdWF9OyYlqZ65Wha5AS8FAcHm6V6ym39n5p04WO72PcNwK3VnXAVMxdUIp1XU2qrzau7ds2t2y9/3S3fpQ=="
       },
       "Snowflake.Data": {
         "type": "Direct",
-        "requested": "[5.4.0, )",
-        "resolved": "5.4.0",
-        "contentHash": "LnKi1FDoDglSEJNZA8Re42iopxIcndOEavyDknC+4Yi9kSG980mGTXOAvUNvzljw8Lnoa8arkspOf3UhLZwICQ==",
+        "requested": "[5.4.1, )",
+        "resolved": "5.4.1",
+        "contentHash": "HQhtzfUfbdl1HG9cLo4VSQF3QEVHehY734y5/+82oPnXhE/qsNYAUpMxYZ91lTPWtnu51Z2wl0PzXWa4947z/Q==",
         "dependencies": {
           "AWSSDK.S3": "4.0.18.2",
           "Apache.Arrow": "14.0.2",
@@ -1696,9 +1696,9 @@
     "net9.0": {
       "AWSSDK.Core": {
         "type": "Direct",
-        "requested": "[4.0.3.14, )",
-        "resolved": "4.0.3.14",
-        "contentHash": "stcQQcJuUtJJgZYCPrl4Tb7X5sh5rSPEsNLSUXpplLFaGPe4EK43BMP2Ng+JadyasPLB2ahdESrQWDqyXJdzYQ=="
+        "requested": "[4.0.3.15, )",
+        "resolved": "4.0.3.15",
+        "contentHash": "1haLKyBjhwV34uafRco2du36ACf2k0pjKqhYj//y4TROSk3OW/faov0/+zGZidUyUuNP06hvUb8U/LgNPKsSeg=="
       },
       "FirebirdSql.Data.FirebirdClient": {
         "type": "Direct",
@@ -1781,15 +1781,15 @@
       },
       "PatternKit.Core": {
         "type": "Direct",
-        "requested": "[0.34.0, )",
-        "resolved": "0.34.0",
-        "contentHash": "FVkfNJQ6VW7kMdTLWzwzfksh8sCg3BlWzchyE0N6r0hJAGXsrgPRQ7NijaKCt17SXxr42NnvoDl2mwwcXoCQBg=="
+        "requested": "[0.34.1, )",
+        "resolved": "0.34.1",
+        "contentHash": "VVPUHdWF9OyYlqZ65Wha5AS8FAcHm6V6ym39n5p04WO72PcNwK3VnXAVMxdUIp1XU2qrzau7ds2t2y9/3S3fpQ=="
       },
       "Snowflake.Data": {
         "type": "Direct",
-        "requested": "[5.4.0, )",
-        "resolved": "5.4.0",
-        "contentHash": "LnKi1FDoDglSEJNZA8Re42iopxIcndOEavyDknC+4Yi9kSG980mGTXOAvUNvzljw8Lnoa8arkspOf3UhLZwICQ==",
+        "requested": "[5.4.1, )",
+        "resolved": "5.4.1",
+        "contentHash": "HQhtzfUfbdl1HG9cLo4VSQF3QEVHehY734y5/+82oPnXhE/qsNYAUpMxYZ91lTPWtnu51Z2wl0PzXWa4947z/Q==",
         "dependencies": {
           "AWSSDK.S3": "4.0.18.2",
           "Apache.Arrow": "14.0.2",

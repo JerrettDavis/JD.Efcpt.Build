@@ -35,7 +35,7 @@
     -->
     <PackageReference Include="Microsoft.Build.Framework" Version="18.3.3" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.Build.Utilities.Core" Version="18.3.3" ExcludeAssets="runtime" />
-    <PackageReference Include="PatternKit.Core" Version="0.34.0" />
+    <PackageReference Include="PatternKit.Core" Version="0.34.1" />
     <PackageReference Include="System.IO.Hashing" Version="10.0.3" />
   </ItemGroup>
 
@@ -48,9 +48,9 @@
     <PackageReference Include="MySqlConnector" Version="2.5.0" />
     <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="9.0.13" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="10.3.4" />
-    <PackageReference Include="Snowflake.Data" Version="5.4.0" />
+    <PackageReference Include="Snowflake.Data" Version="5.4.1" />
     <!-- Override vulnerable AWSSDK.Core transitive dependency from Snowflake.Data -->
-    <PackageReference Include="AWSSDK.Core" Version="4.0.3.14" />
+    <PackageReference Include="AWSSDK.Core" Version="4.0.3.15" />
   </ItemGroup>
 
   <!--
