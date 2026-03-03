@@ -47,6 +47,6 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <!-- Override vulnerable AWSSDK.Core transitive dependency -->
-    <PackageReference Include="AWSSDK.Core" Version="4.0.3.14" />
+    <PackageReference Include="AWSSDK.Core" Version="4.0.3.15" />
   </ItemGroup>
 </Project>
