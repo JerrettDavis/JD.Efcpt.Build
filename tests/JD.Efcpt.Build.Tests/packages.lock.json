@@ -112,11 +112,11 @@
       },
       "TinyBDD.Xunit": {
         "type": "Direct",
-        "requested": "[0.19.2, )",
-        "resolved": "0.19.2",
-        "contentHash": "u3aj2HFdXFltGnd3AeNXzOvCe4qmxV2c5EmgNLpYWEP5rprmcz4rBK7STYI9Rzk3OH1jwWSv6EE6k/zwoOv1bw==",
+        "requested": "[0.19.3, )",
+        "resolved": "0.19.3",
+        "contentHash": "V+B+fHyJxlmBLt1PHQ8Rj+aOD5etNQfzGMBInvZMDKflF9yn9EMyjVAvJEWLs4TQYMvBxu9Y09od8UpRQL9YwA==",
         "dependencies": {
-          "TinyBDD": "0.19.2",
+          "TinyBDD": "0.19.3",
           "xunit.abstractions": "2.0.3",
           "xunit.extensibility.core": "2.9.3"
         }
@@ -350,16 +350,16 @@
       },
       "Microsoft.Extensions.DependencyInjection": {
         "type": "Transitive",
-        "resolved": "10.0.2",
-        "contentHash": "J/Zmp6fY93JbaiZ11ckWvcyxMPjD6XVwIHQXBjryTBgn7O6O20HYg9uVLFcZlNfgH78MnreE/7EH+hjfzn7VyA==",
+        "resolved": "10.0.3",
+        "contentHash": "2DLOmC0EkB2smVK8lPP1PIKEgL1arE3CMp9XSIQB/Y7ev5nnnyuM/PizKJ6QfLD08QCYoopSC9SFdbYglDomYg==",
         "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.2"
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.3"
         }
       },
       "Microsoft.Extensions.DependencyInjection.Abstractions": {
         "type": "Transitive",
-        "resolved": "10.0.2",
-        "contentHash": "zOIurr59+kUf9vNcsUkCvKWZv+fPosUZXURZesYkJCvl0EzTc9F7maAO4Cd2WEV7ZJJ0AZrFQvuH6Npph9wdBw=="
+        "resolved": "10.0.3",
+        "contentHash": "bwGMrRcAMWx2s/RDgja97p27rxSz2pEQW0+rX5cWAUWVETVJ/eyxGfjAl8vuG5a+lckWmPIE+vcuaZNVB5YDdw=="
       },
       "Microsoft.Extensions.Logging": {
         "type": "Transitive",
@@ -667,11 +667,11 @@
       },
       "TinyBDD": {
         "type": "Transitive",
-        "resolved": "0.19.2",
-        "contentHash": "6AxyTZydfP6gkr0PtIueDnQ8tFcYnJGZXyZyoKWYWrXP5iJps3FWhhhLXUG21sIfyTyRDF+9pmMWi6OufPumVA==",
+        "resolved": "0.19.3",
+        "contentHash": "vKhUd9HJDQ8JOoHFcI6K/jgHkOonrLpXTSBtLj+DLOjsSwErA+a0csD55lPgv8XCKGUAANtKxFTYF84WUObF3g==",
         "dependencies": {
-          "Microsoft.Extensions.DependencyInjection": "10.0.2",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.2"
+          "Microsoft.Extensions.DependencyInjection": "10.0.3",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.3"
         }
       },
       "Tomlyn.Signed": {
