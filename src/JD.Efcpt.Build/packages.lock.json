@@ -34,8 +34,8 @@
       },
       "AWSSDK.Core": {
         "type": "Transitive",
-        "resolved": "4.0.3.14",
-        "contentHash": "stcQQcJuUtJJgZYCPrl4Tb7X5sh5rSPEsNLSUXpplLFaGPe4EK43BMP2Ng+JadyasPLB2ahdESrQWDqyXJdzYQ=="
+        "resolved": "4.0.3.15",
+        "contentHash": "1haLKyBjhwV34uafRco2du36ACf2k0pjKqhYj//y4TROSk3OW/faov0/+zGZidUyUuNP06hvUb8U/LgNPKsSeg=="
       },
       "AWSSDK.S3": {
         "type": "Transitive",
@@ -367,13 +367,13 @@
       },
       "PatternKit.Core": {
         "type": "Transitive",
-        "resolved": "0.34.0",
-        "contentHash": "FVkfNJQ6VW7kMdTLWzwzfksh8sCg3BlWzchyE0N6r0hJAGXsrgPRQ7NijaKCt17SXxr42NnvoDl2mwwcXoCQBg=="
+        "resolved": "0.34.1",
+        "contentHash": "VVPUHdWF9OyYlqZ65Wha5AS8FAcHm6V6ym39n5p04WO72PcNwK3VnXAVMxdUIp1XU2qrzau7ds2t2y9/3S3fpQ=="
       },
       "Snowflake.Data": {
         "type": "Transitive",
-        "resolved": "5.4.0",
-        "contentHash": "LnKi1FDoDglSEJNZA8Re42iopxIcndOEavyDknC+4Yi9kSG980mGTXOAvUNvzljw8Lnoa8arkspOf3UhLZwICQ==",
+        "resolved": "5.4.1",
+        "contentHash": "HQhtzfUfbdl1HG9cLo4VSQF3QEVHehY734y5/+82oPnXhE/qsNYAUpMxYZ91lTPWtnu51Z2wl0PzXWa4947z/Q==",
         "dependencies": {
           "AWSSDK.S3": "4.0.18.2",
           "Apache.Arrow": "14.0.2",
@@ -479,7 +479,7 @@
       "jd.efcpt.build.tasks": {
         "type": "Project",
         "dependencies": {
-          "AWSSDK.Core": "[4.0.3.14, )",
+          "AWSSDK.Core": "[4.0.3.15, )",
           "FirebirdSql.Data.FirebirdClient": "[10.3.4, )",
           "Microsoft.Build.Framework": "[18.3.3, )",
           "Microsoft.Build.Utilities.Core": "[18.3.3, )",
@@ -488,8 +488,8 @@
           "MySqlConnector": "[2.5.0, )",
           "Npgsql": "[9.0.4, )",
           "Oracle.ManagedDataAccess.Core": "[23.26.100, )",
-          "PatternKit.Core": "[0.34.0, )",
-          "Snowflake.Data": "[5.4.0, )",
+          "PatternKit.Core": "[0.34.1, )",
+          "Snowflake.Data": "[5.4.1, )",
           "System.IO.Hashing": "[10.0.3, )"
         }
       }
@@ -527,8 +527,8 @@
       },
       "AWSSDK.Core": {
         "type": "Transitive",
-        "resolved": "4.0.3.14",
-        "contentHash": "stcQQcJuUtJJgZYCPrl4Tb7X5sh5rSPEsNLSUXpplLFaGPe4EK43BMP2Ng+JadyasPLB2ahdESrQWDqyXJdzYQ=="
+        "resolved": "4.0.3.15",
+        "contentHash": "1haLKyBjhwV34uafRco2du36ACf2k0pjKqhYj//y4TROSk3OW/faov0/+zGZidUyUuNP06hvUb8U/LgNPKsSeg=="
       },
       "AWSSDK.S3": {
         "type": "Transitive",
@@ -852,13 +852,13 @@
       },
       "PatternKit.Core": {
         "type": "Transitive",
-        "resolved": "0.34.0",
-        "contentHash": "FVkfNJQ6VW7kMdTLWzwzfksh8sCg3BlWzchyE0N6r0hJAGXsrgPRQ7NijaKCt17SXxr42NnvoDl2mwwcXoCQBg=="
+        "resolved": "0.34.1",
+        "contentHash": "VVPUHdWF9OyYlqZ65Wha5AS8FAcHm6V6ym39n5p04WO72PcNwK3VnXAVMxdUIp1XU2qrzau7ds2t2y9/3S3fpQ=="
       },
       "Snowflake.Data": {
         "type": "Transitive",
-        "resolved": "5.4.0",
-        "contentHash": "LnKi1FDoDglSEJNZA8Re42iopxIcndOEavyDknC+4Yi9kSG980mGTXOAvUNvzljw8Lnoa8arkspOf3UhLZwICQ==",
+        "resolved": "5.4.1",
+        "contentHash": "HQhtzfUfbdl1HG9cLo4VSQF3QEVHehY734y5/+82oPnXhE/qsNYAUpMxYZ91lTPWtnu51Z2wl0PzXWa4947z/Q==",
         "dependencies": {
           "AWSSDK.S3": "4.0.18.2",
           "Apache.Arrow": "14.0.2",
@@ -969,7 +969,7 @@
       "jd.efcpt.build.tasks": {
         "type": "Project",
         "dependencies": {
-          "AWSSDK.Core": "[4.0.3.14, )",
+          "AWSSDK.Core": "[4.0.3.15, )",
           "FirebirdSql.Data.FirebirdClient": "[10.3.4, )",
           "Microsoft.Build.Framework": "[18.3.3, )",
           "Microsoft.Build.Utilities.Core": "[18.3.3, )",
@@ -978,8 +978,8 @@
           "MySqlConnector": "[2.5.0, )",
           "Npgsql": "[9.0.4, )",
           "Oracle.ManagedDataAccess.Core": "[23.26.100, )",
-          "PatternKit.Core": "[0.34.0, )",
-          "Snowflake.Data": "[5.4.0, )",
+          "PatternKit.Core": "[0.34.1, )",
+          "Snowflake.Data": "[5.4.1, )",
           "System.IO.Hashing": "[10.0.3, )"
         }
       }
@@ -1017,8 +1017,8 @@
       },
       "AWSSDK.Core": {
         "type": "Transitive",
-        "resolved": "4.0.3.14",
-        "contentHash": "stcQQcJuUtJJgZYCPrl4Tb7X5sh5rSPEsNLSUXpplLFaGPe4EK43BMP2Ng+JadyasPLB2ahdESrQWDqyXJdzYQ=="
+        "resolved": "4.0.3.15",
+        "contentHash": "1haLKyBjhwV34uafRco2du36ACf2k0pjKqhYj//y4TROSk3OW/faov0/+zGZidUyUuNP06hvUb8U/LgNPKsSeg=="
       },
       "AWSSDK.S3": {
         "type": "Transitive",
@@ -1341,13 +1341,13 @@
       },
       "PatternKit.Core": {
         "type": "Transitive",
-        "resolved": "0.34.0",
-        "contentHash": "FVkfNJQ6VW7kMdTLWzwzfksh8sCg3BlWzchyE0N6r0hJAGXsrgPRQ7NijaKCt17SXxr42NnvoDl2mwwcXoCQBg=="
+        "resolved": "0.34.1",
+        "contentHash": "VVPUHdWF9OyYlqZ65Wha5AS8FAcHm6V6ym39n5p04WO72PcNwK3VnXAVMxdUIp1XU2qrzau7ds2t2y9/3S3fpQ=="
       },
       "Snowflake.Data": {
         "type": "Transitive",
-        "resolved": "5.4.0",
-        "contentHash": "LnKi1FDoDglSEJNZA8Re42iopxIcndOEavyDknC+4Yi9kSG980mGTXOAvUNvzljw8Lnoa8arkspOf3UhLZwICQ==",
+        "resolved": "5.4.1",
+        "contentHash": "HQhtzfUfbdl1HG9cLo4VSQF3QEVHehY734y5/+82oPnXhE/qsNYAUpMxYZ91lTPWtnu51Z2wl0PzXWa4947z/Q==",
         "dependencies": {
           "AWSSDK.S3": "4.0.18.2",
           "Apache.Arrow": "14.0.2",
@@ -1453,7 +1453,7 @@
       "jd.efcpt.build.tasks": {
         "type": "Project",
         "dependencies": {
-          "AWSSDK.Core": "[4.0.3.14, )",
+          "AWSSDK.Core": "[4.0.3.15, )",
           "FirebirdSql.Data.FirebirdClient": "[10.3.4, )",
           "Microsoft.Build.Framework": "[18.3.3, )",
           "Microsoft.Build.Utilities.Core": "[18.3.3, )",
@@ -1462,8 +1462,8 @@
           "MySqlConnector": "[2.5.0, )",
           "Npgsql": "[9.0.4, )",
           "Oracle.ManagedDataAccess.Core": "[23.26.100, )",
-          "PatternKit.Core": "[0.34.0, )",
-          "Snowflake.Data": "[5.4.0, )",
+          "PatternKit.Core": "[0.34.1, )",
+          "Snowflake.Data": "[5.4.1, )",
           "System.IO.Hashing": "[10.0.3, )"
         }
       }

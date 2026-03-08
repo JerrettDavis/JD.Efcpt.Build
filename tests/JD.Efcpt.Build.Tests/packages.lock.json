@@ -112,11 +112,11 @@
       },
       "TinyBDD.Xunit": {
         "type": "Direct",
-        "requested": "[0.19.3, )",
-        "resolved": "0.19.3",
-        "contentHash": "V+B+fHyJxlmBLt1PHQ8Rj+aOD5etNQfzGMBInvZMDKflF9yn9EMyjVAvJEWLs4TQYMvBxu9Y09od8UpRQL9YwA==",
+        "requested": "[0.19.5, )",
+        "resolved": "0.19.5",
+        "contentHash": "v8oF0vkno5OFTBvw81eXZ5Vaq1ccD2BE0yfv5zNHfnr02hRquvwFuVJbn6hclMTCF5sFWV47Q0KXxG3I+TbYyQ==",
         "dependencies": {
-          "TinyBDD": "0.19.3",
+          "TinyBDD": "0.19.5",
           "xunit.abstractions": "2.0.3",
           "xunit.extensibility.core": "2.9.3"
         }
@@ -514,8 +514,8 @@
       },
       "PatternKit.Core": {
         "type": "Transitive",
-        "resolved": "0.34.1",
-        "contentHash": "VVPUHdWF9OyYlqZ65Wha5AS8FAcHm6V6ym39n5p04WO72PcNwK3VnXAVMxdUIp1XU2qrzau7ds2t2y9/3S3fpQ=="
+        "resolved": "0.34.4",
+        "contentHash": "fZjOMAzx+Yct1Oa0If0cZfAbecPdsTO6S8VP3cQgaBJDD28UJ4sJBJekax6f/c2mj8pFdXY0+uxu7/hVpRyjNQ=="
       },
       "SharpZipLib": {
         "type": "Transitive",
@@ -667,8 +667,8 @@
       },
       "TinyBDD": {
         "type": "Transitive",
-        "resolved": "0.19.3",
-        "contentHash": "vKhUd9HJDQ8JOoHFcI6K/jgHkOonrLpXTSBtLj+DLOjsSwErA+a0csD55lPgv8XCKGUAANtKxFTYF84WUObF3g==",
+        "resolved": "0.19.5",
+        "contentHash": "AVIWsLxIrJYQZ1rkf1bOBDmgWS0l/X1iucAzBLS81zYbfGP5brcKfhOvbfAD/SkMIRqgwBcMtksHO+HG2pWRgQ==",
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection": "10.0.3",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.3"
@@ -736,7 +736,7 @@
           "MySqlConnector": "[2.5.0, )",
           "Npgsql": "[9.0.4, )",
           "Oracle.ManagedDataAccess.Core": "[23.26.100, )",
-          "PatternKit.Core": "[0.34.1, )",
+          "PatternKit.Core": "[0.34.4, )",
           "Snowflake.Data": "[5.4.1, )",
           "System.IO.Hashing": "[10.0.3, )"
         }
