@@ -35,7 +35,7 @@
     -->
     <PackageReference Include="Microsoft.Build.Framework" Version="18.3.3" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.Build.Utilities.Core" Version="18.3.3" ExcludeAssets="runtime" />
-    <PackageReference Include="PatternKit.Core" Version="0.34.1" />
+    <PackageReference Include="PatternKit.Core" Version="0.34.4" />
     <PackageReference Include="System.IO.Hashing" Version="10.0.3" />
   </ItemGroup>
 

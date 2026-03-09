@@ -138,9 +138,9 @@
       },
       "PatternKit.Core": {
         "type": "Direct",
-        "requested": "[0.34.1, )",
-        "resolved": "0.34.1",
-        "contentHash": "VVPUHdWF9OyYlqZ65Wha5AS8FAcHm6V6ym39n5p04WO72PcNwK3VnXAVMxdUIp1XU2qrzau7ds2t2y9/3S3fpQ==",
+        "requested": "[0.34.4, )",
+        "resolved": "0.34.4",
+        "contentHash": "fZjOMAzx+Yct1Oa0If0cZfAbecPdsTO6S8VP3cQgaBJDD28UJ4sJBJekax6f/c2mj8pFdXY0+uxu7/hVpRyjNQ==",
         "dependencies": {
           "System.Threading.Tasks.Extensions": "4.6.3"
         }
@@ -826,9 +826,9 @@
       },
       "PatternKit.Core": {
         "type": "Direct",
-        "requested": "[0.34.1, )",
-        "resolved": "0.34.1",
-        "contentHash": "VVPUHdWF9OyYlqZ65Wha5AS8FAcHm6V6ym39n5p04WO72PcNwK3VnXAVMxdUIp1XU2qrzau7ds2t2y9/3S3fpQ=="
+        "requested": "[0.34.4, )",
+        "resolved": "0.34.4",
+        "contentHash": "fZjOMAzx+Yct1Oa0If0cZfAbecPdsTO6S8VP3cQgaBJDD28UJ4sJBJekax6f/c2mj8pFdXY0+uxu7/hVpRyjNQ=="
       },
       "Snowflake.Data": {
         "type": "Direct",
@@ -1303,9 +1303,9 @@
       },
       "PatternKit.Core": {
         "type": "Direct",
-        "requested": "[0.34.1, )",
-        "resolved": "0.34.1",
-        "contentHash": "VVPUHdWF9OyYlqZ65Wha5AS8FAcHm6V6ym39n5p04WO72PcNwK3VnXAVMxdUIp1XU2qrzau7ds2t2y9/3S3fpQ=="
+        "requested": "[0.34.4, )",
+        "resolved": "0.34.4",
+        "contentHash": "fZjOMAzx+Yct1Oa0If0cZfAbecPdsTO6S8VP3cQgaBJDD28UJ4sJBJekax6f/c2mj8pFdXY0+uxu7/hVpRyjNQ=="
       },
       "Snowflake.Data": {
         "type": "Direct",
@@ -1781,9 +1781,9 @@
       },
       "PatternKit.Core": {
         "type": "Direct",
-        "requested": "[0.34.1, )",
-        "resolved": "0.34.1",
-        "contentHash": "VVPUHdWF9OyYlqZ65Wha5AS8FAcHm6V6ym39n5p04WO72PcNwK3VnXAVMxdUIp1XU2qrzau7ds2t2y9/3S3fpQ=="
+        "requested": "[0.34.4, )",
+        "resolved": "0.34.4",
+        "contentHash": "fZjOMAzx+Yct1Oa0If0cZfAbecPdsTO6S8VP3cQgaBJDD28UJ4sJBJekax6f/c2mj8pFdXY0+uxu7/hVpRyjNQ=="
       },
       "Snowflake.Data": {
         "type": "Direct",
