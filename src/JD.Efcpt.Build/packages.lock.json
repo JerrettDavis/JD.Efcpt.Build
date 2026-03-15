@@ -367,8 +367,8 @@
       },
       "PatternKit.Core": {
         "type": "Transitive",
-        "resolved": "0.34.1",
-        "contentHash": "VVPUHdWF9OyYlqZ65Wha5AS8FAcHm6V6ym39n5p04WO72PcNwK3VnXAVMxdUIp1XU2qrzau7ds2t2y9/3S3fpQ=="
+        "resolved": "0.34.4",
+        "contentHash": "fZjOMAzx+Yct1Oa0If0cZfAbecPdsTO6S8VP3cQgaBJDD28UJ4sJBJekax6f/c2mj8pFdXY0+uxu7/hVpRyjNQ=="
       },
       "Snowflake.Data": {
         "type": "Transitive",
@@ -488,7 +488,7 @@
           "MySqlConnector": "[2.5.0, )",
           "Npgsql": "[9.0.4, )",
           "Oracle.ManagedDataAccess.Core": "[23.26.100, )",
-          "PatternKit.Core": "[0.34.1, )",
+          "PatternKit.Core": "[0.34.4, )",
           "Snowflake.Data": "[5.4.1, )",
           "System.IO.Hashing": "[10.0.3, )"
         }
@@ -852,8 +852,8 @@
       },
       "PatternKit.Core": {
         "type": "Transitive",
-        "resolved": "0.34.1",
-        "contentHash": "VVPUHdWF9OyYlqZ65Wha5AS8FAcHm6V6ym39n5p04WO72PcNwK3VnXAVMxdUIp1XU2qrzau7ds2t2y9/3S3fpQ=="
+        "resolved": "0.34.4",
+        "contentHash": "fZjOMAzx+Yct1Oa0If0cZfAbecPdsTO6S8VP3cQgaBJDD28UJ4sJBJekax6f/c2mj8pFdXY0+uxu7/hVpRyjNQ=="
       },
       "Snowflake.Data": {
         "type": "Transitive",
@@ -978,7 +978,7 @@
           "MySqlConnector": "[2.5.0, )",
           "Npgsql": "[9.0.4, )",
           "Oracle.ManagedDataAccess.Core": "[23.26.100, )",
-          "PatternKit.Core": "[0.34.1, )",
+          "PatternKit.Core": "[0.34.4, )",
           "Snowflake.Data": "[5.4.1, )",
           "System.IO.Hashing": "[10.0.3, )"
         }
@@ -1341,8 +1341,8 @@
       },
       "PatternKit.Core": {
         "type": "Transitive",
-        "resolved": "0.34.1",
-        "contentHash": "VVPUHdWF9OyYlqZ65Wha5AS8FAcHm6V6ym39n5p04WO72PcNwK3VnXAVMxdUIp1XU2qrzau7ds2t2y9/3S3fpQ=="
+        "resolved": "0.34.4",
+        "contentHash": "fZjOMAzx+Yct1Oa0If0cZfAbecPdsTO6S8VP3cQgaBJDD28UJ4sJBJekax6f/c2mj8pFdXY0+uxu7/hVpRyjNQ=="
       },
       "Snowflake.Data": {
         "type": "Transitive",
@@ -1462,7 +1462,7 @@
           "MySqlConnector": "[2.5.0, )",
           "Npgsql": "[9.0.4, )",
           "Oracle.ManagedDataAccess.Core": "[23.26.100, )",
-          "PatternKit.Core": "[0.34.1, )",
+          "PatternKit.Core": "[0.34.4, )",
           "Snowflake.Data": "[5.4.1, )",
           "System.IO.Hashing": "[10.0.3, )"
         }
