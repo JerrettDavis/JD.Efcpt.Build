@@ -112,11 +112,11 @@
       },
       "TinyBDD.Xunit": {
         "type": "Direct",
-        "requested": "[0.19.5, )",
-        "resolved": "0.19.5",
-        "contentHash": "v8oF0vkno5OFTBvw81eXZ5Vaq1ccD2BE0yfv5zNHfnr02hRquvwFuVJbn6hclMTCF5sFWV47Q0KXxG3I+TbYyQ==",
+        "requested": "[0.19.6, )",
+        "resolved": "0.19.6",
+        "contentHash": "z0/b1LXQZkE7SfjsM8eRlsesvru57unotOBfiTkvqeCW+n5Nl3LsjzethSidXS5gZX97aW++rxVNPae8ZLrCLA==",
         "dependencies": {
-          "TinyBDD": "0.19.5",
+          "TinyBDD": "0.19.6",
           "xunit.abstractions": "2.0.3",
           "xunit.extensibility.core": "2.9.3"
         }
@@ -667,8 +667,8 @@
       },
       "TinyBDD": {
         "type": "Transitive",
-        "resolved": "0.19.5",
-        "contentHash": "AVIWsLxIrJYQZ1rkf1bOBDmgWS0l/X1iucAzBLS81zYbfGP5brcKfhOvbfAD/SkMIRqgwBcMtksHO+HG2pWRgQ==",
+        "resolved": "0.19.6",
+        "contentHash": "4LNJdg+eMVA0KbCbHI2JtHpJRAtQyJK9L0aR0Sb4w0w5xruE3aH/DqTorFbZ8nyulsjFPwi3CUgFxIZOtfWXQg==",
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection": "10.0.3",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.3"
