@@ -33,10 +33,10 @@
       MSBuild packages: Use ExcludeAssets="runtime" to prevent copying to output.
       These assemblies are provided by the MSBuild host (Visual Studio/dotnet).
     -->
-    <PackageReference Include="Microsoft.Build.Framework" Version="18.3.3" ExcludeAssets="runtime" />
-    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="18.3.3" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.Build.Framework" Version="18.4.0" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="18.4.0" ExcludeAssets="runtime" />
     <PackageReference Include="PatternKit.Core" Version="0.34.4" />
-    <PackageReference Include="System.IO.Hashing" Version="10.0.3" />
+    <PackageReference Include="System.IO.Hashing" Version="10.0.5" />
   </ItemGroup>
 
   <!--
@@ -46,11 +46,11 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
     <PackageReference Include="MySqlConnector" Version="2.5.0" />
-    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="9.0.13" />
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="9.0.14" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="10.3.4" />
     <PackageReference Include="Snowflake.Data" Version="5.4.1" />
     <!-- Override vulnerable AWSSDK.Core transitive dependency from Snowflake.Data -->
-    <PackageReference Include="AWSSDK.Core" Version="4.0.3.15" />
+    <PackageReference Include="AWSSDK.Core" Version="4.0.3.18" />
   </ItemGroup>
 
   <!--
@@ -59,12 +59,12 @@
     Oracle.ManagedDataAccess.Core is .NET Core only; use full framework package for net472.
   -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
-    <PackageReference Include="Npgsql" Version="8.0.8" />
+    <PackageReference Include="Npgsql" Version="8.0.9" />
     <PackageReference Include="Oracle.ManagedDataAccess" Version="23.26.100" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' != 'net472'">
-    <PackageReference Include="Npgsql" Version="9.0.4" />
+    <PackageReference Include="Npgsql" Version="9.0.5" />
     <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.26.100" />
   </ItemGroup>
 
