@@ -35,7 +35,7 @@
     </PackageReference>
     <PackageReference Include="Testcontainers.MsSql" Version="4.10.0" />
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.10.0" />
-    <PackageReference Include="Testcontainers.MySql" Version="4.10.0" />
+    <PackageReference Include="Testcontainers.MySql" Version="4.11.0" />
     <PackageReference Include="Testcontainers.FirebirdSql" Version="4.10.0" />
     <PackageReference Include="Testcontainers.Oracle" Version="4.10.0" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.2" />
