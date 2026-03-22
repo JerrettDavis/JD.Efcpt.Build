@@ -35,7 +35,7 @@
     -->
     <PackageReference Include="Microsoft.Build.Framework" Version="18.4.0" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.Build.Utilities.Core" Version="18.4.0" ExcludeAssets="runtime" />
-    <PackageReference Include="PatternKit.Core" Version="0.34.4" />
+    <PackageReference Include="PatternKit.Core" Version="0.35.4" />
     <PackageReference Include="System.IO.Hashing" Version="10.0.5" />
   </ItemGroup>
 
@@ -50,7 +50,7 @@
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="10.3.4" />
     <PackageReference Include="Snowflake.Data" Version="5.4.1" />
     <!-- Override vulnerable AWSSDK.Core transitive dependency from Snowflake.Data -->
-    <PackageReference Include="AWSSDK.Core" Version="4.0.3.18" />
+    <PackageReference Include="AWSSDK.Core" Version="4.0.3.20" />
   </ItemGroup>
 
   <!--

@@ -4,9 +4,9 @@
     ".NETFramework,Version=v4.7.2": {
       "AWSSDK.Core": {
         "type": "Direct",
-        "requested": "[4.0.3.18, )",
-        "resolved": "4.0.3.18",
-        "contentHash": "9f6HvYm8fgEIzDE3Ek60kdULqms8waHxeMPpBK6N1n55BHH0RZaOwBTyW1M9vBPXjAx0BMUtH2+DMd8FmPdA9w==",
+        "requested": "[4.0.3.20, )",
+        "resolved": "4.0.3.20",
+        "contentHash": "LOCdI5hsqtNg7Z+2zV3C+p1JDDAvyUshXMg3lrwKOL2RS7rxCKvJ0hpswzWeUSntf2V2yssL4HELamQBJaZqyg==",
         "dependencies": {
           "System.Buffers": "4.5.1",
           "System.Memory": "4.5.5",
@@ -138,9 +138,9 @@
       },
       "PatternKit.Core": {
         "type": "Direct",
-        "requested": "[0.34.4, )",
-        "resolved": "0.34.4",
-        "contentHash": "fZjOMAzx+Yct1Oa0If0cZfAbecPdsTO6S8VP3cQgaBJDD28UJ4sJBJekax6f/c2mj8pFdXY0+uxu7/hVpRyjNQ==",
+        "requested": "[0.35.4, )",
+        "resolved": "0.35.4",
+        "contentHash": "X6ynhvW67GgiizhaLp3FQMotSlhRixNf5h66qFe15LSLglWAwp5E6ZbHt5aTYYAPrr4GU8xjCpLsCHNgZMByeg==",
         "dependencies": {
           "System.Threading.Tasks.Extensions": "4.6.3"
         }
@@ -737,9 +737,9 @@
     "net10.0": {
       "AWSSDK.Core": {
         "type": "Direct",
-        "requested": "[4.0.3.18, )",
-        "resolved": "4.0.3.18",
-        "contentHash": "9f6HvYm8fgEIzDE3Ek60kdULqms8waHxeMPpBK6N1n55BHH0RZaOwBTyW1M9vBPXjAx0BMUtH2+DMd8FmPdA9w=="
+        "requested": "[4.0.3.20, )",
+        "resolved": "4.0.3.20",
+        "contentHash": "LOCdI5hsqtNg7Z+2zV3C+p1JDDAvyUshXMg3lrwKOL2RS7rxCKvJ0hpswzWeUSntf2V2yssL4HELamQBJaZqyg=="
       },
       "FirebirdSql.Data.FirebirdClient": {
         "type": "Direct",
@@ -826,9 +826,9 @@
       },
       "PatternKit.Core": {
         "type": "Direct",
-        "requested": "[0.34.4, )",
-        "resolved": "0.34.4",
-        "contentHash": "fZjOMAzx+Yct1Oa0If0cZfAbecPdsTO6S8VP3cQgaBJDD28UJ4sJBJekax6f/c2mj8pFdXY0+uxu7/hVpRyjNQ=="
+        "requested": "[0.35.4, )",
+        "resolved": "0.35.4",
+        "contentHash": "X6ynhvW67GgiizhaLp3FQMotSlhRixNf5h66qFe15LSLglWAwp5E6ZbHt5aTYYAPrr4GU8xjCpLsCHNgZMByeg=="
       },
       "Snowflake.Data": {
         "type": "Direct",
@@ -1218,9 +1218,9 @@
     "net8.0": {
       "AWSSDK.Core": {
         "type": "Direct",
-        "requested": "[4.0.3.18, )",
-        "resolved": "4.0.3.18",
-        "contentHash": "9f6HvYm8fgEIzDE3Ek60kdULqms8waHxeMPpBK6N1n55BHH0RZaOwBTyW1M9vBPXjAx0BMUtH2+DMd8FmPdA9w=="
+        "requested": "[4.0.3.20, )",
+        "resolved": "4.0.3.20",
+        "contentHash": "LOCdI5hsqtNg7Z+2zV3C+p1JDDAvyUshXMg3lrwKOL2RS7rxCKvJ0hpswzWeUSntf2V2yssL4HELamQBJaZqyg=="
       },
       "FirebirdSql.Data.FirebirdClient": {
         "type": "Direct",
@@ -1303,9 +1303,9 @@
       },
       "PatternKit.Core": {
         "type": "Direct",
-        "requested": "[0.34.4, )",
-        "resolved": "0.34.4",
-        "contentHash": "fZjOMAzx+Yct1Oa0If0cZfAbecPdsTO6S8VP3cQgaBJDD28UJ4sJBJekax6f/c2mj8pFdXY0+uxu7/hVpRyjNQ=="
+        "requested": "[0.35.4, )",
+        "resolved": "0.35.4",
+        "contentHash": "X6ynhvW67GgiizhaLp3FQMotSlhRixNf5h66qFe15LSLglWAwp5E6ZbHt5aTYYAPrr4GU8xjCpLsCHNgZMByeg=="
       },
       "Snowflake.Data": {
         "type": "Direct",
@@ -1696,9 +1696,9 @@
     "net9.0": {
       "AWSSDK.Core": {
         "type": "Direct",
-        "requested": "[4.0.3.18, )",
-        "resolved": "4.0.3.18",
-        "contentHash": "9f6HvYm8fgEIzDE3Ek60kdULqms8waHxeMPpBK6N1n55BHH0RZaOwBTyW1M9vBPXjAx0BMUtH2+DMd8FmPdA9w=="
+        "requested": "[4.0.3.20, )",
+        "resolved": "4.0.3.20",
+        "contentHash": "LOCdI5hsqtNg7Z+2zV3C+p1JDDAvyUshXMg3lrwKOL2RS7rxCKvJ0hpswzWeUSntf2V2yssL4HELamQBJaZqyg=="
       },
       "FirebirdSql.Data.FirebirdClient": {
         "type": "Direct",
@@ -1781,9 +1781,9 @@
       },
       "PatternKit.Core": {
         "type": "Direct",
-        "requested": "[0.34.4, )",
-        "resolved": "0.34.4",
-        "contentHash": "fZjOMAzx+Yct1Oa0If0cZfAbecPdsTO6S8VP3cQgaBJDD28UJ4sJBJekax6f/c2mj8pFdXY0+uxu7/hVpRyjNQ=="
+        "requested": "[0.35.4, )",
+        "resolved": "0.35.4",
+        "contentHash": "X6ynhvW67GgiizhaLp3FQMotSlhRixNf5h66qFe15LSLglWAwp5E6ZbHt5aTYYAPrr4GU8xjCpLsCHNgZMByeg=="
       },
       "Snowflake.Data": {
         "type": "Direct",
