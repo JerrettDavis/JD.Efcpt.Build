@@ -103,7 +103,7 @@
   </Target>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.0" />
     <None Include="defaults/**/*.*" Pack="true" PackagePath="build/Defaults" />
   </ItemGroup>
 
