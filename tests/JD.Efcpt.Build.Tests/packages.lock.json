@@ -4,9 +4,9 @@
     "net10.0": {
       "AWSSDK.Core": {
         "type": "Direct",
-        "requested": "[4.0.3.18, )",
-        "resolved": "4.0.3.18",
-        "contentHash": "9f6HvYm8fgEIzDE3Ek60kdULqms8waHxeMPpBK6N1n55BHH0RZaOwBTyW1M9vBPXjAx0BMUtH2+DMd8FmPdA9w=="
+        "requested": "[4.0.3.20, )",
+        "resolved": "4.0.3.20",
+        "contentHash": "LOCdI5hsqtNg7Z+2zV3C+p1JDDAvyUshXMg3lrwKOL2RS7rxCKvJ0hpswzWeUSntf2V2yssL4HELamQBJaZqyg=="
       },
       "coverlet.collector": {
         "type": "Direct",
