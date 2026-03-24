@@ -16,37 +16,37 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="coverlet.collector" Version="8.0.1" />
-    <PackageReference Include="Microsoft.Build.Locator" Version="1.11.2">
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.Build.Locator">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
-    <PackageReference Include="Microsoft.Build.Framework" Version="18.4.0">
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.Build.Framework">
       <ExcludeAssets>runtime</ExcludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="18.4.0">
+    <PackageReference Include="Microsoft.Build.Utilities.Core">
       <ExcludeAssets>runtime</ExcludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.NET.StringTools" Version="18.4.0">
+    <PackageReference Include="Microsoft.NET.StringTools">
       <ExcludeAssets>runtime</ExcludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Testcontainers.MsSql" Version="4.11.0" />
-    <PackageReference Include="Testcontainers.PostgreSql" Version="4.11.0" />
-    <PackageReference Include="Testcontainers.MySql" Version="4.11.0" />
-    <PackageReference Include="Testcontainers.FirebirdSql" Version="4.11.0" />
-    <PackageReference Include="Testcontainers.Oracle" Version="4.11.0" />
-    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.2" />
-    <PackageReference Include="TinyBDD.Xunit" Version="0.19.9" />
-    <PackageReference Include="xunit" Version="2.9.3" />
-    <PackageReference Include="Xunit.SkippableFact" Version="1.5.61" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+    <PackageReference Include="Testcontainers.MsSql" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Testcontainers.MySql" />
+    <PackageReference Include="Testcontainers.FirebirdSql" />
+    <PackageReference Include="Testcontainers.Oracle" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />
+    <PackageReference Include="TinyBDD.Xunit" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="Xunit.SkippableFact" />
+    <PackageReference Include="xunit.runner.visualstudio">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <!-- Override vulnerable AWSSDK.Core transitive dependency -->
-    <PackageReference Include="AWSSDK.Core" Version="4.0.3.21" />
+    <PackageReference Include="AWSSDK.Core" />
   </ItemGroup>
 </Project>
