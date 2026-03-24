@@ -18,7 +18,7 @@
 
   <!-- No EF Core dependencies - just plain POCOs with DataAnnotations -->
   <ItemGroup>
-    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+    <PackageReference Include="System.ComponentModel.Annotations" />
   </ItemGroup>
 
   <Import Project="$(EfcptBuildRoot)JD.Efcpt.Build.targets" />
