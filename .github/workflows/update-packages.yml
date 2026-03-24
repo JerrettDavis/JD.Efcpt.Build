@@ -39,6 +39,11 @@ jobs:
 
           if [ -s outdated.txt ]; then
             echo "has-updates=true" >> $GITHUB_OUTPUT
+            {
+              echo 'outdated<<EOF'
+              cat outdated.txt
+              echo 'EOF'
+            } >> $GITHUB_OUTPUT
             echo "Outdated packages found:"
             cat outdated.txt
           else
@@ -60,7 +65,7 @@ jobs:
 
             ### Changes
             ```
-            $(cat outdated.txt)
+            ${{ steps.check.outputs.outdated }}
             ```
 
             ### Checklist
