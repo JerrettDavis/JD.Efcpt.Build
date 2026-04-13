@@ -103,6 +103,7 @@
   </Target>
 
   <ItemGroup>
+    <PackageReference Include="AWSSDK.Core" VersionOverride="4.0.3.29" />
     <PackageReference Include="Microsoft.Data.SqlClient" />
     <None Include="defaults/**/*.*" Pack="true" PackagePath="build/Defaults" />
   </ItemGroup>
