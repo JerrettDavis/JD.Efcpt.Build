@@ -18,7 +18,7 @@
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.0" />
     <PackageVersion Include="Microsoft.Data.Sqlite.Core" Version="9.0.14" />
     <PackageVersion Include="Microsoft.NET.StringTools" Version="18.4.0" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.4.0" />
     <PackageVersion Include="MySqlConnector" Version="2.5.0" />
     <PackageVersion Include="Npgsql" Version="9.0.5" />
     <PackageVersion Include="Oracle.ManagedDataAccess" Version="23.26.100" />
