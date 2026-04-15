@@ -11,7 +11,7 @@ namespace JD.Efcpt.Build.Tests.Profiling;
 /// </summary>
 [Feature("BuildProfilerManager: Cross-task profiler coordination")]
 [Collection(nameof(AssemblySetup))]
-public sealed class BuildProfilerManagerTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class BuildProfilerManagerTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SetupState(string ProjectPath);
 
@@ -170,3 +170,4 @@ public sealed class BuildProfilerManagerTests(ITestOutputHelper output) : TinyBd
             .AssertPassed();
     }
 }
+

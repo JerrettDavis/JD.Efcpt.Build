@@ -7,7 +7,7 @@ using Xunit;
 
 namespace JD.Efcpt.Build.Tests.Config;
 
-public class EfcptConfigGeneratorTests
+public partial class EfcptConfigGeneratorTests
 {
     private readonly string _schemaPath;
 
@@ -195,10 +195,10 @@ public class EfcptConfigGeneratorTests
         Assert.Null(config["functions"]);
         Assert.Null(config["replacements"]);
         
-        // Verify code-generation has exactly 12 required properties
+        // Verify code-generation has exactly 13 required properties
         var codeGen = config["code-generation"]?.AsObject();
         Assert.NotNull(codeGen);
-        Assert.Equal(12, codeGen.Count);
+        Assert.Equal(13, codeGen.Count);
         
         // Verify names has exactly 2 required properties
         var names = config["names"]?.AsObject();
@@ -226,3 +226,4 @@ public class EfcptConfigGeneratorTests
         throw new DirectoryNotFoundException("Could not find repository root");
     }
 }
+

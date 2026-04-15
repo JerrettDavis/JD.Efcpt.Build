@@ -10,7 +10,7 @@ namespace JD.Efcpt.Build.Tests;
 
 [Feature("StageEfcptInputs task: stages configuration and templates to output directory")]
 [Collection(nameof(AssemblySetup))]
-public sealed class StageEfcptInputsTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class StageEfcptInputsTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private enum TemplateShape
     {
@@ -635,3 +635,4 @@ public sealed class StageEfcptInputsTests(ITestOutputHelper output) : TinyBddXun
             .AssertPassed();
     }
 }
+

@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("FileSystemHelpers: file system operation utilities")]
 [Collection(nameof(AssemblySetup))]
-public sealed class FileSystemHelpersTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class FileSystemHelpersTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     #region CopyDirectory Tests
 
@@ -271,3 +271,4 @@ public sealed class FileSystemHelpersTests(ITestOutputHelper output) : TinyBddXu
 
     #endregion
 }
+

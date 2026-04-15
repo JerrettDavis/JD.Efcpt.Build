@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("ResolveDbContextName: MSBuild task for resolving DbContext names")]
 [Collection(nameof(AssemblySetup))]
-public sealed class ResolveDbContextNameTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class ResolveDbContextNameTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record TaskResult(
         ResolveDbContextName Task,
@@ -227,3 +227,4 @@ public sealed class ResolveDbContextNameTests(ITestOutputHelper output) : TinyBd
             .AssertPassed();
     }
 }
+

@@ -11,7 +11,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("EnumerableExtensions: collection manipulation utilities")]
 [Collection(nameof(AssemblySetup))]
-public sealed class EnumerableExtensionsTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class EnumerableExtensionsTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     [Scenario("BuildCandidateNames returns fallback names when no override")]
     [Fact]
@@ -135,3 +135,4 @@ public sealed class EnumerableExtensionsTests(ITestOutputHelper output) : TinyBd
             .AssertPassed();
     }
 }
+

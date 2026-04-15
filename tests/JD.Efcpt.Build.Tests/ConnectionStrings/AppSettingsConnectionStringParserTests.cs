@@ -11,7 +11,7 @@ namespace JD.Efcpt.Build.Tests.ConnectionStrings;
 
 [Feature("AppSettingsConnectionStringParser: parses connection strings from appsettings.json files")]
 [Collection(nameof(AssemblySetup))]
-public sealed class AppSettingsConnectionStringParserTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class AppSettingsConnectionStringParserTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SetupState(TestFolder Folder, string FilePath, string KeyName);
     private sealed record ParseResult(SetupState Setup, ConnectionStringResult Result);
@@ -186,3 +186,4 @@ public sealed class AppSettingsConnectionStringParserTests(ITestOutputHelper out
         public override bool Execute() => true;
     }
 }
+

@@ -11,7 +11,7 @@ namespace JD.Efcpt.Build.Tests;
 
 [Feature("Full pipeline: resolve, dacpac, stage, fingerprint, generate, rename")]
 [Collection(nameof(AssemblySetup))]
-public sealed class PipelineTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class PipelineTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record PipelineState(
         TestFolder Folder,
@@ -291,3 +291,4 @@ public sealed class PipelineTests(ITestOutputHelper output) : TinyBddXunitBase(o
             .Finally(r => r.Fingerprint.Stage.Ensure.Resolve.State.Folder.Dispose())
             .AssertPassed();
 }
+

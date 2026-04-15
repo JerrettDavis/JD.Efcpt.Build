@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("DacpacFingerprint: schema-based DACPAC hashing for reliable change detection")]
 [Collection(nameof(AssemblySetup))]
-public sealed class DacpacFingerprintTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class DacpacFingerprintTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private const string SampleModelXml = """
         <?xml version="1.0" encoding="utf-8"?>
@@ -390,3 +390,4 @@ public sealed class DacpacFingerprintTests(ITestOutputHelper output) : TinyBddXu
             .AssertPassed();
     }
 }
+

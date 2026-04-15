@@ -11,7 +11,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("DbContextNameGenerator: Generates context names from various sources")]
 [Collection(nameof(AssemblySetup))]
-public sealed class DbContextNameGeneratorTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class DbContextNameGeneratorTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     [Scenario("Generates context name from SQL project path")]
     [Theory]
@@ -306,3 +306,4 @@ public sealed class DbContextNameGeneratorTests(ITestOutputHelper output) : Tiny
             .AssertPassed();
     }
 }
+

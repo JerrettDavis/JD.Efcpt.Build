@@ -36,7 +36,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </remarks>
 [Feature("Direct DACPAC loading: use pre-built DACPAC without building .sqlproj")]
 [Collection(nameof(AssemblySetup))]
-public sealed class DirectDacpacTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class DirectDacpacTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record DirectDacpacState(
         TestFolder Folder,
@@ -402,3 +402,4 @@ public sealed class DirectDacpacTests(ITestOutputHelper output) : TinyBddXunitBa
             .AssertPassed();
     }
 }
+

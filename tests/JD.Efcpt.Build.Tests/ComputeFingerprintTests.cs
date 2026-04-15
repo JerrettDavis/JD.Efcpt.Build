@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("ComputeFingerprint: deterministic XxHash64-based fingerprinting for incremental builds")]
 [Collection(nameof(AssemblySetup))]
-public sealed class ComputeFingerprintTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class ComputeFingerprintTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SetupState(
         TestFolder Folder,
@@ -707,3 +707,4 @@ public sealed class ComputeFingerprintTests(ITestOutputHelper output) : TinyBddX
             .AssertPassed();
     }
 }
+

@@ -13,7 +13,7 @@ namespace JD.Efcpt.Build.Tests.Profiling;
 /// </summary>
 [Feature("Profiling Security: Sensitive data exclusion")]
 [Collection(nameof(AssemblySetup))]
-public sealed class ProfilingSecurityTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class ProfilingSecurityTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     // Test task with sensitive data
     private sealed class TestTaskWithSensitiveData : Microsoft.Build.Utilities.Task
@@ -189,3 +189,4 @@ public sealed class ProfilingSecurityTests(ITestOutputHelper output) : TinyBddXu
         }
     }
 }
+

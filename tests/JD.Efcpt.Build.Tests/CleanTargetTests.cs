@@ -9,7 +9,7 @@ namespace JD.Efcpt.Build.Tests;
 
 [Feature("Clean target: dotnet clean removes efcpt output directory")]
 [Collection(nameof(AssemblySetup))]
-public sealed class CleanTargetTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class CleanTargetTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record CleanTestContext(
         TestFolder Folder,
@@ -169,3 +169,4 @@ public sealed class CleanTargetTests(ITestOutputHelper output) : TinyBddXunitBas
             .Finally(r => r.Context.Dispose())
             .AssertPassed();
 }
+

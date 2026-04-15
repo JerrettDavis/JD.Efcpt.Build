@@ -38,11 +38,11 @@
 
   <!-- EF Core dependencies for DbContext -->
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
+    <PackageReference Include="Microsoft.EntityFrameworkCore" VersionOverride="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" VersionOverride="8.0.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="8.0.0" />
   </ItemGroup>
 
   <Import Project="$(EfcptBuildRoot)JD.Efcpt.Build.targets" />

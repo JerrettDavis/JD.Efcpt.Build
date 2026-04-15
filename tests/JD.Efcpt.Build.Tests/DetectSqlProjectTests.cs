@@ -13,7 +13,7 @@ namespace JD.Efcpt.Build.Tests;
 /// </summary>
 [Feature("DetectSqlProject: MSBuild task for SQL project detection")]
 [Collection(nameof(AssemblySetup))]
-public sealed class DetectSqlProjectTests(ITestOutputHelper output) : TinyBddXunitBase(output)
+public sealed partial class DetectSqlProjectTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record SetupState(TestBuildEngine Engine, TestFolder Folder, DetectSqlProject Task);
     private sealed record ExecutionResult(SetupState Setup, bool Success, bool IsSqlProject);
@@ -282,3 +282,4 @@ public sealed class DetectSqlProjectTests(ITestOutputHelper output) : TinyBddXun
             .AssertPassed();
     }
 }
+
