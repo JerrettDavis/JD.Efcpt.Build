@@ -235,8 +235,8 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          if git rev-parse "v${PACKAGE_VERSION}" >/dev/null 2>&1; then
-            echo "Tag v${PACKAGE_VERSION} already exists. Skipping tag push."
+          if git ls-remote --exit-code --tags origin "refs/tags/v${PACKAGE_VERSION}" >/dev/null 2>&1; then
+            echo "Tag v${PACKAGE_VERSION} already exists on remote. Skipping tag push."
           else
             git tag "v${PACKAGE_VERSION}"
             git push origin "v${PACKAGE_VERSION}"
