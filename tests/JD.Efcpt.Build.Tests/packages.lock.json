@@ -4,15 +4,15 @@
     "net10.0": {
       "AWSSDK.Core": {
         "type": "Direct",
-        "requested": "[4.0.3.27, )",
-        "resolved": "4.0.3.27",
-        "contentHash": "hGdpxa7GR2JrfOGI35MWlGCiqq4GlpNDJi0DDvE8lJunboziMFeTCXypvstS5eo0WYdJR9pqHykR53QsjWj7jg=="
+        "requested": "[4.0.3.30, )",
+        "resolved": "4.0.3.30",
+        "contentHash": "DdQtAWrlQT+oRw8Mqe6zpmp3DUGMUrzwUYxXzu4Bu8jkdEdiMfBHCvoZqvJjt6qB1AlF1mCM8fgdM6L2aRyd6g=="
       },
       "coverlet.collector": {
         "type": "Direct",
-        "requested": "[8.0.1, )",
-        "resolved": "8.0.1",
-        "contentHash": "heVQl5tKYnnIDYlR1QMVGueYH6iriZTcZB6AjDczQNwZzxkjDIt9C84Pt4cCiZYrbo7jkZOYGWbs6Lo9wAtVLg=="
+        "requested": "[10.0.0, )",
+        "resolved": "10.0.0",
+        "contentHash": "WFejCcOUR6k8UYyDnnR6Gk+obFYMsWrZuNqPJnsVFGVhpPSN0y20D4qbdKJnXinYGx9PQ397Hf9TnU1NBST8vA=="
       },
       "Microsoft.Build.Framework": {
         "type": "Direct",
@@ -112,11 +112,11 @@
       },
       "TinyBDD.Xunit": {
         "type": "Direct",
-        "requested": "[0.19.11, )",
-        "resolved": "0.19.11",
-        "contentHash": "kq2WLW1ucEA6I1aqdYeqvEmUw+q08FHq7L0eR9tARgqR7Fr8ibBps41WIIItRX8C2nAEWG833ORn5PC3Ntz4pw==",
+        "requested": "[0.19.13, )",
+        "resolved": "0.19.13",
+        "contentHash": "ldUaI55XY0i4wGQzoRCj4MCTlHQBJjfGkxzs/qmZwxOQZsBPDh9LYTRZdgBCdzuRcDxQBD6IIAjY1TkF3/pXoA==",
         "dependencies": {
-          "TinyBDD": "0.19.11",
+          "TinyBDD": "0.19.13",
           "xunit.abstractions": "2.0.3",
           "xunit.extensibility.core": "2.9.3"
         }
@@ -581,8 +581,8 @@
       },
       "TinyBDD": {
         "type": "Transitive",
-        "resolved": "0.19.11",
-        "contentHash": "XKuXI5KOrUMCcLUmev+9ZN+th4yA6Cl5BTTfX/AID/fF7M4qnTAeqp2YqDBb/HlXr0pNXC56miA2slrUQ+jkkA==",
+        "resolved": "0.19.13",
+        "contentHash": "cHy2tlEmjABOe8GCxeSH1mgMF6VqS9OvKb5t3E42SRfM9Pe8Ff6DsoOYY/OUCMYXqk9y41BnhuRv/x1M8HYkKw==",
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection": "10.0.5",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5"
