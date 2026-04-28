@@ -4,9 +4,9 @@
     "net10.0": {
       "AWSSDK.Core": {
         "type": "Direct",
-        "requested": "[4.0.3.30, )",
-        "resolved": "4.0.3.30",
-        "contentHash": "DdQtAWrlQT+oRw8Mqe6zpmp3DUGMUrzwUYxXzu4Bu8jkdEdiMfBHCvoZqvJjt6qB1AlF1mCM8fgdM6L2aRyd6g=="
+        "requested": "[4.0.4, )",
+        "resolved": "4.0.4",
+        "contentHash": "RjBk1WDrOCpsSRGn6j2lYhgiyYnXEhMctwJevNnIPIIGpgj49ifbU6FmG1Dk+1M/VSuqeTQ1WVsssziTty7b2w=="
       },
       "coverlet.collector": {
         "type": "Direct",
@@ -112,11 +112,11 @@
       },
       "TinyBDD.Xunit": {
         "type": "Direct",
-        "requested": "[0.19.13, )",
-        "resolved": "0.19.13",
-        "contentHash": "ldUaI55XY0i4wGQzoRCj4MCTlHQBJjfGkxzs/qmZwxOQZsBPDh9LYTRZdgBCdzuRcDxQBD6IIAjY1TkF3/pXoA==",
+        "requested": "[0.19.14, )",
+        "resolved": "0.19.14",
+        "contentHash": "b1OdOGd5VT42aWvXrU1Dfe4KTGGkP04YHswx1xLPwLAHjDBA/JGf7j6eCkdC7TVCKyfRrOg5YX1ZKZlbh1irlQ==",
         "dependencies": {
-          "TinyBDD": "0.19.13",
+          "TinyBDD": "0.19.14",
           "xunit.abstractions": "2.0.3",
           "xunit.extensibility.core": "2.9.3"
         }
@@ -581,8 +581,8 @@
       },
       "TinyBDD": {
         "type": "Transitive",
-        "resolved": "0.19.13",
-        "contentHash": "cHy2tlEmjABOe8GCxeSH1mgMF6VqS9OvKb5t3E42SRfM9Pe8Ff6DsoOYY/OUCMYXqk9y41BnhuRv/x1M8HYkKw==",
+        "resolved": "0.19.14",
+        "contentHash": "AmxZi6ykvQT0v/PEJyiFk/YBhN5YqzmFvt/w+n+STVa+P2Mj6Oh5gczZMWwLrf6MDP+3BTraRUJlwZ1/OKxINQ==",
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection": "10.0.5",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5"
@@ -663,7 +663,7 @@
       },
       "Microsoft.Data.SqlClient": {
         "type": "CentralTransitive",
-        "requested": "[7.0.0, )",
+        "requested": "[7.0.1, )",
         "resolved": "6.1.4",
         "contentHash": "lQcSog5LLImg4yNEuuG6ccvdzXnCvER8Rms9Ngk9zB4Q8na4f+S7/abSoC7gnEltBg4e5xTnLAWmMLIOtLg4pg==",
         "dependencies": {
