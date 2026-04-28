@@ -28,6 +28,7 @@
     <PackageVersion Include="Snowflake.Data" Version="5.4.1" />
     <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.2" />
     <PackageVersion Include="System.IO.Hashing" Version="10.0.5" />
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="9.0.15" />
     <PackageVersion Include="Testcontainers.FirebirdSql" Version="4.11.0" />
     <PackageVersion Include="Testcontainers.MsSql" Version="4.11.0" />
     <PackageVersion Include="Testcontainers.MySql" Version="4.11.0" />
