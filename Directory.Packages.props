@@ -3,7 +3,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="AWSSDK.Core" Version="4.0.6" />
+    <PackageVersion Include="AWSSDK.Core" Version="4.0.6.1" />
     <PackageVersion Include="coverlet.collector" Version="10.0.0" />
     <PackageVersion Include="FirebirdSql.Data.FirebirdClient" Version="10.3.4" />
     <PackageVersion Include="FluentAssertions" Version="8.9.0" />
@@ -26,7 +26,7 @@
     <PackageVersion Include="PatternKit.Core" Version="0.34.4" />
     <PackageVersion Include="PolySharp" Version="1.15.0" />
     <PackageVersion Include="Snowflake.Data" Version="5.4.1" />
-    <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.2" />
+    <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
     <PackageVersion Include="System.IO.Hashing" Version="10.0.5" />
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="9.0.15" />
     <PackageVersion Include="Testcontainers.FirebirdSql" Version="4.11.0" />
