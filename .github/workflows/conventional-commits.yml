@@ -1,0 +1,59 @@
+name: Conventional Commits
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, edited, synchronize, reopened, ready_for_review ]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  validate:
+    name: Conventional Commits
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title and commits
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const allowed = /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([A-Za-z0-9._/-]+\))?!?: .+$/;
+            const allowedSpecial = /^(Merge .+|Revert ".+")$/;
+
+            const failures = [];
+            const title = context.payload.pull_request.title;
+
+            if (!allowed.test(title) && !allowedSpecial.test(title)) {
+              failures.push(`PR title: ${title}`);
+            }
+
+            const commits = await github.paginate(github.rest.pulls.listCommits, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100,
+            });
+
+            for (const commit of commits) {
+              const subject = commit.commit.message.split('\n')[0];
+              if (!allowed.test(subject) && !allowedSpecial.test(subject)) {
+                failures.push(`${commit.sha.substring(0, 7)}: ${subject}`);
+              }
+            }
+
+            if (failures.length > 0) {
+              core.setFailed([
+                'Conventional Commit validation failed.',
+                '',
+                'Expected format:',
+                '  type(scope): description',
+                '  type: description',
+                '',
+                'Allowed types:',
+                '  build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test',
+                '',
+                'Failures:',
+                ...failures.map(f => `  - ${f}`),
+              ].join('\n'));
+            }
