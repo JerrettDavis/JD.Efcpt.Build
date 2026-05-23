@@ -1,66 +1,34 @@
 version: 2
-
 updates:
-  # NuGet package updates
   - package-ecosystem: "nuget"
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
-      time: "09:00"
     open-pull-requests-limit: 10
-    reviewers:
-      - "jerrettdavis"
     labels:
       - "dependencies"
-      - "nuget"
     commit-message:
-      prefix: "deps"
-      include: "scope"
+      prefix: "chore(deps)"
+    cooldown:
+      default-days: 2
     groups:
-      all-nuget:
+      all-dependencies:
         patterns:
           - "*"
-      microsoft:
-        patterns:
-          - "Microsoft.*"
-        update-types:
-          - "minor"
-          - "patch"
-      testing:
-        patterns:
-          - "xunit*"
-          - "Moq"
-          - "FluentAssertions"
-          - "coverlet.*"
-        update-types:
-          - "minor"
-          - "patch"
-      analyzers:
-        patterns:
-          - "*.Analyzers"
-          - "*.CodeAnalysis"
-        update-types:
-          - "minor"
-          - "patch"
 
-  # GitHub Actions updates
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
-      time: "09:00"
     open-pull-requests-limit: 5
-    reviewers:
-      - "jerrettdavis"
     labels:
       - "dependencies"
-      - "github-actions"
+      - "ci"
     commit-message:
-      prefix: "ci"
-      include: "scope"
+      prefix: "chore(deps)"
+    cooldown:
+      default-days: 2
     groups:
-      all-actions:
+      all-dependencies:
         patterns:
           - "*"
