@@ -3,7 +3,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="AWSSDK.Core" Version="4.0.7.1" />
+    <PackageVersion Include="AWSSDK.Core" Version="4.0.7.2" />
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
     <PackageVersion Include="FirebirdSql.Data.FirebirdClient" Version="10.3.4" />
     <PackageVersion Include="FluentAssertions" Version="8.10.0" />
@@ -29,12 +29,12 @@
     <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
     <PackageVersion Include="System.IO.Hashing" Version="10.0.5" />
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="9.0.15" />
-    <PackageVersion Include="Testcontainers.FirebirdSql" Version="4.11.0" />
-    <PackageVersion Include="Testcontainers.MsSql" Version="4.11.0" />
-    <PackageVersion Include="Testcontainers.MySql" Version="4.11.0" />
-    <PackageVersion Include="Testcontainers.Oracle" Version="4.11.0" />
-    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.11.0" />
-    <PackageVersion Include="TinyBDD.Xunit" Version="0.19.15" />
+    <PackageVersion Include="Testcontainers.FirebirdSql" Version="4.12.0" />
+    <PackageVersion Include="Testcontainers.MsSql" Version="4.12.0" />
+    <PackageVersion Include="Testcontainers.MySql" Version="4.12.0" />
+    <PackageVersion Include="Testcontainers.Oracle" Version="4.12.0" />
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.12.0" />
+    <PackageVersion Include="TinyBDD.Xunit" Version="0.19.16" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="Xunit.SkippableFact" Version="1.5.61" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
