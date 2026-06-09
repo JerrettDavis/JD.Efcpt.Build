@@ -4,9 +4,9 @@
     "net10.0": {
       "AWSSDK.Core": {
         "type": "Direct",
-        "requested": "[4.0.7.4, )",
-        "resolved": "4.0.7.4",
-        "contentHash": "qNlzH2ygJ6JG8uefpvws782PnJlkVEwqRD5vz4fR8wFfwWU3ttyAjiwEOPEYcxl84mhQdYGI9gR+kroGFI2+wA=="
+        "requested": "[4.0.8, )",
+        "resolved": "4.0.8",
+        "contentHash": "JFq4sdtnlLePkISe5M0j1a5ushTrvwCGO1CNOGZaoBv33dscHls14m5dsPzyrN54xn924MtAP+s5xTdfNGNTUQ=="
       },
       "coverlet.collector": {
         "type": "Direct",
@@ -114,11 +114,11 @@
       },
       "TinyBDD.Xunit": {
         "type": "Direct",
-        "requested": "[0.19.21, )",
-        "resolved": "0.19.21",
-        "contentHash": "Rc9ic+sEog916hOOWaqW7OxFW6Bt9eGY8dX5YGyd4ognqbxjTolLd74shdAf6v92nNIJWzunAFiqfX2rJ6Ea2Q==",
+        "requested": "[0.19.22, )",
+        "resolved": "0.19.22",
+        "contentHash": "5zVTp1NbKu+n0b78tzo0epmuj9Cpk41C4k61K/y2xZwQWrDVrDEsKaF1Tm2RBcSt+FDp8vZx2zxER1pNAha62w==",
         "dependencies": {
-          "TinyBDD": "0.19.21",
+          "TinyBDD": "0.19.22",
           "xunit.abstractions": "2.0.3",
           "xunit.extensibility.core": "2.9.3"
         }
@@ -628,8 +628,8 @@
       },
       "TinyBDD": {
         "type": "Transitive",
-        "resolved": "0.19.21",
-        "contentHash": "DYh22Z40sOKUod6aoBUpmDNHbwJyl8Mij3sT4bZXY9HvdnXOVdZC9DLNSM7wg8TbcJRCSvXk5tMtaCcH8AkFKw==",
+        "resolved": "0.19.22",
+        "contentHash": "hCXrPDPSX+apWspnq6l0yI0/yekJFP5TAuKUUp4tNQNC4sBQHaaBno1xeI9AjvNKgyQC1cZPIBDZurd/XEuP/A==",
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection": "10.0.8",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.8"
