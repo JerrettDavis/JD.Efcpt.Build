@@ -34,7 +34,7 @@ public sealed partial class MySqlSchemaIntegrationTests(ITestOutputHelper output
         var container = new MySqlBuilder("mysql:8.0")
             .Build();
 
-        await container.StartAsync();
+        await ContainerStartup.StartOrSkipAsync(container);
         return new TestContext(container, container.GetConnectionString());
     }
 
@@ -140,10 +140,11 @@ public sealed partial class MySqlSchemaIntegrationTests(ITestOutputHelper output
     // ========== Tests ==========
 
     [Scenario("Reads tables from MySQL database")]
-    [Fact]
+    [SkippableFact]
     public async Task Reads_tables_from_database()
     {
-        await Given("a MySQL container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a MySQL container with test schema", () => Task.FromResult(ctx))
             .When("schema is read", ExecuteReadSchema)
             .Then("returns all tables", r => r.Schema.Tables.Count == 3)
             .And("contains customers table", r => r.Schema.Tables.Any(t => t.Name == "customers"))
@@ -154,10 +155,11 @@ public sealed partial class MySqlSchemaIntegrationTests(ITestOutputHelper output
     }
 
     [Scenario("Reads columns with correct metadata")]
-    [Fact]
+    [SkippableFact]
     public async Task Reads_columns_with_metadata()
     {
-        await Given("a MySQL container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a MySQL container with test schema", () => Task.FromResult(ctx))
             .When("schema is read", ExecuteReadSchema)
             .Then("customers table has correct column count", r =>
                 r.Schema.Tables.First(t => t.Name == "customers").Columns.Count == 4)
@@ -172,10 +174,11 @@ public sealed partial class MySqlSchemaIntegrationTests(ITestOutputHelper output
     }
 
     [Scenario("Reads indexes from MySQL database")]
-    [Fact]
+    [SkippableFact]
     public async Task Reads_indexes_from_database()
     {
-        await Given("a MySQL container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a MySQL container with test schema", () => Task.FromResult(ctx))
             .When("schema is read", ExecuteReadSchema)
             .Then("products table has indexes", r =>
                 r.Schema.Tables.First(t => t.Name == "products").Indexes.Count > 0)
@@ -186,10 +189,11 @@ public sealed partial class MySqlSchemaIntegrationTests(ITestOutputHelper output
     }
 
     [Scenario("Identifies primary key indexes")]
-    [Fact]
+    [SkippableFact]
     public async Task Identifies_primary_key_indexes()
     {
-        await Given("a MySQL container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a MySQL container with test schema", () => Task.FromResult(ctx))
             .When("schema is read", ExecuteReadSchema)
             .Then("customers table has PRIMARY index", r =>
                 r.Schema.Tables.First(t => t.Name == "customers").Indexes
@@ -199,10 +203,11 @@ public sealed partial class MySqlSchemaIntegrationTests(ITestOutputHelper output
     }
 
     [Scenario("Computes deterministic fingerprint")]
-    [Fact]
+    [SkippableFact]
     public async Task Computes_deterministic_fingerprint()
     {
-        await Given("a MySQL container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a MySQL container with test schema", () => Task.FromResult(ctx))
             .When("fingerprint computed twice", ExecuteComputeFingerprint)
             .Then("fingerprints are equal", r => string.Equals(r.Fingerprint1, r.Fingerprint2, StringComparison.Ordinal))
             .And("fingerprint is not empty", r => !string.IsNullOrEmpty(r.Fingerprint1))
@@ -211,10 +216,11 @@ public sealed partial class MySqlSchemaIntegrationTests(ITestOutputHelper output
     }
 
     [Scenario("Fingerprint changes when schema changes")]
-    [Fact]
+    [SkippableFact]
     public async Task Fingerprint_changes_when_schema_changes()
     {
-        await Given("a MySQL container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a MySQL container with test schema", () => Task.FromResult(ctx))
             .When("schema is modified", ExecuteComputeFingerprintWithChange)
             .Then("fingerprints are different", r => !string.Equals(r.Fingerprint1, r.Fingerprint2, StringComparison.Ordinal))
             .Finally(r => r.Context.Dispose())
@@ -222,10 +228,11 @@ public sealed partial class MySqlSchemaIntegrationTests(ITestOutputHelper output
     }
 
     [Scenario("Uses factory to create reader")]
-    [Fact]
+    [SkippableFact]
     public async Task Factory_creates_correct_reader()
     {
-        await Given("a MySQL container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a MySQL container with test schema", () => Task.FromResult(ctx))
             .When("schema read via factory", ExecuteReadSchemaViaFactory)
             .Then("returns valid schema", r => r.Schema.Tables.Count == 3)
             .Finally(r => r.Context.Dispose())
@@ -233,10 +240,11 @@ public sealed partial class MySqlSchemaIntegrationTests(ITestOutputHelper output
     }
 
     [Scenario("MariaDB alias works")]
-    [Fact]
+    [SkippableFact]
     public async Task Mariadb_alias_works()
     {
-        await Given("a MySQL container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a MySQL container with test schema", () => Task.FromResult(ctx))
             .When("schema read via mariadb alias", ExecuteReadSchemaViaMariaDbAlias)
             .Then("returns valid schema", r => r.Schema.Tables.Count == 3)
             .Finally(r => r.Context.Dispose())

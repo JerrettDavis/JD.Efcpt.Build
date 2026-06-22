@@ -35,7 +35,7 @@ public sealed partial class SqlServerSchemaIntegrationTests(ITestOutputHelper ou
         var container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
             .Build();
 
-        await container.StartAsync();
+        await ContainerStartup.StartOrSkipAsync(container);
         var connectionString = container.GetConnectionString();
 
         return new TestContext(container, connectionString);
@@ -137,10 +137,11 @@ public sealed partial class SqlServerSchemaIntegrationTests(ITestOutputHelper ou
     // ========== Tests ==========
 
     [Scenario("Read empty database schema")]
-    [Fact]
+    [SkippableFact]
     public async Task Read_empty_database_schema()
     {
-        await Given("SQL Server with empty database", SetupEmptyDatabase)
+        var ctx = await SetupEmptyDatabase();
+        await Given("SQL Server with empty database", () => Task.FromResult(ctx))
             .When("read schema", ExecuteReadSchema)
             .Then("schema is not null", r => r.Schema != null)
             .And("no user tables exist", r => !FilterDefaultTables(r.Schema.Tables).Any())
@@ -149,10 +150,11 @@ public sealed partial class SqlServerSchemaIntegrationTests(ITestOutputHelper ou
     }
 
     [Scenario("Read single table schema")]
-    [Fact]
+    [SkippableFact]
     public async Task Read_single_table_schema()
     {
-        await Given("SQL Server with Users table", SetupSingleTableDatabase)
+        var ctx = await SetupSingleTableDatabase();
+        await Given("SQL Server with Users table", () => Task.FromResult(ctx))
             .When("read schema", ExecuteReadSchema)
             .Then("exactly one user table exists", r => FilterDefaultTables(r.Schema.Tables).Count() == 1)
             .And("table schema is dbo", r =>
@@ -193,10 +195,11 @@ public sealed partial class SqlServerSchemaIntegrationTests(ITestOutputHelper ou
     }
 
     [Scenario("Read schema with indexes")]
-    [Fact]
+    [SkippableFact]
     public async Task Read_schema_with_indexes()
     {
-        await Given("SQL Server with Products table and index", SetupDatabaseWithIndexes)
+        var ctx = await SetupDatabaseWithIndexes();
+        await Given("SQL Server with Products table and index", () => Task.FromResult(ctx))
             .When("read schema", ExecuteReadSchema)
             .Then("Products table exists", r =>
             {
@@ -220,10 +223,11 @@ public sealed partial class SqlServerSchemaIntegrationTests(ITestOutputHelper ou
     }
 
     [Scenario("Schema fingerprint is consistent")]
-    [Fact]
+    [SkippableFact]
     public async Task Schema_fingerprint_is_consistent()
     {
-        await Given("SQL Server with TestTable", SetupDatabaseForFingerprinting)
+        var ctx = await SetupDatabaseForFingerprinting();
+        await Given("SQL Server with TestTable", () => Task.FromResult(ctx))
             .When("read schema and compute fingerprints twice", ExecuteComputeFingerprintTwice)
             .Then("fingerprints are identical", r => r.Fingerprint1 == r.Fingerprint2)
             .And("fingerprint is not empty", r => !string.IsNullOrEmpty(r.Fingerprint1))
@@ -243,10 +247,11 @@ public sealed partial class SqlServerSchemaIntegrationTests(ITestOutputHelper ou
     }
 
     [Scenario("Schema changes produce different fingerprints")]
-    [Fact]
+    [SkippableFact]
     public async Task Schema_changes_produce_different_fingerprints()
     {
-        await Given("SQL Server with VersionedTable", SetupDatabaseForChanges)
+        var ctx = await SetupDatabaseForChanges();
+        await Given("SQL Server with VersionedTable", () => Task.FromResult(ctx))
             .When("read schema, add column, read schema again", ExecuteChangeAndCompare)
             .Then("fingerprints are different", r => r.Fingerprint1 != r.Fingerprint2)
             .Finally(r => r.Context.Dispose())
@@ -274,10 +279,11 @@ public sealed partial class SqlServerSchemaIntegrationTests(ITestOutputHelper ou
     }
 
     [Scenario("Read multiple tables in deterministic order")]
-    [Fact]
+    [SkippableFact]
     public async Task Read_multiple_tables_in_deterministic_order()
     {
-        await Given("SQL Server with Zebras, Apples, Monkeys tables", SetupDatabaseWithMultipleTables)
+        var ctx = await SetupDatabaseWithMultipleTables();
+        await Given("SQL Server with Zebras, Apples, Monkeys tables", () => Task.FromResult(ctx))
             .When("read schema", ExecuteReadSchema)
             .Then("exactly 3 user tables exist", r => FilterDefaultTables(r.Schema.Tables).Count() == 3)
             .And("tables are sorted alphabetically", r =>

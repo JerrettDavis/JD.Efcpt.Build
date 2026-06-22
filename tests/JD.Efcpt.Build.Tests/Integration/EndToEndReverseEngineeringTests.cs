@@ -40,7 +40,7 @@ public sealed partial class EndToEndReverseEngineeringTests(ITestOutputHelper ou
         var container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
             .Build();
 
-        await container.StartAsync();
+        await ContainerStartup.StartOrSkipAsync(container);
         var connectionString = container.GetConnectionString();
 
         // Create a sample schema with multiple tables
@@ -181,68 +181,80 @@ public sealed partial class EndToEndReverseEngineeringTests(ITestOutputHelper ou
     // ========== Tests ==========
 
     [Scenario("Generate models from SQL Server schema")]
-    [Fact]
+    [SkippableFact]
     public async Task Generate_models_from_sql_server_schema()
-        => await Given("SQL Server with Customers, Orders, Products tables", SetupSqlServerWithSampleSchema)
-            .When("execute reverse engineering pipeline", ExecuteReverseEngineering)
-            .Then("query schema task succeeds", r => r.QuerySuccess)
-            .And("run efcpt task succeeds", r => r.RunSuccess)
-            .And("fingerprint file exists", r => File.Exists(Path.Combine(r.OutputDir, "efcpt-fingerprint.txt")))
-            .And("schema model file exists", r => File.Exists(Path.Combine(r.OutputDir, "schema-model.json")))
-            .Finally(r => r.Context.Dispose())
-            .AssertPassed();
+        {
+            var ctx = await SetupSqlServerWithSampleSchema();
+            await Given("SQL Server with Customers, Orders, Products tables", () => Task.FromResult(ctx))
+                .When("execute reverse engineering pipeline", ExecuteReverseEngineering)
+                .Then("query schema task succeeds", r => r.QuerySuccess)
+                .And("run efcpt task succeeds", r => r.RunSuccess)
+                .And("fingerprint file exists", r => File.Exists(Path.Combine(r.OutputDir, "efcpt-fingerprint.txt")))
+                .And("schema model file exists", r => File.Exists(Path.Combine(r.OutputDir, "schema-model.json")))
+                .Finally(r => r.Context.Dispose())
+                .AssertPassed();
+        }
 
     [Scenario("Generated models contain expected files")]
-    [Fact]
+    [SkippableFact]
     public async Task Generated_models_contain_expected_files()
-        => await Given("SQL Server with sample schema", SetupSqlServerWithSampleSchema)
-            .When("execute reverse engineering", ExecuteReverseEngineering)
-            .Then("tasks succeed", r => r.QuerySuccess && r.RunSuccess)
-            .And("sample model file is generated", r => File.Exists(Path.Combine(r.OutputDir, "SampleModel.cs")))
-            .And("sample model has content", r =>
-            {
-                var sampleFile = Path.Combine(r.OutputDir, "SampleModel.cs");
-                return File.Exists(sampleFile) && new FileInfo(sampleFile).Length > 0;
-            })
-            .Finally(r => r.Context.Dispose())
-            .AssertPassed();
+        {
+            var ctx = await SetupSqlServerWithSampleSchema();
+            await Given("SQL Server with sample schema", () => Task.FromResult(ctx))
+                .When("execute reverse engineering", ExecuteReverseEngineering)
+                .Then("tasks succeed", r => r.QuerySuccess && r.RunSuccess)
+                .And("sample model file is generated", r => File.Exists(Path.Combine(r.OutputDir, "SampleModel.cs")))
+                .And("sample model has content", r =>
+                {
+                    var sampleFile = Path.Combine(r.OutputDir, "SampleModel.cs");
+                    return File.Exists(sampleFile) && new FileInfo(sampleFile).Length > 0;
+                })
+                .Finally(r => r.Context.Dispose())
+                .AssertPassed();
+        }
 
     [Scenario("Generated models are valid C# code")]
-    [Fact]
+    [SkippableFact]
     public async Task Generated_models_are_valid_csharp_code()
-        => await Given("SQL Server with sample schema", SetupSqlServerWithSampleSchema)
-            .When("execute reverse engineering", ExecuteReverseEngineering)
-            .Then("tasks succeed", r => r.QuerySuccess && r.RunSuccess)
-            .And("generated .cs file exists", r =>
-            {
-                var csFiles = GetGeneratedFiles(r.OutputDir, "*.cs");
-                return csFiles.Length > 0;
-            })
-            .And("generated file has content", r =>
-            {
-                var csFiles = GetGeneratedFiles(r.OutputDir, "*.cs");
-                return csFiles.All(f => new FileInfo(f).Length > 0);
-            })
-            .And("generated file contains expected comment", r =>
-            {
-                var sampleFile = Path.Combine(r.OutputDir, "SampleModel.cs");
-                if (!File.Exists(sampleFile)) return false;
-                var content = File.ReadAllText(sampleFile);
-                return content.Contains("// generated from");
-            })
-            .Finally(r => r.Context.Dispose())
-            .AssertPassed();
+        {
+            var ctx = await SetupSqlServerWithSampleSchema();
+            await Given("SQL Server with sample schema", () => Task.FromResult(ctx))
+                .When("execute reverse engineering", ExecuteReverseEngineering)
+                .Then("tasks succeed", r => r.QuerySuccess && r.RunSuccess)
+                .And("generated .cs file exists", r =>
+                {
+                    var csFiles = GetGeneratedFiles(r.OutputDir, "*.cs");
+                    return csFiles.Length > 0;
+                })
+                .And("generated file has content", r =>
+                {
+                    var csFiles = GetGeneratedFiles(r.OutputDir, "*.cs");
+                    return csFiles.All(f => new FileInfo(f).Length > 0);
+                })
+                .And("generated file contains expected comment", r =>
+                {
+                    var sampleFile = Path.Combine(r.OutputDir, "SampleModel.cs");
+                    if (!File.Exists(sampleFile)) return false;
+                    var content = File.ReadAllText(sampleFile);
+                    return content.Contains("// generated from");
+                })
+                .Finally(r => r.Context.Dispose())
+                .AssertPassed();
+        }
 
     [Scenario("Schema fingerprint changes when database schema changes")]
-    [Fact]
+    [SkippableFact]
     public async Task Schema_fingerprint_changes_when_database_schema_changes()
-        => await Given("SQL Server with sample schema", SetupSqlServerWithSampleSchema)
-            .When("execute reverse engineering, modify schema, execute again", ExecuteModifyAndRegenerate)
-            .Then("initial generation succeeds", r => r.InitialQuerySuccess && r.InitialRunSuccess)
-            .And("modified generation succeeds", r => r.ModifiedQuerySuccess && r.ModifiedRunSuccess)
-            .And("fingerprints are different", r => r.InitialFingerprint != r.ModifiedFingerprint)
-            .Finally(r => r.Context.Dispose())
-            .AssertPassed();
+        {
+            var ctx = await SetupSqlServerWithSampleSchema();
+            await Given("SQL Server with sample schema", () => Task.FromResult(ctx))
+                .When("execute reverse engineering, modify schema, execute again", ExecuteModifyAndRegenerate)
+                .Then("initial generation succeeds", r => r.InitialQuerySuccess && r.InitialRunSuccess)
+                .And("modified generation succeeds", r => r.ModifiedQuerySuccess && r.ModifiedRunSuccess)
+                .And("fingerprints are different", r => r.InitialFingerprint != r.ModifiedFingerprint)
+                .Finally(r => r.Context.Dispose())
+                .AssertPassed();
+        }
 
     private static async Task<ModifiedSchemaResult> ExecuteModifyAndRegenerate(TestContext context)
     {
