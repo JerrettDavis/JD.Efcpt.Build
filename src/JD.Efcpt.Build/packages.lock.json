@@ -10,9 +10,9 @@
       },
       "JD.MSBuild.Fluent": {
         "type": "Direct",
-        "requested": "[1.3.15, )",
-        "resolved": "1.3.15",
-        "contentHash": "MT8+Bfbt36zcgwXX59x034yP1sGh+u0nVqPtoauhuktT2aEf3ay1JlwZKgWElBoGUSu+DxksE0vkZzZ8BxRkAQ=="
+        "requested": "[1.3.17, )",
+        "resolved": "1.3.17",
+        "contentHash": "zWX+DMZvtluqSDwN1XqxlWIG8kDOZYjowrbZtPO8CkvDyGeZOVhCMbAh+7UrNuZQ11PG8qlTMVDnPLTEZopiwA=="
       },
       "Microsoft.Data.SqlClient": {
         "type": "Direct",
@@ -453,8 +453,8 @@
         "dependencies": {
           "AWSSDK.Core": "[4.0.3.18, )",
           "FirebirdSql.Data.FirebirdClient": "[10.3.4, )",
-          "Microsoft.Build.Framework": "[18.6.3, )",
-          "Microsoft.Build.Utilities.Core": "[18.6.3, )",
+          "Microsoft.Build.Framework": "[18.7.1, )",
+          "Microsoft.Build.Utilities.Core": "[18.7.1, )",
           "Microsoft.Data.SqlClient": "[6.1.4, )",
           "Microsoft.Data.Sqlite.Core": "[9.0.14, )",
           "MySqlConnector": "[2.5.0, )",
@@ -473,22 +473,22 @@
       },
       "Microsoft.Build.Framework": {
         "type": "CentralTransitive",
-        "requested": "[18.6.3, )",
-        "resolved": "18.6.3",
-        "contentHash": "jywLHZK1Skb+kVO9Q2Drz0h3p0MnUDsMudYcXNKq1vYXPiYDXHbWJZlMxhyt2dp0T3IYiTQPb+6FMnWRwt3Kiw==",
+        "requested": "[18.7.1, )",
+        "resolved": "18.7.1",
+        "contentHash": "OkLtppCHnD0hrfeTQDZNSe6oxYW2/1qKmtE/iyF8ZzsdC541Txv0pUGrDZQTNr0E/OYxzpt5oVHqR26A6mzYnw==",
         "dependencies": {
-          "Microsoft.NET.StringTools": "18.6.3",
+          "Microsoft.NET.StringTools": "18.7.1",
           "System.Memory": "4.6.3",
           "System.Runtime.CompilerServices.Unsafe": "6.1.2"
         }
       },
       "Microsoft.Build.Utilities.Core": {
         "type": "CentralTransitive",
-        "requested": "[18.6.3, )",
-        "resolved": "18.6.3",
-        "contentHash": "QY8fuN42Tlssib/YMyIECX3MoMAB49v3ZS7uTpf6tNs5BbzdXmo+o9HI1joUXJLwueQn9Lbwdpv+q44tzsqFdw==",
+        "requested": "[18.7.1, )",
+        "resolved": "18.7.1",
+        "contentHash": "qxESKA3linJoBtnZMJ1w7ykrr8vzINDzEoCpAFWrqvzuXedPVUMq6t82xYueyAeAZsbOTpi/lrWk7o8FcJIBMw==",
         "dependencies": {
-          "Microsoft.Build.Framework": "18.6.3",
+          "Microsoft.Build.Framework": "18.7.1",
           "System.Memory": "4.6.3",
           "System.Runtime.CompilerServices.Unsafe": "6.1.2"
         }
@@ -504,9 +504,9 @@
       },
       "Microsoft.NET.StringTools": {
         "type": "CentralTransitive",
-        "requested": "[18.6.3, )",
-        "resolved": "18.6.3",
-        "contentHash": "meWX/k62HeaQ+7zxcJBcGo2EccmLZiaHYwJJ9wAO6ZX3Ujeht5XNetVZWU7nW2vKbDB+88X1lQkLafVkOUrtgQ==",
+        "requested": "[18.7.1, )",
+        "resolved": "18.7.1",
+        "contentHash": "OhuO9c4ZqYBaqB7INwOpDLa7wX0VkR2T3MhjUSsPebLvZi0/Z7QzeeD5uiINd9L9Wev+EwvNUiF3N2hWVtdFPQ==",
         "dependencies": {
           "System.Memory": "4.6.3",
           "System.Runtime.CompilerServices.Unsafe": "6.1.2"
