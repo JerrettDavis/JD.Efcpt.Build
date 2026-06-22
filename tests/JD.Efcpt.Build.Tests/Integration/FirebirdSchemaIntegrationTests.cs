@@ -39,7 +39,7 @@ public sealed partial class FirebirdSchemaIntegrationTests(ITestOutputHelper out
         var container = new FirebirdSqlBuilder("jacobalberty/firebird:v4.0")
             .Build();
 
-        await container.StartAsync();
+        await ContainerStartup.StartOrSkipAsync(container);
         return new TestContext(container, container.GetConnectionString());
     }
 
@@ -156,10 +156,11 @@ public sealed partial class FirebirdSchemaIntegrationTests(ITestOutputHelper out
     // ========== Tests ==========
 
     [Scenario("Reads tables from Firebird database")]
-    [Fact]
+    [SkippableFact]
     public async Task Reads_tables_from_database()
     {
-        await Given("a Firebird container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a Firebird container with test schema", () => Task.FromResult(ctx))
             .When("schema is read", ExecuteReadSchema)
             .Then("returns test tables", r => r.Schema.Tables.Count >= 3)
             .And("contains customers table", r => r.Schema.Tables.Any(t => t.Name.Equals("CUSTOMERS", StringComparison.OrdinalIgnoreCase)))
@@ -170,10 +171,11 @@ public sealed partial class FirebirdSchemaIntegrationTests(ITestOutputHelper out
     }
 
     [Scenario("Reads columns with correct metadata")]
-    [Fact]
+    [SkippableFact]
     public async Task Reads_columns_with_metadata()
     {
-        await Given("a Firebird container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a Firebird container with test schema", () => Task.FromResult(ctx))
             .When("schema is read", ExecuteReadSchema)
             .Then("customers table has correct column count", r =>
                 r.Schema.Tables.First(t => t.Name.Equals("CUSTOMERS", StringComparison.OrdinalIgnoreCase)).Columns.Count == 4)
@@ -184,10 +186,11 @@ public sealed partial class FirebirdSchemaIntegrationTests(ITestOutputHelper out
     }
 
     [Scenario("Reads indexes from Firebird database")]
-    [Fact]
+    [SkippableFact]
     public async Task Reads_indexes_from_database()
     {
-        await Given("a Firebird container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a Firebird container with test schema", () => Task.FromResult(ctx))
             .When("schema is read", ExecuteReadSchema)
             .Then("products table has indexes", r =>
                 r.Schema.Tables.First(t => t.Name.Equals("PRODUCTS", StringComparison.OrdinalIgnoreCase)).Indexes.Count > 0)
@@ -196,10 +199,11 @@ public sealed partial class FirebirdSchemaIntegrationTests(ITestOutputHelper out
     }
 
     [Scenario("Computes deterministic fingerprint")]
-    [Fact]
+    [SkippableFact]
     public async Task Computes_deterministic_fingerprint()
     {
-        await Given("a Firebird container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a Firebird container with test schema", () => Task.FromResult(ctx))
             .When("fingerprint computed twice", ExecuteComputeFingerprint)
             .Then("fingerprints are equal", r => string.Equals(r.Fingerprint1, r.Fingerprint2, StringComparison.Ordinal))
             .And("fingerprint is not empty", r => !string.IsNullOrEmpty(r.Fingerprint1))
@@ -208,10 +212,11 @@ public sealed partial class FirebirdSchemaIntegrationTests(ITestOutputHelper out
     }
 
     [Scenario("Fingerprint changes when schema changes")]
-    [Fact]
+    [SkippableFact]
     public async Task Fingerprint_changes_when_schema_changes()
     {
-        await Given("a Firebird container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a Firebird container with test schema", () => Task.FromResult(ctx))
             .When("schema is modified", ExecuteComputeFingerprintWithChange)
             .Then("fingerprints are different", r => !string.Equals(r.Fingerprint1, r.Fingerprint2, StringComparison.Ordinal))
             .Finally(r => r.Context.Dispose())
@@ -219,10 +224,11 @@ public sealed partial class FirebirdSchemaIntegrationTests(ITestOutputHelper out
     }
 
     [Scenario("Uses factory to create reader")]
-    [Fact]
+    [SkippableFact]
     public async Task Factory_creates_correct_reader()
     {
-        await Given("a Firebird container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a Firebird container with test schema", () => Task.FromResult(ctx))
             .When("schema read via factory", ExecuteReadSchemaViaFactory)
             .Then("returns valid schema", r => r.Schema.Tables.Count >= 3)
             .And("contains customers table", r => r.Schema.Tables.Any(t => t.Name.Equals("CUSTOMERS", StringComparison.OrdinalIgnoreCase)))
@@ -231,10 +237,11 @@ public sealed partial class FirebirdSchemaIntegrationTests(ITestOutputHelper out
     }
 
     [Scenario("fb alias works")]
-    [Fact]
+    [SkippableFact]
     public async Task Fb_alias_works()
     {
-        await Given("a Firebird container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a Firebird container with test schema", () => Task.FromResult(ctx))
             .When("schema read via fb alias", ExecuteReadSchemaViaFbAlias)
             .Then("returns valid schema", r => r.Schema.Tables.Count >= 3)
             .And("contains customers table", r => r.Schema.Tables.Any(t => t.Name.Equals("CUSTOMERS", StringComparison.OrdinalIgnoreCase)))
@@ -243,10 +250,11 @@ public sealed partial class FirebirdSchemaIntegrationTests(ITestOutputHelper out
     }
 
     [Scenario("Excludes system tables")]
-    [Fact]
+    [SkippableFact]
     public async Task Excludes_system_tables()
     {
-        await Given("a Firebird container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a Firebird container with test schema", () => Task.FromResult(ctx))
             .When("schema is read", ExecuteReadSchema)
             .Then("no RDB$ tables included", r =>
                 !r.Schema.Tables.Any(t => t.Name.StartsWith("RDB$", StringComparison.OrdinalIgnoreCase)))

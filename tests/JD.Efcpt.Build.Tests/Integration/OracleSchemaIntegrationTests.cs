@@ -43,7 +43,7 @@ public sealed partial class OracleSchemaIntegrationTests(ITestOutputHelper outpu
         var container = new OracleBuilder("gvenzl/oracle-xe:21.3.0-slim-faststart")
             .Build();
 
-        await container.StartAsync();
+        await ContainerStartup.StartOrSkipAsync(container);
         return new TestContext(container, container.GetConnectionString());
     }
 
@@ -160,10 +160,11 @@ public sealed partial class OracleSchemaIntegrationTests(ITestOutputHelper outpu
     // ========== Tests ==========
 
     [Scenario("Reads tables from Oracle database")]
-    [Fact]
+    [SkippableFact]
     public async Task Reads_tables_from_database()
     {
-        await Given("an Oracle container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("an Oracle container with test schema", () => Task.FromResult(ctx))
             .When("schema is read", ExecuteReadSchema)
             .Then("returns test tables", r => r.Schema.Tables.Count >= 3)
             .And("contains customers table", r => r.Schema.Tables.Any(t => t.Name.Equals("CUSTOMERS", StringComparison.OrdinalIgnoreCase)))
@@ -174,10 +175,11 @@ public sealed partial class OracleSchemaIntegrationTests(ITestOutputHelper outpu
     }
 
     [Scenario("Reads columns with correct metadata")]
-    [Fact]
+    [SkippableFact]
     public async Task Reads_columns_with_metadata()
     {
-        await Given("an Oracle container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("an Oracle container with test schema", () => Task.FromResult(ctx))
             .When("schema is read", ExecuteReadSchema)
             .Then("customers table has correct column count", r =>
                 r.Schema.Tables.First(t => t.Name.Equals("CUSTOMERS", StringComparison.OrdinalIgnoreCase)).Columns.Count == 4)
@@ -188,10 +190,11 @@ public sealed partial class OracleSchemaIntegrationTests(ITestOutputHelper outpu
     }
 
     [Scenario("Reads indexes from Oracle database")]
-    [Fact]
+    [SkippableFact]
     public async Task Reads_indexes_from_database()
     {
-        await Given("an Oracle container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("an Oracle container with test schema", () => Task.FromResult(ctx))
             .When("schema is read", ExecuteReadSchema)
             .Then("products table has indexes", r =>
                 r.Schema.Tables.First(t => t.Name.Equals("PRODUCTS", StringComparison.OrdinalIgnoreCase)).Indexes.Count > 0)
@@ -200,10 +203,11 @@ public sealed partial class OracleSchemaIntegrationTests(ITestOutputHelper outpu
     }
 
     [Scenario("Computes deterministic fingerprint")]
-    [Fact]
+    [SkippableFact]
     public async Task Computes_deterministic_fingerprint()
     {
-        await Given("an Oracle container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("an Oracle container with test schema", () => Task.FromResult(ctx))
             .When("fingerprint computed twice", ExecuteComputeFingerprint)
             .Then("fingerprints are equal", r => string.Equals(r.Fingerprint1, r.Fingerprint2, StringComparison.Ordinal))
             .And("fingerprint is not empty", r => !string.IsNullOrEmpty(r.Fingerprint1))
@@ -212,10 +216,11 @@ public sealed partial class OracleSchemaIntegrationTests(ITestOutputHelper outpu
     }
 
     [Scenario("Fingerprint changes when schema changes")]
-    [Fact]
+    [SkippableFact]
     public async Task Fingerprint_changes_when_schema_changes()
     {
-        await Given("an Oracle container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("an Oracle container with test schema", () => Task.FromResult(ctx))
             .When("schema is modified", ExecuteComputeFingerprintWithChange)
             .Then("fingerprints are different", r => !string.Equals(r.Fingerprint1, r.Fingerprint2, StringComparison.Ordinal))
             .Finally(r => r.Context.Dispose())
@@ -223,10 +228,11 @@ public sealed partial class OracleSchemaIntegrationTests(ITestOutputHelper outpu
     }
 
     [Scenario("Uses factory to create reader")]
-    [Fact]
+    [SkippableFact]
     public async Task Factory_creates_correct_reader()
     {
-        await Given("an Oracle container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("an Oracle container with test schema", () => Task.FromResult(ctx))
             .When("schema read via factory", ExecuteReadSchemaViaFactory)
             .Then("returns valid schema", r => r.Schema.Tables.Count >= 3)
             .And("contains customers table", r => r.Schema.Tables.Any(t => t.Name.Equals("CUSTOMERS", StringComparison.OrdinalIgnoreCase)))
@@ -235,10 +241,11 @@ public sealed partial class OracleSchemaIntegrationTests(ITestOutputHelper outpu
     }
 
     [Scenario("oracledb alias works")]
-    [Fact]
+    [SkippableFact]
     public async Task Oracledb_alias_works()
     {
-        await Given("an Oracle container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("an Oracle container with test schema", () => Task.FromResult(ctx))
             .When("schema read via oracledb alias", ExecuteReadSchemaViaOracleDbAlias)
             .Then("returns valid schema", r => r.Schema.Tables.Count >= 3)
             .And("contains customers table", r => r.Schema.Tables.Any(t => t.Name.Equals("CUSTOMERS", StringComparison.OrdinalIgnoreCase)))
@@ -247,10 +254,11 @@ public sealed partial class OracleSchemaIntegrationTests(ITestOutputHelper outpu
     }
 
     [Scenario("Excludes system schemas")]
-    [Fact]
+    [SkippableFact]
     public async Task Excludes_system_schemas()
     {
-        await Given("an Oracle container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("an Oracle container with test schema", () => Task.FromResult(ctx))
             .When("schema is read", ExecuteReadSchema)
             .Then("no SYS tables included", r =>
                 !r.Schema.Tables.Any(t => t.Schema.Equals("SYS", StringComparison.OrdinalIgnoreCase)))

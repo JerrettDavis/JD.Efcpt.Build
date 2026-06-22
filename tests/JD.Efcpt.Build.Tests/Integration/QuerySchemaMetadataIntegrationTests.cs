@@ -34,10 +34,11 @@ public sealed partial class QuerySchemaMetadataIntegrationTests(ITestOutputHelpe
         bool Success);
 
     [Scenario("Queries schema from real SQL Server and produces deterministic fingerprint")]
-    [Fact]
+    [SkippableFact]
     public async Task Queries_schema_and_produces_deterministic_fingerprint()
     {
-        await Given("SQL Server with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("SQL Server with test schema", () => Task.FromResult(ctx))
             .When("execute QuerySchemaMetadata task", ExecuteQuerySchemaMetadata)
             .Then("task succeeds", r => r.Success)
             .And("fingerprint is generated", r => !string.IsNullOrEmpty(r.Task.SchemaFingerprint))
@@ -47,10 +48,11 @@ public sealed partial class QuerySchemaMetadataIntegrationTests(ITestOutputHelpe
     }
 
     [Scenario("Identical schema produces identical fingerprint")]
-    [Fact]
+    [SkippableFact]
     public async Task Identical_schema_produces_identical_fingerprint()
     {
-        await Given("SQL Server with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("SQL Server with test schema", () => Task.FromResult(ctx))
             .When("execute task twice", ExecuteTaskTwice)
             .Then("both tasks succeed", r => r.Item1.Success && r.Item2.Success)
             .And("fingerprints are identical", r => r.Item1.Task.SchemaFingerprint == r.Item2.Task.SchemaFingerprint)
@@ -59,10 +61,11 @@ public sealed partial class QuerySchemaMetadataIntegrationTests(ITestOutputHelpe
     }
 
     [Scenario("Schema change produces different fingerprint")]
-    [Fact]
+    [SkippableFact]
     public async Task Schema_change_produces_different_fingerprint()
     {
-        await Given("SQL Server with initial schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("SQL Server with initial schema", () => Task.FromResult(ctx))
             .When("execute task, modify schema, execute again", ExecuteTaskModifySchemaExecuteAgain)
             .Then("both tasks succeed", r => r.Item1.Success && r.Item2.Success)
             .And("fingerprints are different", r => r.Item1.Task.SchemaFingerprint != r.Item2.Task.SchemaFingerprint)
@@ -71,10 +74,11 @@ public sealed partial class QuerySchemaMetadataIntegrationTests(ITestOutputHelpe
     }
 
     [Scenario("Captures schema elements: tables, columns, indexes")]
-    [Fact]
+    [SkippableFact]
     public async Task Captures_complete_schema_elements()
     {
-        await Given("SQL Server with comprehensive schema", SetupComprehensiveSchema)
+        var ctx = await SetupComprehensiveSchema();
+        await Given("SQL Server with comprehensive schema", () => Task.FromResult(ctx))
             .When("execute QuerySchemaMetadata task", ExecuteQuerySchemaMetadata)
             .Then("task succeeds", r => r.Success)
             .And("schema model contains expected tables", VerifySchemaModelContainsTables)
@@ -83,10 +87,11 @@ public sealed partial class QuerySchemaMetadataIntegrationTests(ITestOutputHelpe
     }
 
     [Scenario("Handles empty database gracefully")]
-    [Fact]
+    [SkippableFact]
     public async Task Handles_empty_database_gracefully()
     {
-        await Given("SQL Server with empty database", SetupEmptyDatabase)
+        var ctx = await SetupEmptyDatabase();
+        await Given("SQL Server with empty database", () => Task.FromResult(ctx))
             .When("execute QuerySchemaMetadata task", ExecuteQuerySchemaMetadata)
             .Then("task succeeds", r => r.Success)
             .And("fingerprint is generated for empty schema", r => !string.IsNullOrEmpty(r.Task.SchemaFingerprint))
@@ -95,10 +100,11 @@ public sealed partial class QuerySchemaMetadataIntegrationTests(ITestOutputHelpe
     }
 
     [Scenario("Fails gracefully with invalid connection string")]
-    [Fact]
+    [SkippableFact]
     public async Task Fails_gracefully_with_invalid_connection_string()
     {
-        await Given("invalid connection string", SetupInvalidConnectionString)
+        var ctx = await SetupInvalidConnectionString();
+        await Given("invalid connection string", () => Task.FromResult(ctx))
             .When("execute QuerySchemaMetadata task", ExecuteQuerySchemaMetadata)
             .Then("task fails", r => !r.Success)
             .And("error is logged", r => r.Context.Engine.Errors.Count > 0)
@@ -113,7 +119,7 @@ public sealed partial class QuerySchemaMetadataIntegrationTests(ITestOutputHelpe
         var container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
             .Build();
 
-        await container.StartAsync();
+        await ContainerStartup.StartOrSkipAsync(container);
 
         var connectionString = container.GetConnectionString();
         await CreateTestSchema(connectionString);
@@ -130,7 +136,7 @@ public sealed partial class QuerySchemaMetadataIntegrationTests(ITestOutputHelpe
         var container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
             .Build();
 
-        await container.StartAsync();
+        await ContainerStartup.StartOrSkipAsync(container);
 
         var connectionString = container.GetConnectionString();
         await CreateComprehensiveSchema(connectionString);
@@ -147,7 +153,7 @@ public sealed partial class QuerySchemaMetadataIntegrationTests(ITestOutputHelpe
         var container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
             .Build();
 
-        await container.StartAsync();
+        await ContainerStartup.StartOrSkipAsync(container);
 
         var connectionString = container.GetConnectionString();
         // Don't create any schema - leave database empty

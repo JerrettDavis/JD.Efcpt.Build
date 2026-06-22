@@ -34,7 +34,7 @@ public sealed partial class PostgreSqlSchemaIntegrationTests(ITestOutputHelper o
         var container = new PostgreSqlBuilder("postgres:16-alpine")
             .Build();
 
-        await container.StartAsync();
+        await ContainerStartup.StartOrSkipAsync(container);
         return new TestContext(container, container.GetConnectionString());
     }
 
@@ -126,10 +126,11 @@ public sealed partial class PostgreSqlSchemaIntegrationTests(ITestOutputHelper o
     // ========== Tests ==========
 
     [Scenario("Reads tables from PostgreSQL database")]
-    [Fact]
+    [SkippableFact]
     public async Task Reads_tables_from_database()
     {
-        await Given("a PostgreSQL container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a PostgreSQL container with test schema", () => Task.FromResult(ctx))
             .When("schema is read", ExecuteReadSchema)
             .Then("returns both tables", r => r.Schema.Tables.Count == 2)
             .And("contains users table", r => r.Schema.Tables.Any(t => t.Name == "users"))
@@ -139,10 +140,11 @@ public sealed partial class PostgreSqlSchemaIntegrationTests(ITestOutputHelper o
     }
 
     [Scenario("Reads columns with correct metadata")]
-    [Fact]
+    [SkippableFact]
     public async Task Reads_columns_with_metadata()
     {
-        await Given("a PostgreSQL container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a PostgreSQL container with test schema", () => Task.FromResult(ctx))
             .When("schema is read", ExecuteReadSchema)
             .Then("users table has correct column count", r =>
                 r.Schema.Tables.First(t => t.Name == "users").Columns.Count == 4)
@@ -156,10 +158,11 @@ public sealed partial class PostgreSqlSchemaIntegrationTests(ITestOutputHelper o
     }
 
     [Scenario("Reads indexes from PostgreSQL database")]
-    [Fact]
+    [SkippableFact]
     public async Task Reads_indexes_from_database()
     {
-        await Given("a PostgreSQL container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a PostgreSQL container with test schema", () => Task.FromResult(ctx))
             .When("schema is read", ExecuteReadSchema)
             .Then("orders table has indexes", r =>
                 r.Schema.Tables.First(t => t.Name == "orders").Indexes.Count > 0)
@@ -168,10 +171,11 @@ public sealed partial class PostgreSqlSchemaIntegrationTests(ITestOutputHelper o
     }
 
     [Scenario("Computes deterministic fingerprint")]
-    [Fact]
+    [SkippableFact]
     public async Task Computes_deterministic_fingerprint()
     {
-        await Given("a PostgreSQL container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a PostgreSQL container with test schema", () => Task.FromResult(ctx))
             .When("fingerprint computed twice", ExecuteComputeFingerprint)
             .Then("fingerprints are equal", r => string.Equals(r.Fingerprint1, r.Fingerprint2, StringComparison.Ordinal))
             .And("fingerprint is not empty", r => !string.IsNullOrEmpty(r.Fingerprint1))
@@ -180,10 +184,11 @@ public sealed partial class PostgreSqlSchemaIntegrationTests(ITestOutputHelper o
     }
 
     [Scenario("Fingerprint changes when schema changes")]
-    [Fact]
+    [SkippableFact]
     public async Task Fingerprint_changes_when_schema_changes()
     {
-        await Given("a PostgreSQL container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a PostgreSQL container with test schema", () => Task.FromResult(ctx))
             .When("schema is modified", ExecuteComputeFingerprintWithChange)
             .Then("fingerprints are different", r => !string.Equals(r.Fingerprint1, r.Fingerprint2, StringComparison.Ordinal))
             .Finally(r => r.Context.Dispose())
@@ -191,10 +196,11 @@ public sealed partial class PostgreSqlSchemaIntegrationTests(ITestOutputHelper o
     }
 
     [Scenario("Uses factory to create reader")]
-    [Fact]
+    [SkippableFact]
     public async Task Factory_creates_correct_reader()
     {
-        await Given("a PostgreSQL container with test schema", SetupDatabaseWithSchema)
+        var ctx = await SetupDatabaseWithSchema();
+        await Given("a PostgreSQL container with test schema", () => Task.FromResult(ctx))
             .When("schema read via factory", ExecuteReadSchemaViaFactory)
             .Then("returns valid schema", r => r.Schema.Tables.Count == 2)
             .Finally(r => r.Context.Dispose())
