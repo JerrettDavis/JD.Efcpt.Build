@@ -4,25 +4,25 @@
     "net10.0": {
       "JD.MSBuild.Fluent": {
         "type": "Direct",
-        "requested": "[1.3.20, )",
-        "resolved": "1.3.20",
-        "contentHash": "CDOIxzOEJonLnaz8mfm/Dk89LY/J1XabD2wibjAc603F5qj92mr5U2t9akD5m6Cf8lPuuZUfIAIGW64peMKxDw=="
+        "requested": "[1.3.22, )",
+        "resolved": "1.3.22",
+        "contentHash": "Xk1flOylxBukKjE5A9YVIlF57TASuzo/sVTpQiXVWyR/6WN4vwts7VB1jrzWB506qgENAWSvWhVAK9CIMNoKZQ=="
       }
     },
     "net8.0": {
       "JD.MSBuild.Fluent": {
         "type": "Direct",
-        "requested": "[1.3.20, )",
-        "resolved": "1.3.20",
-        "contentHash": "CDOIxzOEJonLnaz8mfm/Dk89LY/J1XabD2wibjAc603F5qj92mr5U2t9akD5m6Cf8lPuuZUfIAIGW64peMKxDw=="
+        "requested": "[1.3.22, )",
+        "resolved": "1.3.22",
+        "contentHash": "Xk1flOylxBukKjE5A9YVIlF57TASuzo/sVTpQiXVWyR/6WN4vwts7VB1jrzWB506qgENAWSvWhVAK9CIMNoKZQ=="
       }
     },
     "net9.0": {
       "JD.MSBuild.Fluent": {
         "type": "Direct",
-        "requested": "[1.3.20, )",
-        "resolved": "1.3.20",
-        "contentHash": "CDOIxzOEJonLnaz8mfm/Dk89LY/J1XabD2wibjAc603F5qj92mr5U2t9akD5m6Cf8lPuuZUfIAIGW64peMKxDw=="
+        "requested": "[1.3.22, )",
+        "resolved": "1.3.22",
+        "contentHash": "Xk1flOylxBukKjE5A9YVIlF57TASuzo/sVTpQiXVWyR/6WN4vwts7VB1jrzWB506qgENAWSvWhVAK9CIMNoKZQ=="
       }
     }
   }
