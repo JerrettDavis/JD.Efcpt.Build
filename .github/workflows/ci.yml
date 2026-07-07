@@ -98,7 +98,7 @@ jobs:
           path: coverage-report
 
       - name: Add coverage summary to PR
-        uses: marocchino/sticky-pull-request-comment@v3
+        uses: marocchino/sticky-pull-request-comment@v3.0.4
         with:
           recreate: true
           message: |
