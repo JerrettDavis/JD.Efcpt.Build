@@ -41,7 +41,34 @@ dotnet build
 >
 > **.NET 10+ users:** No tool installation needed - uses `dnx` automatically.
 
+## Pipeline Overview
+
+The complete workflow from database to EF Core models:
+
+```mermaid
+graph LR
+    A["Live Database"] -->|Live DB Connection| B["Query Schema"]
+    C["SQL Project (.sqlproj)"] -->|Build| D["Generate DACPAC"]
+    B & D -->|Schema Metadata| E["efcpt Scaffold"]
+    F["Configuration<br/>(efcpt-config.json)"] -->|Config| E
+    G["T4 Templates"] -->|Templates| E
+    E -->|Generate Code| H["EF Core Models"]
+    H -->|Add to Build| I["dotnet build"]
+    I -->|Compile| J[".dll/.exe"]
+    
+    K["Entry Points"]
+    K -->|Template| L["dotnet new efcptbuild"]
+    K -->|SDK| M["Project Sdk=JD.Efcpt.Sdk"]
+    K -->|Package| N["PackageReference JD.Efcpt.Build"]
+```
+
 ## Available Packages
+
+| Package | Purpose | Usage |
+|---------|---------|-------|
+| [JD.Efcpt.Build](https://www.nuget.org/packages/JD.Efcpt.Build/) | MSBuild integration | Add as `PackageReference` |
+| [JD.Efcpt.Sdk](https://www.nuget.org/packages/JD.Efcpt.Sdk/) | SDK package (cleanest setup) | Use as project SDK |
+| [JD.Efcpt.Build.Templates](https://www.nuget.org/packages/JD.Efcpt.Build.Templates/) | Project templates | `dotnet new install` |
 
 | Package | Purpose | Usage |
 |---------|---------|-------|
@@ -75,6 +102,32 @@ dotnet build
 | [API Reference](docs/user-guide/api-reference.md) | Complete MSBuild properties and tasks |
 | [Core Concepts](docs/user-guide/core-concepts.md) | How the build pipeline works |
 | [Architecture](docs/architecture/README.md) | Internal architecture details |
+
+## How JD.Efcpt.Build Compares
+
+| Feature | JD.Efcpt.Build | `dotnet ef dbcontext scaffold` | EF Core Power Tools GUI | Plain efcpt CLI |
+|---------|---|---|---|---|
+| **Build-time automation** | Yes (MSBuild target) | Manual only | Manual only | Manual only |
+| **Incremental regeneration** | Yes (fingerprinting) | N/A | No | No |
+| **DACPAC/.sqlproj support** | Yes (SQL Server) | No | Yes (GUI-only) | Yes |
+| **Live DB input** | Yes | Yes | Yes | Yes |
+| **Config persisted** | Yes (efcpt-config.json) | Per-command args | Visual Studio cache | CLI args |
+| **CI/CD ready** | Yes (fully automated) | Limited | No | Limited |
+| **T4 template customization** | Yes | No | Yes | Yes |
+| **Multi-schema support** | Yes | Yes | Yes | Yes |
+
+Use **JD.Efcpt.Build** when you want **automated, reproducible model generation as part of your build pipeline**. Use the CLI directly when you need occasional scaffolding without build-step integration.
+
+## Database Provider Support
+
+JD.Efcpt.Build supports multiple database providers through EF Core Power Tools:
+
+- **SQL Server (.sqlproj)** - Full support: DACPAC, connection string mode, incremental builds
+- **PostgreSQL, MySQL, SQLite, Oracle, Firebird, Snowflake** - Connection string mode only (no DACPAC generation)
+
+> **Note:** DACPAC and `.sqlproj` project files are SQL Server-specific. For non-SQL-Server databases, use [Connection String Mode](docs/user-guide/connection-string-mode.md) to scaffold directly from a live database connection.
+
+For detailed provider-specific guidance, see [Provider Configuration](docs/user-guide/configuration.md#provider-configuration).
 
 ## Requirements
 
