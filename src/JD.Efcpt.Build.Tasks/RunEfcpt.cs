@@ -529,7 +529,7 @@ public sealed class RunEfcpt : Task
     /// transient failure (process launch hiccup, timeout) is retried on the next call rather
     /// than being cached as a permanent negative.
     /// </remarks>
-    private static bool IsDotNet10SdkInstalled(string dotnetExe) =>
+    internal static bool IsDotNet10SdkInstalled(string dotnetExe) =>
         SdkProbeCache.GetOrProbe("list-sdks", dotnetExe, () => ProbeDotNet10SdkInstalled(dotnetExe));
 
     /// <summary>
@@ -564,38 +564,54 @@ public sealed class RunEfcpt : Task
             if (!p.WaitForExit(ProcessTimeoutMs))
                 return ProbeOutcome.Transient;
 
-            if (p.ExitCode != 0)
-                return ProbeOutcome.Unavailable;
-
-            var output = p.StandardOutput.ReadToEnd();
-
-            // Parse output like "10.0.100 [C:\Program Files\dotnet\sdk]"
-            // Check if any line starts with "10." or higher
-            foreach (var line in output.Split(NewLineSeparators, StringSplitOptions.RemoveEmptyEntries))
-            {
-                var trimmed = line.Trim();
-                if (string.IsNullOrEmpty(trimmed))
-                    continue;
-
-                // Extract version number (first part before space or bracket)
-                var spaceIndex = trimmed.IndexOf(' ');
-                var versionStr = spaceIndex >= 0 ? trimmed.Substring(0, spaceIndex) : trimmed;
-
-                // Parse major version
-                var dotIndex = versionStr.IndexOf('.');
-                if (dotIndex > 0 && int.TryParse(versionStr.Substring(0, dotIndex), out var major))
-                {
-                    if (major >= 10)
-                        return ProbeOutcome.Available;
-                }
-            }
-
-            return ProbeOutcome.Unavailable;
+            return MapListSdksOutcome(p.ExitCode, p.StandardOutput.ReadToEnd());
         }
         catch
         {
             return ProbeOutcome.Transient;
         }
+    }
+
+    /// <summary>
+    /// Pure decision logic for a completed <c>dotnet --list-sdks</c> invocation: given its exit
+    /// code and captured standard output, determines whether a qualifying SDK is listed.
+    /// Extracted from <see cref="ProbeDotNet10SdkInstalled"/> so it can be unit tested without
+    /// spawning a process; the timeout/launch-failure/exception paths remain in the caller since
+    /// they are inherent to the process spawn itself.
+    /// </summary>
+    /// <param name="exitCode">The exit code of the completed process.</param>
+    /// <param name="output">The captured standard output of the completed process.</param>
+    /// <returns>
+    /// <see cref="ProbeOutcome.Available"/> if a listed SDK version is &gt;= 10.0;
+    /// <see cref="ProbeOutcome.Unavailable"/> otherwise (including a non-zero exit code).
+    /// </returns>
+    internal static ProbeOutcome MapListSdksOutcome(int exitCode, string output)
+    {
+        if (exitCode != 0)
+            return ProbeOutcome.Unavailable;
+
+        // Parse output like "10.0.100 [C:\Program Files\dotnet\sdk]"
+        // Check if any line starts with "10." or higher
+        foreach (var line in output.Split(NewLineSeparators, StringSplitOptions.RemoveEmptyEntries))
+        {
+            var trimmed = line.Trim();
+            if (string.IsNullOrEmpty(trimmed))
+                continue;
+
+            // Extract version number (first part before space or bracket)
+            var spaceIndex = trimmed.IndexOf(' ');
+            var versionStr = spaceIndex >= 0 ? trimmed.Substring(0, spaceIndex) : trimmed;
+
+            // Parse major version
+            var dotIndex = versionStr.IndexOf('.');
+            if (dotIndex > 0 && int.TryParse(versionStr.Substring(0, dotIndex), out var major))
+            {
+                if (major >= 10)
+                    return ProbeOutcome.Available;
+            }
+        }
+
+        return ProbeOutcome.Unavailable;
     }
 
     /// <summary>
@@ -611,7 +627,7 @@ public sealed class RunEfcpt : Task
     /// memoized - a transient failure (process launch hiccup, timeout) is retried on the next
     /// call rather than being cached as a permanent negative.
     /// </remarks>
-    private static bool IsDnxAvailable(string dotnetExe) =>
+    internal static bool IsDnxAvailable(string dotnetExe) =>
         SdkProbeCache.GetOrProbe("dnx-help", dotnetExe, () => ProbeDnxAvailable(dotnetExe));
 
     /// <summary>
@@ -645,13 +661,27 @@ public sealed class RunEfcpt : Task
             if (!p.WaitForExit(ProcessTimeoutMs))
                 return ProbeOutcome.Transient;
 
-            return p.ExitCode == 0 ? ProbeOutcome.Available : ProbeOutcome.Unavailable;
+            return MapExitCodeOutcome(p.ExitCode);
         }
         catch
         {
             return ProbeOutcome.Transient;
         }
     }
+
+    /// <summary>
+    /// Pure decision logic for a completed <c>dotnet dnx --help</c> invocation: maps its exit
+    /// code to a probe outcome. Extracted from <see cref="ProbeDnxAvailable"/> so it can be unit
+    /// tested without spawning a process; the timeout/launch-failure/exception paths remain in
+    /// the caller since they are inherent to the process spawn itself.
+    /// </summary>
+    /// <param name="exitCode">The exit code of the completed process.</param>
+    /// <returns>
+    /// <see cref="ProbeOutcome.Available"/> if <paramref name="exitCode"/> is zero;
+    /// otherwise <see cref="ProbeOutcome.Unavailable"/>.
+    /// </returns>
+    internal static ProbeOutcome MapExitCodeOutcome(int exitCode) =>
+        exitCode == 0 ? ProbeOutcome.Available : ProbeOutcome.Unavailable;
 
     private string BuildArgs()
     {

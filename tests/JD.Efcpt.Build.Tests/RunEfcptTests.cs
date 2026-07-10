@@ -1,4 +1,5 @@
 using JD.Efcpt.Build.Tasks;
+using JD.Efcpt.Build.Tasks.Utilities;
 using JD.Efcpt.Build.Tests.Infrastructure;
 using TinyBDD;
 using TinyBDD.Xunit;
@@ -640,6 +641,78 @@ public sealed partial class RunEfcptTests(ITestOutputHelper output) : TinyBddXun
             .Then("task succeeds", r => r.Success)
             .And("project path is set", r => !string.IsNullOrEmpty(r.Task.ProjectPath))
             .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    // MapListSdksOutcome / MapExitCodeOutcome are the pure decision-logic seams extracted from
+    // ProbeDotNet10SdkInstalled / ProbeDnxAvailable so the exit-code/output parsing can be unit
+    // tested directly, without spawning a real `dotnet` process.
+
+    [Scenario("MapListSdksOutcome reports Unavailable for a non-zero exit code regardless of output")]
+    [Fact]
+    public async Task MapListSdksOutcome_reports_unavailable_for_nonzero_exit_code()
+    {
+        await Given("a non-zero exit code and output that would otherwise qualify", () => (ExitCode: 1, Output: "10.0.100 [C:\\dotnet\\sdk]"))
+            .When("MapListSdksOutcome is called", args => RunEfcpt.MapListSdksOutcome(args.ExitCode, args.Output))
+            .Then("returns Unavailable", result => result == ProbeOutcome.Unavailable)
+            .AssertPassed();
+    }
+
+    [Scenario("MapListSdksOutcome reports Available when a qualifying SDK version is listed")]
+    [Theory]
+    [InlineData("10.0.100 [C:\\Program Files\\dotnet\\sdk]", true)]
+    [InlineData("9.0.100 [C:\\Program Files\\dotnet\\sdk]\n10.0.100 [C:\\Program Files\\dotnet\\sdk]", true)]
+    [InlineData("11.0.100 [C:\\Program Files\\dotnet\\sdk]", true)]
+    [InlineData("9.0.100 [C:\\Program Files\\dotnet\\sdk]\n8.0.404 [C:\\Program Files\\dotnet\\sdk]", false)]
+    [InlineData("", false)]
+    [InlineData("not-a-version-line", false)]
+    [InlineData("   \n10.0.100 [C:\\Program Files\\dotnet\\sdk]", true)] // blank line is skipped before the qualifying line
+    public async Task MapListSdksOutcome_maps_output_to_expected_outcome(string output, bool expectAvailable)
+    {
+        await Given("a zero exit code and captured `dotnet --list-sdks` output", () => output)
+            .When("MapListSdksOutcome is called", o => RunEfcpt.MapListSdksOutcome(0, o))
+            .Then($"returns {(expectAvailable ? "Available" : "Unavailable")}", result =>
+                result == (expectAvailable ? ProbeOutcome.Available : ProbeOutcome.Unavailable))
+            .AssertPassed();
+    }
+
+    [Scenario("IsDotNet10SdkInstalled returns false when dotnet command doesn't exist")]
+    [Fact]
+    public async Task IsDotNet10SdkInstalled_returns_false_for_nonexistent_dotnet()
+    {
+        await Given("a non-existent dotnet command", () => "nonexistent-dotnet-command-12345")
+            .When("IsDotNet10SdkInstalled is called", RunEfcpt.IsDotNet10SdkInstalled)
+            .Then("returns false", result => result == false)
+            .AssertPassed();
+    }
+
+    [Scenario("IsDnxAvailable returns false when dotnet command doesn't exist")]
+    [Fact]
+    public async Task IsDnxAvailable_returns_false_for_nonexistent_dotnet()
+    {
+        await Given("a non-existent dotnet command", () => "nonexistent-dotnet-command-12345")
+            .When("IsDnxAvailable is called", RunEfcpt.IsDnxAvailable)
+            .Then("returns false", result => result == false)
+            .AssertPassed();
+    }
+
+    // Note: Testing IsDotNet10SdkInstalled/IsDnxAvailable with a real dotnet executable would
+    // require the .NET SDK to be installed and resolvable, which is environment-dependent (see
+    // the equivalent note in DotNetToolUtilitiesTests). The nonexistent-command tests above
+    // deterministically exercise the launch-failure -> ProbeOutcome.Transient path without that
+    // dependency; the output-parsing decision logic is covered directly via MapListSdksOutcome.
+
+    [Scenario("MapExitCodeOutcome maps a zero exit code to Available and non-zero to Unavailable")]
+    [Theory]
+    [InlineData(0, true)]
+    [InlineData(1, false)]
+    [InlineData(-1, false)]
+    public async Task MapExitCodeOutcome_maps_exit_code_to_expected_outcome(int exitCode, bool expectAvailable)
+    {
+        await Given($"an exit code of {exitCode}", () => exitCode)
+            .When("MapExitCodeOutcome is called", RunEfcpt.MapExitCodeOutcome)
+            .Then($"returns {(expectAvailable ? "Available" : "Unavailable")}", result =>
+                result == (expectAvailable ? ProbeOutcome.Available : ProbeOutcome.Unavailable))
             .AssertPassed();
     }
 }

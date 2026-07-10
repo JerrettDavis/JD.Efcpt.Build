@@ -198,6 +198,66 @@ public sealed partial class SdkProbeCacheTests(ITestOutputHelper output) : TinyB
             .AssertPassed();
     }
 
+    [Scenario("ResolveDotnetExecutable returns null for a null or empty dotnetExe")]
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public async Task ResolveDotnetExecutable_returns_null_for_null_or_empty(string? dotnetExe)
+    {
+        await Given("a null or empty dotnetExe", () => dotnetExe)
+            .When("ResolveDotnetExecutable is invoked", SdkProbeCache.ResolveDotnetExecutable)
+            .Then("returns null", result => result is null)
+            .AssertPassed();
+    }
+
+    [Scenario("ResolveDotnetExecutable returns null for a bare command when PATH is empty")]
+    [Fact]
+    public async Task ResolveDotnetExecutable_returns_null_when_path_is_empty()
+    {
+        var originalPath = Environment.GetEnvironmentVariable("PATH");
+        try
+        {
+            await Given("PATH cleared and a bare command", () =>
+                {
+                    Environment.SetEnvironmentVariable("PATH", string.Empty);
+                    return "dotnet";
+                })
+                .When("ResolveDotnetExecutable is invoked", SdkProbeCache.ResolveDotnetExecutable)
+                .Then("returns null", result => result is null)
+                .AssertPassed();
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("PATH", originalPath);
+        }
+    }
+
+    [Scenario("ResolveDotnetExecutable skips blank PATH entries and still resolves a later match")]
+    [Fact]
+    public async Task ResolveDotnetExecutable_skips_blank_path_entries()
+    {
+        var originalPath = Environment.GetEnvironmentVariable("PATH");
+        using var folder = new TestFolder();
+        try
+        {
+            var stubPath = folder.WriteFile("dotnet.exe", "stub");
+            var stubDir = Path.GetDirectoryName(stubPath)!;
+
+            await Given("a PATH with a leading blank entry followed by a directory containing the stub", () =>
+                {
+                    Environment.SetEnvironmentVariable("PATH", $"{Path.PathSeparator}{stubDir}");
+                    return "dotnet";
+                })
+                .When("ResolveDotnetExecutable is invoked", SdkProbeCache.ResolveDotnetExecutable)
+                .Then("resolves to the stub file", result => result == Path.GetFullPath(stubPath))
+                .AssertPassed();
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("PATH", originalPath);
+        }
+    }
+
     [Scenario("GetOrProbe does not cache a transient probe failure, so the next call retries")]
     [Fact]
     public async Task GetOrProbe_does_not_cache_transient_failure()

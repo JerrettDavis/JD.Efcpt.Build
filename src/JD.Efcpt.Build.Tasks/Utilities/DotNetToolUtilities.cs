@@ -79,30 +79,46 @@ internal static class DotNetToolUtilities
                 return ProbeOutcome.Transient;
             }
 
-            if (process.ExitCode != 0)
-                return ProbeOutcome.Unavailable;
-
-            var output = outputBuilder.ToString();
-
-            // Parse SDK versions from output like "10.0.100 [C:\Program Files\dotnet\sdk]"
-            foreach (var line in output.Split(NewLineSeparator, StringSplitOptions.RemoveEmptyEntries))
-            {
-                var trimmed = line.Trim();
-                var firstSpace = trimmed.IndexOf(' ');
-                if (firstSpace <= 0)
-                    continue;
-
-                var versionStr = trimmed.Substring(0, firstSpace);
-                if (Version.TryParse(versionStr, out var version) && version.Major >= 10)
-                    return ProbeOutcome.Available;
-            }
-
-            return ProbeOutcome.Unavailable;
+            return MapListSdksOutcome(process.ExitCode, outputBuilder.ToString());
         }
         catch
         {
             return ProbeOutcome.Transient;
         }
+    }
+
+    /// <summary>
+    /// Pure decision logic for a completed <c>dotnet --list-sdks</c> invocation: given its exit
+    /// code and captured standard output, determines whether a qualifying SDK is listed.
+    /// Extracted from <see cref="ProbeDotNet10SdkInstalled"/> so it can be unit tested without
+    /// spawning a process; the timeout/launch-failure/exception paths remain in the caller since
+    /// they are inherent to the process spawn itself.
+    /// </summary>
+    /// <param name="exitCode">The exit code of the completed process.</param>
+    /// <param name="output">The captured standard output of the completed process.</param>
+    /// <returns>
+    /// <see cref="ProbeOutcome.Available"/> if a listed SDK version is &gt;= 10.0;
+    /// <see cref="ProbeOutcome.Unavailable"/> otherwise (including a non-zero exit code).
+    /// </returns>
+    internal static ProbeOutcome MapListSdksOutcome(int exitCode, string output)
+    {
+        if (exitCode != 0)
+            return ProbeOutcome.Unavailable;
+
+        // Parse SDK versions from output like "10.0.100 [C:\Program Files\dotnet\sdk]"
+        foreach (var line in output.Split(NewLineSeparator, StringSplitOptions.RemoveEmptyEntries))
+        {
+            var trimmed = line.Trim();
+            var firstSpace = trimmed.IndexOf(' ');
+            if (firstSpace <= 0)
+                continue;
+
+            var versionStr = trimmed.Substring(0, firstSpace);
+            if (Version.TryParse(versionStr, out var version) && version.Major >= 10)
+                return ProbeOutcome.Available;
+        }
+
+        return ProbeOutcome.Unavailable;
     }
 
     /// <summary>
@@ -167,38 +183,52 @@ internal static class DotNetToolUtilities
                 return ProbeOutcome.Transient;
             }
 
-            if (process.ExitCode != 0)
-            {
-                return ProbeOutcome.Unavailable;
-            }
-
-            var output = outputBuilder.ToString();
-
-            // If we can list runtimes and at least one .NET 10 runtime is present, dnx is available
-            foreach (var line in output.Split(NewLineSeparator, StringSplitOptions.RemoveEmptyEntries))
-            {
-                var trimmed = line.Trim();
-                if (string.IsNullOrEmpty(trimmed))
-                    continue;
-
-                // Expected format: "<runtimeName> <version> [path]"
-                var parts = trimmed.Split(SpaceSeparator, StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length < 2)
-                    continue;
-
-                var versionStr = parts[1];
-                if (Version.TryParse(versionStr, out var version) && version.Major >= 10)
-                {
-                    return ProbeOutcome.Available;
-                }
-            }
-
-            return ProbeOutcome.Unavailable;
+            return MapListRuntimesOutcome(process.ExitCode, outputBuilder.ToString());
         }
         catch
         {
             return ProbeOutcome.Transient;
         }
+    }
+
+    /// <summary>
+    /// Pure decision logic for a completed <c>dotnet --list-runtimes</c> invocation: given its
+    /// exit code and captured standard output, determines whether a qualifying (dnx-capable)
+    /// runtime is listed. Extracted from <see cref="ProbeDnxAvailable"/> so it can be unit
+    /// tested without spawning a process; the timeout/launch-failure/exception paths remain in
+    /// the caller since they are inherent to the process spawn itself.
+    /// </summary>
+    /// <param name="exitCode">The exit code of the completed process.</param>
+    /// <param name="output">The captured standard output of the completed process.</param>
+    /// <returns>
+    /// <see cref="ProbeOutcome.Available"/> if a qualifying (&gt;= 10.0) runtime is listed;
+    /// <see cref="ProbeOutcome.Unavailable"/> otherwise (including a non-zero exit code).
+    /// </returns>
+    internal static ProbeOutcome MapListRuntimesOutcome(int exitCode, string output)
+    {
+        if (exitCode != 0)
+            return ProbeOutcome.Unavailable;
+
+        // If we can list runtimes and at least one .NET 10 runtime is present, dnx is available
+        foreach (var line in output.Split(NewLineSeparator, StringSplitOptions.RemoveEmptyEntries))
+        {
+            var trimmed = line.Trim();
+            if (string.IsNullOrEmpty(trimmed))
+                continue;
+
+            // Expected format: "<runtimeName> <version> [path]"
+            var parts = trimmed.Split(SpaceSeparator, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length < 2)
+                continue;
+
+            var versionStr = parts[1];
+            if (Version.TryParse(versionStr, out var version) && version.Major >= 10)
+            {
+                return ProbeOutcome.Available;
+            }
+        }
+
+        return ProbeOutcome.Unavailable;
     }
 
     /// <summary>
