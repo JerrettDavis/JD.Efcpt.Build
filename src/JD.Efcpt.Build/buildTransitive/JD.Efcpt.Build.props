@@ -16,6 +16,12 @@
       To explicitly disable, set:
         <EfcptEnabled>false</EfcptEnabled>-->
     <EfcptEnabled Condition="'$(EfcptEnabled)' == ''">true</EfcptEnabled>
+    <!--Design-Time Build Guard: default for the opt-back-in override. The actual guard that
+      forces EfcptEnabled=false during a design-time build is applied in JD.Efcpt.Build.targets
+      (not here), because this props file is imported very early - before the consuming
+      project's own <PropertyGroup> has had a chance to set EfcptRunDuringDesignTimeBuild. See
+      the targets file for the full rationale and the guard itself.-->
+    <EfcptRunDuringDesignTimeBuild Condition="'$(EfcptRunDuringDesignTimeBuild)' == ''">false</EfcptRunDuringDesignTimeBuild>
     <!--Output-->
     <EfcptOutput Condition="'$(EfcptOutput)' == ''">$(BaseIntermediateOutputPath)efcpt\</EfcptOutput>
     <EfcptGeneratedDir Condition="'$(EfcptGeneratedDir)' == ''">$(EfcptOutput)Generated\</EfcptGeneratedDir>

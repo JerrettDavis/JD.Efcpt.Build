@@ -19,6 +19,7 @@ Set these properties in your `.csproj` file or `Directory.Build.props`.
 | Property | Default | Description |
 |----------|---------|-------------|
 | `EfcptEnabled` | `true` | Master switch for the entire pipeline |
+| `EfcptRunDuringDesignTimeBuild` | `false` | Allow the pipeline to run during IDE design-time builds (IntelliSense). By default the pipeline is skipped whenever MSBuild sets `DesignTimeBuild=true`, so tool restore/SDK checks/efcpt invocation never fire on every keystroke or file-open in Visual Studio/Rider. Set to `true` to force generation during design-time builds. |
 | `EfcptSqlProj` | *(auto-discovered)* | Path to SQL Project file (`.sqlproj` for Microsoft.Build.Sql, `.csproj`/`.fsproj` for MSBuild.Sdk.SqlProj) |
 | `EfcptDacpac` | *(empty)* | Path to pre-built `.dacpac` file (skips SQL Project build) |
 | `EfcptConfig` | `efcpt-config.json` | EF Core Power Tools configuration file |

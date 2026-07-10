@@ -40,7 +40,24 @@ public static class SharedPropertyGroups
         group.Property<EfcptConfigUseNullableReferenceTypes>("true", 
             "'$(EfcptConfigUseNullableReferenceTypes)'=='' and ('$(Nullable)'=='enable' or '$(Nullable)'=='Enable')");
         
-        group.Property<EfcptConfigUseNullableReferenceTypes>("false", 
+        group.Property<EfcptConfigUseNullableReferenceTypes>("false",
             "'$(EfcptConfigUseNullableReferenceTypes)'=='' and '$(Nullable)'!=''");
+    }
+
+    /// <summary>
+    /// Forces EfcptEnabled=false for the duration of an IDE design-time build (IntelliSense),
+    /// unless the consuming project opted back in via EfcptRunDuringDesignTimeBuild=true.
+    /// </summary>
+    /// <remarks>
+    /// This must run in the targets file (evaluated after the consuming project's own
+    /// PropertyGroup), not in props (evaluated before it) - otherwise a project-level
+    /// &lt;EfcptRunDuringDesignTimeBuild&gt;true&lt;/EfcptRunDuringDesignTimeBuild&gt; override
+    /// would not be visible yet when this condition is checked, and the pipeline would stay
+    /// disabled even when the user explicitly asked for it to run.
+    /// </remarks>
+    public static void ConfigureDesignTimeBuildGuard(PropsGroupBuilder group)
+    {
+        group.Property<EfcptEnabled>("false",
+            "'$(EfcptEnabled)'=='true' and '$(DesignTimeBuild)'=='true' and '$(EfcptRunDuringDesignTimeBuild)'!='true'");
     }
 }

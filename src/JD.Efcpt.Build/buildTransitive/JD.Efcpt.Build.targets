@@ -6,6 +6,28 @@
     <EfcptConfigUseNullableReferenceTypes Condition="('$(EfcptConfigUseNullableReferenceTypes)' == '') and (('$(Nullable)' == 'enable') or ('$(Nullable)' == 'Enable'))">true</EfcptConfigUseNullableReferenceTypes>
     <EfcptConfigUseNullableReferenceTypes Condition="('$(EfcptConfigUseNullableReferenceTypes)' == '') and ('$(Nullable)' != '')">false</EfcptConfigUseNullableReferenceTypes>
   </PropertyGroup>
+  <!--Design-Time Build Guard: IDEs (Visual Studio, Rider) run "design-time builds" to power
+    IntelliSense, which set the DesignTimeBuild property to true. Without a guard, a DTB would
+    still walk the entire pipeline (tool restore, SDK checks, efcpt invocation) since every
+    pipeline target is BeforeTargets="CoreCompile" and DTBs evaluate CoreCompile's inputs. This
+    forces EfcptEnabled=false for the duration of a DTB, short-circuiting every EfcptEnabled-gated
+    target in one place instead of scattering the condition across the pipeline.
+
+    This override lives here (in the targets file, evaluated after the consuming project's own
+    <PropertyGroup>) rather than in JD.Efcpt.Build.props, so that a project-level
+    <EfcptRunDuringDesignTimeBuild>true</EfcptRunDuringDesignTimeBuild> override is visible by the
+    time this condition is evaluated. Doing this in props (evaluated before project content) would
+    see the pre-project-body default and permanently disable the pipeline even when the user
+    opted back in.-->
+  <PropertyGroup>
+    <EfcptEnabled Condition="'$(EfcptEnabled)' == 'true' and '$(DesignTimeBuild)' == 'true' and '$(EfcptRunDuringDesignTimeBuild)' != 'true'">false</EfcptEnabled>
+  </PropertyGroup>
+  <!--Design-Time Build Guard: Emits a low-importance diagnostic (visible with -v:diag) explaining
+    why the generation pipeline was skipped. The actual skip happens above via the EfcptEnabled
+    override, so this target intentionally does not gate anything itself.-->
+  <Target Name="_EfcptDesignTimeBuildSkipped" BeforeTargets="Build;CoreCompile" Condition="'$(DesignTimeBuild)' == 'true' and '$(EfcptRunDuringDesignTimeBuild)' != 'true'">
+    <Message Text="[Efcpt] Skipping EF Core Power Tools generation pipeline: DesignTimeBuild='$(DesignTimeBuild)'. Set EfcptRunDuringDesignTimeBuild=true to force generation during design-time builds." Importance="Low" />
+  </Target>
   <!--SQL Project Detection: Detect SQL database projects via SDK attribute or MSBuild properties. Must be in targets file for SDK property availability.-->
   <Target Name="_EfcptDetectSqlProject" BeforeTargets="BeforeBuild;BeforeRebuild">
     <DetectSqlProject DSP="$(DSP)" ProjectPath="$(MSBuildProjectFullPath)" SqlServerVersion="$(SqlServerVersion)">

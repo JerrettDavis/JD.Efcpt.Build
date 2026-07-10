@@ -17,6 +17,12 @@ public static class BuildTransitivePropsFactory
                 p.PropertyGroup(null, group =>
                 {
                     group.Property<EfcptEnabled>( "true", "'$(EfcptEnabled)'==''");
+                    // Design-Time Build Guard: default for the opt-back-in override. The actual
+                    // guard that forces EfcptEnabled=false during a design-time build lives in
+                    // BuildTransitiveTargetsFactory (JD.Efcpt.Build.targets), not here, because
+                    // this props file is imported before the consuming project's own
+                    // PropertyGroup - too early to see a project-level override of this property.
+                    group.Property<EfcptRunDuringDesignTimeBuild>( "false", "'$(EfcptRunDuringDesignTimeBuild)'==''");
                     group.Property<EfcptOutput>( "$(BaseIntermediateOutputPath)efcpt\\", "'$(EfcptOutput)'==''");
                     group.Property<EfcptGeneratedDir>( "$(EfcptOutput)Generated\\", "'$(EfcptGeneratedDir)'==''");
                     group.Property<EfcptSqlProj>( "", "'$(EfcptSqlProj)'==''");
@@ -112,6 +118,7 @@ public static class BuildTransitivePropsFactory
                 t.PropertyGroup(null, group =>
                 {
                     group.Property<EfcptEnabled>( "true", "'$(EfcptEnabled)'==''");
+                    group.Property<EfcptRunDuringDesignTimeBuild>( "false", "'$(EfcptRunDuringDesignTimeBuild)'==''");
                     group.Property<EfcptOutput>( "$(BaseIntermediateOutputPath)efcpt\\", "'$(EfcptOutput)'==''");
                     group.Property<EfcptGeneratedDir>( "$(EfcptOutput)Generated\\", "'$(EfcptGeneratedDir)'==''");
                     group.Property<EfcptSqlProj>( "", "'$(EfcptSqlProj)'==''");
@@ -459,6 +466,10 @@ public static class BuildTransitivePropsFactory
   public readonly struct EfcptRenaming : IMsBuildPropertyName
   {
     public string Name => "EfcptRenaming";
+  }
+  public readonly struct EfcptRunDuringDesignTimeBuild : IMsBuildPropertyName
+  {
+    public string Name => "EfcptRunDuringDesignTimeBuild";
   }
   public readonly struct EfcptSdkVersionWarningLevel : IMsBuildPropertyName
   {

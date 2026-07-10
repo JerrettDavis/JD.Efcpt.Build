@@ -25,7 +25,16 @@ public static class BuildTransitiveTargetsFactory
             {
                 t.PropertyGroup(null, SharedPropertyGroups.ConfigureNullableReferenceTypes);
                 t.PropertyGroup(null, SharedPropertyGroups.ConfigureTaskAssemblyResolution);
-                
+                t.PropertyGroup(null, SharedPropertyGroups.ConfigureDesignTimeBuildGuard);
+
+                // Design-Time Build Guard: diagnostic only. The actual skip happens via the
+                // EfcptEnabled override above (ConfigureDesignTimeBuildGuard).
+                t.Target("_EfcptDesignTimeBuildSkipped", target =>
+                {
+                    target.BeforeTargets("Build", "CoreCompile");
+                    target.Condition("'$(DesignTimeBuild)' == 'true' and '$(EfcptRunDuringDesignTimeBuild)' != 'true'");
+                    target.Message("[Efcpt] Skipping EF Core Power Tools generation pipeline: DesignTimeBuild='$(DesignTimeBuild)'. Set EfcptRunDuringDesignTimeBuild=true to force generation during design-time builds.", "Low");
+                });
                 t.Target("_EfcptDetectSqlProject", target =>
                 {
                     target.BeforeTargets("BeforeBuild", "BeforeRebuild");

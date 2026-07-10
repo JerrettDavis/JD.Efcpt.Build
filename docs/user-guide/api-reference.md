@@ -273,6 +273,7 @@ Applies MSBuild property overrides to the staged `efcpt-config.json` file. This 
 | Property | Default | Description |
 |----------|---------|-------------|
 | `EfcptEnabled` | `true` | Master switch for the entire pipeline |
+| `EfcptRunDuringDesignTimeBuild` | `false` | Force the pipeline to run during IDE design-time builds (`DesignTimeBuild=true`). Off by default so tool restore/SDK checks/efcpt never fire on IntelliSense builds. |
 | `EfcptSqlProj` | *(auto-discovered)* | Path to `.sqlproj` file |
 | `EfcptDacpac` | *(empty)* | Path to pre-built `.dacpac` file (skips .sqlproj build) |
 | `EfcptConfig` | `efcpt-config.json` | EF Core Power Tools configuration |
