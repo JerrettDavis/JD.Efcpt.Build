@@ -13,6 +13,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\JD.Efcpt.Build.Tasks\JD.Efcpt.Build.Tasks.csproj" />
+    <!--
+      Test-fixture-only satellite adapter assembly, built and copied next to this test assembly
+      so dynamic-load tests can copy it into a temp "providers" directory and reflection-load it
+      the same way ProviderAdapterResolver loads a real satellite package. No test code
+      references its types directly - see the fixture project's remarks.
+    -->
+    <ProjectReference Include="..\Fixtures\JD.Efcpt.Build.TestProvider\JD.Efcpt.Build.TestProvider.csproj" />
   </ItemGroup>
 
   <ItemGroup>

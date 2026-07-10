@@ -114,6 +114,7 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("OutputDir", "$(EfcptOutput)");
                         task.Param("Provider", "$(EfcptProvider)");
                         task.Param("LogVerbosity", "$(EfcptLogVerbosity)");
+                        task.Param("ProviderSearchPaths", "@(EfcptProviderSearchPath)");
                         task.OutputProperty<SchemaFingerprint, EfcptSchemaFingerprint>();
                     });
                     target.Message("Database schema fingerprint: $(_EfcptSchemaFingerprint)", "normal");
@@ -239,6 +240,7 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("OutputDir", "$(EfcptOutput)");
                         task.Param("Provider", "$(EfcptProvider)");
                         task.Param("LogVerbosity", "$(EfcptLogVerbosity)");
+                        task.Param("ProviderSearchPaths", "@(EfcptProviderSearchPath)");
                         task.OutputProperty<SchemaFingerprint, EfcptSchemaFingerprint>();
                     });
                 });

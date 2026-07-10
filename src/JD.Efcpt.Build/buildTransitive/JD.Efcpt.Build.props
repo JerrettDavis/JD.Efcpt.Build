@@ -36,7 +36,11 @@
     <EfcptAppSettings Condition="'$(EfcptAppSettings)' == ''"></EfcptAppSettings>
     <EfcptAppConfig Condition="'$(EfcptAppConfig)' == ''"></EfcptAppConfig>
     <EfcptConnectionStringName Condition="'$(EfcptConnectionStringName)' == ''">DefaultConnection</EfcptConnectionStringName>
-    <!--Database provider: mssql (default), postgres, mysql, sqlite, oracle, firebird, snowflake-->
+    <!--Database provider: mssql (default), postgres, mysql, sqlite, oracle, firebird, snowflake.
+      Every provider except mssql ships in its own satellite package (e.g. JD.Efcpt.Build.PostgreSQL)
+      that must be installed separately. Installing a satellite package appends its deployed
+      provider directory to the @(EfcptProviderSearchPath) item group (via that package's own
+      build/ props file) so QuerySchemaMetadata can locate its adapter assembly at build time.-->
     <EfcptProvider Condition="'$(EfcptProvider)' == ''">mssql</EfcptProvider>
     <!--Solution probing-->
     <EfcptSolutionDir Condition="'$(EfcptSolutionDir)' == ''">$(SolutionDir)</EfcptSolutionDir>

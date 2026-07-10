@@ -12,7 +12,7 @@ namespace JD.Efcpt.Build.Tasks.Schema;
 /// that support the standard ADO.NET metadata collections (Columns, Tables, Indexes, IndexColumns).
 /// Providers with unique metadata mechanisms (like SQLite) should implement ISchemaReader directly.
 /// </remarks>
-internal abstract class SchemaReaderBase : ISchemaReader
+public abstract class SchemaReaderBase : ISchemaReader
 {
     /// <summary>
     /// Reads the complete schema from the database specified by the connection string.
@@ -174,7 +174,7 @@ internal abstract class SchemaReaderBase : ISchemaReader
 /// <remarks>
 /// Different providers may use different casing (e.g., PostgreSQL uses lowercase, others use uppercase).
 /// </remarks>
-internal sealed record ColumnNameMapping(
+public sealed record ColumnNameMapping(
     string TableSchema,
     string TableName,
     string ColumnName,

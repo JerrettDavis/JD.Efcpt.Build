@@ -39,6 +39,19 @@
     <PackageReference Include="System.IO.Hashing" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!--
+      Shared provider contracts (IProviderAdapter, ISchemaReader, SchemaModel, SchemaReaderBase)
+      and cross-cutting helpers (Extensions, net472 Compatibility polyfills). This assembly is
+      also referenced by every satellite provider project (JD.Efcpt.Build.PostgreSQL, .MySQL,
+      etc.) so that reflection-loaded adapters can be cast back to IProviderAdapter - see
+      ProviderAdapterResolver's remarks. CopyLocalLockFileAssemblies (above) ensures the built
+      DLL lands next to JD.Efcpt.Build.Tasks.dll and is swept into the main package by the
+      existing tasks/{tfm} pack glob in JD.Efcpt.Build.csproj.
+    -->
+    <ProjectReference Include="..\JD.Efcpt.Build.Providers.Abstractions\JD.Efcpt.Build.Providers.Abstractions.csproj" />
+  </ItemGroup>
+
   <!--
     Database Provider Packages (build-time only, not runtime dependencies for consumers).
     These packages work across all target frameworks.

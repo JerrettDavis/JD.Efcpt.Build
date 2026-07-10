@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!--
+      Single-target: this fixture only needs to run wherever JD.Efcpt.Build.Tests runs
+      (net10.0). It is never packed or shipped - see the remarks below.
+    -->
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>JD.Efcpt.Build.TestProvider</AssemblyName>
+    <RootNamespace>JD.Efcpt.Build.TestProvider</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!--
+    Test-only fixture assembly: a minimal, real IProviderAdapter implementation used to exercise
+    ProviderAdapterResolver's dynamic satellite-package loading path (Resolve -> search directories
+    -> load assembly -> reflect for IProviderAdapter -> Activator.CreateInstance) without depending
+    on a real ADO.NET driver.
+
+    JD.Efcpt.Build.Tests references this project purely so it gets built and copied next to
+    JD.Efcpt.Build.Tests.dll - no test code references JD.Efcpt.Build.TestProvider's types
+    directly. Tests instead copy the built DLL into a temporary "providers/{provider}" directory
+    (renamed to match the JD.Efcpt.Build.{Suffix}.dll convention) and resolve it the same way a
+    real satellite provider package would be discovered at build time. Loading it only through
+    that reflective path - never through a normal compile-time reference - avoids a duplicate
+    assembly-identity load in the test process.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\JD.Efcpt.Build.Providers.Abstractions\JD.Efcpt.Build.Providers.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

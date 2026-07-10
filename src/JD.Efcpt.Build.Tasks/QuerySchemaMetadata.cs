@@ -62,6 +62,17 @@ public sealed class QuerySchemaMetadata : Task
     public string LogVerbosity { get; set; } = "minimal";
 
     /// <summary>
+    /// Additional directories to search for a satellite provider package's adapter assembly
+    /// (e.g. <c>JD.Efcpt.Build.PostgreSQL.dll</c>), beyond the bundled <c>providers/{provider}/</c>
+    /// folder next to the task assembly. Populated from the consuming project's
+    /// <c>@(EfcptProviderSearchPath)</c> item group by <c>JD.Efcpt.Build.targets</c>; a satellite
+    /// provider package's own <c>build/</c> props file appends its deployed provider directory to
+    /// that item group when installed. Ignored for the bundled <c>mssql</c> provider.
+    /// </summary>
+    [ProfileInput]
+    public string[] ProviderSearchPaths { get; set; } = [];
+
+    /// <summary>
     /// Computed schema fingerprint (output).
     /// </summary>
     [Output]
@@ -88,10 +99,10 @@ public sealed class QuerySchemaMetadata : Task
             var providerDisplayName = DatabaseProviderFactory.GetProviderDisplayName(normalizedProvider);
 
             // Validate connection using the appropriate provider
-            ValidateConnection(normalizedProvider, ConnectionString, log);
+            ValidateConnection(normalizedProvider, ConnectionString, ProviderSearchPaths, log);
 
             // Create schema reader for the provider
-            var reader = DatabaseProviderFactory.CreateSchemaReader(normalizedProvider);
+            var reader = DatabaseProviderFactory.CreateSchemaReader(normalizedProvider, ProviderSearchPaths);
 
             log.Detail($"Reading schema metadata from {providerDisplayName} database...");
             var schema = reader.ReadSchema(ConnectionString);
@@ -126,11 +137,15 @@ public sealed class QuerySchemaMetadata : Task
         }
     }
 
-    private static void ValidateConnection(string provider, string connectionString, BuildLog log)
+    private static void ValidateConnection(
+        string provider,
+        string connectionString,
+        IReadOnlyList<string> providerSearchPaths,
+        BuildLog log)
     {
         try
         {
-            using var connection = DatabaseProviderFactory.CreateConnection(provider, connectionString);
+            using var connection = DatabaseProviderFactory.CreateConnection(provider, connectionString, providerSearchPaths);
             connection.Open();
             log.Detail("Database connection validated successfully.");
         }

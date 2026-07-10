@@ -368,11 +368,15 @@
         "resolved": "0.17.0",
         "contentHash": "zSItaqXfXlkWYe4xApYrU2rPgHoSlXvU2NyS5jq66bhOyMYuNj48sc8m/guWOt8id1z+cbnHkmEQPpsRWlYoYg=="
       },
+      "jd.efcpt.build.providers.abstractions": {
+        "type": "Project"
+      },
       "jd.efcpt.build.tasks": {
         "type": "Project",
         "dependencies": {
           "AWSSDK.Core": "[4.0.3.18, )",
           "FirebirdSql.Data.FirebirdClient": "[10.3.4, )",
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
           "Microsoft.Build.Framework": "[18.7.1, )",
           "Microsoft.Build.Utilities.Core": "[18.7.1, )",
           "Microsoft.Data.SqlClient": "[6.1.4, )",
@@ -862,11 +866,15 @@
         "resolved": "0.17.0",
         "contentHash": "zSItaqXfXlkWYe4xApYrU2rPgHoSlXvU2NyS5jq66bhOyMYuNj48sc8m/guWOt8id1z+cbnHkmEQPpsRWlYoYg=="
       },
+      "jd.efcpt.build.providers.abstractions": {
+        "type": "Project"
+      },
       "jd.efcpt.build.tasks": {
         "type": "Project",
         "dependencies": {
           "AWSSDK.Core": "[4.0.3.18, )",
           "FirebirdSql.Data.FirebirdClient": "[10.3.4, )",
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
           "Microsoft.Build.Framework": "[18.7.1, )",
           "Microsoft.Build.Utilities.Core": "[18.7.1, )",
           "Microsoft.Data.SqlClient": "[6.1.4, )",
@@ -1347,11 +1355,15 @@
         "resolved": "0.17.0",
         "contentHash": "zSItaqXfXlkWYe4xApYrU2rPgHoSlXvU2NyS5jq66bhOyMYuNj48sc8m/guWOt8id1z+cbnHkmEQPpsRWlYoYg=="
       },
+      "jd.efcpt.build.providers.abstractions": {
+        "type": "Project"
+      },
       "jd.efcpt.build.tasks": {
         "type": "Project",
         "dependencies": {
           "AWSSDK.Core": "[4.0.3.18, )",
           "FirebirdSql.Data.FirebirdClient": "[10.3.4, )",
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
           "Microsoft.Build.Framework": "[18.7.1, )",
           "Microsoft.Build.Utilities.Core": "[18.7.1, )",
           "Microsoft.Data.SqlClient": "[6.1.4, )",

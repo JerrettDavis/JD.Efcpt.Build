@@ -8,7 +8,7 @@ namespace JD.Efcpt.Build.Tasks.Compatibility;
 /// <summary>
 /// Provides polyfills for APIs not available in .NET Framework 4.7.2.
 /// </summary>
-internal static class NetFrameworkPolyfills
+public static class NetFrameworkPolyfills
 {
     /// <summary>
     /// Throws ArgumentNullException if argument is null.
@@ -84,18 +84,33 @@ internal static class NetFrameworkPolyfills
 /// <summary>
 /// Polyfill for OperatingSystem static methods (introduced in .NET 5).
 /// </summary>
-internal static class OperatingSystemPolyfill
+public static class OperatingSystemPolyfill
 {
+    /// <summary>
+    /// Determines whether the current OS platform is Windows.
+    /// </summary>
     public static bool IsWindows() => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
+    /// <summary>
+    /// Determines whether the current OS platform is Linux.
+    /// </summary>
     public static bool IsLinux() => RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+
+    /// <summary>
+    /// Determines whether the current OS platform is macOS.
+    /// </summary>
     public static bool IsMacOS() => RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
 }
 
 /// <summary>
 /// Extension methods for KeyValuePair deconstruction (not available in .NET Framework).
 /// </summary>
-internal static class KeyValuePairExtensions
+public static class KeyValuePairExtensions
 {
+    /// <summary>
+    /// Deconstructs a <see cref="KeyValuePair{TKey,TValue}"/> into its key and value.
+    /// Polyfill for the built-in deconstruction support available on newer target frameworks.
+    /// </summary>
     public static void Deconstruct<TKey, TValue>(
         this KeyValuePair<TKey, TValue> kvp,
         out TKey key,
@@ -109,7 +124,7 @@ internal static class KeyValuePairExtensions
 /// <summary>
 /// Extension methods for string operations not available in .NET Framework.
 /// </summary>
-internal static class StringPolyfillExtensions
+public static class StringPolyfillExtensions
 {
     /// <summary>
     /// Splits a string using StringSplitOptions.

@@ -685,11 +685,15 @@
           "xunit.extensibility.core": "[2.9.3]"
         }
       },
+      "jd.efcpt.build.providers.abstractions": {
+        "type": "Project"
+      },
       "jd.efcpt.build.tasks": {
         "type": "Project",
         "dependencies": {
           "AWSSDK.Core": "[4.0.3.18, )",
           "FirebirdSql.Data.FirebirdClient": "[10.3.4, )",
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
           "Microsoft.Build.Framework": "[18.7.1, )",
           "Microsoft.Build.Utilities.Core": "[18.7.1, )",
           "Microsoft.Data.SqlClient": "[6.1.4, )",
@@ -700,6 +704,12 @@
           "PatternKit.Core": "[0.34.4, )",
           "Snowflake.Data": "[5.4.1, )",
           "System.IO.Hashing": "[10.0.5, )"
+        }
+      },
+      "jd.efcpt.build.testprovider": {
+        "type": "Project",
+        "dependencies": {
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )"
         }
       },
       "FirebirdSql.Data.FirebirdClient": {
