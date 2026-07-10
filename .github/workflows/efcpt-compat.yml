@@ -1,0 +1,172 @@
+name: EFCPT Compatibility Matrix
+
+# Guards against upstream ErikEJ.EFCorePowerTools.Cli (efcpt) releases silently
+# breaking this package. efcpt releases are pinned to EF Core version lines and can
+# introduce breaking changes without warning. This job weekly resolves the latest
+# efcpt release per supported EF Core line and rebuilds a representative sample that
+# actually invokes efcpt, failing loudly (with a job summary) when a version breaks.
+
+on:
+  schedule:
+    # Weekly, Monday 07:00 UTC
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual run'
+        required: false
+        default: 'Manual efcpt compatibility check'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "efcpt-compat-${{ github.ref }}"
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  EFCPT_PACKAGE_ID: ErikEJ.EFCorePowerTools.Cli
+  # Space-separated EF Core major lines this package supports/tests (see docs/user-guide/efcpt-compatibility.md).
+  # efcpt CLI release lines track EF Core: 8.x -> EF Core 8, 9.x -> EF Core 9, 10.x -> EF Core 10.
+  EFCPT_SUPPORTED_LINES: "8 9 10"
+  # Local pack version high enough to win over any released JD.Efcpt.Build on nuget.org for Version="*".
+  LOCAL_PACKAGE_VERSION: "99.0.0"
+
+jobs:
+  resolve-versions:
+    name: Resolve latest efcpt per EF Core line
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.resolve.outputs.matrix }}
+    steps:
+      - name: Query nuget.org for latest efcpt version per supported line
+        id: resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+          INDEX="https://api.nuget.org/v3-flatcontainer/erikej.efcorepowertools.cli/index.json"
+          echo "Fetching $INDEX"
+          ALL="$(curl -fsSL "$INDEX" | jq -r '.versions[]')"
+
+          include='[]'
+          for line in $EFCPT_SUPPORTED_LINES; do
+            # Latest STABLE (no pre-release marker) version whose major component == line.
+            latest="$(printf '%s\n' "$ALL" \
+              | grep -E "^${line}\." \
+              | grep -viE '-' \
+              | sort -V \
+              | tail -n1 || true)"
+            if [ -z "$latest" ]; then
+              echo "::warning::No stable efcpt release found for EF Core line ${line}"
+              continue
+            fi
+            echo "EF Core ${line} -> efcpt ${latest}"
+            include="$(printf '%s' "$include" | jq -c --arg l "$line" --arg v "$latest" '. + [{"efcore":$l,"efcptVersion":$v}]')"
+          done
+
+          if [ "$(printf '%s' "$include" | jq 'length')" -eq 0 ]; then
+            echo "::error::Could not resolve any efcpt versions from nuget.org"
+            exit 1
+          fi
+
+          echo "matrix={\"include\":${include}}" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## Resolved efcpt versions"
+            echo ""
+            echo "| EF Core line | Latest efcpt (stable) |"
+            echo "| --- | --- |"
+            printf '%s' "$include" | jq -r '.[] | "| \(.efcore) | \(.efcptVersion) |"'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  compat:
+    name: efcpt ${{ matrix.efcptVersion }} (EF Core ${{ matrix.efcore }})
+    needs: resolve-versions
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.resolve-versions.outputs.matrix) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Pack JD.Efcpt.Build to local feed
+        run: |
+          dotnet restore JD.Efcpt.Build.sln --use-lock-file
+          dotnet pack src/JD.Efcpt.Build/JD.Efcpt.Build.csproj \
+            --configuration Release \
+            --output ./artifacts \
+            /p:Version=${{ env.LOCAL_PACKAGE_VERSION }} \
+            /p:PackageVersion=${{ env.LOCAL_PACKAGE_VERSION }}
+
+      - name: Install efcpt ${{ matrix.efcptVersion }}
+        run: |
+          dotnet tool install --global "$EFCPT_PACKAGE_ID" --version "${{ matrix.efcptVersion }}"
+          echo "${HOME}/.dotnet/tools" >> "$GITHUB_PATH"
+
+      - name: Build representative sample against efcpt ${{ matrix.efcptVersion }}
+        id: sample
+        shell: bash
+        run: |
+          set -o pipefail
+          EFCPT_EXE="${HOME}/.dotnet/tools/efcpt"
+          LOG="efcpt-compat-${{ matrix.efcptVersion }}.log"
+          echo "log=$LOG" >> "$GITHUB_OUTPUT"
+
+          # Pin the exact efcpt build via EfcptToolPath: this takes the explicit-path branch in the
+          # RunEfcpt task and bypasses dnx (which would otherwise ignore EfcptToolVersion on .NET 10).
+          set +e
+          dotnet build samples/simple-generation/SimpleGenerationSample.sln \
+            --configuration Release \
+            /p:EfcptToolPath="$EFCPT_EXE" \
+            /p:EfcptToolVersion="${{ matrix.efcptVersion }}" \
+            /p:EfcptLogVerbosity=detailed \
+            2>&1 | tee "$LOG"
+          rc=${PIPESTATUS[0]}
+          set -e
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          exit "$rc"
+
+      - name: Report incompatibility
+        if: failure() && steps.sample.outputs.rc != '0'
+        shell: bash
+        run: |
+          LOG="${{ steps.sample.outputs.log }}"
+          {
+            echo "## :x: efcpt ${{ matrix.efcptVersion }} (EF Core ${{ matrix.efcore }}) is INCOMPATIBLE"
+            echo ""
+            echo "The representative sample \`samples/simple-generation\` failed to build when scaffolded"
+            echo "with efcpt \`${{ matrix.efcptVersion }}\`. This likely indicates an upstream breaking change."
+            echo ""
+            echo "### Build error excerpt"
+            echo '```'
+            if [ -f "$LOG" ]; then
+              grep -iE 'error|efcpt|exception|EFCPT[0-9]' "$LOG" | tail -n 40 || tail -n 40 "$LOG"
+            else
+              echo "(build log not captured)"
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Report compatibility
+        if: success()
+        run: |
+          echo "## :white_check_mark: efcpt ${{ matrix.efcptVersion }} (EF Core ${{ matrix.efcore }}) is compatible" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: efcpt-compat-log-${{ matrix.efcore }}-${{ matrix.efcptVersion }}
+          path: ${{ steps.sample.outputs.log }}
+          if-no-files-found: ignore

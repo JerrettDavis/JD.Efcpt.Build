@@ -497,8 +497,13 @@ Enable caching for the efcpt intermediate directory to skip regeneration when sc
 5. **Use environment variables** for connection strings
 6. **Never commit credentials** to source control
 
+## efcpt Compatibility
+
+The `efcpt` CLI is an external tool whose release lines track EF Core versions, so an upstream release can change scaffolding behavior. A scheduled workflow guards against this by weekly rebuilding a sample against the latest `efcpt` per supported EF Core line. See [efcpt Compatibility](efcpt-compatibility.md) for the supported version matrix and how the guard works.
+
 ## Next Steps
 
+- [efcpt Compatibility](efcpt-compatibility.md) - Supported efcpt versions and the weekly compat guard
 - [Troubleshooting](troubleshooting.md) - Solve common problems
 - [Configuration](configuration.md) - Complete configuration reference
 - [Advanced Topics](advanced.md) - Complex scenarios
