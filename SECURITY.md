@@ -26,7 +26,7 @@ Do not open public issues for security vulnerabilities.
 
 ## Security Response Expectation
 
-- Initial response: Within 48 hours
+- Initial response: We aim to acknowledge reports within 5 business days
 - Patch release: Within 1 week for critical vulnerabilities
 - Public disclosure: After a patch is available or 90 days, whichever comes first
 

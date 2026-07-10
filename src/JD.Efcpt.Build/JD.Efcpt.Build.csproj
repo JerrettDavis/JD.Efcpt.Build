@@ -23,10 +23,6 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 
-    <!-- Symbol Package Configuration -->
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-
     <!-- Build Configuration -->
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
@@ -107,7 +103,6 @@
   </Target>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.Core" VersionOverride="4.0.7.1" />
     <PackageReference Include="Microsoft.Data.SqlClient" />
     <None Include="defaults/**/*.*" Pack="true" PackagePath="build/Defaults" />
   </ItemGroup>

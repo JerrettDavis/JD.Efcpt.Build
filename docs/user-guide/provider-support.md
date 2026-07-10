@@ -18,6 +18,8 @@ JD.Efcpt.Build integrates with EF Core Power Tools to support multiple database 
 
 SQL Server is the best-supported provider because it has native tooling for DACPAC generation.
 
+> **Platform Note:** Traditional (non-SDK-style) `.sqlproj` files are Windows-only. For cross-platform SQL projects, use [Microsoft.Build.Sql](https://github.com/microsoft/DacFx) or [MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj), which are supported by JD.Efcpt.Build and work on Windows, Linux, and macOS.
+
 ### Option 1: DACPAC Mode (Recommended for SQL Server)
 
 Use a SQL Server Database Project (.sqlproj) to define your schema:
