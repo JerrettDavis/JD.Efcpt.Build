@@ -1,11 +1,4 @@
 using System.Data.Common;
-using FirebirdSql.Data.FirebirdClient;
-using Microsoft.Data.SqlClient;
-using Microsoft.Data.Sqlite;
-using MySqlConnector;
-using Npgsql;
-using Oracle.ManagedDataAccess.Client;
-using Snowflake.Data.Client;
 #if NETFRAMEWORK
 using JD.Efcpt.Build.Tasks.Compatibility;
 #endif
@@ -15,8 +8,22 @@ namespace JD.Efcpt.Build.Tasks.Schema;
 /// <summary>
 /// Factory for creating database connections and schema readers based on provider type.
 /// </summary>
+/// <remarks>
+/// Connection and schema-reader construction is delegated to <see cref="IProviderAdapter"/>
+/// implementations resolved via <see cref="Resolver"/>; see <see cref="ProviderAdapterResolver"/>
+/// for the phased design that will let later phases move drivers into satellite packages
+/// without changing this factory's public surface.
+/// </remarks>
 internal static class DatabaseProviderFactory
 {
+    /// <summary>
+    /// Resolves normalized provider names to their <see cref="IProviderAdapter"/>. A single
+    /// instance is held for the lifetime of this static class's load context (which, under
+    /// MSBuild, is scoped per task load — see <see cref="ProviderAdapterResolver"/> for why
+    /// caching is instance-scoped rather than process-static).
+    /// </summary>
+    private static readonly ProviderAdapterResolver Resolver = new();
+
     /// <summary>
     /// Known provider identifiers mapped to their canonical names.
     /// </summary>
@@ -45,41 +52,25 @@ internal static class DatabaseProviderFactory
     /// <summary>
     /// Creates a DbConnection for the specified provider.
     /// </summary>
+    /// <exception cref="ProviderDriverNotFoundException">
+    /// Thrown when the driver for the normalized provider cannot be resolved.
+    /// </exception>
     public static DbConnection CreateConnection(string provider, string connectionString)
     {
         var normalized = NormalizeProvider(provider);
-
-        return normalized switch
-        {
-            "mssql" => CreateSqlServerConnection(connectionString),
-            "postgres" => new NpgsqlConnection(connectionString),
-            "mysql" => new MySqlConnection(connectionString),
-            "sqlite" => new SqliteConnection(connectionString),
-            "oracle" => new OracleConnection(connectionString),
-            "firebird" => new FbConnection(connectionString),
-            "snowflake" => new SnowflakeDbConnection(connectionString),
-            _ => throw new NotSupportedException($"Database provider '{provider}' is not supported.")
-        };
+        return Resolver.Resolve(normalized).CreateConnection(connectionString);
     }
 
     /// <summary>
     /// Creates an ISchemaReader for the specified provider.
     /// </summary>
+    /// <exception cref="ProviderDriverNotFoundException">
+    /// Thrown when the driver for the normalized provider cannot be resolved.
+    /// </exception>
     public static ISchemaReader CreateSchemaReader(string provider)
     {
         var normalized = NormalizeProvider(provider);
-
-        return normalized switch
-        {
-            "mssql" => new Providers.SqlServerSchemaReader(),
-            "postgres" => new Providers.PostgreSqlSchemaReader(),
-            "mysql" => new Providers.MySqlSchemaReader(),
-            "sqlite" => new Providers.SqliteSchemaReader(),
-            "oracle" => new Providers.OracleSchemaReader(),
-            "firebird" => new Providers.FirebirdSchemaReader(),
-            "snowflake" => new Providers.SnowflakeSchemaReader(),
-            _ => throw new NotSupportedException($"Database provider '{provider}' is not supported.")
-        };
+        return Resolver.Resolve(normalized).CreateSchemaReader();
     }
 
     /// <summary>
@@ -100,15 +91,5 @@ internal static class DatabaseProviderFactory
             "snowflake" => "Snowflake",
             _ => provider
         };
-    }
-
-    /// <summary>
-    /// Creates a SQL Server connection with native library initialization.
-    /// </summary>
-    private static SqlConnection CreateSqlServerConnection(string connectionString)
-    {
-        // Ensure native library resolver is set up before creating SqlConnection
-        NativeLibraryLoader.EnsureInitialized();
-        return new SqlConnection(connectionString);
     }
 }
