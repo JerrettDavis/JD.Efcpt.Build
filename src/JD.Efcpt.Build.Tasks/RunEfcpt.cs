@@ -525,7 +525,9 @@ public sealed class RunEfcpt : Task
     /// The underlying process spawn is memoized via <see cref="SdkProbeCache"/> under the
     /// <c>"list-sdks"</c> probe name - the same command (and thus the same cache key) used by
     /// <see cref="DotNetToolUtilities.IsDotNet10SdkInstalled"/>, so both tasks share a single
-    /// probe result within a build session.
+    /// probe result within a build session. Only a determinate probe result is memoized - a
+    /// transient failure (process launch hiccup, timeout) is retried on the next call rather
+    /// than being cached as a permanent negative.
     /// </remarks>
     private static bool IsDotNet10SdkInstalled(string dotnetExe) =>
         SdkProbeCache.GetOrProbe("list-sdks", dotnetExe, () => ProbeDotNet10SdkInstalled(dotnetExe));
@@ -535,8 +537,13 @@ public sealed class RunEfcpt : Task
     /// itself - callers should go through <see cref="IsDotNet10SdkInstalled"/>.
     /// </summary>
     /// <param name="dotnetExe">Path to the dotnet executable.</param>
-    /// <returns>True if .NET 10+ SDK is installed; otherwise false.</returns>
-    private static bool ProbeDotNet10SdkInstalled(string dotnetExe)
+    /// <returns>
+    /// <see cref="ProbeOutcome.Available"/> if .NET 10+ SDK is installed;
+    /// <see cref="ProbeOutcome.Unavailable"/> if the probe ran to completion but no such SDK
+    /// was found; or <see cref="ProbeOutcome.Transient"/> if the probe could not produce a
+    /// determinate answer (launch failure, timeout, unexpected exception).
+    /// </returns>
+    private static ProbeOutcome ProbeDotNet10SdkInstalled(string dotnetExe)
     {
         try
         {
@@ -551,14 +558,14 @@ public sealed class RunEfcpt : Task
             };
 
             using var p = Process.Start(psi);
-            if (p is null) return false;
+            if (p is null) return ProbeOutcome.Transient;
 
             // Check if process completed within timeout
             if (!p.WaitForExit(ProcessTimeoutMs))
-                return false;
+                return ProbeOutcome.Transient;
 
             if (p.ExitCode != 0)
-                return false;
+                return ProbeOutcome.Unavailable;
 
             var output = p.StandardOutput.ReadToEnd();
 
@@ -579,15 +586,15 @@ public sealed class RunEfcpt : Task
                 if (dotIndex > 0 && int.TryParse(versionStr.Substring(0, dotIndex), out var major))
                 {
                     if (major >= 10)
-                        return true;
+                        return ProbeOutcome.Available;
                 }
             }
 
-            return false;
+            return ProbeOutcome.Unavailable;
         }
         catch
         {
-            return false;
+            return ProbeOutcome.Transient;
         }
     }
 
@@ -600,7 +607,9 @@ public sealed class RunEfcpt : Task
     /// The underlying process spawn is memoized via <see cref="SdkProbeCache"/> under the
     /// <c>"dnx-help"</c> probe name (distinct from <see cref="DotNetToolUtilities.IsDnxAvailable"/>,
     /// which probes via <c>--list-runtimes</c> instead - the two are intentionally different
-    /// commands and therefore keep separate cache entries).
+    /// commands and therefore keep separate cache entries). Only a determinate probe result is
+    /// memoized - a transient failure (process launch hiccup, timeout) is retried on the next
+    /// call rather than being cached as a permanent negative.
     /// </remarks>
     private static bool IsDnxAvailable(string dotnetExe) =>
         SdkProbeCache.GetOrProbe("dnx-help", dotnetExe, () => ProbeDnxAvailable(dotnetExe));
@@ -610,8 +619,13 @@ public sealed class RunEfcpt : Task
     /// should go through <see cref="IsDnxAvailable"/>.
     /// </summary>
     /// <param name="dotnetExe">Path to the dotnet executable.</param>
-    /// <returns>True if dnx is available; otherwise false.</returns>
-    private static bool ProbeDnxAvailable(string dotnetExe)
+    /// <returns>
+    /// <see cref="ProbeOutcome.Available"/> if dnx responds successfully;
+    /// <see cref="ProbeOutcome.Unavailable"/> if the probe ran to completion with a non-zero
+    /// exit code; or <see cref="ProbeOutcome.Transient"/> if the probe could not produce a
+    /// determinate answer (launch failure, timeout, unexpected exception).
+    /// </returns>
+    private static ProbeOutcome ProbeDnxAvailable(string dotnetExe)
     {
         try
         {
@@ -626,16 +640,16 @@ public sealed class RunEfcpt : Task
             };
 
             using var p = Process.Start(psi);
-            if (p is null) return false;
+            if (p is null) return ProbeOutcome.Transient;
 
             if (!p.WaitForExit(ProcessTimeoutMs))
-                return false;
+                return ProbeOutcome.Transient;
 
-            return p.ExitCode == 0;
+            return p.ExitCode == 0 ? ProbeOutcome.Available : ProbeOutcome.Unavailable;
         }
         catch
         {
-            return false;
+            return ProbeOutcome.Transient;
         }
     }
 

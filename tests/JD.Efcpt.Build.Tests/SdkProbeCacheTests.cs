@@ -1,5 +1,6 @@
 using System.Threading;
 using JD.Efcpt.Build.Tasks.Utilities;
+using JD.Efcpt.Build.Tests.Infrastructure;
 using TinyBDD;
 using TinyBDD.Xunit;
 using Xunit;
@@ -21,10 +22,10 @@ public sealed partial class SdkProbeCacheTests(ITestOutputHelper output) : TinyB
     {
         SdkProbeCache.Clear();
         var counter = 0;
-        bool Probe()
+        ProbeOutcome Probe()
         {
             Interlocked.Increment(ref counter);
-            return true;
+            return ProbeOutcome.Available;
         }
 
         await Given("a probe factory and a fixed probeName/dotnetExe key", () => (ProbeName: "list-sdks", DotnetExe: "C:\\fake\\dotnet.exe"))
@@ -45,10 +46,10 @@ public sealed partial class SdkProbeCacheTests(ITestOutputHelper output) : TinyB
     {
         SdkProbeCache.Clear();
         var counter = 0;
-        bool Probe()
+        ProbeOutcome Probe()
         {
             Interlocked.Increment(ref counter);
-            return true;
+            return ProbeOutcome.Available;
         }
 
         await Given("a probe factory and the same probeName", () => "list-sdks")
@@ -68,10 +69,10 @@ public sealed partial class SdkProbeCacheTests(ITestOutputHelper output) : TinyB
     {
         SdkProbeCache.Clear();
         var counter = 0;
-        bool Probe()
+        ProbeOutcome Probe()
         {
             Interlocked.Increment(ref counter);
-            return true;
+            return ProbeOutcome.Available;
         }
 
         await Given("a fixed dotnetExe and two different probe names", () => "C:\\fake\\dotnet.exe")
@@ -91,10 +92,10 @@ public sealed partial class SdkProbeCacheTests(ITestOutputHelper output) : TinyB
     {
         SdkProbeCache.Clear();
         var counter = 0;
-        bool Probe()
+        ProbeOutcome Probe()
         {
             Interlocked.Increment(ref counter);
-            return true;
+            return ProbeOutcome.Available;
         }
 
         await Given("a probe factory invoked once", () => "list-sdks")
@@ -115,10 +116,10 @@ public sealed partial class SdkProbeCacheTests(ITestOutputHelper output) : TinyB
     {
         SdkProbeCache.Clear();
         var counter = 0;
-        bool Probe()
+        ProbeOutcome Probe()
         {
             Interlocked.Increment(ref counter);
-            return true;
+            return ProbeOutcome.Available;
         }
 
         await Given("a probe factory and a fixed key", () => "C:\\fake\\dotnet.exe")
@@ -133,6 +134,92 @@ public sealed partial class SdkProbeCacheTests(ITestOutputHelper output) : TinyB
             })
             .Then("all threads observe the same (true) result", results => results.All(r => r))
             .And("the factory ran exactly once", _ => counter == 1)
+            .AssertPassed();
+    }
+
+    [Scenario("GetOrProbe re-invokes the factory when the muxer file's last-write-time changes")]
+    [Fact]
+    public async Task GetOrProbe_reinvokes_factory_when_muxer_mtime_changes()
+    {
+        SdkProbeCache.Clear();
+        using var folder = new TestFolder();
+        var muxerPath = folder.WriteFile("dotnet.exe", "stub-v1");
+
+        var counter = 0;
+        ProbeOutcome Probe()
+        {
+            Interlocked.Increment(ref counter);
+            return ProbeOutcome.Available;
+        }
+
+        await Given("a temp file standing in for the dotnet muxer binary", () => muxerPath)
+            .When("GetOrProbe is called, the muxer file's mtime is advanced, then GetOrProbe is called again", path =>
+            {
+                var first = SdkProbeCache.GetOrProbe("list-sdks", path, Probe);
+
+                // Advance the last-write-time so the cache key's mtime stamp component changes,
+                // simulating an SDK upgrade that replaces the muxer binary mid-session.
+                File.SetLastWriteTimeUtc(path, File.GetLastWriteTimeUtc(path).AddMinutes(5));
+
+                var second = SdkProbeCache.GetOrProbe("list-sdks", path, Probe);
+                return (First: first, Second: second);
+            })
+            .Then("both calls report the factory's result", r => r is { First: true, Second: true })
+            .And("the factory ran twice - once per distinct muxer mtime", _ => counter == 2)
+            .AssertPassed();
+    }
+
+    [Scenario("GetOrProbe tolerates a bare (unqualified) dotnetExe command without throwing")]
+    [Fact]
+    public async Task GetOrProbe_does_not_throw_for_bare_dotnet_exe()
+    {
+        SdkProbeCache.Clear();
+        var counter = 0;
+        ProbeOutcome Probe()
+        {
+            Interlocked.Increment(ref counter);
+            return ProbeOutcome.Available;
+        }
+
+        await Given("a bare 'dotnet' command with no directory separator", () => "dotnet")
+            .When("GetOrProbe is invoked", bareExe => SdkProbeCache.GetOrProbe("list-sdks", bareExe, Probe))
+            .Then("no exception propagates and the factory's result is returned", result => result)
+            .And("the factory ran exactly once", _ => counter == 1)
+            .AssertPassed();
+    }
+
+    [Scenario("ResolveDotnetExecutable does not throw for a bare command and either resolves it via PATH or falls back to null")]
+    [Fact]
+    public async Task ResolveDotnetExecutable_is_safe_for_bare_command()
+    {
+        await Given("a bare 'dotnet' command", () => "dotnet")
+            .When("ResolveDotnetExecutable is invoked", SdkProbeCache.ResolveDotnetExecutable)
+            .Then("the result is either a resolved existing file or null (unresolved)", resolved => resolved is null || File.Exists(resolved))
+            .AssertPassed();
+    }
+
+    [Scenario("GetOrProbe does not cache a transient probe failure, so the next call retries")]
+    [Fact]
+    public async Task GetOrProbe_does_not_cache_transient_failure()
+    {
+        SdkProbeCache.Clear();
+        var counter = 0;
+        ProbeOutcome Probe()
+        {
+            var invocation = Interlocked.Increment(ref counter);
+            return invocation == 1 ? ProbeOutcome.Transient : ProbeOutcome.Available;
+        }
+
+        await Given("a probe factory that fails transiently on its first call and succeeds on its second", () => "C:\\fake\\dotnet-transient.exe")
+            .When("GetOrProbe is invoked twice with the same key", dotnetExe =>
+            {
+                var first = SdkProbeCache.GetOrProbe("list-sdks", dotnetExe, Probe);
+                var second = SdkProbeCache.GetOrProbe("list-sdks", dotnetExe, Probe);
+                return (First: first, Second: second);
+            })
+            .Then("the first call reports a negative result without caching it", r => r.First == false)
+            .And("the second call reports success", r => r.Second)
+            .And("the factory was invoked twice - the transient result was not cached", _ => counter == 2)
             .AssertPassed();
     }
 }

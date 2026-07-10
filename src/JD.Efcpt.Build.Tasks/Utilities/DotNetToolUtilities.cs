@@ -26,7 +26,9 @@ internal static class DotNetToolUtilities
     /// <remarks>
     /// The underlying process spawn is memoized via <see cref="SdkProbeCache"/> under the
     /// <c>"list-sdks"</c> probe name, shared with <see cref="RunEfcpt"/>'s equivalent probe so
-    /// the two tasks reuse a single result within the same build session.
+    /// the two tasks reuse a single result within the same build session. Only a determinate
+    /// probe result is memoized - a transient failure (process launch hiccup, timeout) is
+    /// retried on the next call rather than being cached as a permanent negative.
     /// </remarks>
     public static bool IsDotNet10SdkInstalled(string dotnetExe) =>
         SdkProbeCache.GetOrProbe("list-sdks", dotnetExe, () => ProbeDotNet10SdkInstalled(dotnetExe));
@@ -37,9 +39,12 @@ internal static class DotNetToolUtilities
     /// </summary>
     /// <param name="dotnetExe">Path to the dotnet executable (typically "dotnet" or "dotnet.exe").</param>
     /// <returns>
-    /// <c>true</c> if a listed SDK version is &gt;= 10.0; otherwise <c>false</c>.
+    /// <see cref="ProbeOutcome.Available"/> if a listed SDK version is &gt;= 10.0;
+    /// <see cref="ProbeOutcome.Unavailable"/> if the probe ran to completion but no such SDK was
+    /// found; or <see cref="ProbeOutcome.Transient"/> if the probe could not produce a
+    /// determinate answer (launch failure, timeout, unexpected exception).
     /// </returns>
-    private static bool ProbeDotNet10SdkInstalled(string dotnetExe)
+    private static ProbeOutcome ProbeDotNet10SdkInstalled(string dotnetExe)
     {
         try
         {
@@ -71,11 +76,11 @@ internal static class DotNetToolUtilities
             if (!process.WaitForExit(ProcessTimeoutMs))
             {
                 try { process.Kill(); } catch { /* best effort */ }
-                return false;
+                return ProbeOutcome.Transient;
             }
 
             if (process.ExitCode != 0)
-                return false;
+                return ProbeOutcome.Unavailable;
 
             var output = outputBuilder.ToString();
 
@@ -89,14 +94,14 @@ internal static class DotNetToolUtilities
 
                 var versionStr = trimmed.Substring(0, firstSpace);
                 if (Version.TryParse(versionStr, out var version) && version.Major >= 10)
-                    return true;
+                    return ProbeOutcome.Available;
             }
 
-            return false;
+            return ProbeOutcome.Unavailable;
         }
         catch
         {
-            return false;
+            return ProbeOutcome.Transient;
         }
     }
 
@@ -109,7 +114,9 @@ internal static class DotNetToolUtilities
     /// </returns>
     /// <remarks>
     /// The underlying process spawn is memoized via <see cref="SdkProbeCache"/> under the
-    /// <c>"list-runtimes"</c> probe name.
+    /// <c>"list-runtimes"</c> probe name. Only a determinate probe result is memoized - a
+    /// transient failure (process launch hiccup, timeout) is retried on the next call rather
+    /// than being cached as a permanent negative.
     /// </remarks>
     public static bool IsDnxAvailable(string dotnetExe) =>
         SdkProbeCache.GetOrProbe("list-runtimes", dotnetExe, () => ProbeDnxAvailable(dotnetExe));
@@ -120,9 +127,12 @@ internal static class DotNetToolUtilities
     /// </summary>
     /// <param name="dotnetExe">Path to the dotnet executable (typically "dotnet" or "dotnet.exe").</param>
     /// <returns>
-    /// <c>true</c> if dnx functionality is available; otherwise <c>false</c>.
+    /// <see cref="ProbeOutcome.Available"/> if dnx functionality is available;
+    /// <see cref="ProbeOutcome.Unavailable"/> if the probe ran to completion but no qualifying
+    /// runtime was found; or <see cref="ProbeOutcome.Transient"/> if the probe could not
+    /// produce a determinate answer (launch failure, timeout, unexpected exception).
     /// </returns>
-    private static bool ProbeDnxAvailable(string dotnetExe)
+    private static ProbeOutcome ProbeDnxAvailable(string dotnetExe)
     {
         try
         {
@@ -154,12 +164,12 @@ internal static class DotNetToolUtilities
             if (!process.WaitForExit(ProcessTimeoutMs))
             {
                 try { process.Kill(); } catch { /* best effort */ }
-                return false;
+                return ProbeOutcome.Transient;
             }
 
             if (process.ExitCode != 0)
             {
-                return false;
+                return ProbeOutcome.Unavailable;
             }
 
             var output = outputBuilder.ToString();
@@ -179,15 +189,15 @@ internal static class DotNetToolUtilities
                 var versionStr = parts[1];
                 if (Version.TryParse(versionStr, out var version) && version.Major >= 10)
                 {
-                    return true;
+                    return ProbeOutcome.Available;
                 }
             }
 
-            return false;
+            return ProbeOutcome.Unavailable;
         }
         catch
         {
-            return false;
+            return ProbeOutcome.Transient;
         }
     }
 
