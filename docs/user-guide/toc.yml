@@ -14,6 +14,8 @@
   href: t4-templates.md
 - name: CI/CD Integration
   href: ci-cd.md
+- name: efcpt Compatibility
+  href: efcpt-compatibility.md
 - name: Split Outputs
   href: split-outputs.md
 - name: Advanced Topics
