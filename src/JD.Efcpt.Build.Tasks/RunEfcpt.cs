@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Extensions;
+using JD.Efcpt.Build.Tasks.Utilities;
 using Microsoft.Build.Framework;
 using PatternKit.Behavioral.Strategy;
 using Task = Microsoft.Build.Utilities.Task;
@@ -520,7 +521,22 @@ public sealed class RunEfcpt : Task
     /// </summary>
     /// <param name="dotnetExe">Path to the dotnet executable.</param>
     /// <returns>True if .NET 10+ SDK is installed; otherwise false.</returns>
-    private static bool IsDotNet10SdkInstalled(string dotnetExe)
+    /// <remarks>
+    /// The underlying process spawn is memoized via <see cref="SdkProbeCache"/> under the
+    /// <c>"list-sdks"</c> probe name - the same command (and thus the same cache key) used by
+    /// <see cref="DotNetToolUtilities.IsDotNet10SdkInstalled"/>, so both tasks share a single
+    /// probe result within a build session.
+    /// </remarks>
+    private static bool IsDotNet10SdkInstalled(string dotnetExe) =>
+        SdkProbeCache.GetOrProbe("list-sdks", dotnetExe, () => ProbeDotNet10SdkInstalled(dotnetExe));
+
+    /// <summary>
+    /// Performs the actual `dotnet --list-sdks` process spawn and output parsing. Not memoized
+    /// itself - callers should go through <see cref="IsDotNet10SdkInstalled"/>.
+    /// </summary>
+    /// <param name="dotnetExe">Path to the dotnet executable.</param>
+    /// <returns>True if .NET 10+ SDK is installed; otherwise false.</returns>
+    private static bool ProbeDotNet10SdkInstalled(string dotnetExe)
     {
         try
         {
@@ -575,7 +591,27 @@ public sealed class RunEfcpt : Task
         }
     }
 
-    private static bool IsDnxAvailable(string dotnetExe)
+    /// <summary>
+    /// Checks if dnx (dotnet native execution) is available by running <c>dotnet dnx --help</c>.
+    /// </summary>
+    /// <param name="dotnetExe">Path to the dotnet executable.</param>
+    /// <returns>True if dnx is available; otherwise false.</returns>
+    /// <remarks>
+    /// The underlying process spawn is memoized via <see cref="SdkProbeCache"/> under the
+    /// <c>"dnx-help"</c> probe name (distinct from <see cref="DotNetToolUtilities.IsDnxAvailable"/>,
+    /// which probes via <c>--list-runtimes</c> instead - the two are intentionally different
+    /// commands and therefore keep separate cache entries).
+    /// </remarks>
+    private static bool IsDnxAvailable(string dotnetExe) =>
+        SdkProbeCache.GetOrProbe("dnx-help", dotnetExe, () => ProbeDnxAvailable(dotnetExe));
+
+    /// <summary>
+    /// Performs the actual `dotnet dnx --help` process spawn. Not memoized itself - callers
+    /// should go through <see cref="IsDnxAvailable"/>.
+    /// </summary>
+    /// <param name="dotnetExe">Path to the dotnet executable.</param>
+    /// <returns>True if dnx is available; otherwise false.</returns>
+    private static bool ProbeDnxAvailable(string dotnetExe)
     {
         try
         {

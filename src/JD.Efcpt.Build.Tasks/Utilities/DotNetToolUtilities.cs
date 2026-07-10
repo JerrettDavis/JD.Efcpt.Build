@@ -23,7 +23,23 @@ internal static class DotNetToolUtilities
     /// <returns>
     /// <c>true</c> if a listed SDK version is &gt;= 10.0; otherwise <c>false</c>.
     /// </returns>
-    public static bool IsDotNet10SdkInstalled(string dotnetExe)
+    /// <remarks>
+    /// The underlying process spawn is memoized via <see cref="SdkProbeCache"/> under the
+    /// <c>"list-sdks"</c> probe name, shared with <see cref="RunEfcpt"/>'s equivalent probe so
+    /// the two tasks reuse a single result within the same build session.
+    /// </remarks>
+    public static bool IsDotNet10SdkInstalled(string dotnetExe) =>
+        SdkProbeCache.GetOrProbe("list-sdks", dotnetExe, () => ProbeDotNet10SdkInstalled(dotnetExe));
+
+    /// <summary>
+    /// Performs the actual `dotnet --list-sdks` process spawn and output parsing. Not memoized
+    /// itself - callers should go through <see cref="IsDotNet10SdkInstalled"/>.
+    /// </summary>
+    /// <param name="dotnetExe">Path to the dotnet executable (typically "dotnet" or "dotnet.exe").</param>
+    /// <returns>
+    /// <c>true</c> if a listed SDK version is &gt;= 10.0; otherwise <c>false</c>.
+    /// </returns>
+    private static bool ProbeDotNet10SdkInstalled(string dotnetExe)
     {
         try
         {
@@ -91,7 +107,22 @@ internal static class DotNetToolUtilities
     /// <returns>
     /// <c>true</c> if dnx functionality is available; otherwise <c>false</c>.
     /// </returns>
-    public static bool IsDnxAvailable(string dotnetExe)
+    /// <remarks>
+    /// The underlying process spawn is memoized via <see cref="SdkProbeCache"/> under the
+    /// <c>"list-runtimes"</c> probe name.
+    /// </remarks>
+    public static bool IsDnxAvailable(string dotnetExe) =>
+        SdkProbeCache.GetOrProbe("list-runtimes", dotnetExe, () => ProbeDnxAvailable(dotnetExe));
+
+    /// <summary>
+    /// Performs the actual `dotnet --list-runtimes` process spawn and output parsing. Not
+    /// memoized itself - callers should go through <see cref="IsDnxAvailable"/>.
+    /// </summary>
+    /// <param name="dotnetExe">Path to the dotnet executable (typically "dotnet" or "dotnet.exe").</param>
+    /// <returns>
+    /// <c>true</c> if dnx functionality is available; otherwise <c>false</c>.
+    /// </returns>
+    private static bool ProbeDnxAvailable(string dotnetExe)
     {
         try
         {
