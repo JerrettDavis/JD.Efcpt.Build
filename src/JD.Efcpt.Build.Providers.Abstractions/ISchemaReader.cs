@@ -3,7 +3,7 @@ namespace JD.Efcpt.Build.Tasks.Schema;
 /// <summary>
 /// Defines a contract for reading schema metadata from a database.
 /// </summary>
-internal interface ISchemaReader
+public interface ISchemaReader
 {
     /// <summary>
     /// Reads the complete schema from the database specified by the connection string.

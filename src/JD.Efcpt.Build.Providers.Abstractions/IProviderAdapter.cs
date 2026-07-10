@@ -8,20 +8,21 @@ namespace JD.Efcpt.Build.Tasks.Schema;
 /// </summary>
 /// <remarks>
 /// <para>
-/// This is the seam between <see cref="DatabaseProviderFactory"/> and the concrete,
-/// provider-specific ADO.NET driver. Today every implementation lives in this assembly
-/// (see <c>Schema/Providers/*ProviderAdapter.cs</c>) and simply wraps the existing
-/// connection type and <see cref="ISchemaReader"/> for its provider.
+/// This is the seam between <c>DatabaseProviderFactory</c> (in <c>JD.Efcpt.Build.Tasks</c>)
+/// and the concrete, provider-specific ADO.NET driver. SQL Server's implementation lives
+/// directly in <c>JD.Efcpt.Build.Tasks</c> (see <c>Schema/Providers/SqlServerProviderAdapter</c>)
+/// since it's bundled with the core package. Every other provider's implementation lives in
+/// its own satellite project (e.g. <c>JD.Efcpt.Build.PostgreSQL</c>) and simply wraps that
+/// provider's ADO.NET connection type and <see cref="ISchemaReader"/>.
 /// </para>
 /// <para>
-/// In a later phase, drivers will be extracted into satellite packages (e.g.
-/// <c>JD.Efcpt.Build.PostgreSQL</c>) and <see cref="ProviderAdapterResolver"/> will
-/// locate implementations of this interface from those packages instead of
-/// constructing them directly. The interface is intentionally minimal so that swap
-/// can happen without touching <see cref="DatabaseProviderFactory"/> again.
+/// This interface lives in a shared, dependency-light assembly (referenced by both
+/// <c>JD.Efcpt.Build.Tasks</c> and every satellite provider project) so that
+/// <c>ProviderAdapterResolver</c> can reflection-load a satellite provider's adapter type and
+/// cast it back to this exact interface type, regardless of which project produced it.
 /// </para>
 /// </remarks>
-internal interface IProviderAdapter
+public interface IProviderAdapter
 {
     /// <summary>
     /// Creates a provider-specific <see cref="DbConnection"/> for the given connection string.

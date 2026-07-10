@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!--
+      Multi-target to match every consumer: JD.Efcpt.Build.Tasks (bundled SQL Server) and
+      every satellite provider project (JD.Efcpt.Build.PostgreSQL, .MySQL, .Sqlite, .Oracle,
+      .Firebird, .Snowflake). All of them must be able to cast a reflection-loaded adapter to
+      IProviderAdapter, which requires the exact same assembly identity across load contexts -
+      see ProviderAdapterResolver's remarks for why this assembly exists.
+    -->
+    <TargetFrameworks>net472;net8.0;net9.0;net10.0</TargetFrameworks>
+
+    <!--
+      Not packed as its own NuGet package. This assembly is a build-time/runtime implementation
+      detail shared between the core Tasks assembly and satellite provider projects via
+      ProjectReference; its output DLL travels to consumers by being swept up alongside
+      JD.Efcpt.Build.Tasks.dll (CopyLocalLockFileAssemblies) into the existing tasks/{tfm} pack
+      glob in JD.Efcpt.Build.csproj. It never needs to be resolved as a standalone package.
+    -->
+    <IsPackable>false</IsPackable>
+
+    <AssemblyName>JD.Efcpt.Build.Providers.Abstractions</AssemblyName>
+    <RootNamespace>JD.Efcpt.Build.Tasks.Schema</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+
+    <LangVersion>latest</LangVersion>
+
+    <!-- Disable nullable and some warnings for net472, matching JD.Efcpt.Build.Tasks -->
+    <Nullable Condition="'$(TargetFramework)' == 'net472'">annotations</Nullable>
+    <NoWarn Condition="'$(TargetFramework)' == 'net472'">$(NoWarn);CS8632</NoWarn>
+  </PropertyGroup>
+
+  <!-- Polyfills for net472: provides IsExternalInit, init accessors, etc. (records use these). -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <PackageReference Include="PolySharp">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <!--
+    DataTable.AsEnumerable()/CopyToDataTable() live in System.Data.DataSetExtensions, which is
+    not part of the default net472 reference set. JD.Efcpt.Build.Tasks gets this transitively
+    via its database driver packages; this assembly has no such package to piggyback on, so it
+    must be referenced explicitly.
+  -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <Reference Include="System.Data.DataSetExtensions" />
+  </ItemGroup>
+</Project>
