@@ -53,16 +53,6 @@ public sealed class ProviderAdapterResolverTests(ITestOutputHelper output) : Tin
             .AssertPassed();
     }
 
-    [Scenario("Resolves Oracle adapter")]
-    [Fact]
-    public async Task Resolves_oracle_adapter()
-    {
-        await Given("a resolver", () => new ProviderAdapterResolver())
-            .When("resolved for oracle", r => r.Resolve("oracle"))
-            .Then("returns a non-null OracleProviderAdapter", adapter => adapter is OracleProviderAdapter)
-            .AssertPassed();
-    }
-
     [Scenario("Resolves Firebird adapter")]
     [Fact]
     public async Task Resolves_firebird_adapter()
@@ -120,6 +110,51 @@ public sealed class ProviderAdapterResolverTests(ITestOutputHelper output) : Tin
             .Then("throws ProviderDriverNotFoundException with the install command",
                 ex => ex is ProviderDriverNotFoundException &&
                       ex.Message.Contains("dotnet add package JD.Efcpt.Build.Snowflake"))
+            .AssertPassed();
+    }
+
+    #endregion
+
+    #region Satellite Provider: Oracle
+
+    /// <summary>
+    /// Oracle is a satellite provider (JD.Efcpt.Build.Oracle); see the Snowflake region above
+    /// for why a search path is required and how the Tests project makes this DLL available.
+    /// </summary>
+    private static readonly string[] OracleSearchPath =
+        [Path.GetDirectoryName(typeof(ProviderAdapterResolverTests).Assembly.Location)!];
+
+    [Scenario("Resolves Oracle adapter dynamically from a satellite provider search path")]
+    [Fact]
+    public async Task Resolves_oracle_adapter_from_search_path()
+    {
+        await Given("a resolver and this test assembly's own directory as a provider search path",
+                () => (Resolver: new ProviderAdapterResolver(), SearchPaths: OracleSearchPath))
+            .When("resolved for oracle", t => t.Resolver.Resolve("oracle", t.SearchPaths))
+            .Then("returns a non-null OracleProviderAdapter", adapter => adapter is OracleProviderAdapter)
+            .AssertPassed();
+    }
+
+    [Scenario("Throws ProviderDriverNotFoundException for Oracle when no search path contains its assembly")]
+    [Fact]
+    public async Task Throws_for_oracle_without_matching_search_path()
+    {
+        await Given("a resolver with no search paths", () => new ProviderAdapterResolver())
+            .When("resolved for oracle", r =>
+            {
+                try
+                {
+                    r.Resolve("oracle");
+                    return (Exception?)null;
+                }
+                catch (Exception ex)
+                {
+                    return ex;
+                }
+            })
+            .Then("throws ProviderDriverNotFoundException with the install command",
+                ex => ex is ProviderDriverNotFoundException &&
+                      ex.Message.Contains("dotnet add package JD.Efcpt.Build.Oracle"))
             .AssertPassed();
     }
 

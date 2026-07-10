@@ -119,16 +119,23 @@ public sealed partial class OracleSchemaIntegrationTests(ITestOutputHelper outpu
         return new SchemaResult(ctx, schema);
     }
 
+    // Oracle is a satellite provider (JD.Efcpt.Build.Oracle); its adapter DLL is only present
+    // here because the Tests project has a test-only ProjectReference to it, which places the
+    // DLL in this test assembly's own output directory. See ProviderAdapterResolverTests for
+    // the same pattern applied to the resolver directly.
+    private static readonly string[] OracleSearchPaths =
+        [Path.GetDirectoryName(typeof(OracleSchemaIntegrationTests).Assembly.Location)!];
+
     private static SchemaResult ExecuteReadSchemaViaFactory(TestContext ctx)
     {
-        var reader = DatabaseProviderFactory.CreateSchemaReader("oracle");
+        var reader = DatabaseProviderFactory.CreateSchemaReader("oracle", OracleSearchPaths);
         var schema = reader.ReadSchema(ctx.ConnectionString);
         return new SchemaResult(ctx, schema);
     }
 
     private static SchemaResult ExecuteReadSchemaViaOracleDbAlias(TestContext ctx)
     {
-        var reader = DatabaseProviderFactory.CreateSchemaReader("oracledb");
+        var reader = DatabaseProviderFactory.CreateSchemaReader("oracledb", OracleSearchPaths);
         var schema = reader.ReadSchema(ctx.ConnectionString);
         return new SchemaResult(ctx, schema);
     }

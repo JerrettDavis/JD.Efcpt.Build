@@ -55,11 +55,10 @@ internal sealed class ProviderAdapterResolver
             ["postgres"] = () => new PostgreSqlProviderAdapter(),
             ["mysql"] = () => new MySqlProviderAdapter(),
             ["sqlite"] = () => new SqliteProviderAdapter(),
-            ["oracle"] = () => new OracleProviderAdapter(),
             ["firebird"] = () => new FirebirdProviderAdapter()
-            // "snowflake" is intentionally absent: it was the first provider extracted into a
-            // satellite package (JD.Efcpt.Build.Snowflake) and now resolves exclusively via
-            // ResolveFromSatellitePackage below.
+            // "snowflake" and "oracle" are intentionally absent: they were extracted into
+            // satellite packages (JD.Efcpt.Build.Snowflake, JD.Efcpt.Build.Oracle) and now
+            // resolve exclusively via ResolveFromSatellitePackage below.
         };
 
     private readonly ConcurrentDictionary<string, IProviderAdapter> _cache = new();

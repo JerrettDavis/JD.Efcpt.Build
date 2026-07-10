@@ -28,6 +28,13 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     private static readonly string[] SnowflakeSearchPaths =
         [Path.GetDirectoryName(typeof(DatabaseProviderFactoryTests).Assembly.Location)!];
 
+    /// <summary>
+    /// Oracle is a satellite provider; see <see cref="SnowflakeSearchPaths"/> remarks - same
+    /// reasoning applies (test-only ProjectReference to JD.Efcpt.Build.Oracle).
+    /// </summary>
+    private static readonly string[] OracleSearchPaths =
+        [Path.GetDirectoryName(typeof(DatabaseProviderFactoryTests).Assembly.Location)!];
+
     #region NormalizeProvider Tests
 
     [Scenario("Normalizes SQL Server provider aliases")]
@@ -219,8 +226,12 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_oracle_connection()
     {
-        await Given("oracle provider and connection string", () => ("oracle", "Data Source=localhost:1521/ORCL"))
-            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2))
+        // Oracle is a satellite provider (JD.Efcpt.Build.Oracle) and no longer resolves
+        // in-assembly - see the Snowflake connection test above for why a search path is
+        // required.
+        await Given("oracle provider, connection string, and a matching search path",
+                () => ("oracle", "Data Source=localhost:1521/ORCL", OracleSearchPaths))
+            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2, t.Item3))
             .Then("returns OracleConnection", conn => conn is OracleConnection)
             .Finally(conn => conn.Dispose())
             .AssertPassed();
@@ -312,8 +323,9 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_oracle_schema_reader()
     {
-        await Given("oracle provider", () => "oracle")
-            .When("schema reader created", p => DatabaseProviderFactory.CreateSchemaReader(p))
+        // See the Oracle connection test above for why a search path is required here.
+        await Given("oracle provider and a matching search path", () => ("oracle", OracleSearchPaths))
+            .When("schema reader created", t => DatabaseProviderFactory.CreateSchemaReader(t.Item1, t.Item2))
             .Then("returns OracleSchemaReader", reader => reader is OracleSchemaReader)
             .AssertPassed();
     }

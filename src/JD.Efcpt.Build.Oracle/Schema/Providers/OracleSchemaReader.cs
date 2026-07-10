@@ -7,7 +7,12 @@ namespace JD.Efcpt.Build.Tasks.Schema.Providers;
 /// <summary>
 /// Reads schema metadata from Oracle databases using GetSchema() for standard metadata.
 /// </summary>
-internal sealed class OracleSchemaReader : ISchemaReader
+/// <remarks>
+/// Public (rather than internal) so <c>ProviderAdapterResolver</c> in <c>JD.Efcpt.Build.Tasks</c>
+/// can reflection-load and instantiate <see cref="OracleProviderAdapter"/> (which constructs
+/// this reader) after locating this satellite package's assembly.
+/// </remarks>
+public sealed class OracleSchemaReader : ISchemaReader
 {
     /// <summary>
     /// Reads the complete schema from an Oracle database.

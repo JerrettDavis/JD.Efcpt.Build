@@ -685,6 +685,13 @@
           "xunit.extensibility.core": "[2.9.3]"
         }
       },
+      "jd.efcpt.build.oracle": {
+        "type": "Project",
+        "dependencies": {
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
+          "Oracle.ManagedDataAccess.Core": "[23.26.100, )"
+        }
+      },
       "jd.efcpt.build.providers.abstractions": {
         "type": "Project"
       },
@@ -707,7 +714,6 @@
           "Microsoft.Data.Sqlite.Core": "[9.0.14, )",
           "MySqlConnector": "[2.5.0, )",
           "Npgsql": "[9.0.5, )",
-          "Oracle.ManagedDataAccess.Core": "[23.26.100, )",
           "PatternKit.Core": "[0.34.4, )",
           "System.IO.Hashing": "[10.0.5, )"
         }
