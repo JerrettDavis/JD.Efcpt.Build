@@ -19,6 +19,15 @@ namespace JD.Efcpt.Build.Tests.Schema;
 [Collection(nameof(AssemblySetup))]
 public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
+    /// <summary>
+    /// Snowflake is a satellite provider; its adapter DLL is only present because the Tests
+    /// project has a test-only ProjectReference to JD.Efcpt.Build.Snowflake, which places it in
+    /// this test assembly's own output directory. See ProviderAdapterResolverTests for the same
+    /// pattern applied to the resolver directly.
+    /// </summary>
+    private static readonly string[] SnowflakeSearchPaths =
+        [Path.GetDirectoryName(typeof(DatabaseProviderFactoryTests).Assembly.Location)!];
+
     #region NormalizeProvider Tests
 
     [Scenario("Normalizes SQL Server provider aliases")]
@@ -232,8 +241,13 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_snowflake_connection()
     {
-        await Given("snowflake provider and connection string", () => ("snowflake", "account=test;user=test"))
-            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2))
+        // Snowflake is a satellite provider (JD.Efcpt.Build.Snowflake) and no longer resolves
+        // in-assembly - point at this test assembly's own output directory, where the Tests
+        // project's test-only ProjectReference to JD.Efcpt.Build.Snowflake already placed its
+        // built adapter DLL.
+        await Given("snowflake provider, connection string, and a matching search path",
+                () => ("snowflake", "account=test;user=test", SnowflakeSearchPaths))
+            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2, t.Item3))
             .Then("returns SnowflakeDbConnection", conn => conn is SnowflakeDbConnection)
             .Finally(conn => conn.Dispose())
             .AssertPassed();
@@ -242,6 +256,17 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     #endregion
 
     #region CreateSchemaReader Tests
+
+    [Scenario("Creates Snowflake schema reader")]
+    [Fact]
+    public async Task Creates_snowflake_schema_reader()
+    {
+        // See the Snowflake connection test above for why a search path is required here.
+        await Given("snowflake provider and a matching search path", () => ("snowflake", SnowflakeSearchPaths))
+            .When("schema reader created", t => DatabaseProviderFactory.CreateSchemaReader(t.Item1, t.Item2))
+            .Then("returns SnowflakeSchemaReader", reader => reader is SnowflakeSchemaReader)
+            .AssertPassed();
+    }
 
     [Scenario("Creates SQL Server schema reader")]
     [Fact]
@@ -300,16 +325,6 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
         await Given("firebird provider", () => "firebird")
             .When("schema reader created", p => DatabaseProviderFactory.CreateSchemaReader(p))
             .Then("returns FirebirdSchemaReader", reader => reader is FirebirdSchemaReader)
-            .AssertPassed();
-    }
-
-    [Scenario("Creates Snowflake schema reader")]
-    [Fact]
-    public async Task Creates_snowflake_schema_reader()
-    {
-        await Given("snowflake provider", () => "snowflake")
-            .When("schema reader created", p => DatabaseProviderFactory.CreateSchemaReader(p))
-            .Then("returns SnowflakeSchemaReader", reader => reader is SnowflakeSchemaReader)
             .AssertPassed();
     }
 

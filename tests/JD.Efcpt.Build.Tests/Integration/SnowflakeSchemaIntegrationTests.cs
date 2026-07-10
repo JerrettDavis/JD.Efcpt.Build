@@ -175,16 +175,23 @@ public sealed partial class SnowflakeSchemaIntegrationTests(ITestOutputHelper ou
         return new SchemaResult(ctx, schema);
     }
 
+    // Snowflake is a satellite provider (JD.Efcpt.Build.Snowflake); its adapter DLL is only
+    // present here because the Tests project has a test-only ProjectReference to it, which
+    // places the DLL in this test assembly's own output directory. See
+    // ProviderAdapterResolverTests for the same pattern applied to the resolver directly.
+    private static readonly string[] SnowflakeSearchPaths =
+        [Path.GetDirectoryName(typeof(SnowflakeSchemaIntegrationTests).Assembly.Location)!];
+
     private static SchemaResult ExecuteReadSchemaViaFactory(TestContext ctx)
     {
-        var reader = DatabaseProviderFactory.CreateSchemaReader("snowflake");
+        var reader = DatabaseProviderFactory.CreateSchemaReader("snowflake", SnowflakeSearchPaths);
         var schema = reader.ReadSchema(ctx.ConnectionString);
         return new SchemaResult(ctx, schema);
     }
 
     private static SchemaResult ExecuteReadSchemaViaSfAlias(TestContext ctx)
     {
-        var reader = DatabaseProviderFactory.CreateSchemaReader("sf");
+        var reader = DatabaseProviderFactory.CreateSchemaReader("sf", SnowflakeSearchPaths);
         var schema = reader.ReadSchema(ctx.ConnectionString);
         return new SchemaResult(ctx, schema);
     }

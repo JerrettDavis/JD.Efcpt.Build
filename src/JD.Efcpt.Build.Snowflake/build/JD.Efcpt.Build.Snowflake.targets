@@ -1,0 +1,24 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--
+    Appends this package's deployed provider directory to @(EfcptProviderSearchPath), which
+    QuerySchemaMetadata (in JD.Efcpt.Build.Tasks, via ProviderAdapterResolver) reads to locate
+    JD.Efcpt.Build.Snowflake.dll at build time.
+
+    This computes its own tasks-folder selection instead of depending on $(_EfcptTasksFolder)
+    (set by JD.Efcpt.Build.targets) being evaluated first: NuGet does not guarantee this
+    package's build/ import runs after the core package's, so this mirrors that same
+    MSBuildRuntimeType/MSBuildVersion selection logic independently, reusing $(_EfcptTasksFolder)
+    when it happens to already be set to avoid recomputation.
+  -->
+  <PropertyGroup>
+    <_EfcptSnowflakeTasksFolder Condition="'$(_EfcptSnowflakeTasksFolder)' == '' and '$(_EfcptTasksFolder)' != ''">$(_EfcptTasksFolder)</_EfcptSnowflakeTasksFolder>
+    <_EfcptSnowflakeTasksFolder Condition="'$(_EfcptSnowflakeTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.14'))">net10.0</_EfcptSnowflakeTasksFolder>
+    <_EfcptSnowflakeTasksFolder Condition="'$(_EfcptSnowflakeTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.12'))">net9.0</_EfcptSnowflakeTasksFolder>
+    <_EfcptSnowflakeTasksFolder Condition="'$(_EfcptSnowflakeTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core'">net8.0</_EfcptSnowflakeTasksFolder>
+    <_EfcptSnowflakeTasksFolder Condition="'$(_EfcptSnowflakeTasksFolder)' == ''">net472</_EfcptSnowflakeTasksFolder>
+    <_EfcptSnowflakeProviderDir>$(MSBuildThisFileDirectory)..\tasks\$(_EfcptSnowflakeTasksFolder)\providers\snowflake</_EfcptSnowflakeProviderDir>
+  </PropertyGroup>
+  <ItemGroup Condition="Exists('$(_EfcptSnowflakeProviderDir)')">
+    <EfcptProviderSearchPath Include="$(_EfcptSnowflakeProviderDir)" />
+  </ItemGroup>
+</Project>

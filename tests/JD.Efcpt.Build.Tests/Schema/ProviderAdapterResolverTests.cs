@@ -73,13 +73,53 @@ public sealed class ProviderAdapterResolverTests(ITestOutputHelper output) : Tin
             .AssertPassed();
     }
 
-    [Scenario("Resolves Snowflake adapter")]
+    #endregion
+
+    #region Satellite Provider: Snowflake
+
+    /// <summary>
+    /// Snowflake was the first provider extracted into a satellite package
+    /// (JD.Efcpt.Build.Snowflake), so it now resolves exclusively through
+    /// <see cref="ProviderAdapterResolver"/>'s dynamic-loading path rather than the in-assembly
+    /// dictionary. The Tests project ProjectReferences JD.Efcpt.Build.Snowflake (test-only
+    /// weight), so its built adapter DLL is already sitting in this test assembly's own output
+    /// directory - pointing ProviderSearchPaths there exercises the exact same
+    /// find-load-instantiate path a real satellite package install goes through.
+    /// </summary>
+    private static readonly string[] TestAssemblyDirectorySearchPath =
+        [Path.GetDirectoryName(typeof(ProviderAdapterResolverTests).Assembly.Location)!];
+
+    [Scenario("Resolves Snowflake adapter dynamically from a satellite provider search path")]
     [Fact]
-    public async Task Resolves_snowflake_adapter()
+    public async Task Resolves_snowflake_adapter_from_search_path()
     {
-        await Given("a resolver", () => new ProviderAdapterResolver())
-            .When("resolved for snowflake", r => r.Resolve("snowflake"))
+        await Given("a resolver and this test assembly's own directory as a provider search path",
+                () => (Resolver: new ProviderAdapterResolver(), SearchPaths: TestAssemblyDirectorySearchPath))
+            .When("resolved for snowflake", t => t.Resolver.Resolve("snowflake", t.SearchPaths))
             .Then("returns a non-null SnowflakeProviderAdapter", adapter => adapter is SnowflakeProviderAdapter)
+            .AssertPassed();
+    }
+
+    [Scenario("Throws ProviderDriverNotFoundException for Snowflake when no search path contains its assembly")]
+    [Fact]
+    public async Task Throws_for_snowflake_without_matching_search_path()
+    {
+        await Given("a resolver with no search paths", () => new ProviderAdapterResolver())
+            .When("resolved for snowflake", r =>
+            {
+                try
+                {
+                    r.Resolve("snowflake");
+                    return (Exception?)null;
+                }
+                catch (Exception ex)
+                {
+                    return ex;
+                }
+            })
+            .Then("throws ProviderDriverNotFoundException with the install command",
+                ex => ex is ProviderDriverNotFoundException &&
+                      ex.Message.Contains("dotnet add package JD.Efcpt.Build.Snowflake"))
             .AssertPassed();
     }
 

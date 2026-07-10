@@ -688,10 +688,17 @@
       "jd.efcpt.build.providers.abstractions": {
         "type": "Project"
       },
-      "jd.efcpt.build.tasks": {
+      "jd.efcpt.build.snowflake": {
         "type": "Project",
         "dependencies": {
           "AWSSDK.Core": "[4.0.3.18, )",
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
+          "Snowflake.Data": "[5.4.1, )"
+        }
+      },
+      "jd.efcpt.build.tasks": {
+        "type": "Project",
+        "dependencies": {
           "FirebirdSql.Data.FirebirdClient": "[10.3.4, )",
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
           "Microsoft.Build.Framework": "[18.7.1, )",
@@ -702,7 +709,6 @@
           "Npgsql": "[9.0.5, )",
           "Oracle.ManagedDataAccess.Core": "[23.26.100, )",
           "PatternKit.Core": "[0.34.4, )",
-          "Snowflake.Data": "[5.4.1, )",
           "System.IO.Hashing": "[10.0.5, )"
         }
       },

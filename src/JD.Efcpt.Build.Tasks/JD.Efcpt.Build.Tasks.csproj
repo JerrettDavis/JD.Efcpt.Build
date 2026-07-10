@@ -61,9 +61,12 @@
     <PackageReference Include="MySqlConnector" />
     <PackageReference Include="Microsoft.Data.Sqlite.Core" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" />
-    <PackageReference Include="Snowflake.Data" />
-    <!-- Override vulnerable AWSSDK.Core transitive dependency from Snowflake.Data -->
-    <PackageReference Include="AWSSDK.Core" VersionOverride="4.0.3.18" />
+    <!--
+      Snowflake.Data (and its AWSSDK.Core VersionOverride quirk) moved to the
+      JD.Efcpt.Build.Snowflake satellite package - see that project's csproj. Do not add it back
+      here; the whole point of extraction is to keep it out of the core package's dependency
+      graph.
+    -->
   </ItemGroup>
 
   <!--
