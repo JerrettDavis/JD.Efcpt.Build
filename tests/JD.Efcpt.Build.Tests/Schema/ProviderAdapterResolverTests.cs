@@ -134,4 +134,77 @@ public sealed class ProviderAdapterResolverTests(ITestOutputHelper output) : Tin
     }
 
     #endregion
+
+    #region Cache Key Correctness (search-path-aware caching)
+
+    [Scenario("Cache key is the provider name alone when no search paths are supplied")]
+    [Fact]
+    public async Task Cache_key_is_provider_name_alone_with_no_search_paths()
+    {
+        await Given("a provider with no search paths", () => "postgres")
+            .When("cache key built", p => ProviderAdapterResolver.BuildCacheKey(p, []))
+            .Then("the key equals the provider name", key => key == "postgres")
+            .AssertPassed();
+    }
+
+    [Scenario("Cache key is unaffected by search-path order")]
+    [Fact]
+    public async Task Cache_key_is_order_independent()
+    {
+        await Given("the same two search paths in different orders",
+                () => (A: new[] { @"C:\a", @"C:\b" }, B: new[] { @"C:\b", @"C:\a" }))
+            .When("cache keys built for both orderings",
+                t => (KeyA: ProviderAdapterResolver.BuildCacheKey("postgres", t.A), KeyB: ProviderAdapterResolver.BuildCacheKey("postgres", t.B)))
+            .Then("both keys are identical", t => t.KeyA == t.KeyB)
+            .AssertPassed();
+    }
+
+    [Scenario("Cache key de-duplicates repeated and differently-cased search paths")]
+    [Fact]
+    public async Task Cache_key_deduplicates_paths()
+    {
+        await Given("a search path repeated with different casing",
+                () => (Once: new[] { @"C:\providers" }, Twice: new[] { @"C:\providers", @"C:\Providers", @"c:\providers" }))
+            .When("cache keys built for both sets",
+                t => (KeyOnce: ProviderAdapterResolver.BuildCacheKey("postgres", t.Once), KeyTwice: ProviderAdapterResolver.BuildCacheKey("postgres", t.Twice)))
+            .Then("both keys are identical", t => t.KeyOnce == t.KeyTwice)
+            .AssertPassed();
+    }
+
+    [Scenario("Cache key differs for different search-path sets on the same provider")]
+    [Fact]
+    public async Task Cache_key_differs_for_different_search_paths()
+    {
+        await Given("two distinct search-path sets for the same provider",
+                () => (A: new[] { @"C:\projectA\providers" }, B: new[] { @"C:\projectB\providers" }))
+            .When("cache keys built for both",
+                t => (KeyA: ProviderAdapterResolver.BuildCacheKey("postgres", t.A), KeyB: ProviderAdapterResolver.BuildCacheKey("postgres", t.B)))
+            .Then("the keys are different", t => t.KeyA != t.KeyB)
+            .AssertPassed();
+    }
+
+    [Scenario("Cache key ignores null, empty, and whitespace-only search-path entries")]
+    [Fact]
+    public async Task Cache_key_ignores_blank_entries()
+    {
+        await Given("a search path set padded with blank entries",
+                () => (Clean: new[] { @"C:\providers" }, Padded: new[] { "", "   ", @"C:\providers", null! }))
+            .When("cache keys built for both",
+                t => (KeyClean: ProviderAdapterResolver.BuildCacheKey("postgres", t.Clean), KeyPadded: ProviderAdapterResolver.BuildCacheKey("postgres", t.Padded)))
+            .Then("both keys are identical", t => t.KeyClean == t.KeyPadded)
+            .AssertPassed();
+    }
+
+    [Scenario("Cache key differs across provider names given the same search paths")]
+    [Fact]
+    public async Task Cache_key_differs_by_provider_name()
+    {
+        await Given("the same search paths for two different providers", () => new[] { @"C:\providers" })
+            .When("cache keys built for both providers",
+                paths => (Postgres: ProviderAdapterResolver.BuildCacheKey("postgres", paths), MySql: ProviderAdapterResolver.BuildCacheKey("mysql", paths)))
+            .Then("the keys are different", t => t.Postgres != t.MySql)
+            .AssertPassed();
+    }
+
+    #endregion
 }

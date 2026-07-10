@@ -57,6 +57,24 @@ public sealed class ProviderDriverNotFoundExceptionTests(ITestOutputHelper outpu
 
     #endregion
 
+    #region Inner Exception Constructor
+
+    [Scenario("Inner-exception constructor preserves the original failure and still surfaces install guidance")]
+    [Fact]
+    public async Task Inner_exception_constructor_preserves_original_failure()
+    {
+        var original = new BadImageFormatException("bad image");
+
+        await Given("a load failure for provider 'postgres'", () => original)
+            .When("exception constructed with the inner exception", inner => new ProviderDriverNotFoundException("postgres", inner))
+            .Then("InnerException is the exact instance passed in", ex => ReferenceEquals(ex.InnerException, original))
+            .And("message still contains the dotnet add package command", ex => ex.Message.Contains("dotnet add package JD.Efcpt.Build.PostgreSQL"))
+            .And("Provider property matches", ex => ex.Provider == "postgres")
+            .AssertPassed();
+    }
+
+    #endregion
+
     #region Package Suffix Table
 
     [Scenario("Package suffix table maps every known provider")]

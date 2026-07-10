@@ -706,6 +706,12 @@
           "System.IO.Hashing": "[10.0.5, )"
         }
       },
+      "jd.efcpt.build.testprovider": {
+        "type": "Project",
+        "dependencies": {
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )"
+        }
+      },
       "FirebirdSql.Data.FirebirdClient": {
         "type": "CentralTransitive",
         "requested": "[10.3.4, )",

@@ -60,6 +60,25 @@ internal sealed class ProviderDriverNotFoundException : Exception
         Provider = provider;
     }
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="ProviderDriverNotFoundException"/> for the given
+    /// normalized provider, wrapping an underlying failure encountered while loading or
+    /// instantiating that provider's satellite adapter assembly (e.g. a corrupt DLL, a missing
+    /// parameterless constructor, or a type-load failure). <paramref name="innerException"/> is
+    /// preserved as <see cref="Exception.InnerException"/> for diagnostics, while
+    /// <see cref="Exception.Message"/> still surfaces the actionable <c>dotnet add package</c>
+    /// guidance instead of the raw CLR error text - this is the primary reason this exception
+    /// type exists once a provider's driver is truly a satellite package rather than merely
+    /// missing.
+    /// </summary>
+    /// <param name="provider">The normalized provider name (e.g. <c>postgres</c>).</param>
+    /// <param name="innerException">The underlying exception that caused resolution to fail.</param>
+    public ProviderDriverNotFoundException(string provider, Exception innerException)
+        : base(BuildMessage(provider), innerException)
+    {
+        Provider = provider;
+    }
+
     private static string BuildMessage(string provider)
     {
         var hasSuffix = PackageSuffixesByProvider.TryGetValue(provider, out var suffix) && suffix is not null;

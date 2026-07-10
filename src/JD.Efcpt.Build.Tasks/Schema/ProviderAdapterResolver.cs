@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using JD.Efcpt.Build.Tasks.Schema.Providers;
 
 namespace JD.Efcpt.Build.Tasks.Schema;
@@ -26,9 +27,18 @@ namespace JD.Efcpt.Build.Tasks.Schema;
 /// <c>AppDomain</c> on .NET Framework), and different projects in the same build may supply
 /// different <c>providerSearchPaths</c> for the same provider name across different load
 /// contexts in the same process. Instance-scoped caching keeps that state correctly isolated.
-/// Within a single instance, the first successful resolution for a provider wins even if a
-/// later call passes different search paths - this matches the existing MSBuild task lifecycle,
-/// where search paths are constant for the duration of a single project build.
+/// </para>
+/// <para>
+/// <b>Thread safety and cache keys:</b> the cache is a <see cref="ConcurrentDictionary{TKey,TValue}"/>
+/// because a single <see cref="DatabaseProviderFactory"/>-held instance can be reached
+/// concurrently under MSBuild node reuse. For providers resolved dynamically from a satellite
+/// package, the cache key folds in the effective, order-independent set of
+/// <c>providerSearchPaths</c> (see <see cref="BuildCacheKey"/>) - not just the provider name -
+/// so that two callers supplying different search paths for the same provider (e.g. two
+/// projects with different <c>EfcptProviderSearchPath</c> items reusing the same task node)
+/// never collide on the same cache entry and silently receive the wrong adapter. Providers
+/// resolved in-assembly via <see cref="AdapterFactoriesByProvider"/> are cached by name alone
+/// since search paths are irrelevant to them.
 /// </para>
 /// </remarks>
 internal sealed class ProviderAdapterResolver
@@ -50,11 +60,12 @@ internal sealed class ProviderAdapterResolver
             ["snowflake"] = () => new SnowflakeProviderAdapter()
         };
 
-    private readonly Dictionary<string, IProviderAdapter> _cache = new();
+    private readonly ConcurrentDictionary<string, IProviderAdapter> _cache = new();
 
     /// <summary>
     /// Resolves the <see cref="IProviderAdapter"/> for a normalized provider name, caching
-    /// the result on this instance so repeat calls return the same adapter instance.
+    /// the result on this instance so repeat calls return the same adapter instance. Safe to
+    /// call concurrently from multiple threads.
     /// </summary>
     /// <param name="normalizedProvider">
     /// A provider name already normalized by <see cref="DatabaseProviderFactory.NormalizeProvider"/>.
@@ -68,28 +79,64 @@ internal sealed class ProviderAdapterResolver
     /// <returns>The resolved <see cref="IProviderAdapter"/> for the provider.</returns>
     /// <exception cref="ProviderDriverNotFoundException">
     /// Thrown when no adapter is registered for <paramref name="normalizedProvider"/> and no
-    /// matching satellite assembly can be found in any searched directory.
+    /// matching satellite assembly can be found in any searched directory, or when a matching
+    /// satellite assembly was found but could not be loaded or instantiated (see
+    /// <see cref="Exception.InnerException"/> for the underlying cause in that case).
     /// </exception>
     public IProviderAdapter Resolve(string normalizedProvider, IReadOnlyList<string>? providerSearchPaths = null)
     {
-        if (_cache.TryGetValue(normalizedProvider, out var cached))
-            return cached;
+        if (AdapterFactoriesByProvider.TryGetValue(normalizedProvider, out var factory))
+            return _cache.GetOrAdd(normalizedProvider, _ => factory());
 
-        var adapter = AdapterFactoriesByProvider.TryGetValue(normalizedProvider, out var factory)
-            ? factory()
-            : ResolveFromSatellitePackage(normalizedProvider, providerSearchPaths ?? [])
-                ?? throw new ProviderDriverNotFoundException(normalizedProvider);
+        var searchPaths = providerSearchPaths ?? [];
+        var cacheKey = BuildCacheKey(normalizedProvider, searchPaths);
 
-        _cache[normalizedProvider] = adapter;
-        return adapter;
+        return _cache.GetOrAdd(cacheKey, _ =>
+            ResolveFromSatellitePackage(normalizedProvider, searchPaths)
+                ?? throw new ProviderDriverNotFoundException(normalizedProvider));
+    }
+
+    /// <summary>
+    /// Builds the cache key for a satellite-resolved provider, folding in the effective set of
+    /// <paramref name="providerSearchPaths"/> so that two callers supplying different search
+    /// paths for the same provider name never collide on the same cache entry - see the
+    /// thread-safety and cache-key remarks on this type.
+    /// </summary>
+    /// <param name="normalizedProvider">The normalized provider name.</param>
+    /// <param name="providerSearchPaths">The caller-supplied satellite search paths.</param>
+    /// <returns>
+    /// A key that is identical for two calls with the same provider and the same effective set
+    /// of search paths, regardless of order, duplicates, or surrounding whitespace.
+    /// </returns>
+    internal static string BuildCacheKey(string normalizedProvider, IReadOnlyList<string> providerSearchPaths)
+    {
+        var distinctSortedPaths = providerSearchPaths
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Select(p => p.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return distinctSortedPaths.Count == 0
+            ? normalizedProvider
+            : normalizedProvider + "|" + string.Join("|", distinctSortedPaths);
     }
 
     /// <summary>
     /// Attempts to locate and load a satellite provider package's adapter assembly for
     /// <paramref name="normalizedProvider"/>, returning its <see cref="IProviderAdapter"/>
-    /// instance, or <see langword="null"/> if no matching assembly is found.
+    /// instance, or <see langword="null"/> if no matching assembly is found in any searched
+    /// directory.
     /// </summary>
-    private static IProviderAdapter? ResolveFromSatellitePackage(
+    /// <exception cref="ProviderDriverNotFoundException">
+    /// Thrown when a matching assembly file was found but loading it or instantiating its
+    /// <see cref="IProviderAdapter"/> implementation failed for any reason (corrupt DLL, wrong
+    /// architecture, missing transitive dependency, no accessible parameterless constructor,
+    /// a constructor that throws, etc.). The original exception is preserved as
+    /// <see cref="Exception.InnerException"/>. This ensures a raw CLR loader exception never
+    /// reaches the MSBuild log in place of the actionable install guidance.
+    /// </exception>
+    internal static IProviderAdapter? ResolveFromSatellitePackage(
         string normalizedProvider,
         IReadOnlyList<string> providerSearchPaths)
     {
@@ -105,14 +152,25 @@ internal sealed class ProviderAdapterResolver
         if (assemblyPath is null)
             return null;
 
-        var assembly = ProviderAssemblyLoader.LoadFromPath(assemblyPath);
-        return CreateAdapterInstance(assembly);
+        try
+        {
+            var assembly = ProviderAssemblyLoader.LoadFromPath(assemblyPath);
+            return CreateAdapterInstance(assembly);
+        }
+        catch (Exception ex)
+        {
+            throw new ProviderDriverNotFoundException(normalizedProvider, ex);
+        }
     }
 
     /// <summary>
     /// Enumerates, in search order, the directories that may contain a satellite provider's
     /// adapter assembly: first the bundled <c>providers/{provider}/</c> folder next to this
-    /// assembly, then each caller-supplied search path in order.
+    /// assembly, then each caller-supplied search path in order. Caller-supplied paths that are
+    /// null, empty, whitespace, or don't exist on disk are skipped defensively - an
+    /// <c>EfcptProviderSearchPath</c> item pointing at a stale or misconfigured directory should
+    /// be silently ignored rather than risk a downstream <see cref="Path.Combine(string, string)"/>
+    /// failure on a malformed entry.
     /// </summary>
     internal static IEnumerable<string> EnumerateCandidateDirectories(
         string normalizedProvider,
@@ -124,8 +182,16 @@ internal sealed class ProviderAdapterResolver
 
         foreach (var path in providerSearchPaths)
         {
-            if (!string.IsNullOrWhiteSpace(path))
-                yield return path;
+            if (string.IsNullOrWhiteSpace(path))
+                continue;
+
+            // Directory.Exists tolerates invalid path characters by returning false instead of
+            // throwing, so this also guards against a malformed search-path entry crashing
+            // resolution outright.
+            if (!Directory.Exists(path))
+                continue;
+
+            yield return path;
         }
     }
 
