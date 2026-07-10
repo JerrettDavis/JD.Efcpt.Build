@@ -53,7 +53,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [0.15.39] - 2026-05-27
 
 ### Changed
-- Bumped NuGet dependencies (various updates)
 - Bumped GitHub Actions dependencies (2 updates)
 
 ---

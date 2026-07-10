@@ -2,6 +2,12 @@
   "version": 2,
   "dependencies": {
     "net10.0": {
+      "AWSSDK.Core": {
+        "type": "Direct",
+        "requested": "[4.0.7.1, )",
+        "resolved": "4.0.7.1",
+        "contentHash": "XA0GHLwEMkoVu3u8neKnLEDD9ViXpn26ie9UhKXZXYRzCRfSFrLWpBOhupWlf+cJEFBYCC5mx2NsN8h59Y+M2Q=="
+      },
       "JD.MSBuild.Fluent": {
         "type": "Direct",
         "requested": "[1.3.22, )",
@@ -379,12 +385,6 @@
           "System.IO.Hashing": "[10.0.5, )"
         }
       },
-      "AWSSDK.Core": {
-        "type": "CentralTransitive",
-        "requested": "[4.0.100.2, )",
-        "resolved": "4.0.3.18",
-        "contentHash": "9f6HvYm8fgEIzDE3Ek60kdULqms8waHxeMPpBK6N1n55BHH0RZaOwBTyW1M9vBPXjAx0BMUtH2+DMd8FmPdA9w=="
-      },
       "FirebirdSql.Data.FirebirdClient": {
         "type": "CentralTransitive",
         "requested": "[10.3.4, )",
@@ -490,6 +490,12 @@
       }
     },
     "net8.0": {
+      "AWSSDK.Core": {
+        "type": "Direct",
+        "requested": "[4.0.7.1, )",
+        "resolved": "4.0.7.1",
+        "contentHash": "XA0GHLwEMkoVu3u8neKnLEDD9ViXpn26ie9UhKXZXYRzCRfSFrLWpBOhupWlf+cJEFBYCC5mx2NsN8h59Y+M2Q=="
+      },
       "JD.MSBuild.Fluent": {
         "type": "Direct",
         "requested": "[1.3.22, )",
@@ -873,12 +879,6 @@
           "System.IO.Hashing": "[10.0.5, )"
         }
       },
-      "AWSSDK.Core": {
-        "type": "CentralTransitive",
-        "requested": "[4.0.100.2, )",
-        "resolved": "4.0.3.18",
-        "contentHash": "9f6HvYm8fgEIzDE3Ek60kdULqms8waHxeMPpBK6N1n55BHH0RZaOwBTyW1M9vBPXjAx0BMUtH2+DMd8FmPdA9w=="
-      },
       "FirebirdSql.Data.FirebirdClient": {
         "type": "CentralTransitive",
         "requested": "[10.3.4, )",
@@ -981,6 +981,12 @@
       }
     },
     "net9.0": {
+      "AWSSDK.Core": {
+        "type": "Direct",
+        "requested": "[4.0.7.1, )",
+        "resolved": "4.0.7.1",
+        "contentHash": "XA0GHLwEMkoVu3u8neKnLEDD9ViXpn26ie9UhKXZXYRzCRfSFrLWpBOhupWlf+cJEFBYCC5mx2NsN8h59Y+M2Q=="
+      },
       "JD.MSBuild.Fluent": {
         "type": "Direct",
         "requested": "[1.3.22, )",
@@ -1357,12 +1363,6 @@
           "Snowflake.Data": "[5.4.1, )",
           "System.IO.Hashing": "[10.0.5, )"
         }
-      },
-      "AWSSDK.Core": {
-        "type": "CentralTransitive",
-        "requested": "[4.0.100.2, )",
-        "resolved": "4.0.3.18",
-        "contentHash": "9f6HvYm8fgEIzDE3Ek60kdULqms8waHxeMPpBK6N1n55BHH0RZaOwBTyW1M9vBPXjAx0BMUtH2+DMd8FmPdA9w=="
       },
       "FirebirdSql.Data.FirebirdClient": {
         "type": "CentralTransitive",

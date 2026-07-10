@@ -55,7 +55,7 @@ graph LR
     L & M & N -->|dotnet build| Build["<b>Build Process<br/>(BeforeTargets=CoreCompile)</b>"]
     
     A["Live Database"] -->|Connection| B["Query Schema"]
-    C["SQL Project (.sqlproj)"] -->|Build| D["Generate DACPAC"]
+    C["SQL Project (.sqlproj)"] -->|Build| D["DACPAC"]
     Direct["Direct DACPAC<br/>(EfcptDacpacPath)"] -->|DACPAC File| D
     
     B & D -->|Schema Metadata| Build
