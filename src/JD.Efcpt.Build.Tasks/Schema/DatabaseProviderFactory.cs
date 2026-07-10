@@ -52,25 +52,39 @@ internal static class DatabaseProviderFactory
     /// <summary>
     /// Creates a DbConnection for the specified provider.
     /// </summary>
+    /// <param name="provider">The provider name (any recognized alias).</param>
+    /// <param name="connectionString">The database connection string.</param>
+    /// <param name="providerSearchPaths">
+    /// Additional directories to search for a satellite provider assembly, if the provider isn't
+    /// bundled with the core package. See <see cref="ProviderAdapterResolver.Resolve"/>.
+    /// </param>
     /// <exception cref="ProviderDriverNotFoundException">
     /// Thrown when the driver for the normalized provider cannot be resolved.
     /// </exception>
-    public static DbConnection CreateConnection(string provider, string connectionString)
+    public static DbConnection CreateConnection(
+        string provider,
+        string connectionString,
+        IReadOnlyList<string>? providerSearchPaths = null)
     {
         var normalized = NormalizeProvider(provider);
-        return Resolver.Resolve(normalized).CreateConnection(connectionString);
+        return Resolver.Resolve(normalized, providerSearchPaths).CreateConnection(connectionString);
     }
 
     /// <summary>
     /// Creates an ISchemaReader for the specified provider.
     /// </summary>
+    /// <param name="provider">The provider name (any recognized alias).</param>
+    /// <param name="providerSearchPaths">
+    /// Additional directories to search for a satellite provider assembly, if the provider isn't
+    /// bundled with the core package. See <see cref="ProviderAdapterResolver.Resolve"/>.
+    /// </param>
     /// <exception cref="ProviderDriverNotFoundException">
     /// Thrown when the driver for the normalized provider cannot be resolved.
     /// </exception>
-    public static ISchemaReader CreateSchemaReader(string provider)
+    public static ISchemaReader CreateSchemaReader(string provider, IReadOnlyList<string>? providerSearchPaths = null)
     {
         var normalized = NormalizeProvider(provider);
-        return Resolver.Resolve(normalized).CreateSchemaReader();
+        return Resolver.Resolve(normalized, providerSearchPaths).CreateSchemaReader();
     }
 
     /// <summary>
