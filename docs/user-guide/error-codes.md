@@ -280,6 +280,43 @@ pre-installed efcpt executable. ...
 
 ---
 
+### JD0027: Tool Auto-Acquisition Failed
+**Severity**: Error
+**Task**: RunEfcpt
+
+`EfcptAutoAcquireTool` (default `true`) attempted to bootstrap an obj-local tool manifest and
+install the efcpt tool into it - because no hermetic, network-free way to run the tool was
+otherwise available (typically: targeting .NET 8/9, where `dnx` is not usable, with no explicit
+`EfcptToolPath`, no already-usable tool manifest, and no global tool already resolvable on
+`PATH`) - but the underlying `dotnet new tool-manifest` / `dotnet tool install` step failed.
+
+**Example**:
+```
+error JD0027: EfcptAutoAcquireTool attempted to bootstrap a local dotnet tool manifest and
+install 'ErikEJ.EFCorePowerTools.Cli --version 10.*' into it, but the acquisition step failed.
+Attempted manifest directory: 'C:\repo\src\MyProject\obj\efcpt'. Details: dotnet tool install
+ErikEJ.EFCorePowerTools.Cli --version 10.* exited with code 1. ... Fix options: (1) install the
+tool globally ahead of time - run: dotnet tool install --global ErikEJ.EFCorePowerTools.Cli
+--version 10.*; (2) commit a pre-restored tool manifest to source control ... and set
+EfcptAutoAcquireTool=false to use it as-is; or (3) enable EfcptOfflineMode and pre-provision the
+tool via one of the above before building offline. ...
+```
+
+**Resolution**:
+- Check the captured `dotnet tool install` output in the error message for the underlying cause
+  (network access, NuGet feed configuration, a bad `EfcptToolVersion` constraint, etc.)
+- Install the tool as a global tool ahead of time: `dotnet tool install --global
+  ErikEJ.EFCorePowerTools.Cli --version 10.*`
+- Or commit a pre-restored tool manifest to source control and set `EfcptAutoAcquireTool=false`
+  so the build uses it as-is instead of trying to bootstrap a new one
+- Or enable `EfcptOfflineMode` and pre-provision the tool via one of the above before building
+  offline (offline mode never attempts auto-acquisition - see JD0026)
+- Run `dotnet build -t:EfcptDoctor` for a diagnostic report of which execution path would be
+  used and why
+- See [tool-acquisition.md](tool-acquisition.md) for the full auto-acquisition workflow
+
+---
+
 ## Troubleshooting Tips
 
 ### General Troubleshooting Steps
