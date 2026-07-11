@@ -16,7 +16,9 @@ namespace JD.Efcpt.Build.Tasks.Utilities;
 /// the cost needlessly. This cache ensures a given probe only executes once per distinct
 /// <c>(probeName, dotnetExe, muxer-last-write-time)</c> key for the lifetime of the process
 /// (i.e. a single build session), while still invalidating automatically if the resolved
-/// <c>dotnet</c> path or the muxer binary itself changes (e.g. an SDK upgrade mid-session).
+/// <c>dotnet</c> path or the muxer binary itself changes (e.g. the muxer is replaced in place
+/// mid-session). Note this mtime check does not reliably detect a side-by-side SDK install that
+/// leaves the muxer binary itself untouched.
 /// </para>
 /// <para>
 /// Callers typically pass a bare command name (e.g. <c>"dotnet"</c>) rather than a full path.
@@ -73,7 +75,10 @@ internal static class SdkProbeCache
     /// </param>
     /// <param name="probe">
     /// The factory delegate that performs the actual (expensive) probe. Only invoked when no
-    /// cached determinate result exists yet for the resolved key.
+    /// cached determinate result exists yet for the resolved key. If <paramref name="probe"/>
+    /// throws, the cache itself coerces the failure to <see cref="ProbeOutcome.Transient"/>
+    /// rather than memoizing (and forever rethrowing) the exception via <see cref="Lazy{T}"/> -
+    /// callers do not need to guard against exceptions from <see cref="GetOrProbe"/> themselves.
     /// </param>
     /// <returns>
     /// <see langword="true"/> if the probe result (fresh or cached) is
@@ -84,7 +89,9 @@ internal static class SdkProbeCache
     internal static bool GetOrProbe(string probeName, string? dotnetExe, Func<ProbeOutcome> probe)
     {
         var key = BuildKey(probeName, dotnetExe);
-        var lazy = Cache.GetOrAdd(key, _ => new Lazy<ProbeOutcome>(probe, LazyThreadSafetyMode.ExecutionAndPublication));
+        var lazy = Cache.GetOrAdd(key, _ => new Lazy<ProbeOutcome>(
+            () => { try { return probe(); } catch { return ProbeOutcome.Transient; } },
+            LazyThreadSafetyMode.ExecutionAndPublication));
         var outcome = lazy.Value;
 
         if (outcome == ProbeOutcome.Transient)

@@ -282,4 +282,32 @@ public sealed partial class SdkProbeCacheTests(ITestOutputHelper output) : TinyB
             .And("the factory was invoked twice - the transient result was not cached", _ => counter == 2)
             .AssertPassed();
     }
+
+    [Scenario("GetOrProbe treats a thrown exception as a transient failure and does not poison the cache")]
+    [Fact]
+    public async Task GetOrProbe_does_not_poison_cache_when_probe_throws()
+    {
+        SdkProbeCache.Clear();
+        var counter = 0;
+        ProbeOutcome Probe()
+        {
+            var invocation = Interlocked.Increment(ref counter);
+            if (invocation == 1)
+                throw new InvalidOperationException("simulated probe failure");
+
+            return ProbeOutcome.Available;
+        }
+
+        await Given("a probe factory that throws on its first call and succeeds on its second", () => "C:\\fake\\dotnet-throws.exe")
+            .When("GetOrProbe is invoked twice with the same key", dotnetExe =>
+            {
+                var first = SdkProbeCache.GetOrProbe("list-sdks", dotnetExe, Probe);
+                var second = SdkProbeCache.GetOrProbe("list-sdks", dotnetExe, Probe);
+                return (First: first, Second: second);
+            })
+            .Then("the first call reports a negative result without throwing or caching it", r => r.First == false)
+            .And("the second call reports the real (successful) outcome", r => r.Second)
+            .And("the factory was invoked twice - the thrown exception was not memoized", _ => counter == 2)
+            .AssertPassed();
+    }
 }
