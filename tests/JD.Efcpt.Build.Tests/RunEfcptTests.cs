@@ -1,5 +1,5 @@
+using JD.Efcpt.Build.Core.Diagnostics;
 using JD.Efcpt.Build.Tasks;
-using JD.Efcpt.Build.Tasks.Utilities;
 using JD.Efcpt.Build.Tests.Infrastructure;
 using TinyBDD;
 using TinyBDD.Xunit;
@@ -644,16 +644,18 @@ public sealed partial class RunEfcptTests(ITestOutputHelper output) : TinyBddXun
             .AssertPassed();
     }
 
-    // MapListSdksOutcome / MapExitCodeOutcome are the pure decision-logic seams extracted from
-    // ProbeDotNet10SdkInstalled / ProbeDnxAvailable so the exit-code/output parsing can be unit
-    // tested directly, without spawning a real `dotnet` process.
+    // MapListSdksOutcome / MapExitCodeOutcome are the pure decision-logic seams (now canonical in
+    // Core's DotNetToolUtilities, #181) so the exit-code/output parsing can be unit tested
+    // directly, without spawning a real `dotnet` process. RunEfcpt.IsDotNet10SdkInstalled /
+    // IsDnxAvailable are thin delegates to those Core probes, exercised below via a nonexistent
+    // command to cover the launch-failure -> false path.
 
     [Scenario("MapListSdksOutcome reports Unavailable for a non-zero exit code regardless of output")]
     [Fact]
     public async Task MapListSdksOutcome_reports_unavailable_for_nonzero_exit_code()
     {
         await Given("a non-zero exit code and output that would otherwise qualify", () => (ExitCode: 1, Output: "10.0.100 [C:\\dotnet\\sdk]"))
-            .When("MapListSdksOutcome is called", args => RunEfcpt.MapListSdksOutcome(args.ExitCode, args.Output))
+            .When("MapListSdksOutcome is called", args => DotNetToolUtilities.MapListSdksOutcome(args.ExitCode, args.Output))
             .Then("returns Unavailable", result => result == ProbeOutcome.Unavailable)
             .AssertPassed();
     }
@@ -670,7 +672,7 @@ public sealed partial class RunEfcptTests(ITestOutputHelper output) : TinyBddXun
     public async Task MapListSdksOutcome_maps_output_to_expected_outcome(string output, bool expectAvailable)
     {
         await Given("a zero exit code and captured `dotnet --list-sdks` output", () => output)
-            .When("MapListSdksOutcome is called", o => RunEfcpt.MapListSdksOutcome(0, o))
+            .When("MapListSdksOutcome is called", o => DotNetToolUtilities.MapListSdksOutcome(0, o))
             .Then($"returns {(expectAvailable ? "Available" : "Unavailable")}", result =>
                 result == (expectAvailable ? ProbeOutcome.Available : ProbeOutcome.Unavailable))
             .AssertPassed();
@@ -710,7 +712,7 @@ public sealed partial class RunEfcptTests(ITestOutputHelper output) : TinyBddXun
     public async Task MapExitCodeOutcome_maps_exit_code_to_expected_outcome(int exitCode, bool expectAvailable)
     {
         await Given($"an exit code of {exitCode}", () => exitCode)
-            .When("MapExitCodeOutcome is called", RunEfcpt.MapExitCodeOutcome)
+            .When("MapExitCodeOutcome is called", DotNetToolUtilities.MapExitCodeOutcome)
             .Then($"returns {(expectAvailable ? "Available" : "Unavailable")}", result =>
                 result == (expectAvailable ? ProbeOutcome.Available : ProbeOutcome.Unavailable))
             .AssertPassed();

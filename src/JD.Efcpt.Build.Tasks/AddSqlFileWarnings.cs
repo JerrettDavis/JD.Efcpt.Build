@@ -1,4 +1,5 @@
 using System.Text;
+using JD.Efcpt.Build.Core.Logging;
 using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Extensions;
 using Microsoft.Build.Framework;

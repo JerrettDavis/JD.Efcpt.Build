@@ -40,6 +40,19 @@ When `EfcptDumpResolvedInputs` is `true`, check `obj/efcpt/resolved-inputs.json`
 }
 ```
 
+### Diagnose Tool Resolution
+
+Before digging through build logs, run `jd-efcpt doctor` (or `dotnet build -t:EfcptDoctor`) to see
+exactly which execution path (dnx, tool-manifest, or global tool) would be used, and the exact
+remediation if none is viable:
+
+```bash
+jd-efcpt doctor --target-framework net10.0
+```
+
+See [jd-efcpt CLI](cli.md#jd-efcpt-doctor) for the full option/exit-code reference, and
+[Tool Acquisition](tool-acquisition.md#efcptdoctor) for the MSBuild-target equivalent.
+
 ## Common Issues
 
 ### Generated Files Don't Appear
@@ -137,6 +150,12 @@ When `EfcptDumpResolvedInputs` is `true`, check `obj/efcpt/resolved-inputs.json`
      <EfcptToolMode>tool-manifest</EfcptToolMode>
    </PropertyGroup>
    ```
+
+4. **Ask `jd-efcpt doctor` which path would actually be used, and why the others aren't viable:**
+   ```bash
+   jd-efcpt doctor --target-framework net8.0 --tool-mode tool-manifest
+   ```
+   See [jd-efcpt CLI](cli.md#jd-efcpt-doctor).
 
 ### DACPAC Build Fails
 

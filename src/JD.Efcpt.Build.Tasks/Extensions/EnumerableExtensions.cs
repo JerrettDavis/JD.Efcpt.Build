@@ -1,3 +1,5 @@
+using JD.Efcpt.Build.Core;
+
 namespace JD.Efcpt.Build.Tasks.Extensions;
 
 /// <summary>

@@ -1,5 +1,6 @@
 using System.Net.Http;
 using System.Text.Json;
+using JD.Efcpt.Build.Core.Logging;
 using JD.Efcpt.Build.Tasks.Decorators;
 using Microsoft.Build.Framework;
 using Task = Microsoft.Build.Utilities.Task;

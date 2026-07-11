@@ -1,3 +1,5 @@
+using JD.Efcpt.Build.Core.Diagnostics;
+using JD.Efcpt.Build.Core.Logging;
 using JD.Efcpt.Build.Tasks;
 using JD.Efcpt.Build.Tests.Infrastructure;
 using TinyBDD;
@@ -636,7 +638,7 @@ public sealed partial class RunSqlPackageTests(ITestOutputHelper output) : TinyB
         .When("framework version is evaluated", s =>
         {
             // This would trigger the IsDotNet10OrLater check in ResolveToolPath
-            var isNet10OrLater = Tasks.Utilities.DotNetToolUtilities.IsDotNet10OrLater(s.tfm);
+            var isNet10OrLater = DotNetToolUtilities.IsDotNet10OrLater(s.tfm);
             return (s.state, isNet10OrLater);
         })
         .Then("is recognized as .NET 10+", r => r.isNet10OrLater)
@@ -659,7 +661,7 @@ public sealed partial class RunSqlPackageTests(ITestOutputHelper output) : TinyB
         })
         .When("framework version is evaluated", s =>
         {
-            var isNet10OrLater = Tasks.Utilities.DotNetToolUtilities.IsDotNet10OrLater(s.tfm);
+            var isNet10OrLater = DotNetToolUtilities.IsDotNet10OrLater(s.tfm);
             return (s.state, isNet10OrLater);
         })
         .Then("is not recognized as .NET 10+", r => !r.isNet10OrLater)

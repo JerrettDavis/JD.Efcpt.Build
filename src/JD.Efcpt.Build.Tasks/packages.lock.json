@@ -403,21 +403,6 @@
           "System.Runtime.CompilerServices.Unsafe": "6.1.2"
         }
       },
-      "System.Text.Json": {
-        "type": "Transitive",
-        "resolved": "10.0.4",
-        "contentHash": "1tRPRt8D/kzjGL7em1uJ3iJlvVIC3G/sZJ+ZgSvtVYLXGGO26Clkqy2b5uts/pyR706Yw8/xA7exeI2PI50dpw==",
-        "dependencies": {
-          "Microsoft.Bcl.AsyncInterfaces": "10.0.4",
-          "System.Buffers": "4.6.1",
-          "System.IO.Pipelines": "10.0.4",
-          "System.Memory": "4.6.3",
-          "System.Runtime.CompilerServices.Unsafe": "6.1.2",
-          "System.Text.Encodings.Web": "10.0.4",
-          "System.Threading.Tasks.Extensions": "4.6.3",
-          "System.ValueTuple": "4.6.1"
-        }
-      },
       "System.Text.RegularExpressions": {
         "type": "Transitive",
         "resolved": "4.3.1",
@@ -436,6 +421,15 @@
         "resolved": "4.6.1",
         "contentHash": "+RJT4qaekpZ7DDLhf+LTjq+E48jieKiY9ulJ+BoxKmZblIJfIJT8Ufcaa/clQqnYvWs8jugfGSMu8ylS0caG0w=="
       },
+      "jd.efcpt.build.core": {
+        "type": "Project",
+        "dependencies": {
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
+          "PatternKit.Core": "[0.34.4, )",
+          "System.IO.Hashing": "[10.0.5, )",
+          "System.Text.Json": "[9.0.15, )"
+        }
+      },
       "jd.efcpt.build.providers.abstractions": {
         "type": "Project"
       },
@@ -447,6 +441,22 @@
         "dependencies": {
           "System.Memory": "4.6.3",
           "System.Runtime.CompilerServices.Unsafe": "6.1.2"
+        }
+      },
+      "System.Text.Json": {
+        "type": "CentralTransitive",
+        "requested": "[9.0.15, )",
+        "resolved": "10.0.4",
+        "contentHash": "1tRPRt8D/kzjGL7em1uJ3iJlvVIC3G/sZJ+ZgSvtVYLXGGO26Clkqy2b5uts/pyR706Yw8/xA7exeI2PI50dpw==",
+        "dependencies": {
+          "Microsoft.Bcl.AsyncInterfaces": "10.0.4",
+          "System.Buffers": "4.6.1",
+          "System.IO.Pipelines": "10.0.4",
+          "System.Memory": "4.6.3",
+          "System.Runtime.CompilerServices.Unsafe": "6.1.2",
+          "System.Text.Encodings.Web": "10.0.4",
+          "System.Threading.Tasks.Extensions": "4.6.3",
+          "System.ValueTuple": "4.6.1"
         }
       }
     },
@@ -694,6 +704,14 @@
         "type": "Transitive",
         "resolved": "10.0.4",
         "contentHash": "LmDnaYkcWkZSlZ07L7YcB6bH8sCiBZ7j28kPbYiXdF6f0iUiN7rxsRORlZGdj5saN/wZIqvF7lDBn/cpjU+e2g=="
+      },
+      "jd.efcpt.build.core": {
+        "type": "Project",
+        "dependencies": {
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
+          "PatternKit.Core": "[0.34.4, )",
+          "System.IO.Hashing": "[10.0.5, )"
+        }
       },
       "jd.efcpt.build.providers.abstractions": {
         "type": "Project"
@@ -947,6 +965,14 @@
         "resolved": "8.0.0",
         "contentHash": "+TUFINV2q2ifyXauQXRwy4CiBhqvDEDZeVJU7qfxya4aRYOKzVBpN+4acx25VcPB9ywUN6C0n8drWl110PhZEg=="
       },
+      "jd.efcpt.build.core": {
+        "type": "Project",
+        "dependencies": {
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
+          "PatternKit.Core": "[0.34.4, )",
+          "System.IO.Hashing": "[10.0.5, )"
+        }
+      },
       "jd.efcpt.build.providers.abstractions": {
         "type": "Project"
       },
@@ -1198,6 +1224,14 @@
         "type": "Transitive",
         "resolved": "9.0.11",
         "contentHash": "s8yUYuYYu+PAwvBdhLG1KyrGrk9gkYeuPxfAsXsTqqWyepwSyEw8hAaflW4nO98NG52YpYI1am2+9o+79h2RtQ=="
+      },
+      "jd.efcpt.build.core": {
+        "type": "Project",
+        "dependencies": {
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
+          "PatternKit.Core": "[0.34.4, )",
+          "System.IO.Hashing": "[10.0.5, )"
+        }
       },
       "jd.efcpt.build.providers.abstractions": {
         "type": "Project"

@@ -289,6 +289,9 @@ On .NET 8 or 9:
 1. Verify the tool is installed: `dotnet tool list --global`
 2. Reinstall if needed: `dotnet tool install -g ErikEJ.EFCorePowerTools.Cli --version "10.*"`
 3. Try using a local tool manifest with `<EfcptToolMode>tool-manifest</EfcptToolMode>`
+4. Run `jd-efcpt doctor --target-framework <your-tfm>` (or `dotnet build -t:EfcptDoctor`) to see
+   exactly which execution path would be used and what's missing - see
+   [jd-efcpt CLI](cli.md#jd-efcpt-doctor).
 
 ### No generated files
 
@@ -301,3 +304,5 @@ On .NET 8 or 9:
 - [Core Concepts](core-concepts.md) - Understand how the pipeline works
 - [Configuration](configuration.md) - Explore all configuration options
 - [T4 Templates](t4-templates.md) - Customize code generation
+- [jd-efcpt CLI](cli.md) - Bootstrap `efcpt-config.json` and diagnose tool resolution from the
+  command line, without a project or a build

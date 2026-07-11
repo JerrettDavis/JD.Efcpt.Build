@@ -1,9 +1,11 @@
 using System.Diagnostics;
 using System.Text.Json;
+using JD.Efcpt.Build.Core;
+using JD.Efcpt.Build.Core.Diagnostics;
+using JD.Efcpt.Build.Core.Processes;
 using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Extensions;
 using JD.Efcpt.Build.Tasks.Schema;
-using JD.Efcpt.Build.Tasks.Utilities;
 using Microsoft.Build.Framework;
 using PatternKit.Behavioral.Strategy;
 using Task = Microsoft.Build.Utilities.Task;
@@ -80,13 +82,6 @@ namespace JD.Efcpt.Build.Tasks;
 /// </remarks>
 public sealed class RunEfcpt : Task
 {
-    /// <summary>
-    /// Timeout in milliseconds for external process operations (SDK checks, dnx availability).
-    /// </summary>
-    private const int ProcessTimeoutMs = 5000;
-
-    private static readonly string[] NewLineSeparators = ["\r\n", "\n"];
-
     /// <summary>
     /// Controls how the efcpt dotnet tool is resolved.
     /// </summary>
@@ -309,17 +304,17 @@ public sealed class RunEfcpt : Task
 
     /// <summary>
     /// Testability seam for the SDK/dnx/global-tool capability probes used during tool
-    /// resolution and restore. Defaults to <see cref="Utilities.DefaultSdkProbe"/>, which
-    /// delegates to the existing memoized probes; tests may substitute a fake implementation.
+    /// resolution and restore. Defaults to <see cref="DefaultSdkProbe"/>, which delegates to the
+    /// existing memoized probes; tests may substitute a fake implementation.
     /// </summary>
     internal ISdkProbe Probe { get; set; } = new DefaultSdkProbe();
 
     /// <summary>
     /// Testability seam for tool acquisition (obj-local manifest bootstrap + <c>dotnet tool
     /// install</c>), used by <see cref="AcquireToolIfNeeded"/>. Defaults to
-    /// <see cref="Utilities.DefaultToolAcquirer"/>, which shells out via
-    /// <see cref="ProcessRunner"/>; tests may substitute a fake implementation to assert the
-    /// exact acquisition request without spawning any process or touching the network.
+    /// <see cref="DefaultToolAcquirer"/>, which shells out via <see cref="ProcessRunner"/>; tests
+    /// may substitute a fake implementation to assert the exact acquisition request without
+    /// spawning any process or touching the network.
     /// </summary>
     internal IToolAcquirer ToolAcquirer { get; set; } = new DefaultToolAcquirer();
 
@@ -406,12 +401,11 @@ public sealed class RunEfcpt : Task
     /// This is the same condition <see cref="ToolResolutionStrategy"/> uses (via
     /// <see cref="ToolIsAutoOrManifest"/>) to pick the tool-manifest invocation branch, extracted
     /// so the offline pre-flight check in <see cref="ExecuteCore"/> can apply it before a
-    /// <see cref="ToolResolutionContext"/> exists.
+    /// <see cref="ToolResolutionContext"/> exists. Delegates to <see cref="DoctorEngine"/> (#181)
+    /// so <c>EfcptDoctor</c>'s verdict can never drift out of sync with this resolution logic.
     /// </remarks>
     internal static bool ToolModeUsesManifest(string toolMode, string? manifestDir, bool forceManifestOnNonWindows) =>
-        toolMode.EqualsIgnoreCase("tool-manifest") ||
-        (toolMode.EqualsIgnoreCase("auto") &&
-        (manifestDir is not null || forceManifestOnNonWindows));
+        DoctorEngine.ToolModeUsesManifest(toolMode, manifestDir, forceManifestOnNonWindows);
 
     /// <summary>
     /// Reads a discovered <c>.config/dotnet-tools.json</c> manifest and determines whether it
@@ -423,47 +417,12 @@ public sealed class RunEfcpt : Task
     /// offline pre-flight path. Any parse failure - missing file, malformed JSON, or an
     /// unexpected shape - is tolerated by returning <c>false</c> (i.e. "does not prove
     /// runnability") rather than throwing, since a corrupt manifest is exactly the kind of
-    /// situation the strengthened pre-flight check is meant to catch.
+    /// situation the strengthened pre-flight check is meant to catch. Delegates to
+    /// <see cref="DoctorEngine"/> (#181) so <c>EfcptDoctor</c>'s verdict can never drift out of
+    /// sync with this resolution logic.
     /// </remarks>
-    internal static bool ManifestListsTool(string manifestDir, string toolPackageId, string toolCommand)
-    {
-        try
-        {
-            var manifestPath = Path.Combine(manifestDir, ".config", "dotnet-tools.json");
-            if (!File.Exists(manifestPath)) return false;
-
-            using var stream = File.OpenRead(manifestPath);
-            using var doc = JsonDocument.Parse(stream);
-
-            if (!doc.RootElement.TryGetProperty("tools", out var tools) || tools.ValueKind != JsonValueKind.Object)
-                return false;
-
-            foreach (var tool in tools.EnumerateObject())
-            {
-                if (tool.Name.EqualsIgnoreCase(toolPackageId))
-                    return true;
-
-                if (tool.Value.ValueKind == JsonValueKind.Object &&
-                    tool.Value.TryGetProperty("commands", out var commands) &&
-                    commands.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var command in commands.EnumerateArray())
-                    {
-                        if (command.ValueKind == JsonValueKind.String &&
-                            command.GetString().EqualsIgnoreCase(toolCommand))
-                            return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-        catch
-        {
-            // Malformed/unreadable manifest: don't treat it as proof of runnability.
-            return false;
-        }
-    }
+    internal static bool ManifestListsTool(string manifestDir, string toolPackageId, string toolCommand) =>
+        DoctorEngine.ManifestListsTool(manifestDir, toolPackageId, toolCommand);
 
     private static readonly Lazy<ActionStrategy<ToolRestoreContext>> ToolRestoreStrategy = new(() =>
         ActionStrategy<ToolRestoreContext>.Create()
@@ -785,216 +744,35 @@ public sealed class RunEfcpt : Task
     /// Internal (not private) so <see cref="EfcptDoctor"/> can call the exact same TFM-parsing
     /// logic <see cref="ToolResolutionStrategy"/> and <see cref="AcquireToolIfNeeded"/> use,
     /// rather than a separately-maintained copy that could drift on odd TFM shapes (see #186
-    /// adversarial review).
+    /// adversarial review). Delegates to <see cref="DoctorEngine"/> (#181), which now owns the
+    /// canonical implementation shared with the doctor verdict engine.
     /// </remarks>
-    internal static bool IsDotNet10OrLater(string targetFramework)
-    {
-        if (string.IsNullOrWhiteSpace(targetFramework))
-            return false;
-
-        try
-        {
-            // Parse target framework to get major version (e.g., "net8.0" -> 8, "net10.0" -> 10)
-            if (!targetFramework.StartsWith("net", StringComparison.OrdinalIgnoreCase))
-                return false;
-
-            var versionPart = targetFramework[3..];
-
-            // Trim at the first '.' or '-' after "net" to handle formats like:
-            // - "net10.0"           -> "10"
-            // - "net10.0-windows"   -> "10"
-            // - "net10-windows"     -> "10"
-            var dotIndex = versionPart.IndexOf('.');
-            var hyphenIndex = versionPart.IndexOf('-');
-
-            var cutIndex = (dotIndex >= 0, hyphenIndex >= 0) switch
-            {
-                (true, true) => Math.Min(dotIndex, hyphenIndex),
-                (true, false) => dotIndex,
-                (false, true) => hyphenIndex,
-                _ => -1
-            };
-
-            if (cutIndex > 0)
-                versionPart = versionPart[..cutIndex];
-
-            if (int.TryParse(versionPart, out var version))
-                return version >= 10;
-
-            return false;
-        }
-        catch
-        {
-            return false;
-        }
-    }
+    internal static bool IsDotNet10OrLater(string targetFramework) =>
+        DoctorEngine.IsDotNet10OrLater(targetFramework);
 
     /// <summary>
-    /// Checks if .NET SDK version 10 or later is installed.
+    /// Checks if .NET SDK version 10 or later is installed. Thin delegate to
+    /// <see cref="DotNetToolUtilities.IsDotNet10SdkInstalled"/> (#181): production tool resolution
+    /// goes through <c>DefaultSdkProbe</c> -&gt; <c>DotNetToolUtilities</c>; this static shim
+    /// remains only so the pre-#181 <c>RunEfcptTests</c> keep a stable entry point. Delegating
+    /// (rather than keeping a second copy of the probe) prevents the two implementations from
+    /// silently drifting, and preserves the shared <c>"list-sdks"</c> cache key exactly.
     /// </summary>
     /// <param name="dotnetExe">Path to the dotnet executable.</param>
     /// <returns>True if .NET 10+ SDK is installed; otherwise false.</returns>
-    /// <remarks>
-    /// The underlying process spawn is memoized via <see cref="SdkProbeCache"/> under the
-    /// <c>"list-sdks"</c> probe name - the same command (and thus the same cache key) used by
-    /// <see cref="DotNetToolUtilities.IsDotNet10SdkInstalled"/>, so both tasks share a single
-    /// probe result within a build session. Only a determinate probe result is memoized - a
-    /// transient failure (process launch hiccup, timeout) is retried on the next call rather
-    /// than being cached as a permanent negative.
-    /// </remarks>
     internal static bool IsDotNet10SdkInstalled(string dotnetExe) =>
-        SdkProbeCache.GetOrProbe("list-sdks", dotnetExe, () => ProbeDotNet10SdkInstalled(dotnetExe));
+        DotNetToolUtilities.IsDotNet10SdkInstalled(dotnetExe);
 
     /// <summary>
-    /// Performs the actual `dotnet --list-sdks` process spawn and output parsing. Not memoized
-    /// itself - callers should go through <see cref="IsDotNet10SdkInstalled"/>.
-    /// </summary>
-    /// <param name="dotnetExe">Path to the dotnet executable.</param>
-    /// <returns>
-    /// <see cref="ProbeOutcome.Available"/> if .NET 10+ SDK is installed;
-    /// <see cref="ProbeOutcome.Unavailable"/> if the probe ran to completion but no such SDK
-    /// was found; or <see cref="ProbeOutcome.Transient"/> if the probe could not produce a
-    /// determinate answer (launch failure, timeout, unexpected exception).
-    /// </returns>
-    private static ProbeOutcome ProbeDotNet10SdkInstalled(string dotnetExe)
-    {
-        try
-        {
-            var psi = new ProcessStartInfo
-            {
-                FileName = dotnetExe,
-                Arguments = "--list-sdks",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using var p = Process.Start(psi);
-            if (p is null) return ProbeOutcome.Transient;
-
-            // Check if process completed within timeout
-            if (!p.WaitForExit(ProcessTimeoutMs))
-                return ProbeOutcome.Transient;
-
-            return MapListSdksOutcome(p.ExitCode, p.StandardOutput.ReadToEnd());
-        }
-        catch
-        {
-            return ProbeOutcome.Transient;
-        }
-    }
-
-    /// <summary>
-    /// Pure decision logic for a completed <c>dotnet --list-sdks</c> invocation: given its exit
-    /// code and captured standard output, determines whether a qualifying SDK is listed.
-    /// Extracted from <see cref="ProbeDotNet10SdkInstalled"/> so it can be unit tested without
-    /// spawning a process; the timeout/launch-failure/exception paths remain in the caller since
-    /// they are inherent to the process spawn itself.
-    /// </summary>
-    /// <param name="exitCode">The exit code of the completed process.</param>
-    /// <param name="output">The captured standard output of the completed process.</param>
-    /// <returns>
-    /// <see cref="ProbeOutcome.Available"/> if a listed SDK version is &gt;= 10.0;
-    /// <see cref="ProbeOutcome.Unavailable"/> otherwise (including a non-zero exit code).
-    /// </returns>
-    internal static ProbeOutcome MapListSdksOutcome(int exitCode, string output)
-    {
-        if (exitCode != 0)
-            return ProbeOutcome.Unavailable;
-
-        // Parse output like "10.0.100 [C:\Program Files\dotnet\sdk]"
-        // Check if any line starts with "10." or higher
-        foreach (var line in output.Split(NewLineSeparators, StringSplitOptions.RemoveEmptyEntries))
-        {
-            var trimmed = line.Trim();
-            if (string.IsNullOrEmpty(trimmed))
-                continue;
-
-            // Extract version number (first part before space or bracket)
-            var spaceIndex = trimmed.IndexOf(' ');
-            var versionStr = spaceIndex >= 0 ? trimmed.Substring(0, spaceIndex) : trimmed;
-
-            // Parse major version
-            var dotIndex = versionStr.IndexOf('.');
-            if (dotIndex > 0 && int.TryParse(versionStr.Substring(0, dotIndex), out var major))
-            {
-                if (major >= 10)
-                    return ProbeOutcome.Available;
-            }
-        }
-
-        return ProbeOutcome.Unavailable;
-    }
-
-    /// <summary>
-    /// Checks if dnx (dotnet native execution) is available by running <c>dotnet dnx --help</c>.
+    /// Checks if dnx (dotnet native execution) is available via <c>dotnet dnx --help</c>. Thin
+    /// delegate to <see cref="DotNetToolUtilities.IsDnxHelpAvailable"/> (#181), sharing the exact
+    /// same <c>"dnx-help"</c> cache key and command; see <see cref="IsDotNet10SdkInstalled"/> for
+    /// why this remains a delegating shim rather than a duplicate implementation.
     /// </summary>
     /// <param name="dotnetExe">Path to the dotnet executable.</param>
     /// <returns>True if dnx is available; otherwise false.</returns>
-    /// <remarks>
-    /// The underlying process spawn is memoized via <see cref="SdkProbeCache"/> under the
-    /// <c>"dnx-help"</c> probe name (distinct from <see cref="DotNetToolUtilities.IsDnxAvailable"/>,
-    /// which probes via <c>--list-runtimes</c> instead - the two are intentionally different
-    /// commands and therefore keep separate cache entries). Only a determinate probe result is
-    /// memoized - a transient failure (process launch hiccup, timeout) is retried on the next
-    /// call rather than being cached as a permanent negative.
-    /// </remarks>
     internal static bool IsDnxAvailable(string dotnetExe) =>
-        SdkProbeCache.GetOrProbe("dnx-help", dotnetExe, () => ProbeDnxAvailable(dotnetExe));
-
-    /// <summary>
-    /// Performs the actual `dotnet dnx --help` process spawn. Not memoized itself - callers
-    /// should go through <see cref="IsDnxAvailable"/>.
-    /// </summary>
-    /// <param name="dotnetExe">Path to the dotnet executable.</param>
-    /// <returns>
-    /// <see cref="ProbeOutcome.Available"/> if dnx responds successfully;
-    /// <see cref="ProbeOutcome.Unavailable"/> if the probe ran to completion with a non-zero
-    /// exit code; or <see cref="ProbeOutcome.Transient"/> if the probe could not produce a
-    /// determinate answer (launch failure, timeout, unexpected exception).
-    /// </returns>
-    private static ProbeOutcome ProbeDnxAvailable(string dotnetExe)
-    {
-        try
-        {
-            var psi = new ProcessStartInfo
-            {
-                FileName = dotnetExe,
-                Arguments = "dnx --help",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using var p = Process.Start(psi);
-            if (p is null) return ProbeOutcome.Transient;
-
-            if (!p.WaitForExit(ProcessTimeoutMs))
-                return ProbeOutcome.Transient;
-
-            return MapExitCodeOutcome(p.ExitCode);
-        }
-        catch
-        {
-            return ProbeOutcome.Transient;
-        }
-    }
-
-    /// <summary>
-    /// Pure decision logic for a completed <c>dotnet dnx --help</c> invocation: maps its exit
-    /// code to a probe outcome. Extracted from <see cref="ProbeDnxAvailable"/> so it can be unit
-    /// tested without spawning a process; the timeout/launch-failure/exception paths remain in
-    /// the caller since they are inherent to the process spawn itself.
-    /// </summary>
-    /// <param name="exitCode">The exit code of the completed process.</param>
-    /// <returns>
-    /// <see cref="ProbeOutcome.Available"/> if <paramref name="exitCode"/> is zero;
-    /// otherwise <see cref="ProbeOutcome.Unavailable"/>.
-    /// </returns>
-    internal static ProbeOutcome MapExitCodeOutcome(int exitCode) =>
-        exitCode == 0 ? ProbeOutcome.Available : ProbeOutcome.Unavailable;
+        DotNetToolUtilities.IsDnxHelpAvailable(dotnetExe);
 
     private string BuildArgs()
     {
@@ -1056,16 +834,10 @@ public sealed class RunEfcpt : Task
         return path;
     }
 
-    internal static string? FindManifestDir(string start)
-    {
-        var dir = new DirectoryInfo(start);
-        while (dir is not null)
-        {
-            var manifest = Path.Combine(dir.FullName, ".config", "dotnet-tools.json");
-            if (File.Exists(manifest)) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        return null;
-    }
+    /// <summary>
+    /// Walks up from <paramref name="start"/> looking for a <c>.config/dotnet-tools.json</c> tool
+    /// manifest. Delegates to <see cref="DoctorEngine"/> (#181), which now owns the canonical
+    /// implementation shared with the doctor verdict engine.
+    /// </summary>
+    internal static string? FindManifestDir(string start) => DoctorEngine.FindManifestDir(start);
 }

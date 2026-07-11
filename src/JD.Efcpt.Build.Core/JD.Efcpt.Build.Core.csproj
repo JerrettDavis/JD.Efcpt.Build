@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!--
+      Multi-target to match every consumer: JD.Efcpt.Build.Tasks (MSBuild task host) and the
+      jd-efcpt dotnet-tool CLI (net8.0). This assembly holds the reusable, MSBuild-independent
+      core logic (logging abstraction, config generation, diagnostics, connection-string
+      resolution, process execution) shared between the MSBuild task pipeline and the CLI.
+    -->
+    <TargetFrameworks>net472;net8.0;net9.0;net10.0</TargetFrameworks>
+
+    <!--
+      Not packed as its own NuGet package. This assembly is a build-time/runtime implementation
+      detail shared between JD.Efcpt.Build.Tasks and JD.Efcpt.Cli via ProjectReference; its output
+      DLL travels to Tasks consumers by being swept up alongside JD.Efcpt.Build.Tasks.dll
+      (CopyLocalLockFileAssemblies) into the existing tasks/{tfm} pack glob in
+      JD.Efcpt.Build.csproj, and is a normal dependency for the CLI's dotnet-tool package.
+    -->
+    <IsPackable>false</IsPackable>
+
+    <AssemblyName>JD.Efcpt.Build.Core</AssemblyName>
+    <RootNamespace>JD.Efcpt.Build.Core</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+
+    <LangVersion>latest</LangVersion>
+
+    <!-- Disable nullable and some warnings for net472, matching JD.Efcpt.Build.Tasks -->
+    <Nullable Condition="'$(TargetFramework)' == 'net472'">annotations</Nullable>
+    <NoWarn Condition="'$(TargetFramework)' == 'net472'">$(NoWarn);CS8632</NoWarn>
+  </PropertyGroup>
+
+  <!-- Polyfills for net472: provides IsExternalInit, init accessors, etc. (records use these). -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <PackageReference Include="PolySharp">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PatternKit.Core" />
+    <PackageReference Include="System.IO.Hashing" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+
+  <!-- Framework assembly needed for net472: EfcptConfigGenerator uses HttpClient to fetch the schema. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JD.Efcpt.Build.Providers.Abstractions\JD.Efcpt.Build.Providers.Abstractions.csproj" />
+  </ItemGroup>
+
+  <!--
+    Exposes internal "map-helper" methods (pure exit-code/output -> ProbeOutcome decision logic,
+    e.g. DotNetToolUtilities.MapListSdksOutcome) to test projects so they can be unit tested
+    without spawning a process, while keeping them out of the assembly's public surface.
+    JD.Efcpt.Build.Tests references these during the #181 migration (until its relevant test
+    files relocate to JD.Efcpt.Build.Core.Tests); JD.Efcpt.Build.Core.Tests is the permanent home.
+  -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="JD.Efcpt.Build.Tests" />
+    <InternalsVisibleTo Include="JD.Efcpt.Build.Core.Tests" />
+  </ItemGroup>
+</Project>

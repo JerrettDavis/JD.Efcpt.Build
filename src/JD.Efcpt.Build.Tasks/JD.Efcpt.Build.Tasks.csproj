@@ -50,6 +50,14 @@
       existing tasks/{tfm} pack glob in JD.Efcpt.Build.csproj.
     -->
     <ProjectReference Include="..\JD.Efcpt.Build.Providers.Abstractions\JD.Efcpt.Build.Providers.Abstractions.csproj" />
+    <!--
+      MSBuild-independent core logic (logging abstraction, config generation, diagnostics,
+      connection-string resolution, process execution), extracted in #181 so the jd-efcpt
+      dotnet-tool CLI can share it without depending on MSBuild types. CopyLocalLockFileAssemblies
+      (above) ensures the built DLL lands next to JD.Efcpt.Build.Tasks.dll and is swept into the
+      main package by the existing tasks/{tfm} pack glob in JD.Efcpt.Build.csproj.
+    -->
+    <ProjectReference Include="..\JD.Efcpt.Build.Core\JD.Efcpt.Build.Core.csproj" />
   </ItemGroup>
 
   <!--

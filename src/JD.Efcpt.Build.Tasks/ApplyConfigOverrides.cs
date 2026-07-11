@@ -1,3 +1,4 @@
+using JD.Efcpt.Build.Core.Config;
 using JD.Efcpt.Build.Tasks.Config;
 using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Extensions;

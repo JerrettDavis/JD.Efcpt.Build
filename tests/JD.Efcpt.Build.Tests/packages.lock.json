@@ -685,6 +685,14 @@
           "xunit.extensibility.core": "[2.9.3]"
         }
       },
+      "jd.efcpt.build.core": {
+        "type": "Project",
+        "dependencies": {
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
+          "PatternKit.Core": "[0.34.4, )",
+          "System.IO.Hashing": "[10.0.5, )"
+        }
+      },
       "jd.efcpt.build.firebird": {
         "type": "Project",
         "dependencies": {
@@ -734,6 +742,7 @@
       "jd.efcpt.build.tasks": {
         "type": "Project",
         "dependencies": {
+          "JD.Efcpt.Build.Core": "[1.0.0, )",
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
           "Microsoft.Build.Framework": "[18.7.1, )",
           "Microsoft.Build.Utilities.Core": "[18.7.1, )",
