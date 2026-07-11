@@ -355,6 +355,135 @@ explicit EfcptToolPath to a pre-installed efcpt executable. ...
 
 ---
 
+## Connection String Source Errors (JD0030-JD0039)
+
+Codes `JD0030`-`JD0034` are emitted by `ConnectionStringResolutionChain` / `ResolveSqlProjAndInputs`
+when a pluggable connection-string source is selected via `EfcptConnectionStringSource` (see
+[Connection-String Sources](connection-string-sources.md)) and resolution does not succeed.
+Selecting a source is fail-closed: none of these ever fall back to file/`.sqlproj` resolution.
+`JD0035`-`JD0039` are reserved for future connection-string sources. (`JD0017`-`JD0019` and
+`JD0040`+ are reserved separately for other in-flight work and are not used here.)
+
+### JD0030: Connection-String Source Resolution Failed
+**Severity**: Error
+**Task**: ResolveSqlProjAndInputs (via ConnectionStringResolutionChain)
+
+The selected connection-string source threw an unexpected exception while resolving, or its
+resolver itself failed (for example a satellite assembly was found but failed to load).
+
+**Example**:
+```
+error JD0030: Connection-string source 'azure-keyvault' failed to resolve. Azure Key Vault
+request failed (status 403) for secret 'MyConnectionString' in vault
+'https://myvault.vault.azure.net/': Access denied. See
+https://jerrettdavis.github.io/JD.Efcpt.Build/user-guide/connection-string-sources.html for
+details.
+```
+
+**Resolution**:
+- Check the diagnostic text in the error message for the underlying cause (auth failure,
+  throttling, transient network error, timeout)
+- Verify the build identity has the required least-privilege permission (see
+  [Connection-String Sources](connection-string-sources.md))
+- Retry - transient errors (throttling, brief network blips) resolve themselves on rebuild
+
+---
+
+### JD0031: Connection-String Source Secret Not Found
+**Severity**: Error
+**Task**: ResolveSqlProjAndInputs (via ConnectionStringResolutionChain)
+
+The source was reached successfully, but the secret/value wasn't present - or, for the `env`
+source, the configured environment variable was unset or empty.
+
+**Example**:
+```
+error JD0031: Connection-string source 'env' did not find a value. Environment variable
+'EFCPT_CONNECTION_STRING' is unset or empty. See
+https://jerrettdavis.github.io/JD.Efcpt.Build/user-guide/connection-string-sources.html for
+details.
+```
+
+**Resolution**:
+- Verify the secret/variable name is spelled correctly (`EfcptConnectionStringEnvVar`,
+  `EfcptKeyVaultSecretName`, `EfcptAwsSecretId`)
+- Verify the secret/variable actually exists in the target store/environment
+- For `env`, ensure the variable is set in the same process/shell that invokes the build
+
+---
+
+### JD0032: Connection-String Source Offline Blocked
+**Severity**: Error
+**Task**: ResolveSqlProjAndInputs (via ConnectionStringResolutionChain)
+
+A network-backed source (`azure-keyvault`, `aws-secrets`) was blocked by offline mode
+(`EfcptOfflineMode`/`EFCPT_OFFLINE`) before any request was attempted.
+
+**Example**:
+```
+error JD0032: Connection-string source 'azure-keyvault' is network-backed and was blocked by
+offline mode (EfcptOfflineMode/EFCPT_OFFLINE). Use the 'env' source for air-gapped builds, or
+disable offline mode. See
+https://jerrettdavis.github.io/JD.Efcpt.Build/user-guide/connection-string-sources.html for
+details.
+```
+
+**Resolution**:
+- Use the `env` source for air-gapped/offline builds, pre-provisioning the connection string
+  into an environment variable ahead of time
+- Or disable offline mode if network access is actually available
+- See [Offline / Air-Gapped Builds](offline.md)
+
+---
+
+### JD0033: Connection-String Source Not Installed
+**Severity**: Error
+**Task**: ResolveSqlProjAndInputs (via ConnectionStringResolutionChain)
+
+`EfcptConnectionStringSource` names a source key with no matching bundled or satellite
+implementation - typically because the satellite package hasn't been installed.
+
+**Example**:
+```
+error JD0033: Connection-string source 'azure-keyvault' is not available. Install it with:
+dotnet add package JD.Efcpt.Build.ConnectionStrings.AzureKeyVault See
+https://jerrettdavis.github.io/JD.Efcpt.Build/user-guide/connection-string-sources.html for
+details.
+```
+
+**Resolution**:
+- Install the matching satellite package: `dotnet add package
+  JD.Efcpt.Build.ConnectionStrings.AzureKeyVault` or `dotnet add package
+  JD.Efcpt.Build.ConnectionStrings.AwsSecretsManager`
+- Check `EfcptConnectionStringSource` for typos (`env`, `azure-keyvault`, `aws-secrets`)
+- If using a custom `EfcptConnectionStringSourceSearchPath`, verify it points at the directory
+  containing the satellite's assembly
+
+---
+
+### JD0034: Connection-String Source Misconfigured
+**Severity**: Error
+**Task**: ResolveSqlProjAndInputs (via ConnectionStringResolutionChain)
+
+The selected source is missing required settings (vault URI, secret name, region, secret id)
+and could not attempt resolution.
+
+**Example**:
+```
+error JD0034: Connection-string source 'azure-keyvault' is missing required settings. Missing
+required setting 'secretName' - set EfcptKeyVaultSecretName to the name of the secret
+containing the connection string. See
+https://jerrettdavis.github.io/JD.Efcpt.Build/user-guide/connection-string-sources.html for
+details.
+```
+
+**Resolution**:
+- Set the required properties for the selected source - see the
+  [property reference](connection-string-sources.md#property-reference)
+- Verify the vault URI / region values are well-formed
+
+---
+
 ## Troubleshooting Tips
 
 ### General Troubleshooting Steps

@@ -91,3 +91,24 @@ variable - does **not** enable offline mode via the environment variable.
 Offline mode only gates the three network-dependent tool resolution/restore branches and the
 update-check target. It does not change DACPAC building, schema fingerprinting, or model
 generation itself - those are already local operations that don't touch the network.
+
+## Network-backed connection-string sources
+
+Offline mode also gates network-backed [connection-string sources](connection-string-sources.md):
+if `EfcptConnectionStringSource` is set to `azure-keyvault` or `aws-secrets`, the build fails
+closed with `JD0032` before any request is attempted, rather than hanging or failing
+unpredictably against an unreachable endpoint.
+
+For air-gapped builds that need a connection string resolved from something other than a local
+file, use the `env` source instead - it never touches the network, so it works identically
+offline or online:
+
+```xml
+<PropertyGroup>
+  <EfcptOfflineMode>true</EfcptOfflineMode>
+  <EfcptConnectionStringSource>env</EfcptConnectionStringSource>
+</PropertyGroup>
+```
+
+Pre-provision the connection string into the configured environment variable (default
+`EFCPT_CONNECTION_STRING`) before the offline build runs.
