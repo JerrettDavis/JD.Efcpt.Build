@@ -88,9 +88,38 @@ internal static class DatabaseProviderFactory
         string provider,
         string connectionString,
         IReadOnlyList<string>? providerSearchPaths = null)
+        => CreateConnection(provider, connectionString, providerSearchPaths, null);
+
+    /// <summary>
+    /// Creates a DbConnection for the specified provider, additionally admitting a registered
+    /// custom provider (see #184's <c>customProviders</c> plugin registry).
+    /// </summary>
+    /// <param name="provider">The provider name (a built-in alias, or a registered custom key).</param>
+    /// <param name="connectionString">The database connection string.</param>
+    /// <param name="providerSearchPaths">
+    /// Additional directories to search for a satellite provider assembly, if the provider isn't
+    /// bundled with the core package. See <see cref="ProviderAdapterResolver.Resolve"/>.
+    /// </param>
+    /// <param name="customProviderAssemblies">
+    /// Maps a registered custom provider key to the simple assembly name that contains its
+    /// <see cref="IProviderAdapter"/>, or <see langword="null"/>/empty when no custom providers
+    /// are registered. See <see cref="ProviderAdapterResolver.Resolve"/>.
+    /// </param>
+    /// <exception cref="ProviderDriverNotFoundException">
+    /// Thrown when the driver for the normalized provider cannot be resolved.
+    /// </exception>
+    /// <exception cref="CustomProviderException">
+    /// Thrown when <paramref name="provider"/> resolves to a registered custom provider whose
+    /// assembly cannot be found, loaded, or instantiated.
+    /// </exception>
+    public static DbConnection CreateConnection(
+        string provider,
+        string connectionString,
+        IReadOnlyList<string>? providerSearchPaths,
+        IReadOnlyDictionary<string, string>? customProviderAssemblies)
     {
-        var normalized = NormalizeProvider(provider);
-        return Resolver.Resolve(normalized, providerSearchPaths).CreateConnection(connectionString);
+        var normalized = NormalizeProvider(provider, customProviderAssemblies?.Keys.ToArray());
+        return Resolver.Resolve(normalized, providerSearchPaths, customProviderAssemblies).CreateConnection(connectionString);
     }
 
     /// <summary>
@@ -105,9 +134,36 @@ internal static class DatabaseProviderFactory
     /// Thrown when the driver for the normalized provider cannot be resolved.
     /// </exception>
     public static ISchemaReader CreateSchemaReader(string provider, IReadOnlyList<string>? providerSearchPaths = null)
+        => CreateSchemaReader(provider, providerSearchPaths, null);
+
+    /// <summary>
+    /// Creates an ISchemaReader for the specified provider, additionally admitting a registered
+    /// custom provider (see #184's <c>customProviders</c> plugin registry).
+    /// </summary>
+    /// <param name="provider">The provider name (a built-in alias, or a registered custom key).</param>
+    /// <param name="providerSearchPaths">
+    /// Additional directories to search for a satellite provider assembly, if the provider isn't
+    /// bundled with the core package. See <see cref="ProviderAdapterResolver.Resolve"/>.
+    /// </param>
+    /// <param name="customProviderAssemblies">
+    /// Maps a registered custom provider key to the simple assembly name that contains its
+    /// <see cref="IProviderAdapter"/>, or <see langword="null"/>/empty when no custom providers
+    /// are registered. See <see cref="ProviderAdapterResolver.Resolve"/>.
+    /// </param>
+    /// <exception cref="ProviderDriverNotFoundException">
+    /// Thrown when the driver for the normalized provider cannot be resolved.
+    /// </exception>
+    /// <exception cref="CustomProviderException">
+    /// Thrown when <paramref name="provider"/> resolves to a registered custom provider whose
+    /// assembly cannot be found, loaded, or instantiated.
+    /// </exception>
+    public static ISchemaReader CreateSchemaReader(
+        string provider,
+        IReadOnlyList<string>? providerSearchPaths,
+        IReadOnlyDictionary<string, string>? customProviderAssemblies)
     {
-        var normalized = NormalizeProvider(provider);
-        return Resolver.Resolve(normalized, providerSearchPaths).CreateSchemaReader();
+        var normalized = NormalizeProvider(provider, customProviderAssemblies?.Keys.ToArray());
+        return Resolver.Resolve(normalized, providerSearchPaths, customProviderAssemblies).CreateSchemaReader();
     }
 
     /// <summary>
