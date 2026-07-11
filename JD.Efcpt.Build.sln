@@ -39,6 +39,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JD.Efcpt.Build.PostgreSQL",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JD.Efcpt.Build.MySqlConnector", "src\JD.Efcpt.Build.MySqlConnector\JD.Efcpt.Build.MySqlConnector.csproj", "{5A1F2E3D-9C7B-4A6E-8D2F-1B3C4D5E6F7A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JD.Efcpt.Build.Firebird", "src\JD.Efcpt.Build.Firebird\JD.Efcpt.Build.Firebird.csproj", "{6B2A3F4E-0D8C-4B7F-9E30-2C4D5E6F7A8B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -193,6 +195,18 @@ Global
 		{5A1F2E3D-9C7B-4A6E-8D2F-1B3C4D5E6F7A}.Release|x64.Build.0 = Release|Any CPU
 		{5A1F2E3D-9C7B-4A6E-8D2F-1B3C4D5E6F7A}.Release|x86.ActiveCfg = Release|Any CPU
 		{5A1F2E3D-9C7B-4A6E-8D2F-1B3C4D5E6F7A}.Release|x86.Build.0 = Release|Any CPU
+		{6B2A3F4E-0D8C-4B7F-9E30-2C4D5E6F7A8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B2A3F4E-0D8C-4B7F-9E30-2C4D5E6F7A8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B2A3F4E-0D8C-4B7F-9E30-2C4D5E6F7A8B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6B2A3F4E-0D8C-4B7F-9E30-2C4D5E6F7A8B}.Debug|x64.Build.0 = Debug|Any CPU
+		{6B2A3F4E-0D8C-4B7F-9E30-2C4D5E6F7A8B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6B2A3F4E-0D8C-4B7F-9E30-2C4D5E6F7A8B}.Debug|x86.Build.0 = Debug|Any CPU
+		{6B2A3F4E-0D8C-4B7F-9E30-2C4D5E6F7A8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B2A3F4E-0D8C-4B7F-9E30-2C4D5E6F7A8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B2A3F4E-0D8C-4B7F-9E30-2C4D5E6F7A8B}.Release|x64.ActiveCfg = Release|Any CPU
+		{6B2A3F4E-0D8C-4B7F-9E30-2C4D5E6F7A8B}.Release|x64.Build.0 = Release|Any CPU
+		{6B2A3F4E-0D8C-4B7F-9E30-2C4D5E6F7A8B}.Release|x86.ActiveCfg = Release|Any CPU
+		{6B2A3F4E-0D8C-4B7F-9E30-2C4D5E6F7A8B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -205,5 +219,6 @@ Global
 		{74359DCA-FB38-4CF3-AB20-2DDDD714E74B} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{336169AA-2452-4124-954C-94376E6F6264} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{5A1F2E3D-9C7B-4A6E-8D2F-1B3C4D5E6F7A} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{6B2A3F4E-0D8C-4B7F-9E30-2C4D5E6F7A8B} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

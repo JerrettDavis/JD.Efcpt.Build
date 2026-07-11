@@ -52,11 +52,10 @@ internal sealed class ProviderAdapterResolver
         new Dictionary<string, Func<IProviderAdapter>>
         {
             ["mssql"] = () => new SqlServerProviderAdapter(),
-            ["sqlite"] = () => new SqliteProviderAdapter(),
-            ["firebird"] = () => new FirebirdProviderAdapter()
-            // "snowflake", "oracle", "postgres", and "mysql" are intentionally absent: they were
-            // extracted into satellite packages (JD.Efcpt.Build.Snowflake, .Oracle,
-            // .PostgreSQL, .MySqlConnector) and now resolve exclusively via
+            ["sqlite"] = () => new SqliteProviderAdapter()
+            // "snowflake", "oracle", "postgres", "mysql", and "firebird" are intentionally
+            // absent: they were extracted into satellite packages (JD.Efcpt.Build.Snowflake,
+            // .Oracle, .PostgreSQL, .MySqlConnector, .Firebird) and now resolve exclusively via
             // ResolveFromSatellitePackage below.
         };
 

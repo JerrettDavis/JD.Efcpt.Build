@@ -7,7 +7,7 @@ namespace JD.Efcpt.Build.Tasks.Schema.Providers;
 /// <summary>
 /// Reads schema metadata from Firebird databases using GetSchema() for standard metadata.
 /// </summary>
-internal sealed class FirebirdSchemaReader : ISchemaReader
+public sealed class FirebirdSchemaReader : ISchemaReader
 {
     /// <summary>
     /// Reads the complete schema from a Firebird database.
@@ -60,8 +60,13 @@ internal sealed class FirebirdSchemaReader : ISchemaReader
                 if (typeCol != null && !row.IsNull(typeCol))
                 {
                     var tableType = row[typeCol]?.ToString() ?? "";
+                    // Uses IndexOf rather than the Contains(string, StringComparison) overload:
+                    // that overload requires netstandard2.1 API surface which is not reliably
+                    // available when this project's net472 target resolves a netstandard.dll
+                    // compatibility facade (pulled in by FirebirdSql.Data.FirebirdClient's own
+                    // netstandard2.0 dependency graph) instead of the real BCL member.
                     if (!string.IsNullOrEmpty(tableType) &&
-                        !tableType.Contains("TABLE", StringComparison.OrdinalIgnoreCase))
+                        tableType.IndexOf("TABLE", StringComparison.OrdinalIgnoreCase) < 0)
                         return false;
                 }
 

@@ -49,6 +49,13 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     private static readonly string[] MySqlSearchPaths =
         [Path.GetDirectoryName(typeof(DatabaseProviderFactoryTests).Assembly.Location)!];
 
+    /// <summary>
+    /// Firebird is a satellite provider; see <see cref="SnowflakeSearchPaths"/> remarks - same
+    /// reasoning applies (test-only ProjectReference to JD.Efcpt.Build.Firebird).
+    /// </summary>
+    private static readonly string[] FirebirdSearchPaths =
+        [Path.GetDirectoryName(typeof(DatabaseProviderFactoryTests).Assembly.Location)!];
+
     #region NormalizeProvider Tests
 
     [Scenario("Normalizes SQL Server provider aliases")]
@@ -263,8 +270,12 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_firebird_connection()
     {
-        await Given("firebird provider and connection string", () => ("firebird", "Database=localhost:test.fdb"))
-            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2))
+        // Firebird is a satellite provider (JD.Efcpt.Build.Firebird) and no longer resolves
+        // in-assembly - see the Snowflake connection test above for why a search path is
+        // required.
+        await Given("firebird provider, connection string, and a matching search path",
+                () => ("firebird", "Database=localhost:test.fdb", FirebirdSearchPaths))
+            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2, t.Item3))
             .Then("returns FbConnection", conn => conn is FbConnection)
             .Finally(conn => conn.Dispose())
             .AssertPassed();
@@ -358,8 +369,9 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_firebird_schema_reader()
     {
-        await Given("firebird provider", () => "firebird")
-            .When("schema reader created", p => DatabaseProviderFactory.CreateSchemaReader(p))
+        // See the Firebird connection test above for why a search path is required here.
+        await Given("firebird provider and a matching search path", () => ("firebird", FirebirdSearchPaths))
+            .When("schema reader created", t => DatabaseProviderFactory.CreateSchemaReader(t.Item1, t.Item2))
             .Then("returns FirebirdSchemaReader", reader => reader is FirebirdSchemaReader)
             .AssertPassed();
     }

@@ -17,6 +17,15 @@ namespace JD.Efcpt.Build.Tests.Schema;
 [Collection(nameof(AssemblySetup))]
 public sealed partial class FirebirdSchemaReaderTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
+    /// <summary>
+    /// Firebird is a satellite provider (JD.Efcpt.Build.Firebird); its adapter DLL is only
+    /// present here because the Tests project has a test-only ProjectReference to it, which
+    /// places the DLL in this test assembly's own output directory. See
+    /// ProviderAdapterResolverTests for the same pattern applied to the resolver directly.
+    /// </summary>
+    private static readonly string[] FirebirdSearchPaths =
+        [Path.GetDirectoryName(typeof(FirebirdSchemaReaderTests).Assembly.Location)!];
+
     #region Test Helpers
 
     /// <summary>
@@ -565,9 +574,12 @@ public sealed partial class FirebirdSchemaReaderTests(ITestOutputHelper output) 
     [Fact]
     public async Task Factory_creates_correct_reader()
     {
-        await Given("firebird provider", () => "firebird")
-            .When("schema reader created", provider =>
-                DatabaseProviderFactory.CreateSchemaReader(provider))
+        // Firebird is a satellite provider and no longer resolves in-assembly - point at this
+        // test assembly's own output directory, where the Tests project's test-only
+        // ProjectReference to JD.Efcpt.Build.Firebird already placed its built adapter DLL.
+        await Given("firebird provider and a matching search path", () => ("firebird", FirebirdSearchPaths))
+            .When("schema reader created", t =>
+                DatabaseProviderFactory.CreateSchemaReader(t.Item1, t.Item2))
             .Then("returns FirebirdSchemaReader", reader => reader is FirebirdSchemaReader)
             .AssertPassed();
     }
@@ -576,9 +588,10 @@ public sealed partial class FirebirdSchemaReaderTests(ITestOutputHelper output) 
     [Fact]
     public async Task Fb_alias_creates_correct_reader()
     {
-        await Given("fb provider alias", () => "fb")
-            .When("schema reader created", provider =>
-                DatabaseProviderFactory.CreateSchemaReader(provider))
+        // See the comment on Factory_creates_correct_reader for why a search path is required.
+        await Given("fb provider alias and a matching search path", () => ("fb", FirebirdSearchPaths))
+            .When("schema reader created", t =>
+                DatabaseProviderFactory.CreateSchemaReader(t.Item1, t.Item2))
             .Then("returns FirebirdSchemaReader", reader => reader is FirebirdSchemaReader)
             .AssertPassed();
     }

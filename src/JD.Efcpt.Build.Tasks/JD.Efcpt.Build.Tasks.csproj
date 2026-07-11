@@ -59,7 +59,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" VersionOverride="6.1.4" />
     <PackageReference Include="Microsoft.Data.Sqlite.Core" />
-    <PackageReference Include="FirebirdSql.Data.FirebirdClient" />
     <!--
       Snowflake.Data (and its AWSSDK.Core VersionOverride quirk) moved to the
       JD.Efcpt.Build.Snowflake satellite package - see that project's csproj. Do not add it back
@@ -78,6 +77,10 @@
     MySqlConnector moved to the JD.Efcpt.Build.MySqlConnector satellite package - see that
     project's csproj. Do not add it back here; the whole point of extraction is to keep it out of
     the core package's dependency graph.
+
+    FirebirdSql.Data.FirebirdClient moved to the JD.Efcpt.Build.Firebird satellite package - see
+    that project's csproj. Do not add it back here; the whole point of extraction is to keep it
+    out of the core package's dependency graph.
   -->
 
   <!--

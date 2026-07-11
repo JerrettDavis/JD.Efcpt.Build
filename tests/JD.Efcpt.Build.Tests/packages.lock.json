@@ -685,6 +685,13 @@
           "xunit.extensibility.core": "[2.9.3]"
         }
       },
+      "jd.efcpt.build.firebird": {
+        "type": "Project",
+        "dependencies": {
+          "FirebirdSql.Data.FirebirdClient": "[10.3.4, )",
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )"
+        }
+      },
       "jd.efcpt.build.mysqlconnector": {
         "type": "Project",
         "dependencies": {
@@ -720,7 +727,6 @@
       "jd.efcpt.build.tasks": {
         "type": "Project",
         "dependencies": {
-          "FirebirdSql.Data.FirebirdClient": "[10.3.4, )",
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
           "Microsoft.Build.Framework": "[18.7.1, )",
           "Microsoft.Build.Utilities.Core": "[18.7.1, )",

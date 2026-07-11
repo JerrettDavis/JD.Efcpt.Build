@@ -33,16 +33,6 @@ public sealed class ProviderAdapterResolverTests(ITestOutputHelper output) : Tin
             .AssertPassed();
     }
 
-    [Scenario("Resolves Firebird adapter")]
-    [Fact]
-    public async Task Resolves_firebird_adapter()
-    {
-        await Given("a resolver", () => new ProviderAdapterResolver())
-            .When("resolved for firebird", r => r.Resolve("firebird"))
-            .Then("returns a non-null FirebirdProviderAdapter", adapter => adapter is FirebirdProviderAdapter)
-            .AssertPassed();
-    }
-
     #endregion
 
     #region Satellite Provider: Snowflake
@@ -227,6 +217,52 @@ public sealed class ProviderAdapterResolverTests(ITestOutputHelper output) : Tin
             .Then("throws ProviderDriverNotFoundException with the install command",
                 ex => ex is ProviderDriverNotFoundException &&
                       ex.Message.Contains("dotnet add package JD.Efcpt.Build.MySqlConnector"))
+            .AssertPassed();
+    }
+
+    #endregion
+
+    #region Satellite Provider: Firebird
+
+    /// <summary>
+    /// Firebird is a satellite provider (JD.Efcpt.Build.Firebird); see the Snowflake region
+    /// above for why a search path is required and how the Tests project makes this DLL
+    /// available.
+    /// </summary>
+    private static readonly string[] FirebirdSearchPaths =
+        [Path.GetDirectoryName(typeof(ProviderAdapterResolverTests).Assembly.Location)!];
+
+    [Scenario("Resolves Firebird adapter dynamically from a satellite provider search path")]
+    [Fact]
+    public async Task Resolves_firebird_adapter_from_search_path()
+    {
+        await Given("a resolver and this test assembly's own directory as a provider search path",
+                () => (Resolver: new ProviderAdapterResolver(), SearchPaths: FirebirdSearchPaths))
+            .When("resolved for firebird", t => t.Resolver.Resolve("firebird", t.SearchPaths))
+            .Then("returns a non-null FirebirdProviderAdapter", adapter => adapter is FirebirdProviderAdapter)
+            .AssertPassed();
+    }
+
+    [Scenario("Throws ProviderDriverNotFoundException for Firebird when no search path contains its assembly")]
+    [Fact]
+    public async Task Throws_for_firebird_without_matching_search_path()
+    {
+        await Given("a resolver with no search paths", () => new ProviderAdapterResolver())
+            .When("resolved for firebird", r =>
+            {
+                try
+                {
+                    r.Resolve("firebird");
+                    return (Exception?)null;
+                }
+                catch (Exception ex)
+                {
+                    return ex;
+                }
+            })
+            .Then("throws ProviderDriverNotFoundException with the install command",
+                ex => ex is ProviderDriverNotFoundException &&
+                      ex.Message.Contains("dotnet add package JD.Efcpt.Build.Firebird"))
             .AssertPassed();
     }
 
