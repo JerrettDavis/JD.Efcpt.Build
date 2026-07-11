@@ -127,7 +127,10 @@ public sealed class EfcptDoctor : Task
         var dnxAvailable = Probe.IsDnxAvailable(DotNetExe);
         messages.Add($"dnx available: {dnxAvailable}");
 
-        var dnxUsable = !offline && DotNetToolUtilities.IsDotNet10OrLater(TargetFramework) && sdk10Installed && dnxAvailable;
+        // Reuses RunEfcpt's own TFM-parsing logic (promoted to internal static for #186) rather
+        // than DotNetToolUtilities.IsDotNet10OrLater, so the doctor's verdict can never drift
+        // from the actual resolution/acquisition logic in RunEfcpt on odd TFM shapes.
+        var dnxUsable = !offline && RunEfcpt.IsDotNet10OrLater(TargetFramework) && sdk10Installed && dnxAvailable;
         messages.Add($"dnx usable for this build: {dnxUsable}");
 
 #if NETFRAMEWORK
@@ -210,11 +213,22 @@ public sealed class EfcptDoctor : Task
 
         if (manifestUsesMode && manifestDir is not null)
         {
-            return offline
-                ? ($"A tool manifest was found at '{manifestDir}' but does not list '{ToolPackageId}', and " +
-                    "EfcptOfflineMode prevents restoring it. Pre-provision the tool or disable offline mode.", false)
-                : ($"A tool manifest was found at '{manifestDir}' but does not list '{ToolPackageId}'; " +
-                    "'dotnet tool restore' will be attempted at build time.", true);
+            if (offline)
+                return ($"A tool manifest was found at '{manifestDir}' but does not list '{ToolPackageId}', and " +
+                        "EfcptOfflineMode prevents restoring it. Pre-provision the tool or disable offline mode.", false);
+
+            // Consistent with RunEfcpt.AcquireToolIfNeeded (#186 adversarial-review fix): a
+            // manifest that doesn't list the tool is NOT auto-restorable via 'dotnet tool
+            // restore' (restore only reinstalls tools already listed in the manifest) - it
+            // requires EfcptAutoAcquireTool to install the missing entry, or it's a dead end.
+            if (autoAcquireEffective)
+                return ($"A tool manifest was found at '{manifestDir}' but does not list '{ToolPackageId}'; " +
+                        $"EfcptAutoAcquireTool will install '{ToolPackageId}' into the existing manifest at " +
+                        "build time.", true);
+
+            return ($"A tool manifest was found at '{manifestDir}' but does not list '{ToolPackageId}', and " +
+                    $"EfcptAutoAcquireTool is disabled. Run 'dotnet tool install {ToolPackageId}' in " +
+                    $"'{manifestDir}', set EfcptAutoAcquireTool=true, or set an explicit ToolPath.", false);
         }
 
         if (manifestUsesMode)

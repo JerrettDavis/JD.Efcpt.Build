@@ -672,9 +672,11 @@ public sealed class RunEfcpt : Task
     /// </param>
     /// <returns>
     /// <see langword="true"/> if no acquisition was needed, or acquisition succeeded;
-    /// <see langword="false"/> if acquisition was attempted and failed (in which case a JD0027
-    /// error has already been logged and the caller should return <see langword="false"/> from
-    /// <see cref="Execute"/> without throwing).
+    /// <see langword="false"/> if acquisition was attempted and failed (a JD0027 error has
+    /// already been logged), or if resolution would use a tool manifest that is absent or
+    /// incomplete and acquisition could not be attempted (a JD0028 error has already been
+    /// logged) - in either case the caller should return <see langword="false"/> from
+    /// <see cref="Execute"/> without throwing.
     /// </returns>
     private bool AcquireToolIfNeeded(
         string workingDir,
@@ -693,15 +695,8 @@ public sealed class RunEfcpt : Task
         if (offline)
             return true;
 
-        if (!AutoAcquireTool.IsTrue())
-            return true;
-
         // An explicit ToolPath always wins over any form of automatic resolution/acquisition.
         if (PathUtils.HasExplicitPath(ToolPath))
-            return true;
-
-        // Nothing to install without a package id.
-        if (!PathUtils.HasValue(ToolPackageId))
             return true;
 
         // .NET 10+ with dnx available: dnx handles tool execution on-demand without requiring
@@ -709,34 +704,70 @@ public sealed class RunEfcpt : Task
         if (IsDotNet10OrLater(TargetFramework) && Probe.IsDotNet10SdkInstalled(DotNetExe) && Probe.IsDnxAvailable(DotNetExe))
             return true;
 
+        // Would resolution (ToolResolutionStrategy, via ToolIsAutoOrManifest) actually use a
+        // local tool manifest for this invocation? Computed with the SAME condition the real
+        // resolution strategy uses below, so this method's gating can never drift from what
+        // actually happens once resolution runs.
+        var wouldUseManifest = ToolModeUsesManifest(mode, manifestDir, forceManifestOnNonWindows);
+
         // Already usable via an existing, already-restored tool manifest that resolution would
-        // actually pick up (same condition ToolResolutionStrategy uses).
+        // actually pick up.
         var manifestAlreadyUsable =
+            wouldUseManifest &&
             manifestDir is not null &&
-            ToolModeUsesManifest(mode, manifestDir, forceManifestOnNonWindows) &&
             ManifestListsTool(manifestDir, ToolPackageId, ToolCommand);
         if (manifestAlreadyUsable)
             return true;
 
-        // Already usable via a global tool already resolvable on PATH.
-        if (Probe.IsGlobalToolInstalled(ToolCommand))
+        // Already usable via a global tool already resolvable on PATH - but only when resolution
+        // would actually use the global tool path. When resolution would use a manifest (e.g.
+        // ToolMode="tool-manifest", or "auto" with a discovered-but-incomplete manifest), a
+        // global tool on PATH is irrelevant: ToolResolutionStrategy still emits `dotnet tool run`
+        // against the manifest, which would fail if we skipped acquisition here on the strength
+        // of an unrelated global install.
+        if (!wouldUseManifest && Probe.IsGlobalToolInstalled(ToolCommand))
             return true;
+
+        var canAutoAcquire = AutoAcquireTool.IsTrue() && PathUtils.HasValue(ToolPackageId);
+
+        if (!canAutoAcquire)
+        {
+            if (!wouldUseManifest)
+                // Legacy behavior: not using a manifest, so resolution falls back to invoking the
+                // global tool directly (or 'dotnet tool update --global' first, if ToolRestore is
+                // enabled) - unaffected by this feature when auto-acquisition can't run.
+                return true;
+
+            // Resolution WOULD use a manifest, but that manifest is absent or doesn't list the
+            // tool, and we have no way to fix that (auto-acquire disabled, or no package id to
+            // install). Proceeding would guarantee a `dotnet tool run <cmd>` failure against a
+            // manifest that can't resolve the command - fail now with an actionable error instead.
+            var notConfiguredEx = new EfcptToolAcquisitionNotConfiguredException(
+                workingDir, manifestDir, ToolPackageId, ToolVersion, AutoAcquireTool);
+            log.Error("JD0028", notConfiguredEx.Message);
+            return false;
+        }
+
+        // Target the already-discovered manifest directory when one exists (even if resolution
+        // wouldn't otherwise use it as-is) so acquisition installs the missing tool entry into
+        // that manifest rather than bootstrapping a second, shadowing manifest in workingDir.
+        var acquisitionDir = manifestDir ?? workingDir;
 
         var versionSuffix = string.IsNullOrWhiteSpace(ToolVersion) ? "" : $" {ToolVersion}";
         log.Info(
             $"[Efcpt] No hermetic, network-free way to run the efcpt tool was found for " +
             $"TargetFramework='{TargetFramework}' (dnx unavailable/unusable, no usable tool " +
-            $"manifest or global tool). Bootstrapping an obj-local tool manifest in " +
-            $"'{workingDir}' and installing '{ToolPackageId}{versionSuffix}' into it " +
+            $"manifest or global tool). Bootstrapping/updating the tool manifest in " +
+            $"'{acquisitionDir}' and installing '{ToolPackageId}{versionSuffix}' into it " +
             "(EfcptAutoAcquireTool=true)...");
 
-        var request = new ToolAcquisitionRequest(workingDir, DotNetExe, ToolPackageId, ToolVersion);
+        var request = new ToolAcquisitionRequest(acquisitionDir, DotNetExe, ToolPackageId, ToolVersion);
         var outcome = ToolAcquirer.Acquire(request, log);
 
         if (!outcome.Success)
         {
             var ex = new EfcptToolAcquisitionFailedException(
-                workingDir, ToolPackageId, ToolVersion, outcome.ErrorMessage ?? "(no details captured)");
+                acquisitionDir, ToolPackageId, ToolVersion, outcome.ErrorMessage ?? "(no details captured)");
             log.Error("JD0027", ex.Message);
             return false;
         }
@@ -750,7 +781,13 @@ public sealed class RunEfcpt : Task
     /// </summary>
     /// <param name="targetFramework">The target framework string (e.g., "net8.0", "net10.0").</param>
     /// <returns>True if the target framework is .NET 10.0 or later; otherwise false.</returns>
-    private static bool IsDotNet10OrLater(string targetFramework)
+    /// <remarks>
+    /// Internal (not private) so <see cref="EfcptDoctor"/> can call the exact same TFM-parsing
+    /// logic <see cref="ToolResolutionStrategy"/> and <see cref="AcquireToolIfNeeded"/> use,
+    /// rather than a separately-maintained copy that could drift on odd TFM shapes (see #186
+    /// adversarial review).
+    /// </remarks>
+    internal static bool IsDotNet10OrLater(string targetFramework)
     {
         if (string.IsNullOrWhiteSpace(targetFramework))
             return false;
