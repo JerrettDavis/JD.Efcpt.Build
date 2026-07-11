@@ -78,9 +78,10 @@ target for one build.
 
 ## What it does *not* do
 
-- It does not disable the fingerprint computation itself - `EfcptComputeFingerprint` still runs
-  and still writes a fresh fingerprint, so the *next* build (without `EfcptForceRegenerate`) goes
-  straight back to normal incremental behavior.
+- It does not disable fingerprint computation - `EfcptComputeFingerprint` still runs; the
+  fingerprint file is rewritten only if the computed value actually changed (when it's unchanged,
+  the existing correct value is left in place, not overwritten). Either way the *next* build
+  (without `EfcptForceRegenerate`) is correctly incremental again.
 - It does not affect `EfcptDetectGeneratedFileChanges`, `EfcptOfflineMode`, or any other cache/gate
   outside the fingerprint+stamp pair.
 - It is scoped to `EfcptGenerateModels`; it does not force-rebuild the referenced `.sqlproj` or
