@@ -34,6 +34,17 @@ public static class BuildTransitivePropsFactory
                     group.Property<EfcptAppSettings>( "", "'$(EfcptAppSettings)'==''");
                     group.Property<EfcptAppConfig>( "", "'$(EfcptAppConfig)'==''");
                     group.Property<EfcptConnectionStringName>( "DefaultConnection", "'$(EfcptConnectionStringName)'==''");
+                    // Pluggable connection-string sources (#188): EfcptConnectionStringSource
+                    // selects a source key ("env", "azure-keyvault", "aws-secrets", ...); empty
+                    // (the default) preserves today's file/.sqlproj resolution behavior exactly.
+                    group.Property<EfcptConnectionStringSource>( "", "'$(EfcptConnectionStringSource)'==''");
+                    group.Property<EfcptConnectionStringEnvVar>( "", "'$(EfcptConnectionStringEnvVar)'==''");
+                    group.Property<EfcptKeyVaultUri>( "", "'$(EfcptKeyVaultUri)'==''");
+                    group.Property<EfcptKeyVaultSecretName>( "", "'$(EfcptKeyVaultSecretName)'==''");
+                    group.Property<EfcptKeyVaultSecretVersion>( "", "'$(EfcptKeyVaultSecretVersion)'==''");
+                    group.Property<EfcptAwsSecretId>( "", "'$(EfcptAwsSecretId)'==''");
+                    group.Property<EfcptAwsRegion>( "", "'$(EfcptAwsRegion)'==''");
+                    group.Property<EfcptAwsSecretJsonKey>( "", "'$(EfcptAwsSecretJsonKey)'==''");
                     group.Property<EfcptProvider>( "mssql", "'$(EfcptProvider)'==''");
                     group.Property<EfcptSolutionDir>( "$(SolutionDir)", "'$(EfcptSolutionDir)'==''");
                     group.Property<EfcptSolutionPath>( "$(SolutionPath)", "'$(EfcptSolutionPath)'==''");
@@ -146,6 +157,17 @@ public static class BuildTransitivePropsFactory
                     group.Property<EfcptAppSettings>( "", "'$(EfcptAppSettings)'==''");
                     group.Property<EfcptAppConfig>( "", "'$(EfcptAppConfig)'==''");
                     group.Property<EfcptConnectionStringName>( "DefaultConnection", "'$(EfcptConnectionStringName)'==''");
+                    // Pluggable connection-string sources (#188): EfcptConnectionStringSource
+                    // selects a source key ("env", "azure-keyvault", "aws-secrets", ...); empty
+                    // (the default) preserves today's file/.sqlproj resolution behavior exactly.
+                    group.Property<EfcptConnectionStringSource>( "", "'$(EfcptConnectionStringSource)'==''");
+                    group.Property<EfcptConnectionStringEnvVar>( "", "'$(EfcptConnectionStringEnvVar)'==''");
+                    group.Property<EfcptKeyVaultUri>( "", "'$(EfcptKeyVaultUri)'==''");
+                    group.Property<EfcptKeyVaultSecretName>( "", "'$(EfcptKeyVaultSecretName)'==''");
+                    group.Property<EfcptKeyVaultSecretVersion>( "", "'$(EfcptKeyVaultSecretVersion)'==''");
+                    group.Property<EfcptAwsSecretId>( "", "'$(EfcptAwsSecretId)'==''");
+                    group.Property<EfcptAwsRegion>( "", "'$(EfcptAwsRegion)'==''");
+                    group.Property<EfcptAwsSecretJsonKey>( "", "'$(EfcptAwsSecretJsonKey)'==''");
                     group.Property<EfcptProvider>( "mssql", "'$(EfcptProvider)'==''");
                     group.Property<EfcptSolutionDir>( "$(SolutionDir)", "'$(EfcptSolutionDir)'==''");
                     group.Property<EfcptSolutionPath>( "$(SolutionPath)", "'$(EfcptSolutionPath)'==''");
@@ -266,6 +288,18 @@ public static class BuildTransitivePropsFactory
   public readonly struct EfcptAutoDetectWarningLevel : IMsBuildPropertyName
   {
     public string Name => "EfcptAutoDetectWarningLevel";
+  }
+  public readonly struct EfcptAwsRegion : IMsBuildPropertyName
+  {
+    public string Name => "EfcptAwsRegion";
+  }
+  public readonly struct EfcptAwsSecretId : IMsBuildPropertyName
+  {
+    public string Name => "EfcptAwsSecretId";
+  }
+  public readonly struct EfcptAwsSecretJsonKey : IMsBuildPropertyName
+  {
+    public string Name => "EfcptAwsSecretJsonKey";
   }
   public readonly struct EfcptCheckForUpdates : IMsBuildPropertyName
   {
@@ -423,9 +457,17 @@ public static class BuildTransitivePropsFactory
   {
     public string Name => "EfcptConnectionString";
   }
+  public readonly struct EfcptConnectionStringEnvVar : IMsBuildPropertyName
+  {
+    public string Name => "EfcptConnectionStringEnvVar";
+  }
   public readonly struct EfcptConnectionStringName : IMsBuildPropertyName
   {
     public string Name => "EfcptConnectionStringName";
+  }
+  public readonly struct EfcptConnectionStringSource : IMsBuildPropertyName
+  {
+    public string Name => "EfcptConnectionStringSource";
   }
   public readonly struct EfcptDacpac : IMsBuildPropertyName
   {
@@ -474,6 +516,18 @@ public static class BuildTransitivePropsFactory
   public readonly struct EfcptGeneratedDir : IMsBuildPropertyName
   {
     public string Name => "EfcptGeneratedDir";
+  }
+  public readonly struct EfcptKeyVaultSecretName : IMsBuildPropertyName
+  {
+    public string Name => "EfcptKeyVaultSecretName";
+  }
+  public readonly struct EfcptKeyVaultSecretVersion : IMsBuildPropertyName
+  {
+    public string Name => "EfcptKeyVaultSecretVersion";
+  }
+  public readonly struct EfcptKeyVaultUri : IMsBuildPropertyName
+  {
+    public string Name => "EfcptKeyVaultUri";
   }
   public readonly struct EfcptLogVerbosity : IMsBuildPropertyName
   {

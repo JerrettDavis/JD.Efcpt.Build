@@ -224,6 +224,21 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("EfcptAppSettings", "$(EfcptAppSettings)");
                         task.Param("EfcptAppConfig", "$(EfcptAppConfig)");
                         task.Param("EfcptConnectionStringName", "$(EfcptConnectionStringName)");
+                        // Pluggable connection-string sources (#188) - see
+                        // JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionChain
+                        // Branch 0. EfcptConnectionStringSource selects the source; the rest are
+                        // per-source settings, folded into ConnectionStringSourceContext.Settings
+                        // by ResolveSqlProjAndInputs.
+                        task.Param("EfcptConnectionStringSource", "$(EfcptConnectionStringSource)");
+                        task.Param("EfcptConnectionStringEnvVar", "$(EfcptConnectionStringEnvVar)");
+                        task.Param("EfcptKeyVaultUri", "$(EfcptKeyVaultUri)");
+                        task.Param("EfcptKeyVaultSecretName", "$(EfcptKeyVaultSecretName)");
+                        task.Param("EfcptKeyVaultSecretVersion", "$(EfcptKeyVaultSecretVersion)");
+                        task.Param("EfcptAwsSecretId", "$(EfcptAwsSecretId)");
+                        task.Param("EfcptAwsRegion", "$(EfcptAwsRegion)");
+                        task.Param("EfcptAwsSecretJsonKey", "$(EfcptAwsSecretJsonKey)");
+                        task.Param("OfflineMode", "$(EfcptOfflineMode)");
+                        task.Param("ConnectionStringSourceSearchPaths", "@(EfcptConnectionStringSourceSearchPath)");
                         task.Param("AutoDetectWarningLevel", "$(EfcptAutoDetectWarningLevel)");
                         task.OutputProperty("SqlProjPath", "_EfcptSqlProj");
                         task.OutputProperty("ResolvedConfigPath", "_EfcptResolvedConfig");
