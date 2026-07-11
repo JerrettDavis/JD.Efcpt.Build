@@ -253,6 +253,26 @@ satellite-package resolution machinery. This is disabled by default (custom prov
 third-party code at build time) and requires an explicit opt-in. See
 [Custom Providers](custom-providers.md) for the full authoring and registration guide.
 
+## Per-Provider Reference Samples
+
+Minimal, buildable reference samples exist under `samples/provider-<name>/` for the five
+providers that have no DACPAC support and therefore need Connection String Mode. Each one ships a
+committed, compilable copy of the generated `AppDbContext` + entity classes under
+`EntityFrameworkCoreProject/Generated/`, so the sample builds green in CI with `-p:EfcptEnabled=false`
+and **no live database** - see each sample's README for how to point it at a real database and
+regenerate locally.
+
+| Sample | EF Core Runtime Provider | Notes |
+|--------|--------------------------|-------|
+| [provider-postgres](../../samples/provider-postgres/README.md) | `Npgsql.EntityFrameworkCore.PostgreSQL` | |
+| [provider-mysql](../../samples/provider-mysql/README.md) | `Pomelo.EntityFrameworkCore.MySql` | Pinned to EF Core 9.x - Pomelo has no EF Core 10 release yet |
+| [provider-oracle](../../samples/provider-oracle/README.md) | `Oracle.EntityFrameworkCore` | |
+| [provider-firebird](../../samples/provider-firebird/README.md) | `FirebirdSql.EntityFrameworkCore.Firebird` | |
+| [provider-snowflake](../../samples/provider-snowflake/README.md) | *(none - entities-only)* | No first-party EF Core runtime provider exists for Snowflake |
+
+(SQL Server and SQLite already have full samples under `samples/dacpac-zero-config/` and
+`samples/connection-string-sqlite/` respectively - see [samples/README.md](../../samples/README.md).)
+
 ## See Also
 
 - [Configuration Reference](configuration.md) - All EfcptProvider values and properties

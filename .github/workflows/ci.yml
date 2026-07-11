@@ -241,6 +241,16 @@ jobs:
             "samples/connection-string-mssql/ConnectionStringMssql.sln"
             "samples/aspnet-core-appsettings/AspNetCoreAppSettings.sln"
             "samples/split-data-and-models-between-multiple-projects/SampleApp.slnx"
+            # Per-provider reference samples (#191): minimal EF Core samples with committed
+            # generated code for the providers that don't have DACPAC support, so they build
+            # with -p:EfcptEnabled=false just like the rest of this list. provider-snowflake is
+            # entities-only (no first-party EF Core runtime provider exists for Snowflake) - see
+            # samples/provider-snowflake/README.md.
+            "samples/provider-postgres/ProviderPostgres.sln"
+            "samples/provider-mysql/ProviderMySql.sln"
+            "samples/provider-oracle/ProviderOracle.sln"
+            "samples/provider-firebird/ProviderFirebird.sln"
+            "samples/provider-snowflake/ProviderSnowflake.sln"
           )
           for sample in "${SAMPLES[@]}"; do
             echo "::group::Build $sample"
