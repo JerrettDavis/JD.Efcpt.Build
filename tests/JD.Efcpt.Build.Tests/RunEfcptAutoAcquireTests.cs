@@ -432,11 +432,26 @@ public sealed class RunEfcptAutoAcquireTests(ITestOutputHelper output) : TinyBdd
                     RenamingPath = ctx.setup.RenamingPath,
                     TemplateDir = ctx.setup.TemplateDir,
                     OutputDir = ctx.setup.OutputDir,
-                    ToolMode = "auto",
+                    // Deliberately NOT "auto": RunEfcpt.ExecuteCore sets
+                    // forceManifestOnNonWindows = !IsWindows && !HasExplicitPath(ToolPath), and
+                    // ToolModeUsesManifest treats "auto" as manifest-mode whenever
+                    // forceManifestOnNonWindows is true - regardless of whether a manifest
+                    // actually exists. Since this scenario intentionally has no manifest and an
+                    // empty ToolPath, "auto" would take the forced-manifest branch on Linux/macOS
+                    // (and, with AutoAcquireTool=false and no manifest to restore, dead-end into
+                    // the JD0028 "acquisition not configured" error instead of ever reaching the
+                    // legacy global-tool path this scenario intends to exercise) while resolving
+                    // via the Default/global-tool branch on Windows (where
+                    // forceManifestOnNonWindows is always false). "global" is any
+                    // non-"auto"/"tool-manifest" value, which unconditionally behaves like the
+                    // global tool mode on every platform (see the analogous fix in
+                    // OfflineModeTests.Offline_with_global_tool_on_path_succeeds_without_update),
+                    // so this test deterministically exercises the legacy global-tool path
+                    // identically on Windows and Linux.
+                    ToolMode = "global",
                     ToolPackageId = "ErikEJ.EFCorePowerTools.Cli",
-                    // Default ToolMode="auto" with no manifest resolves to the Default branch,
-                    // which invokes ToolCommand directly as the executable - stand in a fake
-                    // "global tool" script so the invocation actually succeeds.
+                    // Stands in for a real global tool resolvable on PATH: the Default branch of
+                    // ToolResolutionStrategy invokes ToolCommand directly as the executable.
                     ToolCommand = ctx.fakeGlobalTool,
                     TargetFramework = "net8.0",
                     OfflineMode = "false",

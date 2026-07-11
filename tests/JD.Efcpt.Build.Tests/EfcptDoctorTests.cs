@@ -128,6 +128,21 @@ public sealed class EfcptDoctorTests(ITestOutputHelper output) : TinyBddXunitBas
                     OfflineMode = "false",
                     AutoAcquireTool = "false",
                     Strict = "false",
+                    // Deliberately NOT "auto" (the default): EfcptDoctor.Execute computes
+                    // forceManifestOnNonWindows = !IsWindows && !HasExplicitPath(ToolPath), and
+                    // RunEfcpt.ToolModeUsesManifest treats "auto" as manifest-mode whenever
+                    // forceManifestOnNonWindows is true - regardless of whether a manifest
+                    // actually exists. With no manifest present here, "auto" would make
+                    // DetermineVerdict take the "no tool manifest found" branch on Linux/macOS
+                    // (remediation: "dotnet new tool-manifest && dotnet tool install ...") while
+                    // taking the global-tool branch on Windows (remediation: "dotnet tool install
+                    // --global ..."), a platform-dependent divergence in the verdict text. "global"
+                    // is any non-"auto"/"tool-manifest" value, so it bypasses forceManifestOnNonWindows
+                    // entirely (same fix pattern as RunEfcptAutoAcquireTests and
+                    // OfflineModeTests.Offline_with_global_tool_on_path_succeeds_without_update),
+                    // making the global-install remediation this test asserts deterministic on
+                    // every platform.
+                    ToolMode = "global",
                     Probe = new AllUnavailableSdkProbe()
                 };
                 return (folder, task);
