@@ -10,6 +10,13 @@
     <TargetFrameworks>net472;net8.0;net9.0;net10.0</TargetFrameworks>
 
     <!--
+      PublicApiAnalyzers (#191: PUBLIC-API-STABILITY) locks this assembly's public surface -
+      it is the custom-provider contract third parties reference. Scoped to net10.0 only; see
+      build/PublicApi.props for why (avoids a per-TFM PublicAPI.*.txt baseline for net472).
+    -->
+    <PublicApiAnalyzerTfm>net10.0</PublicApiAnalyzerTfm>
+
+    <!--
       Referenceable as its own NuGet package (#184): third-party authors implementing a custom
       database provider (IProviderAdapter + ISchemaReader) need something installable to compile
       against, without pulling in all of JD.Efcpt.Build.Tasks. This assembly remains the shared
@@ -49,6 +56,8 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
   </PropertyGroup>
+
+  <Import Project="..\..\build\PublicApi.props" />
 
   <!-- Polyfills for net472: provides IsExternalInit, init accessors, etc. (records use these). -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net472'">

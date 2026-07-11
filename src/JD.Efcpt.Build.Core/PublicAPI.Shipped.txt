@@ -1,0 +1,444 @@
+#nullable enable
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.<Clone>$() -> JD.Efcpt.Build.Core.Config.CodeGenerationOverrides!
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.CodeGenerationOverrides() -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.DiscoverMultipleStoredProcedureResultsetsPreview.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.DiscoverMultipleStoredProcedureResultsetsPreview.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.EnableOnConfiguring.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.EnableOnConfiguring.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.Equals(JD.Efcpt.Build.Core.Config.CodeGenerationOverrides? other) -> bool
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.GenerateMermaidDiagram.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.GenerateMermaidDiagram.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.MergeDacpacs.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.MergeDacpacs.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.RefreshObjectLists.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.RefreshObjectLists.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.RemoveDefaultSqlFromBoolProperties.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.RemoveDefaultSqlFromBoolProperties.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.SoftDeleteObsoleteFiles.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.SoftDeleteObsoleteFiles.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.T4TemplatePath.get -> string?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.T4TemplatePath.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.Type.get -> string?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.Type.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseAlternateStoredProcedureResultsetDiscovery.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseAlternateStoredProcedureResultsetDiscovery.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseDataAnnotations.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseDataAnnotations.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseDatabaseNames.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseDatabaseNames.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseDatabaseNamesForRoutines.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseDatabaseNamesForRoutines.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseDecimalDataAnnotationForSprocResults.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseDecimalDataAnnotationForSprocResults.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseInflector.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseInflector.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseInternalAccessModifiersForSprocsAndFunctions.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseInternalAccessModifiersForSprocsAndFunctions.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseLegacyInflector.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseLegacyInflector.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseManyToManyEntity.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseManyToManyEntity.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseNoNavigationsPreview.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseNoNavigationsPreview.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseNullableReferenceTypes.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseNullableReferenceTypes.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UsePrefixNavigationNaming.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UsePrefixNavigationNaming.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseT4.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseT4.init -> void
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseT4Split.get -> bool?
+JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.UseT4Split.init -> void
+JD.Efcpt.Build.Core.Config.EfcptConfigGenerator
+JD.Efcpt.Build.Core.Config.EfcptConfigOverrides
+JD.Efcpt.Build.Core.Config.EfcptConfigOverrides.<Clone>$() -> JD.Efcpt.Build.Core.Config.EfcptConfigOverrides!
+JD.Efcpt.Build.Core.Config.EfcptConfigOverrides.CodeGeneration.get -> JD.Efcpt.Build.Core.Config.CodeGenerationOverrides?
+JD.Efcpt.Build.Core.Config.EfcptConfigOverrides.CodeGeneration.init -> void
+JD.Efcpt.Build.Core.Config.EfcptConfigOverrides.EfcptConfigOverrides() -> void
+JD.Efcpt.Build.Core.Config.EfcptConfigOverrides.Equals(JD.Efcpt.Build.Core.Config.EfcptConfigOverrides? other) -> bool
+JD.Efcpt.Build.Core.Config.EfcptConfigOverrides.FileLayout.get -> JD.Efcpt.Build.Core.Config.FileLayoutOverrides?
+JD.Efcpt.Build.Core.Config.EfcptConfigOverrides.FileLayout.init -> void
+JD.Efcpt.Build.Core.Config.EfcptConfigOverrides.HasAnyOverrides() -> bool
+JD.Efcpt.Build.Core.Config.EfcptConfigOverrides.Names.get -> JD.Efcpt.Build.Core.Config.NamesOverrides?
+JD.Efcpt.Build.Core.Config.EfcptConfigOverrides.Names.init -> void
+JD.Efcpt.Build.Core.Config.EfcptConfigOverrides.Replacements.get -> JD.Efcpt.Build.Core.Config.ReplacementsOverrides?
+JD.Efcpt.Build.Core.Config.EfcptConfigOverrides.Replacements.init -> void
+JD.Efcpt.Build.Core.Config.EfcptConfigOverrides.TypeMappings.get -> JD.Efcpt.Build.Core.Config.TypeMappingsOverrides?
+JD.Efcpt.Build.Core.Config.EfcptConfigOverrides.TypeMappings.init -> void
+JD.Efcpt.Build.Core.Config.FileLayoutOverrides
+JD.Efcpt.Build.Core.Config.FileLayoutOverrides.<Clone>$() -> JD.Efcpt.Build.Core.Config.FileLayoutOverrides!
+JD.Efcpt.Build.Core.Config.FileLayoutOverrides.Equals(JD.Efcpt.Build.Core.Config.FileLayoutOverrides? other) -> bool
+JD.Efcpt.Build.Core.Config.FileLayoutOverrides.FileLayoutOverrides() -> void
+JD.Efcpt.Build.Core.Config.FileLayoutOverrides.OutputDbContextPath.get -> string?
+JD.Efcpt.Build.Core.Config.FileLayoutOverrides.OutputDbContextPath.init -> void
+JD.Efcpt.Build.Core.Config.FileLayoutOverrides.OutputPath.get -> string?
+JD.Efcpt.Build.Core.Config.FileLayoutOverrides.OutputPath.init -> void
+JD.Efcpt.Build.Core.Config.FileLayoutOverrides.SplitDbContextPreview.get -> bool?
+JD.Efcpt.Build.Core.Config.FileLayoutOverrides.SplitDbContextPreview.init -> void
+JD.Efcpt.Build.Core.Config.FileLayoutOverrides.UseSchemaFoldersPreview.get -> bool?
+JD.Efcpt.Build.Core.Config.FileLayoutOverrides.UseSchemaFoldersPreview.init -> void
+JD.Efcpt.Build.Core.Config.FileLayoutOverrides.UseSchemaNamespacesPreview.get -> bool?
+JD.Efcpt.Build.Core.Config.FileLayoutOverrides.UseSchemaNamespacesPreview.init -> void
+JD.Efcpt.Build.Core.Config.NamesOverrides
+JD.Efcpt.Build.Core.Config.NamesOverrides.<Clone>$() -> JD.Efcpt.Build.Core.Config.NamesOverrides!
+JD.Efcpt.Build.Core.Config.NamesOverrides.DbContextName.get -> string?
+JD.Efcpt.Build.Core.Config.NamesOverrides.DbContextName.init -> void
+JD.Efcpt.Build.Core.Config.NamesOverrides.DbContextNamespace.get -> string?
+JD.Efcpt.Build.Core.Config.NamesOverrides.DbContextNamespace.init -> void
+JD.Efcpt.Build.Core.Config.NamesOverrides.Equals(JD.Efcpt.Build.Core.Config.NamesOverrides? other) -> bool
+JD.Efcpt.Build.Core.Config.NamesOverrides.ModelNamespace.get -> string?
+JD.Efcpt.Build.Core.Config.NamesOverrides.ModelNamespace.init -> void
+JD.Efcpt.Build.Core.Config.NamesOverrides.NamesOverrides() -> void
+JD.Efcpt.Build.Core.Config.NamesOverrides.RootNamespace.get -> string?
+JD.Efcpt.Build.Core.Config.NamesOverrides.RootNamespace.init -> void
+JD.Efcpt.Build.Core.Config.ReplacementsOverrides
+JD.Efcpt.Build.Core.Config.ReplacementsOverrides.<Clone>$() -> JD.Efcpt.Build.Core.Config.ReplacementsOverrides!
+JD.Efcpt.Build.Core.Config.ReplacementsOverrides.Equals(JD.Efcpt.Build.Core.Config.ReplacementsOverrides? other) -> bool
+JD.Efcpt.Build.Core.Config.ReplacementsOverrides.PreserveCasingWithRegex.get -> bool?
+JD.Efcpt.Build.Core.Config.ReplacementsOverrides.PreserveCasingWithRegex.init -> void
+JD.Efcpt.Build.Core.Config.ReplacementsOverrides.ReplacementsOverrides() -> void
+JD.Efcpt.Build.Core.Config.TypeMappingsOverrides
+JD.Efcpt.Build.Core.Config.TypeMappingsOverrides.<Clone>$() -> JD.Efcpt.Build.Core.Config.TypeMappingsOverrides!
+JD.Efcpt.Build.Core.Config.TypeMappingsOverrides.Equals(JD.Efcpt.Build.Core.Config.TypeMappingsOverrides? other) -> bool
+JD.Efcpt.Build.Core.Config.TypeMappingsOverrides.TypeMappingsOverrides() -> void
+JD.Efcpt.Build.Core.Config.TypeMappingsOverrides.UseDateOnlyTimeOnly.get -> bool?
+JD.Efcpt.Build.Core.Config.TypeMappingsOverrides.UseDateOnlyTimeOnly.init -> void
+JD.Efcpt.Build.Core.Config.TypeMappingsOverrides.UseHierarchyId.get -> bool?
+JD.Efcpt.Build.Core.Config.TypeMappingsOverrides.UseHierarchyId.init -> void
+JD.Efcpt.Build.Core.Config.TypeMappingsOverrides.UseNodaTime.get -> bool?
+JD.Efcpt.Build.Core.Config.TypeMappingsOverrides.UseNodaTime.init -> void
+JD.Efcpt.Build.Core.Config.TypeMappingsOverrides.UseSpatial.get -> bool?
+JD.Efcpt.Build.Core.Config.TypeMappingsOverrides.UseSpatial.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionChain
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.ConnectionStringName.get -> string!
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.ConnectionStringName.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.ConnectionStringResolutionContext() -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.ConnectionStringResolutionContext(string! ExplicitConnectionString, string! EfcptAppSettings, string! EfcptAppConfig, string! ConnectionStringName, string! ProjectDirectory, JD.Efcpt.Build.Core.Logging.IBuildLog! Log, string! ConnectionStringSource = "", System.Collections.Generic.IReadOnlyDictionary<string!, string!>? SourceSettings = null, bool Offline = false, JD.Efcpt.Build.Core.ConnectionStrings.IConnectionStringSourceResolver? SourceResolver = null) -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.ConnectionStringSource.get -> string!
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.ConnectionStringSource.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.Deconstruct(out string! ExplicitConnectionString, out string! EfcptAppSettings, out string! EfcptAppConfig, out string! ConnectionStringName, out string! ProjectDirectory, out JD.Efcpt.Build.Core.Logging.IBuildLog! Log, out string! ConnectionStringSource, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>? SourceSettings, out bool Offline, out JD.Efcpt.Build.Core.ConnectionStrings.IConnectionStringSourceResolver? SourceResolver) -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.EfcptAppConfig.get -> string!
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.EfcptAppConfig.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.EfcptAppSettings.get -> string!
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.EfcptAppSettings.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.Equals(JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext other) -> bool
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.ExplicitConnectionString.get -> string!
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.ExplicitConnectionString.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.Log.get -> JD.Efcpt.Build.Core.Logging.IBuildLog!
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.Log.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.Offline.get -> bool
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.Offline.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.ProjectDirectory.get -> string!
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.ProjectDirectory.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.SourceResolver.get -> JD.Efcpt.Build.Core.ConnectionStrings.IConnectionStringSourceResolver?
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.SourceResolver.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.SourceSettings.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.SourceSettings.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult.<Clone>$() -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult!
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult.ConnectionString.get -> string?
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult.ConnectionString.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult.ConnectionStringResult() -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult.Equals(JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult? other) -> bool
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult.KeyName.get -> string?
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult.KeyName.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult.Source.get -> string?
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult.Source.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult.Success.get -> bool
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult.Success.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext.ConnectionStringSourceContext() -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext.ConnectionStringSourceContext(string! SourceKey, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Settings, bool Offline, JD.Efcpt.Build.Core.Logging.IBuildLog! Log) -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext.Deconstruct(out string! SourceKey, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Settings, out bool Offline, out JD.Efcpt.Build.Core.Logging.IBuildLog! Log) -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext.Equals(JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext other) -> bool
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext.Log.get -> JD.Efcpt.Build.Core.Logging.IBuildLog!
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext.Log.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext.Offline.get -> bool
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext.Offline.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext.Settings.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext.Settings.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext.SourceKey.get -> string!
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext.SourceKey.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceException
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceException.Code.get -> string!
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceException.ConnectionStringSourceException(string! code, string! sourceKey, string! message, System.Exception? innerException = null) -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceException.SourceKey.get -> string!
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceOutcome
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceOutcome.Failed = 3 -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceOutcome
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceOutcome.Found = 1 -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceOutcome
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceOutcome.Misconfigured = 5 -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceOutcome
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceOutcome.NotConfigured = 0 -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceOutcome
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceOutcome.NotFound = 2 -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceOutcome
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceOutcome.OfflineBlocked = 4 -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceOutcome
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.<Clone>$() -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult!
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.ConnectionString.get -> string?
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.ConnectionString.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.ConnectionStringSourceResult() -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.Diagnostic.get -> string?
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.Diagnostic.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.Equals(JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult? other) -> bool
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.Outcome.get -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceOutcome
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.Outcome.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.SourceKey.get -> string!
+JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.SourceKey.init -> void
+JD.Efcpt.Build.Core.ConnectionStrings.CoreConnectionStringSourceResolver
+JD.Efcpt.Build.Core.ConnectionStrings.CoreConnectionStringSourceResolver.CoreConnectionStringSourceResolver() -> void
+JD.Efcpt.Build.Core.ConnectionStrings.CoreConnectionStringSourceResolver.Resolve(string! sourceKey) -> JD.Efcpt.Build.Core.ConnectionStrings.IConnectionStringSource?
+JD.Efcpt.Build.Core.ConnectionStrings.EnvironmentVariableConnectionStringSource
+JD.Efcpt.Build.Core.ConnectionStrings.EnvironmentVariableConnectionStringSource.EnvironmentVariableConnectionStringSource() -> void
+JD.Efcpt.Build.Core.ConnectionStrings.EnvironmentVariableConnectionStringSource.Key.get -> string!
+JD.Efcpt.Build.Core.ConnectionStrings.EnvironmentVariableConnectionStringSource.Priority.get -> int
+JD.Efcpt.Build.Core.ConnectionStrings.EnvironmentVariableConnectionStringSource.Resolve(in JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext context) -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult!
+JD.Efcpt.Build.Core.ConnectionStrings.IConnectionStringSource
+JD.Efcpt.Build.Core.ConnectionStrings.IConnectionStringSource.Key.get -> string!
+JD.Efcpt.Build.Core.ConnectionStrings.IConnectionStringSource.Priority.get -> int
+JD.Efcpt.Build.Core.ConnectionStrings.IConnectionStringSource.Resolve(in JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext context) -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult!
+JD.Efcpt.Build.Core.ConnectionStrings.IConnectionStringSourceResolver
+JD.Efcpt.Build.Core.ConnectionStrings.IConnectionStringSourceResolver.Resolve(string! sourceKey) -> JD.Efcpt.Build.Core.ConnectionStrings.IConnectionStringSource?
+JD.Efcpt.Build.Core.Diagnostics.DefaultSdkProbe
+JD.Efcpt.Build.Core.Diagnostics.DefaultSdkProbe.DefaultSdkProbe() -> void
+JD.Efcpt.Build.Core.Diagnostics.DefaultSdkProbe.IsDnxAvailable(string! dotnetExe) -> bool
+JD.Efcpt.Build.Core.Diagnostics.DefaultSdkProbe.IsDotNet10SdkInstalled(string! dotnetExe) -> bool
+JD.Efcpt.Build.Core.Diagnostics.DefaultSdkProbe.IsGlobalToolInstalled(string! toolCommand) -> bool
+JD.Efcpt.Build.Core.Diagnostics.DefaultToolAcquirer
+JD.Efcpt.Build.Core.Diagnostics.DefaultToolAcquirer.Acquire(JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest request, JD.Efcpt.Build.Core.Logging.IBuildLog! log) -> JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome
+JD.Efcpt.Build.Core.Diagnostics.DefaultToolAcquirer.DefaultToolAcquirer() -> void
+JD.Efcpt.Build.Core.Diagnostics.DoctorEngine
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.AutoAcquire.get -> bool
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.AutoAcquire.init -> void
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.Deconstruct(out string! TargetFramework, out string! ToolMode, out string! ToolPackageId, out string! ToolVersion, out string! ToolCommand, out string! ToolPath, out string! DotNetExe, out string! WorkingDirectory, out bool Offline, out bool AutoAcquire, out bool Strict) -> void
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.DoctorInputs() -> void
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.DoctorInputs(string! TargetFramework, string! ToolMode, string! ToolPackageId, string! ToolVersion, string! ToolCommand, string! ToolPath, string! DotNetExe, string! WorkingDirectory, bool Offline, bool AutoAcquire, bool Strict) -> void
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.DotNetExe.get -> string!
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.DotNetExe.init -> void
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.Equals(JD.Efcpt.Build.Core.Diagnostics.DoctorInputs other) -> bool
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.Offline.get -> bool
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.Offline.init -> void
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.Strict.get -> bool
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.Strict.init -> void
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.TargetFramework.get -> string!
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.TargetFramework.init -> void
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.ToolCommand.get -> string!
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.ToolCommand.init -> void
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.ToolMode.get -> string!
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.ToolMode.init -> void
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.ToolPackageId.get -> string!
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.ToolPackageId.init -> void
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.ToolPath.get -> string!
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.ToolPath.init -> void
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.ToolVersion.get -> string!
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.ToolVersion.init -> void
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.WorkingDirectory.get -> string!
+JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.WorkingDirectory.init -> void
+JD.Efcpt.Build.Core.Diagnostics.DotNetToolUtilities
+JD.Efcpt.Build.Core.Diagnostics.ISdkProbe
+JD.Efcpt.Build.Core.Diagnostics.ISdkProbe.IsDnxAvailable(string! dotnetExe) -> bool
+JD.Efcpt.Build.Core.Diagnostics.ISdkProbe.IsDotNet10SdkInstalled(string! dotnetExe) -> bool
+JD.Efcpt.Build.Core.Diagnostics.ISdkProbe.IsGlobalToolInstalled(string! toolCommand) -> bool
+JD.Efcpt.Build.Core.Diagnostics.IToolAcquirer
+JD.Efcpt.Build.Core.Diagnostics.IToolAcquirer.Acquire(JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest request, JD.Efcpt.Build.Core.Logging.IBuildLog! log) -> JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome
+JD.Efcpt.Build.Core.Diagnostics.ProbeOutcome
+JD.Efcpt.Build.Core.Diagnostics.ProbeOutcome.Available = 0 -> JD.Efcpt.Build.Core.Diagnostics.ProbeOutcome
+JD.Efcpt.Build.Core.Diagnostics.ProbeOutcome.Transient = 2 -> JD.Efcpt.Build.Core.Diagnostics.ProbeOutcome
+JD.Efcpt.Build.Core.Diagnostics.ProbeOutcome.Unavailable = 1 -> JD.Efcpt.Build.Core.Diagnostics.ProbeOutcome
+JD.Efcpt.Build.Core.Diagnostics.SdkProbeCache
+JD.Efcpt.Build.Core.Diagnostics.SecretRedaction
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome.Deconstruct(out bool Success, out string? ErrorMessage) -> void
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome.Equals(JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome other) -> bool
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome.ErrorMessage.get -> string?
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome.ErrorMessage.init -> void
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome.Success.get -> bool
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome.Success.init -> void
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome.ToolAcquisitionOutcome() -> void
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome.ToolAcquisitionOutcome(bool Success, string? ErrorMessage) -> void
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest.Deconstruct(out string! ManifestDir, out string! DotNetExe, out string! ToolPackageId, out string! ToolVersion) -> void
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest.DotNetExe.get -> string!
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest.DotNetExe.init -> void
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest.Equals(JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest other) -> bool
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest.ManifestDir.get -> string!
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest.ManifestDir.init -> void
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest.ToolAcquisitionRequest() -> void
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest.ToolAcquisitionRequest(string! ManifestDir, string! DotNetExe, string! ToolPackageId, string! ToolVersion) -> void
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest.ToolPackageId.get -> string!
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest.ToolPackageId.init -> void
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest.ToolVersion.get -> string!
+JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest.ToolVersion.init -> void
+JD.Efcpt.Build.Core.FileHash
+JD.Efcpt.Build.Core.Logging.IBuildLog
+JD.Efcpt.Build.Core.Logging.IBuildLog.Detail(string! message) -> void
+JD.Efcpt.Build.Core.Logging.IBuildLog.Error(string! code, string! message) -> void
+JD.Efcpt.Build.Core.Logging.IBuildLog.Error(string! message) -> void
+JD.Efcpt.Build.Core.Logging.IBuildLog.Info(string! message) -> void
+JD.Efcpt.Build.Core.Logging.IBuildLog.Log(JD.Efcpt.Build.Core.Logging.MessageLevel level, string! message, string? code = null) -> void
+JD.Efcpt.Build.Core.Logging.IBuildLog.Warn(string! code, string! message) -> void
+JD.Efcpt.Build.Core.Logging.IBuildLog.Warn(string! message) -> void
+JD.Efcpt.Build.Core.Logging.MessageLevel
+JD.Efcpt.Build.Core.Logging.MessageLevel.Error = 3 -> JD.Efcpt.Build.Core.Logging.MessageLevel
+JD.Efcpt.Build.Core.Logging.MessageLevel.Info = 1 -> JD.Efcpt.Build.Core.Logging.MessageLevel
+JD.Efcpt.Build.Core.Logging.MessageLevel.None = 0 -> JD.Efcpt.Build.Core.Logging.MessageLevel
+JD.Efcpt.Build.Core.Logging.MessageLevel.Warn = 2 -> JD.Efcpt.Build.Core.Logging.MessageLevel
+JD.Efcpt.Build.Core.Logging.NullBuildLog
+JD.Efcpt.Build.Core.Logging.NullBuildLog.Detail(string! message) -> void
+JD.Efcpt.Build.Core.Logging.NullBuildLog.Error(string! code, string! message) -> void
+JD.Efcpt.Build.Core.Logging.NullBuildLog.Error(string! message) -> void
+JD.Efcpt.Build.Core.Logging.NullBuildLog.Info(string! message) -> void
+JD.Efcpt.Build.Core.Logging.NullBuildLog.Log(JD.Efcpt.Build.Core.Logging.MessageLevel level, string! message, string? code = null) -> void
+JD.Efcpt.Build.Core.Logging.NullBuildLog.Warn(string! code, string! message) -> void
+JD.Efcpt.Build.Core.Logging.NullBuildLog.Warn(string! message) -> void
+JD.Efcpt.Build.Core.PathUtils
+JD.Efcpt.Build.Core.Processes.ProcessCommand
+JD.Efcpt.Build.Core.Processes.ProcessCommand.Args.get -> string!
+JD.Efcpt.Build.Core.Processes.ProcessCommand.Args.init -> void
+JD.Efcpt.Build.Core.Processes.ProcessCommand.Deconstruct(out string! FileName, out string! Args) -> void
+JD.Efcpt.Build.Core.Processes.ProcessCommand.Equals(JD.Efcpt.Build.Core.Processes.ProcessCommand other) -> bool
+JD.Efcpt.Build.Core.Processes.ProcessCommand.FileName.get -> string!
+JD.Efcpt.Build.Core.Processes.ProcessCommand.FileName.init -> void
+JD.Efcpt.Build.Core.Processes.ProcessCommand.ProcessCommand() -> void
+JD.Efcpt.Build.Core.Processes.ProcessCommand.ProcessCommand(string! FileName, string! Args) -> void
+JD.Efcpt.Build.Core.Processes.ProcessResult
+JD.Efcpt.Build.Core.Processes.ProcessResult.Deconstruct(out int ExitCode, out string! StdOut, out string! StdErr) -> void
+JD.Efcpt.Build.Core.Processes.ProcessResult.Equals(JD.Efcpt.Build.Core.Processes.ProcessResult other) -> bool
+JD.Efcpt.Build.Core.Processes.ProcessResult.ExitCode.get -> int
+JD.Efcpt.Build.Core.Processes.ProcessResult.ExitCode.init -> void
+JD.Efcpt.Build.Core.Processes.ProcessResult.ProcessResult() -> void
+JD.Efcpt.Build.Core.Processes.ProcessResult.ProcessResult(int ExitCode, string! StdOut, string! StdErr) -> void
+JD.Efcpt.Build.Core.Processes.ProcessResult.StdErr.get -> string!
+JD.Efcpt.Build.Core.Processes.ProcessResult.StdErr.init -> void
+JD.Efcpt.Build.Core.Processes.ProcessResult.StdOut.get -> string!
+JD.Efcpt.Build.Core.Processes.ProcessResult.StdOut.init -> void
+JD.Efcpt.Build.Core.Processes.ProcessResult.Success.get -> bool
+JD.Efcpt.Build.Core.Processes.ProcessRunner
+JD.Efcpt.Build.Core.Providers.ProviderNames
+const JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceException.OfflineBlockedCode = "JD0032" -> string!
+const JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceException.SecretNotFoundCode = "JD0031" -> string!
+const JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceException.SourceMisconfiguredCode = "JD0034" -> string!
+const JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceException.SourceNotInstalledCode = "JD0033" -> string!
+const JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceException.SourceResolutionFailedCode = "JD0030" -> string!
+const JD.Efcpt.Build.Core.ConnectionStrings.EnvironmentVariableConnectionStringSource.DefaultEnvVarName = "EFCPT_CONNECTION_STRING" -> string!
+const JD.Efcpt.Build.Core.ConnectionStrings.EnvironmentVariableConnectionStringSource.EnvVarSettingKey = "envVar" -> string!
+const JD.Efcpt.Build.Core.Diagnostics.SecretRedaction.ConnectionStringPlaceholder = "<connection-string redacted>" -> string!
+override JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.Equals(object? obj) -> bool
+override JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.GetHashCode() -> int
+override JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.ToString() -> string!
+override JD.Efcpt.Build.Core.Config.EfcptConfigOverrides.Equals(object? obj) -> bool
+override JD.Efcpt.Build.Core.Config.EfcptConfigOverrides.GetHashCode() -> int
+override JD.Efcpt.Build.Core.Config.EfcptConfigOverrides.ToString() -> string!
+override JD.Efcpt.Build.Core.Config.FileLayoutOverrides.Equals(object? obj) -> bool
+override JD.Efcpt.Build.Core.Config.FileLayoutOverrides.GetHashCode() -> int
+override JD.Efcpt.Build.Core.Config.FileLayoutOverrides.ToString() -> string!
+override JD.Efcpt.Build.Core.Config.NamesOverrides.Equals(object? obj) -> bool
+override JD.Efcpt.Build.Core.Config.NamesOverrides.GetHashCode() -> int
+override JD.Efcpt.Build.Core.Config.NamesOverrides.ToString() -> string!
+override JD.Efcpt.Build.Core.Config.ReplacementsOverrides.Equals(object? obj) -> bool
+override JD.Efcpt.Build.Core.Config.ReplacementsOverrides.GetHashCode() -> int
+override JD.Efcpt.Build.Core.Config.ReplacementsOverrides.ToString() -> string!
+override JD.Efcpt.Build.Core.Config.TypeMappingsOverrides.Equals(object? obj) -> bool
+override JD.Efcpt.Build.Core.Config.TypeMappingsOverrides.GetHashCode() -> int
+override JD.Efcpt.Build.Core.Config.TypeMappingsOverrides.ToString() -> string!
+override JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.GetHashCode() -> int
+override JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult.Equals(object? obj) -> bool
+override JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult.GetHashCode() -> int
+override JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult.ToString() -> string!
+override JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext.GetHashCode() -> int
+override JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.Equals(object? obj) -> bool
+override JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.GetHashCode() -> int
+override JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.ToString() -> string!
+override JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.GetHashCode() -> int
+override JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome.GetHashCode() -> int
+override JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest.GetHashCode() -> int
+override JD.Efcpt.Build.Core.Processes.ProcessCommand.GetHashCode() -> int
+override JD.Efcpt.Build.Core.Processes.ProcessResult.GetHashCode() -> int
+static JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.operator !=(JD.Efcpt.Build.Core.Config.CodeGenerationOverrides? left, JD.Efcpt.Build.Core.Config.CodeGenerationOverrides? right) -> bool
+static JD.Efcpt.Build.Core.Config.CodeGenerationOverrides.operator ==(JD.Efcpt.Build.Core.Config.CodeGenerationOverrides? left, JD.Efcpt.Build.Core.Config.CodeGenerationOverrides? right) -> bool
+static JD.Efcpt.Build.Core.Config.EfcptConfigGenerator.GenerateFromFile(string! schemaPath, string? dbContextName = null, string? rootNamespace = null, string? schemaUrl = null) -> string!
+static JD.Efcpt.Build.Core.Config.EfcptConfigGenerator.GenerateFromSchema(string! schemaJson, string? dbContextName = null, string? rootNamespace = null, string? schemaUrl = null) -> string!
+static JD.Efcpt.Build.Core.Config.EfcptConfigGenerator.GenerateFromUrlAsync(string? schemaUrl = null, string? dbContextName = null, string? rootNamespace = null, JD.Efcpt.Build.Core.Logging.IBuildLog? log = null) -> System.Threading.Tasks.Task<string!>!
+static JD.Efcpt.Build.Core.Config.EfcptConfigOverrides.operator !=(JD.Efcpt.Build.Core.Config.EfcptConfigOverrides? left, JD.Efcpt.Build.Core.Config.EfcptConfigOverrides? right) -> bool
+static JD.Efcpt.Build.Core.Config.EfcptConfigOverrides.operator ==(JD.Efcpt.Build.Core.Config.EfcptConfigOverrides? left, JD.Efcpt.Build.Core.Config.EfcptConfigOverrides? right) -> bool
+static JD.Efcpt.Build.Core.Config.FileLayoutOverrides.operator !=(JD.Efcpt.Build.Core.Config.FileLayoutOverrides? left, JD.Efcpt.Build.Core.Config.FileLayoutOverrides? right) -> bool
+static JD.Efcpt.Build.Core.Config.FileLayoutOverrides.operator ==(JD.Efcpt.Build.Core.Config.FileLayoutOverrides? left, JD.Efcpt.Build.Core.Config.FileLayoutOverrides? right) -> bool
+static JD.Efcpt.Build.Core.Config.NamesOverrides.operator !=(JD.Efcpt.Build.Core.Config.NamesOverrides? left, JD.Efcpt.Build.Core.Config.NamesOverrides? right) -> bool
+static JD.Efcpt.Build.Core.Config.NamesOverrides.operator ==(JD.Efcpt.Build.Core.Config.NamesOverrides? left, JD.Efcpt.Build.Core.Config.NamesOverrides? right) -> bool
+static JD.Efcpt.Build.Core.Config.ReplacementsOverrides.operator !=(JD.Efcpt.Build.Core.Config.ReplacementsOverrides? left, JD.Efcpt.Build.Core.Config.ReplacementsOverrides? right) -> bool
+static JD.Efcpt.Build.Core.Config.ReplacementsOverrides.operator ==(JD.Efcpt.Build.Core.Config.ReplacementsOverrides? left, JD.Efcpt.Build.Core.Config.ReplacementsOverrides? right) -> bool
+static JD.Efcpt.Build.Core.Config.TypeMappingsOverrides.operator !=(JD.Efcpt.Build.Core.Config.TypeMappingsOverrides? left, JD.Efcpt.Build.Core.Config.TypeMappingsOverrides? right) -> bool
+static JD.Efcpt.Build.Core.Config.TypeMappingsOverrides.operator ==(JD.Efcpt.Build.Core.Config.TypeMappingsOverrides? left, JD.Efcpt.Build.Core.Config.TypeMappingsOverrides? right) -> bool
+static JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionChain.Build() -> PatternKit.Behavioral.Chain.ResultChain<JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext, string?>!
+static JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.operator !=(JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext left, JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext right) -> bool
+static JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.operator ==(JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext left, JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext right) -> bool
+static JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult.Failed() -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult!
+static JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult.NotFound() -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult!
+static JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult.WithSuccess(string! connectionString, string! source, string! keyName) -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult!
+static JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult.operator !=(JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult? left, JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult? right) -> bool
+static JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult.operator ==(JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult? left, JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResult? right) -> bool
+static JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext.operator !=(JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext left, JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext right) -> bool
+static JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext.operator ==(JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext left, JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext right) -> bool
+static JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceException.KnownSatellitePackagesByKey.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+static JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceException.SourceNotInstalled(string! sourceKey) -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceException!
+static JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.Failed(string! sourceKey, string? diagnostic = null) -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult!
+static JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.Found(string! sourceKey, string! connectionString) -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult!
+static JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.Misconfigured(string! sourceKey, string? diagnostic = null) -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult!
+static JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.NotConfigured(string! sourceKey) -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult!
+static JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.NotFound(string! sourceKey, string? diagnostic = null) -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult!
+static JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.OfflineBlocked(string! sourceKey, string? diagnostic = null) -> JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult!
+static JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.operator !=(JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult? left, JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult? right) -> bool
+static JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult.operator ==(JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult? left, JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceResult? right) -> bool
+static JD.Efcpt.Build.Core.Diagnostics.DoctorEngine.Diagnose(JD.Efcpt.Build.Core.Diagnostics.DoctorInputs inputs, JD.Efcpt.Build.Core.Diagnostics.ISdkProbe! probe) -> (string! Verdict, bool HasViablePath, System.Collections.Generic.IReadOnlyList<string!>! Messages)
+static JD.Efcpt.Build.Core.Diagnostics.DoctorEngine.FindManifestDir(string! start) -> string?
+static JD.Efcpt.Build.Core.Diagnostics.DoctorEngine.IsDotNet10OrLater(string! targetFramework) -> bool
+static JD.Efcpt.Build.Core.Diagnostics.DoctorEngine.ManifestListsTool(string! manifestDir, string! toolPackageId, string! toolCommand) -> bool
+static JD.Efcpt.Build.Core.Diagnostics.DoctorEngine.ToolModeUsesManifest(string! toolMode, string? manifestDir, bool forceManifestOnNonWindows) -> bool
+static JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.operator !=(JD.Efcpt.Build.Core.Diagnostics.DoctorInputs left, JD.Efcpt.Build.Core.Diagnostics.DoctorInputs right) -> bool
+static JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.operator ==(JD.Efcpt.Build.Core.Diagnostics.DoctorInputs left, JD.Efcpt.Build.Core.Diagnostics.DoctorInputs right) -> bool
+static JD.Efcpt.Build.Core.Diagnostics.DotNetToolUtilities.IsDnxAvailable(string! dotnetExe) -> bool
+static JD.Efcpt.Build.Core.Diagnostics.DotNetToolUtilities.IsDnxHelpAvailable(string! dotnetExe) -> bool
+static JD.Efcpt.Build.Core.Diagnostics.DotNetToolUtilities.IsDotNet10OrLater(string! targetFramework) -> bool
+static JD.Efcpt.Build.Core.Diagnostics.DotNetToolUtilities.IsDotNet10SdkInstalled(string! dotnetExe) -> bool
+static JD.Efcpt.Build.Core.Diagnostics.DotNetToolUtilities.ParseTargetFrameworkVersion(string! targetFramework) -> int?
+static JD.Efcpt.Build.Core.Diagnostics.SdkProbeCache.Clear() -> void
+static JD.Efcpt.Build.Core.Diagnostics.SdkProbeCache.GetOrProbe(string! probeName, string? dotnetExe, System.Func<JD.Efcpt.Build.Core.Diagnostics.ProbeOutcome>! probe) -> bool
+static JD.Efcpt.Build.Core.Diagnostics.SdkProbeCache.ResolveDotnetExecutable(string? dotnetExe) -> string?
+static JD.Efcpt.Build.Core.Diagnostics.SecretRedaction.MaskSecrets(string? text) -> string!
+static JD.Efcpt.Build.Core.Diagnostics.SecretRedaction.RedactConnectionString(string? text, string? connectionString) -> string!
+static JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome.Failed(string! errorMessage) -> JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome
+static JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome.Ok() -> JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome
+static JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome.operator !=(JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome left, JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome right) -> bool
+static JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome.operator ==(JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome left, JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome right) -> bool
+static JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest.operator !=(JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest left, JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest right) -> bool
+static JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest.operator ==(JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest left, JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest right) -> bool
+static JD.Efcpt.Build.Core.FileHash.HashBytes(byte[]! bytes) -> string!
+static JD.Efcpt.Build.Core.FileHash.HashFile(string! path) -> string!
+static JD.Efcpt.Build.Core.FileHash.HashString(string! content) -> string!
+static JD.Efcpt.Build.Core.PathUtils.FullPath(string! path, string! baseDir) -> string!
+static JD.Efcpt.Build.Core.PathUtils.HasExplicitPath(string? s) -> bool
+static JD.Efcpt.Build.Core.PathUtils.HasValue(string? s) -> bool
+static JD.Efcpt.Build.Core.Processes.ProcessCommand.operator !=(JD.Efcpt.Build.Core.Processes.ProcessCommand left, JD.Efcpt.Build.Core.Processes.ProcessCommand right) -> bool
+static JD.Efcpt.Build.Core.Processes.ProcessCommand.operator ==(JD.Efcpt.Build.Core.Processes.ProcessCommand left, JD.Efcpt.Build.Core.Processes.ProcessCommand right) -> bool
+static JD.Efcpt.Build.Core.Processes.ProcessResult.operator !=(JD.Efcpt.Build.Core.Processes.ProcessResult left, JD.Efcpt.Build.Core.Processes.ProcessResult right) -> bool
+static JD.Efcpt.Build.Core.Processes.ProcessResult.operator ==(JD.Efcpt.Build.Core.Processes.ProcessResult left, JD.Efcpt.Build.Core.Processes.ProcessResult right) -> bool
+static JD.Efcpt.Build.Core.Processes.ProcessRunner.Run(JD.Efcpt.Build.Core.Logging.IBuildLog! log, string! fileName, string! args, string! workingDir, System.Collections.Generic.IDictionary<string!, string!>? environmentVariables = null, int? timeoutMs = null, string? secretToRedact = null) -> JD.Efcpt.Build.Core.Processes.ProcessResult
+static JD.Efcpt.Build.Core.Processes.ProcessRunner.RunBuildOrThrow(JD.Efcpt.Build.Core.Logging.IBuildLog! log, string! fileName, string! args, string! workingDir, string? errorMessage = null, System.Collections.Generic.IDictionary<string!, string!>? environmentVariables = null) -> void
+static JD.Efcpt.Build.Core.Processes.ProcessRunner.RunOrThrow(JD.Efcpt.Build.Core.Logging.IBuildLog! log, string! fileName, string! args, string! workingDir, System.Collections.Generic.IDictionary<string!, string!>? environmentVariables = null, string? secretToRedact = null) -> void
+static JD.Efcpt.Build.Core.Providers.ProviderNames.GetDisplayName(string! provider) -> string!
+static JD.Efcpt.Build.Core.Providers.ProviderNames.Normalize(string! provider) -> string!
+static JD.Efcpt.Build.Core.Providers.ProviderNames.SupportedProviders.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static readonly JD.Efcpt.Build.Core.Logging.NullBuildLog.Instance -> JD.Efcpt.Build.Core.Logging.NullBuildLog!
+~override JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.Equals(object obj) -> bool
+~override JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringResolutionContext.ToString() -> string
+~override JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext.Equals(object obj) -> bool
+~override JD.Efcpt.Build.Core.ConnectionStrings.ConnectionStringSourceContext.ToString() -> string
+~override JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.Equals(object obj) -> bool
+~override JD.Efcpt.Build.Core.Diagnostics.DoctorInputs.ToString() -> string
+~override JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome.Equals(object obj) -> bool
+~override JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionOutcome.ToString() -> string
+~override JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest.Equals(object obj) -> bool
+~override JD.Efcpt.Build.Core.Diagnostics.ToolAcquisitionRequest.ToString() -> string
+~override JD.Efcpt.Build.Core.Processes.ProcessCommand.Equals(object obj) -> bool
+~override JD.Efcpt.Build.Core.Processes.ProcessCommand.ToString() -> string
+~override JD.Efcpt.Build.Core.Processes.ProcessResult.Equals(object obj) -> bool
+~override JD.Efcpt.Build.Core.Processes.ProcessResult.ToString() -> string

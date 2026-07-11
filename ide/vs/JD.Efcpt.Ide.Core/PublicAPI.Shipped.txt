@@ -1,0 +1,138 @@
+#nullable enable
+JD.Efcpt.Ide.Core.BuildProfile
+JD.Efcpt.Ide.Core.BuildProfile.Artifacts.get -> System.Collections.Generic.IReadOnlyList<JD.Efcpt.Ide.Core.BuildProfileArtifact!>!
+JD.Efcpt.Ide.Core.BuildProfile.Artifacts.set -> void
+JD.Efcpt.Ide.Core.BuildProfile.BuildProfile() -> void
+JD.Efcpt.Ide.Core.BuildProfile.Diagnostics.get -> System.Collections.Generic.IReadOnlyList<JD.Efcpt.Ide.Core.BuildProfileDiagnostic!>!
+JD.Efcpt.Ide.Core.BuildProfile.Diagnostics.set -> void
+JD.Efcpt.Ide.Core.BuildProfile.Duration.get -> System.TimeSpan?
+JD.Efcpt.Ide.Core.BuildProfile.Duration.set -> void
+JD.Efcpt.Ide.Core.BuildProfile.EndTime.get -> System.DateTimeOffset?
+JD.Efcpt.Ide.Core.BuildProfile.EndTime.set -> void
+JD.Efcpt.Ide.Core.BuildProfile.ModelCount.get -> int
+JD.Efcpt.Ide.Core.BuildProfile.ModelCount.set -> void
+JD.Efcpt.Ide.Core.BuildProfile.ProjectName.get -> string?
+JD.Efcpt.Ide.Core.BuildProfile.ProjectName.set -> void
+JD.Efcpt.Ide.Core.BuildProfile.RunId.get -> string?
+JD.Efcpt.Ide.Core.BuildProfile.RunId.set -> void
+JD.Efcpt.Ide.Core.BuildProfile.SchemaSupported.get -> bool
+JD.Efcpt.Ide.Core.BuildProfile.SchemaSupported.set -> void
+JD.Efcpt.Ide.Core.BuildProfile.SchemaVersion.get -> string!
+JD.Efcpt.Ide.Core.BuildProfile.SchemaVersion.set -> void
+JD.Efcpt.Ide.Core.BuildProfile.StartTime.get -> System.DateTimeOffset?
+JD.Efcpt.Ide.Core.BuildProfile.StartTime.set -> void
+JD.Efcpt.Ide.Core.BuildProfile.Status.get -> string!
+JD.Efcpt.Ide.Core.BuildProfile.Status.set -> void
+JD.Efcpt.Ide.Core.BuildProfile.StatusValue.get -> JD.Efcpt.Ide.Core.BuildProfileStatus
+JD.Efcpt.Ide.Core.BuildProfile.StatusValue.set -> void
+JD.Efcpt.Ide.Core.BuildProfileArtifact
+JD.Efcpt.Ide.Core.BuildProfileArtifact.BuildProfileArtifact() -> void
+JD.Efcpt.Ide.Core.BuildProfileArtifact.Path.get -> string!
+JD.Efcpt.Ide.Core.BuildProfileArtifact.Path.set -> void
+JD.Efcpt.Ide.Core.BuildProfileArtifact.Size.get -> long?
+JD.Efcpt.Ide.Core.BuildProfileArtifact.Size.set -> void
+JD.Efcpt.Ide.Core.BuildProfileArtifact.Type.get -> string!
+JD.Efcpt.Ide.Core.BuildProfileArtifact.Type.set -> void
+JD.Efcpt.Ide.Core.BuildProfileDiagnostic
+JD.Efcpt.Ide.Core.BuildProfileDiagnostic.BuildProfileDiagnostic() -> void
+JD.Efcpt.Ide.Core.BuildProfileDiagnostic.Code.get -> string?
+JD.Efcpt.Ide.Core.BuildProfileDiagnostic.Code.set -> void
+JD.Efcpt.Ide.Core.BuildProfileDiagnostic.Message.get -> string?
+JD.Efcpt.Ide.Core.BuildProfileDiagnostic.Message.set -> void
+JD.Efcpt.Ide.Core.BuildProfileDiagnostic.Severity.get -> string!
+JD.Efcpt.Ide.Core.BuildProfileDiagnostic.Severity.set -> void
+JD.Efcpt.Ide.Core.BuildProfileDiagnostic.Timestamp.get -> System.DateTimeOffset?
+JD.Efcpt.Ide.Core.BuildProfileDiagnostic.Timestamp.set -> void
+JD.Efcpt.Ide.Core.BuildProfileParseException
+JD.Efcpt.Ide.Core.BuildProfileParseException.BuildProfileParseException(string! message) -> void
+JD.Efcpt.Ide.Core.BuildProfileParseException.BuildProfileParseException(string! message, System.Exception! innerException) -> void
+JD.Efcpt.Ide.Core.BuildProfileReader
+JD.Efcpt.Ide.Core.BuildProfileReader.RawBuildProfile
+JD.Efcpt.Ide.Core.BuildProfileReader.RawBuildProfile.Artifacts.get -> System.Collections.Generic.List<JD.Efcpt.Ide.Core.BuildProfileArtifact!>?
+JD.Efcpt.Ide.Core.BuildProfileReader.RawBuildProfile.Artifacts.set -> void
+JD.Efcpt.Ide.Core.BuildProfileReader.RawBuildProfile.Diagnostics.get -> System.Collections.Generic.List<JD.Efcpt.Ide.Core.BuildProfileReader.RawDiagnostic!>?
+JD.Efcpt.Ide.Core.BuildProfileReader.RawBuildProfile.Diagnostics.set -> void
+JD.Efcpt.Ide.Core.BuildProfileReader.RawBuildProfile.Duration.get -> string?
+JD.Efcpt.Ide.Core.BuildProfileReader.RawBuildProfile.Duration.set -> void
+JD.Efcpt.Ide.Core.BuildProfileReader.RawBuildProfile.EndTime.get -> System.DateTimeOffset?
+JD.Efcpt.Ide.Core.BuildProfileReader.RawBuildProfile.EndTime.set -> void
+JD.Efcpt.Ide.Core.BuildProfileReader.RawBuildProfile.Project.get -> JD.Efcpt.Ide.Core.BuildProfileReader.RawProject?
+JD.Efcpt.Ide.Core.BuildProfileReader.RawBuildProfile.Project.set -> void
+JD.Efcpt.Ide.Core.BuildProfileReader.RawBuildProfile.RawBuildProfile() -> void
+JD.Efcpt.Ide.Core.BuildProfileReader.RawBuildProfile.RunId.get -> string?
+JD.Efcpt.Ide.Core.BuildProfileReader.RawBuildProfile.RunId.set -> void
+JD.Efcpt.Ide.Core.BuildProfileReader.RawBuildProfile.SchemaVersion.get -> string?
+JD.Efcpt.Ide.Core.BuildProfileReader.RawBuildProfile.SchemaVersion.set -> void
+JD.Efcpt.Ide.Core.BuildProfileReader.RawBuildProfile.StartTime.get -> System.DateTimeOffset?
+JD.Efcpt.Ide.Core.BuildProfileReader.RawBuildProfile.StartTime.set -> void
+JD.Efcpt.Ide.Core.BuildProfileReader.RawBuildProfile.Status.get -> string?
+JD.Efcpt.Ide.Core.BuildProfileReader.RawBuildProfile.Status.set -> void
+JD.Efcpt.Ide.Core.BuildProfileReader.RawDiagnostic
+JD.Efcpt.Ide.Core.BuildProfileReader.RawDiagnostic.Code.get -> string?
+JD.Efcpt.Ide.Core.BuildProfileReader.RawDiagnostic.Code.set -> void
+JD.Efcpt.Ide.Core.BuildProfileReader.RawDiagnostic.Level.get -> string?
+JD.Efcpt.Ide.Core.BuildProfileReader.RawDiagnostic.Level.set -> void
+JD.Efcpt.Ide.Core.BuildProfileReader.RawDiagnostic.Message.get -> string?
+JD.Efcpt.Ide.Core.BuildProfileReader.RawDiagnostic.Message.set -> void
+JD.Efcpt.Ide.Core.BuildProfileReader.RawDiagnostic.RawDiagnostic() -> void
+JD.Efcpt.Ide.Core.BuildProfileReader.RawDiagnostic.Timestamp.get -> System.DateTimeOffset?
+JD.Efcpt.Ide.Core.BuildProfileReader.RawDiagnostic.Timestamp.set -> void
+JD.Efcpt.Ide.Core.BuildProfileReader.RawProject
+JD.Efcpt.Ide.Core.BuildProfileReader.RawProject.Name.get -> string?
+JD.Efcpt.Ide.Core.BuildProfileReader.RawProject.Name.set -> void
+JD.Efcpt.Ide.Core.BuildProfileReader.RawProject.RawProject() -> void
+JD.Efcpt.Ide.Core.BuildProfileStatus
+JD.Efcpt.Ide.Core.BuildProfileStatus.Canceled = 4 -> JD.Efcpt.Ide.Core.BuildProfileStatus
+JD.Efcpt.Ide.Core.BuildProfileStatus.Failed = 2 -> JD.Efcpt.Ide.Core.BuildProfileStatus
+JD.Efcpt.Ide.Core.BuildProfileStatus.Skipped = 3 -> JD.Efcpt.Ide.Core.BuildProfileStatus
+JD.Efcpt.Ide.Core.BuildProfileStatus.Success = 1 -> JD.Efcpt.Ide.Core.BuildProfileStatus
+JD.Efcpt.Ide.Core.BuildProfileStatus.Unknown = 0 -> JD.Efcpt.Ide.Core.BuildProfileStatus
+JD.Efcpt.Ide.Core.BuildStatusEvaluation
+JD.Efcpt.Ide.Core.BuildStatusEvaluation.BannerMessage.get -> string?
+JD.Efcpt.Ide.Core.BuildStatusEvaluation.BuildStatusEvaluation(JD.Efcpt.Ide.Core.BuildStatusFreshness freshness, string? bannerMessage) -> void
+JD.Efcpt.Ide.Core.BuildStatusEvaluation.Freshness.get -> JD.Efcpt.Ide.Core.BuildStatusFreshness
+JD.Efcpt.Ide.Core.BuildStatusEvaluator
+JD.Efcpt.Ide.Core.BuildStatusFreshness
+JD.Efcpt.Ide.Core.BuildStatusFreshness.Current = 1 -> JD.Efcpt.Ide.Core.BuildStatusFreshness
+JD.Efcpt.Ide.Core.BuildStatusFreshness.NoProfile = 0 -> JD.Efcpt.Ide.Core.BuildStatusFreshness
+JD.Efcpt.Ide.Core.BuildStatusFreshness.StaleAfterFailedRegenerate = 3 -> JD.Efcpt.Ide.Core.BuildStatusFreshness
+JD.Efcpt.Ide.Core.BuildStatusFreshness.StaleFromEarlierRun = 2 -> JD.Efcpt.Ide.Core.BuildStatusFreshness
+JD.Efcpt.Ide.Core.JdDiagnostic
+JD.Efcpt.Ide.Core.JdDiagnostic.Code.get -> string!
+JD.Efcpt.Ide.Core.JdDiagnostic.JdDiagnostic(JD.Efcpt.Ide.Core.JdDiagnosticSeverity severity, string! code, string! message) -> void
+JD.Efcpt.Ide.Core.JdDiagnostic.Message.get -> string!
+JD.Efcpt.Ide.Core.JdDiagnostic.Severity.get -> JD.Efcpt.Ide.Core.JdDiagnosticSeverity
+JD.Efcpt.Ide.Core.JdDiagnosticParser
+JD.Efcpt.Ide.Core.JdDiagnosticSeverity
+JD.Efcpt.Ide.Core.JdDiagnosticSeverity.Error = 1 -> JD.Efcpt.Ide.Core.JdDiagnosticSeverity
+JD.Efcpt.Ide.Core.JdDiagnosticSeverity.Warning = 0 -> JD.Efcpt.Ide.Core.JdDiagnosticSeverity
+JD.Efcpt.Ide.Core.ProjectDiscovery
+JD.Efcpt.Ide.Core.ProjectDiscoveryResult
+JD.Efcpt.Ide.Core.ProjectDiscoveryResult.Matches.get -> System.Collections.Generic.IReadOnlyList<string!>!
+JD.Efcpt.Ide.Core.ProjectDiscoveryResult.ProjectDiscoveryResult(System.Collections.Generic.IReadOnlyList<string!>! matches, System.Collections.Generic.IReadOnlyList<JD.Efcpt.Ide.Core.SkippedProject!>! skipped) -> void
+JD.Efcpt.Ide.Core.ProjectDiscoveryResult.Skipped.get -> System.Collections.Generic.IReadOnlyList<JD.Efcpt.Ide.Core.SkippedProject!>!
+JD.Efcpt.Ide.Core.RegenerateAttempt
+JD.Efcpt.Ide.Core.RegenerateAttempt.ExitCode.get -> int
+JD.Efcpt.Ide.Core.RegenerateAttempt.RegenerateAttempt(System.DateTimeOffset startedUtc, bool succeeded, int exitCode) -> void
+JD.Efcpt.Ide.Core.RegenerateAttempt.StartedUtc.get -> System.DateTimeOffset
+JD.Efcpt.Ide.Core.RegenerateAttempt.Succeeded.get -> bool
+JD.Efcpt.Ide.Core.SecretRedaction
+JD.Efcpt.Ide.Core.SkippedProject
+JD.Efcpt.Ide.Core.SkippedProject.Path.get -> string!
+JD.Efcpt.Ide.Core.SkippedProject.Reason.get -> string!
+JD.Efcpt.Ide.Core.SkippedProject.SkippedProject(string! path, string! reason) -> void
+const JD.Efcpt.Ide.Core.BuildProfileReader.SupportedSchemaMajor = 1 -> int
+const JD.Efcpt.Ide.Core.SecretRedaction.ConnectionStringPlaceholder = "<connection-string redacted>" -> string!
+static JD.Efcpt.Ide.Core.BuildProfileReader.IsSchemaSupported(string! schemaVersion) -> bool
+static JD.Efcpt.Ide.Core.BuildProfileReader.NormalizeDiagnostic(JD.Efcpt.Ide.Core.BuildProfileReader.RawDiagnostic! raw) -> JD.Efcpt.Ide.Core.BuildProfileDiagnostic!
+static JD.Efcpt.Ide.Core.BuildProfileReader.Parse(string! jsonText) -> JD.Efcpt.Ide.Core.BuildProfile!
+static JD.Efcpt.Ide.Core.BuildProfileReader.ReadFile(string! path) -> JD.Efcpt.Ide.Core.BuildProfile!
+static JD.Efcpt.Ide.Core.BuildStatusEvaluator.Evaluate(JD.Efcpt.Ide.Core.RegenerateAttempt? lastAttempt, JD.Efcpt.Ide.Core.BuildProfile? profile) -> JD.Efcpt.Ide.Core.BuildStatusEvaluation!
+static JD.Efcpt.Ide.Core.JdDiagnosticParser.ParseLines(string! output) -> System.Collections.Generic.IReadOnlyList<JD.Efcpt.Ide.Core.JdDiagnostic!>!
+static JD.Efcpt.Ide.Core.JdDiagnosticParser.TryParseLine(string! line) -> JD.Efcpt.Ide.Core.JdDiagnostic?
+static JD.Efcpt.Ide.Core.ProjectDiscovery.DiscoverJdEfcptProjects(System.Collections.Generic.IReadOnlyList<string!>! csprojPaths, System.Func<string!, string!>! readFile) -> JD.Efcpt.Ide.Core.ProjectDiscoveryResult!
+static JD.Efcpt.Ide.Core.ProjectDiscovery.HasJdEfcptPackageReference(string! csprojContent) -> bool
+static JD.Efcpt.Ide.Core.SecretRedaction.MaskSecrets(string? text) -> string!
+static JD.Efcpt.Ide.Core.SecretRedaction.RedactConnectionString(string? text, string? connectionString) -> string!
+static readonly JD.Efcpt.Ide.Core.JdDiagnosticParser.DiagnosticPattern -> System.Text.RegularExpressions.Regex!
+static readonly JD.Efcpt.Ide.Core.ProjectDiscovery.PackageReferencePattern -> System.Text.RegularExpressions.Regex!

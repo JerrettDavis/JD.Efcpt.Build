@@ -1,0 +1,210 @@
+#nullable enable
+JD.Efcpt.Build.Tasks.Extensions.DataRowExtensions
+JD.Efcpt.Build.Tasks.Extensions.StringExtensions
+JD.Efcpt.Build.Tasks.Schema.ColumnModel
+JD.Efcpt.Build.Tasks.Schema.ColumnModel.<Clone>$() -> JD.Efcpt.Build.Tasks.Schema.ColumnModel!
+JD.Efcpt.Build.Tasks.Schema.ColumnModel.ColumnModel(string! Name, string! DataType, int MaxLength, int Precision, int Scale, bool IsNullable, int OrdinalPosition, string? DefaultValue) -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnModel.DataType.get -> string!
+JD.Efcpt.Build.Tasks.Schema.ColumnModel.DataType.init -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnModel.Deconstruct(out string! Name, out string! DataType, out int MaxLength, out int Precision, out int Scale, out bool IsNullable, out int OrdinalPosition, out string? DefaultValue) -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnModel.DefaultValue.get -> string?
+JD.Efcpt.Build.Tasks.Schema.ColumnModel.DefaultValue.init -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnModel.Equals(JD.Efcpt.Build.Tasks.Schema.ColumnModel? other) -> bool
+JD.Efcpt.Build.Tasks.Schema.ColumnModel.IsNullable.get -> bool
+JD.Efcpt.Build.Tasks.Schema.ColumnModel.IsNullable.init -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnModel.MaxLength.get -> int
+JD.Efcpt.Build.Tasks.Schema.ColumnModel.MaxLength.init -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnModel.Name.get -> string!
+JD.Efcpt.Build.Tasks.Schema.ColumnModel.Name.init -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnModel.OrdinalPosition.get -> int
+JD.Efcpt.Build.Tasks.Schema.ColumnModel.OrdinalPosition.init -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnModel.Precision.get -> int
+JD.Efcpt.Build.Tasks.Schema.ColumnModel.Precision.init -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnModel.Scale.get -> int
+JD.Efcpt.Build.Tasks.Schema.ColumnModel.Scale.init -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.<Clone>$() -> JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping!
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.ColumnName.get -> string!
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.ColumnName.init -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.ColumnNameMapping(string! TableSchema, string! TableName, string! ColumnName, string! DataType, string! MaxLength, string! Precision, string! Scale, string! IsNullable, string! OrdinalPosition, string! DefaultValue) -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.DataType.get -> string!
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.DataType.init -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.Deconstruct(out string! TableSchema, out string! TableName, out string! ColumnName, out string! DataType, out string! MaxLength, out string! Precision, out string! Scale, out string! IsNullable, out string! OrdinalPosition, out string! DefaultValue) -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.DefaultValue.get -> string!
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.DefaultValue.init -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.Equals(JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping? other) -> bool
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.IsNullable.get -> string!
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.IsNullable.init -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.MaxLength.get -> string!
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.MaxLength.init -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.OrdinalPosition.get -> string!
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.OrdinalPosition.init -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.Precision.get -> string!
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.Precision.init -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.Scale.get -> string!
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.Scale.init -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.TableName.get -> string!
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.TableName.init -> void
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.TableSchema.get -> string!
+JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.TableSchema.init -> void
+JD.Efcpt.Build.Tasks.Schema.ConstraintModel
+JD.Efcpt.Build.Tasks.Schema.ConstraintModel.<Clone>$() -> JD.Efcpt.Build.Tasks.Schema.ConstraintModel!
+JD.Efcpt.Build.Tasks.Schema.ConstraintModel.CheckExpression.get -> string?
+JD.Efcpt.Build.Tasks.Schema.ConstraintModel.CheckExpression.init -> void
+JD.Efcpt.Build.Tasks.Schema.ConstraintModel.ConstraintModel(string! Name, JD.Efcpt.Build.Tasks.Schema.ConstraintType Type, string? CheckExpression, JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel? ForeignKey) -> void
+JD.Efcpt.Build.Tasks.Schema.ConstraintModel.Deconstruct(out string! Name, out JD.Efcpt.Build.Tasks.Schema.ConstraintType Type, out string? CheckExpression, out JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel? ForeignKey) -> void
+JD.Efcpt.Build.Tasks.Schema.ConstraintModel.Equals(JD.Efcpt.Build.Tasks.Schema.ConstraintModel? other) -> bool
+JD.Efcpt.Build.Tasks.Schema.ConstraintModel.ForeignKey.get -> JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel?
+JD.Efcpt.Build.Tasks.Schema.ConstraintModel.ForeignKey.init -> void
+JD.Efcpt.Build.Tasks.Schema.ConstraintModel.Name.get -> string!
+JD.Efcpt.Build.Tasks.Schema.ConstraintModel.Name.init -> void
+JD.Efcpt.Build.Tasks.Schema.ConstraintModel.Type.get -> JD.Efcpt.Build.Tasks.Schema.ConstraintType
+JD.Efcpt.Build.Tasks.Schema.ConstraintModel.Type.init -> void
+JD.Efcpt.Build.Tasks.Schema.ConstraintType
+JD.Efcpt.Build.Tasks.Schema.ConstraintType.Check = 2 -> JD.Efcpt.Build.Tasks.Schema.ConstraintType
+JD.Efcpt.Build.Tasks.Schema.ConstraintType.Default = 3 -> JD.Efcpt.Build.Tasks.Schema.ConstraintType
+JD.Efcpt.Build.Tasks.Schema.ConstraintType.ForeignKey = 1 -> JD.Efcpt.Build.Tasks.Schema.ConstraintType
+JD.Efcpt.Build.Tasks.Schema.ConstraintType.PrimaryKey = 0 -> JD.Efcpt.Build.Tasks.Schema.ConstraintType
+JD.Efcpt.Build.Tasks.Schema.ConstraintType.Unique = 4 -> JD.Efcpt.Build.Tasks.Schema.ConstraintType
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel.<Clone>$() -> JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel!
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel.ColumnName.get -> string!
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel.ColumnName.init -> void
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel.Deconstruct(out string! ColumnName, out string! ReferencedColumnName, out int OrdinalPosition) -> void
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel.Equals(JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel? other) -> bool
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel.ForeignKeyColumnModel(string! ColumnName, string! ReferencedColumnName, int OrdinalPosition) -> void
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel.OrdinalPosition.get -> int
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel.OrdinalPosition.init -> void
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel.ReferencedColumnName.get -> string!
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel.ReferencedColumnName.init -> void
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel.<Clone>$() -> JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel!
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel.Columns.get -> System.Collections.Generic.IReadOnlyList<JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel!>!
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel.Columns.init -> void
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel.Deconstruct(out string! ReferencedSchema, out string! ReferencedTable, out System.Collections.Generic.IReadOnlyList<JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel!>! Columns) -> void
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel.Equals(JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel? other) -> bool
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel.ForeignKeyModel(string! ReferencedSchema, string! ReferencedTable, System.Collections.Generic.IReadOnlyList<JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel!>! Columns) -> void
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel.ReferencedSchema.get -> string!
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel.ReferencedSchema.init -> void
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel.ReferencedTable.get -> string!
+JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel.ReferencedTable.init -> void
+JD.Efcpt.Build.Tasks.Schema.IProviderAdapter
+JD.Efcpt.Build.Tasks.Schema.IProviderAdapter.CreateConnection(string! connectionString) -> System.Data.Common.DbConnection!
+JD.Efcpt.Build.Tasks.Schema.IProviderAdapter.CreateSchemaReader() -> JD.Efcpt.Build.Tasks.Schema.ISchemaReader!
+JD.Efcpt.Build.Tasks.Schema.ISchemaReader
+JD.Efcpt.Build.Tasks.Schema.ISchemaReader.ReadSchema(string! connectionString) -> JD.Efcpt.Build.Tasks.Schema.SchemaModel!
+JD.Efcpt.Build.Tasks.Schema.IndexColumnModel
+JD.Efcpt.Build.Tasks.Schema.IndexColumnModel.<Clone>$() -> JD.Efcpt.Build.Tasks.Schema.IndexColumnModel!
+JD.Efcpt.Build.Tasks.Schema.IndexColumnModel.ColumnName.get -> string!
+JD.Efcpt.Build.Tasks.Schema.IndexColumnModel.ColumnName.init -> void
+JD.Efcpt.Build.Tasks.Schema.IndexColumnModel.Deconstruct(out string! ColumnName, out int OrdinalPosition, out bool IsDescending) -> void
+JD.Efcpt.Build.Tasks.Schema.IndexColumnModel.Equals(JD.Efcpt.Build.Tasks.Schema.IndexColumnModel? other) -> bool
+JD.Efcpt.Build.Tasks.Schema.IndexColumnModel.IndexColumnModel(string! ColumnName, int OrdinalPosition, bool IsDescending) -> void
+JD.Efcpt.Build.Tasks.Schema.IndexColumnModel.IsDescending.get -> bool
+JD.Efcpt.Build.Tasks.Schema.IndexColumnModel.IsDescending.init -> void
+JD.Efcpt.Build.Tasks.Schema.IndexColumnModel.OrdinalPosition.get -> int
+JD.Efcpt.Build.Tasks.Schema.IndexColumnModel.OrdinalPosition.init -> void
+JD.Efcpt.Build.Tasks.Schema.IndexModel
+JD.Efcpt.Build.Tasks.Schema.IndexModel.<Clone>$() -> JD.Efcpt.Build.Tasks.Schema.IndexModel!
+JD.Efcpt.Build.Tasks.Schema.IndexModel.Columns.get -> System.Collections.Generic.IReadOnlyList<JD.Efcpt.Build.Tasks.Schema.IndexColumnModel!>!
+JD.Efcpt.Build.Tasks.Schema.IndexModel.Columns.init -> void
+JD.Efcpt.Build.Tasks.Schema.IndexModel.Deconstruct(out string! Name, out bool IsUnique, out bool IsPrimaryKey, out bool IsClustered, out System.Collections.Generic.IReadOnlyList<JD.Efcpt.Build.Tasks.Schema.IndexColumnModel!>! Columns) -> void
+JD.Efcpt.Build.Tasks.Schema.IndexModel.Equals(JD.Efcpt.Build.Tasks.Schema.IndexModel? other) -> bool
+JD.Efcpt.Build.Tasks.Schema.IndexModel.IndexModel(string! Name, bool IsUnique, bool IsPrimaryKey, bool IsClustered, System.Collections.Generic.IReadOnlyList<JD.Efcpt.Build.Tasks.Schema.IndexColumnModel!>! Columns) -> void
+JD.Efcpt.Build.Tasks.Schema.IndexModel.IsClustered.get -> bool
+JD.Efcpt.Build.Tasks.Schema.IndexModel.IsClustered.init -> void
+JD.Efcpt.Build.Tasks.Schema.IndexModel.IsPrimaryKey.get -> bool
+JD.Efcpt.Build.Tasks.Schema.IndexModel.IsPrimaryKey.init -> void
+JD.Efcpt.Build.Tasks.Schema.IndexModel.IsUnique.get -> bool
+JD.Efcpt.Build.Tasks.Schema.IndexModel.IsUnique.init -> void
+JD.Efcpt.Build.Tasks.Schema.IndexModel.Name.get -> string!
+JD.Efcpt.Build.Tasks.Schema.IndexModel.Name.init -> void
+JD.Efcpt.Build.Tasks.Schema.SchemaModel
+JD.Efcpt.Build.Tasks.Schema.SchemaModel.<Clone>$() -> JD.Efcpt.Build.Tasks.Schema.SchemaModel!
+JD.Efcpt.Build.Tasks.Schema.SchemaModel.Deconstruct(out System.Collections.Generic.IReadOnlyList<JD.Efcpt.Build.Tasks.Schema.TableModel!>! Tables) -> void
+JD.Efcpt.Build.Tasks.Schema.SchemaModel.Equals(JD.Efcpt.Build.Tasks.Schema.SchemaModel? other) -> bool
+JD.Efcpt.Build.Tasks.Schema.SchemaModel.SchemaModel(System.Collections.Generic.IReadOnlyList<JD.Efcpt.Build.Tasks.Schema.TableModel!>! Tables) -> void
+JD.Efcpt.Build.Tasks.Schema.SchemaModel.Tables.get -> System.Collections.Generic.IReadOnlyList<JD.Efcpt.Build.Tasks.Schema.TableModel!>!
+JD.Efcpt.Build.Tasks.Schema.SchemaModel.Tables.init -> void
+JD.Efcpt.Build.Tasks.Schema.SchemaReaderBase
+JD.Efcpt.Build.Tasks.Schema.SchemaReaderBase.ReadSchema(string! connectionString) -> JD.Efcpt.Build.Tasks.Schema.SchemaModel!
+JD.Efcpt.Build.Tasks.Schema.SchemaReaderBase.SchemaReaderBase() -> void
+JD.Efcpt.Build.Tasks.Schema.TableModel
+JD.Efcpt.Build.Tasks.Schema.TableModel.<Clone>$() -> JD.Efcpt.Build.Tasks.Schema.TableModel!
+JD.Efcpt.Build.Tasks.Schema.TableModel.Columns.get -> System.Collections.Generic.IReadOnlyList<JD.Efcpt.Build.Tasks.Schema.ColumnModel!>!
+JD.Efcpt.Build.Tasks.Schema.TableModel.Columns.init -> void
+JD.Efcpt.Build.Tasks.Schema.TableModel.Constraints.get -> System.Collections.Generic.IReadOnlyList<JD.Efcpt.Build.Tasks.Schema.ConstraintModel!>!
+JD.Efcpt.Build.Tasks.Schema.TableModel.Constraints.init -> void
+JD.Efcpt.Build.Tasks.Schema.TableModel.Deconstruct(out string! Schema, out string! Name, out System.Collections.Generic.IReadOnlyList<JD.Efcpt.Build.Tasks.Schema.ColumnModel!>! Columns, out System.Collections.Generic.IReadOnlyList<JD.Efcpt.Build.Tasks.Schema.IndexModel!>! Indexes, out System.Collections.Generic.IReadOnlyList<JD.Efcpt.Build.Tasks.Schema.ConstraintModel!>! Constraints) -> void
+JD.Efcpt.Build.Tasks.Schema.TableModel.Equals(JD.Efcpt.Build.Tasks.Schema.TableModel? other) -> bool
+JD.Efcpt.Build.Tasks.Schema.TableModel.Indexes.get -> System.Collections.Generic.IReadOnlyList<JD.Efcpt.Build.Tasks.Schema.IndexModel!>!
+JD.Efcpt.Build.Tasks.Schema.TableModel.Indexes.init -> void
+JD.Efcpt.Build.Tasks.Schema.TableModel.Name.get -> string!
+JD.Efcpt.Build.Tasks.Schema.TableModel.Name.init -> void
+JD.Efcpt.Build.Tasks.Schema.TableModel.Schema.get -> string!
+JD.Efcpt.Build.Tasks.Schema.TableModel.Schema.init -> void
+JD.Efcpt.Build.Tasks.Schema.TableModel.TableModel(string! Schema, string! Name, System.Collections.Generic.IReadOnlyList<JD.Efcpt.Build.Tasks.Schema.ColumnModel!>! Columns, System.Collections.Generic.IReadOnlyList<JD.Efcpt.Build.Tasks.Schema.IndexModel!>! Indexes, System.Collections.Generic.IReadOnlyList<JD.Efcpt.Build.Tasks.Schema.ConstraintModel!>! Constraints) -> void
+abstract JD.Efcpt.Build.Tasks.Schema.SchemaReaderBase.CreateConnection(string! connectionString) -> System.Data.Common.DbConnection!
+abstract JD.Efcpt.Build.Tasks.Schema.SchemaReaderBase.GetUserTables(System.Data.Common.DbConnection! connection) -> System.Collections.Generic.List<(string! Schema, string! Name)>!
+abstract JD.Efcpt.Build.Tasks.Schema.SchemaReaderBase.ReadIndexesForTable(System.Data.DataTable! indexesData, System.Data.DataTable! indexColumnsData, string! schemaName, string! tableName) -> System.Collections.Generic.IEnumerable<JD.Efcpt.Build.Tasks.Schema.IndexModel!>!
+override JD.Efcpt.Build.Tasks.Schema.ColumnModel.Equals(object? obj) -> bool
+override JD.Efcpt.Build.Tasks.Schema.ColumnModel.GetHashCode() -> int
+override JD.Efcpt.Build.Tasks.Schema.ColumnModel.ToString() -> string!
+override JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.Equals(object? obj) -> bool
+override JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.GetHashCode() -> int
+override JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.ToString() -> string!
+override JD.Efcpt.Build.Tasks.Schema.ConstraintModel.Equals(object? obj) -> bool
+override JD.Efcpt.Build.Tasks.Schema.ConstraintModel.GetHashCode() -> int
+override JD.Efcpt.Build.Tasks.Schema.ConstraintModel.ToString() -> string!
+override JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel.Equals(object? obj) -> bool
+override JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel.GetHashCode() -> int
+override JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel.ToString() -> string!
+override JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel.Equals(object? obj) -> bool
+override JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel.GetHashCode() -> int
+override JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel.ToString() -> string!
+override JD.Efcpt.Build.Tasks.Schema.IndexColumnModel.Equals(object? obj) -> bool
+override JD.Efcpt.Build.Tasks.Schema.IndexColumnModel.GetHashCode() -> int
+override JD.Efcpt.Build.Tasks.Schema.IndexColumnModel.ToString() -> string!
+override JD.Efcpt.Build.Tasks.Schema.IndexModel.Equals(object? obj) -> bool
+override JD.Efcpt.Build.Tasks.Schema.IndexModel.GetHashCode() -> int
+override JD.Efcpt.Build.Tasks.Schema.IndexModel.ToString() -> string!
+override JD.Efcpt.Build.Tasks.Schema.SchemaModel.Equals(object? obj) -> bool
+override JD.Efcpt.Build.Tasks.Schema.SchemaModel.GetHashCode() -> int
+override JD.Efcpt.Build.Tasks.Schema.SchemaModel.ToString() -> string!
+override JD.Efcpt.Build.Tasks.Schema.TableModel.Equals(object? obj) -> bool
+override JD.Efcpt.Build.Tasks.Schema.TableModel.GetHashCode() -> int
+override JD.Efcpt.Build.Tasks.Schema.TableModel.ToString() -> string!
+static JD.Efcpt.Build.Tasks.Extensions.DataRowExtensions.GetString(this System.Data.DataRow! row, string! columnName) -> string!
+static JD.Efcpt.Build.Tasks.Extensions.StringExtensions.EqualsIgnoreCase(this string? str, string? other) -> bool
+static JD.Efcpt.Build.Tasks.Extensions.StringExtensions.IsTrue(this string? str) -> bool
+static JD.Efcpt.Build.Tasks.Schema.ColumnModel.operator !=(JD.Efcpt.Build.Tasks.Schema.ColumnModel? left, JD.Efcpt.Build.Tasks.Schema.ColumnModel? right) -> bool
+static JD.Efcpt.Build.Tasks.Schema.ColumnModel.operator ==(JD.Efcpt.Build.Tasks.Schema.ColumnModel? left, JD.Efcpt.Build.Tasks.Schema.ColumnModel? right) -> bool
+static JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.operator !=(JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping? left, JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping? right) -> bool
+static JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping.operator ==(JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping? left, JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping? right) -> bool
+static JD.Efcpt.Build.Tasks.Schema.ConstraintModel.operator !=(JD.Efcpt.Build.Tasks.Schema.ConstraintModel? left, JD.Efcpt.Build.Tasks.Schema.ConstraintModel? right) -> bool
+static JD.Efcpt.Build.Tasks.Schema.ConstraintModel.operator ==(JD.Efcpt.Build.Tasks.Schema.ConstraintModel? left, JD.Efcpt.Build.Tasks.Schema.ConstraintModel? right) -> bool
+static JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel.operator !=(JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel? left, JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel? right) -> bool
+static JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel.operator ==(JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel? left, JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel? right) -> bool
+static JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel.Create(string! referencedSchema, string! referencedTable, System.Collections.Generic.IEnumerable<JD.Efcpt.Build.Tasks.Schema.ForeignKeyColumnModel!>! columns) -> JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel!
+static JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel.operator !=(JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel? left, JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel? right) -> bool
+static JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel.operator ==(JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel? left, JD.Efcpt.Build.Tasks.Schema.ForeignKeyModel? right) -> bool
+static JD.Efcpt.Build.Tasks.Schema.IndexColumnModel.operator !=(JD.Efcpt.Build.Tasks.Schema.IndexColumnModel? left, JD.Efcpt.Build.Tasks.Schema.IndexColumnModel? right) -> bool
+static JD.Efcpt.Build.Tasks.Schema.IndexColumnModel.operator ==(JD.Efcpt.Build.Tasks.Schema.IndexColumnModel? left, JD.Efcpt.Build.Tasks.Schema.IndexColumnModel? right) -> bool
+static JD.Efcpt.Build.Tasks.Schema.IndexModel.Create(string! name, bool isUnique, bool isPrimaryKey, bool isClustered, System.Collections.Generic.IEnumerable<JD.Efcpt.Build.Tasks.Schema.IndexColumnModel!>! columns) -> JD.Efcpt.Build.Tasks.Schema.IndexModel!
+static JD.Efcpt.Build.Tasks.Schema.IndexModel.operator !=(JD.Efcpt.Build.Tasks.Schema.IndexModel? left, JD.Efcpt.Build.Tasks.Schema.IndexModel? right) -> bool
+static JD.Efcpt.Build.Tasks.Schema.IndexModel.operator ==(JD.Efcpt.Build.Tasks.Schema.IndexModel? left, JD.Efcpt.Build.Tasks.Schema.IndexModel? right) -> bool
+static JD.Efcpt.Build.Tasks.Schema.SchemaModel.Create(System.Collections.Generic.IEnumerable<JD.Efcpt.Build.Tasks.Schema.TableModel!>! tables) -> JD.Efcpt.Build.Tasks.Schema.SchemaModel!
+static JD.Efcpt.Build.Tasks.Schema.SchemaModel.Empty.get -> JD.Efcpt.Build.Tasks.Schema.SchemaModel!
+static JD.Efcpt.Build.Tasks.Schema.SchemaModel.operator !=(JD.Efcpt.Build.Tasks.Schema.SchemaModel? left, JD.Efcpt.Build.Tasks.Schema.SchemaModel? right) -> bool
+static JD.Efcpt.Build.Tasks.Schema.SchemaModel.operator ==(JD.Efcpt.Build.Tasks.Schema.SchemaModel? left, JD.Efcpt.Build.Tasks.Schema.SchemaModel? right) -> bool
+static JD.Efcpt.Build.Tasks.Schema.SchemaReaderBase.EscapeSql(string! value) -> string!
+static JD.Efcpt.Build.Tasks.Schema.SchemaReaderBase.GetColumnName(System.Data.DataTable! table, params string![]! candidates) -> string!
+static JD.Efcpt.Build.Tasks.Schema.SchemaReaderBase.GetExistingColumn(System.Data.DataTable! table, params string![]! candidates) -> string?
+static JD.Efcpt.Build.Tasks.Schema.TableModel.Create(string! schema, string! name, System.Collections.Generic.IEnumerable<JD.Efcpt.Build.Tasks.Schema.ColumnModel!>! columns, System.Collections.Generic.IEnumerable<JD.Efcpt.Build.Tasks.Schema.IndexModel!>! indexes, System.Collections.Generic.IEnumerable<JD.Efcpt.Build.Tasks.Schema.ConstraintModel!>! constraints) -> JD.Efcpt.Build.Tasks.Schema.TableModel!
+static JD.Efcpt.Build.Tasks.Schema.TableModel.operator !=(JD.Efcpt.Build.Tasks.Schema.TableModel? left, JD.Efcpt.Build.Tasks.Schema.TableModel? right) -> bool
+static JD.Efcpt.Build.Tasks.Schema.TableModel.operator ==(JD.Efcpt.Build.Tasks.Schema.TableModel? left, JD.Efcpt.Build.Tasks.Schema.TableModel? right) -> bool
+virtual JD.Efcpt.Build.Tasks.Schema.SchemaReaderBase.GetColumnMapping() -> JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping!
+virtual JD.Efcpt.Build.Tasks.Schema.SchemaReaderBase.GetIndexColumns(System.Data.Common.DbConnection! connection) -> System.Data.DataTable!
+virtual JD.Efcpt.Build.Tasks.Schema.SchemaReaderBase.GetIndexes(System.Data.Common.DbConnection! connection) -> System.Data.DataTable!
+virtual JD.Efcpt.Build.Tasks.Schema.SchemaReaderBase.MatchesTable(System.Data.DataRow! row, JD.Efcpt.Build.Tasks.Schema.ColumnNameMapping! mapping, string! schemaName, string! tableName) -> bool
+virtual JD.Efcpt.Build.Tasks.Schema.SchemaReaderBase.ReadColumnsForTable(System.Data.DataTable! columnsData, string! schemaName, string! tableName) -> System.Collections.Generic.IEnumerable<JD.Efcpt.Build.Tasks.Schema.ColumnModel!>!
