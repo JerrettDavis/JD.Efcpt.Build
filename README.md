@@ -126,12 +126,34 @@ Use **JD.Efcpt.Build** when you want **automated, reproducible model generation 
 
 JD.Efcpt.Build supports multiple database providers through EF Core Power Tools:
 
-- **SQL Server (.sqlproj)** - Full support: DACPAC, connection string mode, incremental builds
-- **PostgreSQL, MySQL, SQLite, Oracle, Firebird, Snowflake** - Connection string mode only (no DACPAC generation)
+- **SQL Server (.sqlproj)** - Full support: DACPAC, connection string mode, incremental builds. Driver ships bundled with the core `JD.Efcpt.Build` package.
+- **PostgreSQL, MySQL, SQLite, Oracle, Firebird, Snowflake** - Connection string mode only (no DACPAC generation). Each driver ships as a separate **satellite package** you install alongside `JD.Efcpt.Build` - this keeps the core package lightweight for projects that only need SQL Server.
 
 > **Note:** Traditional (non-SDK-style) `.sqlproj` builds are **Windows-only**. For cross-platform SQL projects, use [Microsoft.Build.Sql](https://github.com/microsoft/DacFx) or [MSBuild.Sdk.SqlProj](https://github.com/rr-wfm/MSBuild.Sdk.SqlProj) (both cross-platform). DACPAC files are SQL Server-specific. For non-SQL-Server databases, use [Connection String Mode](docs/user-guide/connection-string-mode.md) to scaffold directly from a live database connection.
 
-For detailed provider-specific guidance, see [Provider Configuration](docs/user-guide/configuration.md#provider-configuration).
+### Installing a provider driver
+
+```bash
+# Example: PostgreSQL
+dotnet add package JD.Efcpt.Build.PostgreSQL
+```
+
+| `EfcptProvider` | Satellite package |
+|---|---|
+| `mssql` (default) | *(bundled - no install needed)* |
+| `postgres` | `JD.Efcpt.Build.PostgreSQL` |
+| `mysql` | `JD.Efcpt.Build.MySqlConnector` |
+| `sqlite` | `JD.Efcpt.Build.Sqlite` |
+| `oracle` | `JD.Efcpt.Build.Oracle` |
+| `firebird` | `JD.Efcpt.Build.Firebird` |
+| `snowflake` | `JD.Efcpt.Build.Snowflake` |
+
+If you set `EfcptProvider` without installing the matching package, the build fails fast with a
+`ProviderDriverNotFoundException` that includes the exact `dotnet add package` command to fix
+it - see [Provider Support](docs/user-guide/provider-support.md#installing-provider-drivers-satellite-packages)
+for details.
+
+For detailed provider-specific guidance, see [Provider Support](docs/user-guide/provider-support.md) and [Provider Configuration](docs/user-guide/configuration.md#provider-configuration).
 
 ## Requirements
 

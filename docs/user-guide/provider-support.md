@@ -4,15 +4,58 @@ JD.Efcpt.Build integrates with EF Core Power Tools to support multiple database 
 
 ## Quick Reference
 
-| Provider | DACPAC Mode | Live DB Mode | Recommended Approach |
-|----------|---|---|---|
-| **SQL Server** | Yes | Yes | DACPAC (if you have .sqlproj) |
-| **PostgreSQL** | No | Yes | Live DB connection string |
-| **MySQL** | No | Yes | Live DB connection string |
-| **SQLite** | No | Yes | Live DB connection string |
-| **Oracle** | No | Yes | Live DB connection string |
-| **Firebird** | No | Yes | Live DB connection string |
-| **Snowflake** | No | Yes | Live DB connection string |
+| Provider | DACPAC Mode | Live DB Mode | Driver Package | Recommended Approach |
+|----------|---|---|---|---|
+| **SQL Server** | Yes | Yes | Bundled with `JD.Efcpt.Build` | DACPAC (if you have .sqlproj) |
+| **PostgreSQL** | No | Yes | `JD.Efcpt.Build.PostgreSQL` | Live DB connection string |
+| **MySQL** | No | Yes | `JD.Efcpt.Build.MySqlConnector` | Live DB connection string |
+| **SQLite** | No | Yes | `JD.Efcpt.Build.Sqlite` | Live DB connection string |
+| **Oracle** | No | Yes | `JD.Efcpt.Build.Oracle` | Live DB connection string |
+| **Firebird** | No | Yes | `JD.Efcpt.Build.Firebird` | Live DB connection string |
+| **Snowflake** | No | Yes | `JD.Efcpt.Build.Snowflake` | Live DB connection string |
+
+## Installing Provider Drivers (Satellite Packages)
+
+To keep the core `JD.Efcpt.Build` package lightweight, only the SQL Server driver ships in the
+box. Every other provider's ADO.NET driver lives in its own **satellite package** that you
+install alongside `JD.Efcpt.Build`:
+
+```bash
+# Example: add PostgreSQL support to a project that already references JD.Efcpt.Build
+dotnet add package JD.Efcpt.Build.PostgreSQL
+```
+
+| `EfcptProvider` value | Install command |
+|---|---|
+| `postgres` | `dotnet add package JD.Efcpt.Build.PostgreSQL` |
+| `mysql` | `dotnet add package JD.Efcpt.Build.MySqlConnector` |
+| `sqlite` | `dotnet add package JD.Efcpt.Build.Sqlite` |
+| `oracle` | `dotnet add package JD.Efcpt.Build.Oracle` |
+| `firebird` | `dotnet add package JD.Efcpt.Build.Firebird` |
+| `snowflake` | `dotnet add package JD.Efcpt.Build.Snowflake` |
+
+Each satellite package bundles its own driver DLLs (e.g. `JD.Efcpt.Build.PostgreSQL` bundles
+Npgsql) and wires itself into the build automatically via an MSBuild `.targets` file - no
+additional configuration is needed beyond installing the package and setting `EfcptProvider`
+and `EfcptConnectionString`.
+
+### What happens if the driver package is missing
+
+If you set `EfcptProvider` to a non-SQL-Server value but haven't installed the matching
+satellite package, the build fails fast with a clear, actionable error instead of a cryptic
+type-load failure:
+
+```
+Driver for provider 'postgres' is not available. Install it with: dotnet add package
+JD.Efcpt.Build.PostgreSQL See https://jerrettdavis.github.io/JD.Efcpt.Build/user-guide/provider-support.html
+for details.
+```
+
+This is thrown as a `ProviderDriverNotFoundException` from the same provider-resolution code
+path regardless of *why* the driver couldn't be loaded - whether the satellite package was
+never installed, or its assembly failed to load for some other reason (corrupt install, wrong
+architecture, etc.) - so you always get the exact install command rather than having to
+diagnose an internal reflection failure yourself.
 
 ## SQL Server (Full Support)
 
@@ -58,7 +101,7 @@ See [Connection String Mode](connection-string-mode.md) for detailed configurati
 
 ## Non-SQL-Server Providers (Live DB Only)
 
-For PostgreSQL, MySQL, SQLite, Oracle, Firebird, and Snowflake, you must use **Connection String Mode** — DACPAC files don't exist for these providers.
+For PostgreSQL, MySQL, SQLite, Oracle, Firebird, and Snowflake, you must use **Connection String Mode** — DACPAC files don't exist for these providers. You must also install the matching satellite package - see [Installing Provider Drivers](#installing-provider-drivers-satellite-packages) above.
 
 ### Configuration
 
@@ -107,6 +150,9 @@ This approach trades automation for portability:
 
 ### PostgreSQL
 
+Requires `dotnet add package JD.Efcpt.Build.PostgreSQL` (bundles Npgsql - see
+[Installing Provider Drivers](#installing-provider-drivers-satellite-packages)).
+
 Connection string format:
 ```
 Host=localhost;Database=mydb;Username=user;Password=pwd;Port=5432
@@ -114,12 +160,18 @@ Host=localhost;Database=mydb;Username=user;Password=pwd;Port=5432
 
 ### MySQL
 
+Requires `dotnet add package JD.Efcpt.Build.MySqlConnector` (bundles MySqlConnector - see
+[Installing Provider Drivers](#installing-provider-drivers-satellite-packages)).
+
 Connection string format:
 ```
 Server=localhost;Database=mydb;Uid=user;Pwd=pwd;Port=3306
 ```
 
 ### SQLite
+
+Requires `dotnet add package JD.Efcpt.Build.Sqlite` (bundles Microsoft.Data.Sqlite.Core - see
+[Installing Provider Drivers](#installing-provider-drivers-satellite-packages)).
 
 Connection string format:
 ```
@@ -130,16 +182,28 @@ Useful for small databases and development. Supports file-based and in-memory da
 
 ### Oracle
 
-Requires Oracle.ManagedDataAccess.Core NuGet package.
+Requires `dotnet add package JD.Efcpt.Build.Oracle` (bundles Oracle.ManagedDataAccess[.Core] -
+see [Installing Provider Drivers](#installing-provider-drivers-satellite-packages)).
 
 Connection string format:
 ```
 Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=localhost)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=mydb)));User Id=user;Password=pwd
 ```
 
+### Firebird
+
+Requires `dotnet add package JD.Efcpt.Build.Firebird` (bundles FirebirdSql.Data.FirebirdClient -
+see [Installing Provider Drivers](#installing-provider-drivers-satellite-packages)).
+
+Connection string format:
+```
+Database=localhost:mydb.fdb;User=SYSDBA;Password=masterkey
+```
+
 ### Snowflake
 
-Requires Snowflake.Data NuGet package.
+Requires `dotnet add package JD.Efcpt.Build.Snowflake` (bundles Snowflake.Data - see
+[Installing Provider Drivers](#installing-provider-drivers-satellite-packages)).
 
 Connection string format:
 ```
@@ -173,6 +237,12 @@ Check that `EfcptConnectionString` or `EfcptAppSettings` is set correctly. See [
 ### DACPAC mode requires SQL Server
 
 Only SQL Server supports `.sqlproj` and DACPAC files. For other providers, use Connection String Mode.
+
+### "Driver for provider '...' is not available" error
+
+You set `EfcptProvider` to a non-SQL-Server value but haven't installed that provider's
+satellite package. The error message includes the exact `dotnet add package` command to run -
+see [Installing Provider Drivers](#installing-provider-drivers-satellite-packages).
 
 ## See Also
 
