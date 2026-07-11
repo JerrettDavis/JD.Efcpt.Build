@@ -1,4 +1,16 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project>
+
+  <!--
+    Explicit SDK import form (rather than <Project Sdk="Microsoft.NET.Sdk">) is REQUIRED here so
+    that Microsoft.VsSDK.targets can be imported AFTER the SDK's own targets. That targets file is
+    what defines the CreateVsixContainer target chain and appends it to $(PrepareForRunDependsOn)
+    (which Microsoft.Common.targets runs as part of a normal Build) - i.e. it is what actually
+    produces the .vsix. Microsoft.VSSDK.BuildTools only auto-imports path/env setup props+targets;
+    it does NOT import Microsoft.VsSDK.targets, so an SDK-style project must import it explicitly
+    (exactly as the classic VSIX project template does). Without this, msbuild compiles the DLL but
+    never packages a .vsix - see the failed CI run 29167011617.
+  -->
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
 
   <PropertyGroup>
     <!--
@@ -67,10 +79,38 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Ship the repo LICENSE inside the .vsix at the package root so the manifest's
+         <License>LICENSE</License> resolves to a file that actually exists in the archive
+         (a relative "..\..\..\LICENSE" escapes the package root and fails CreateVsixContainer
+         validation with VSSDK1310). Only referenced by the windows VSIX build. -->
+    <Content Include="..\..\..\LICENSE">
+      <Link>LICENSE</Link>
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <VSCTCompile Include="JdEfcptCommandTable.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
     </VSCTCompile>
   </ItemGroup>
 
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+
+  <!--
+    Import the VSIX packaging targets AFTER the SDK targets so their $(PrepareForRunDependsOn)
+    additions (GeneratePkgDef/CreateVsixContainer/...) survive. $(VSToolsPath) is redirected to the
+    Microsoft.VSSDK.BuildTools package's tools folder by that package's build props, so this resolves
+    to the package copy - no VS install layout is assumed.
+
+    GUARD: only under full-framework MSBuild (Visual Studio / the windows CI, where
+    $(MSBuildRuntimeType) == 'Full'). Under `dotnet build` (MSBuildRuntimeType == 'Core') the import
+    is skipped entirely, so the net472-only VSIX build tasks are never loaded and the cross-platform
+    `dotnet build` of this project keeps compiling the DLL with 0 errors. Full .vsix packaging only
+    ever happens on the windows CI runner (or in Visual Studio).
+  -->
+  <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets"
+          Condition="'$(MSBuildRuntimeType)' == 'Full' and '$(VSToolsPath)' != '' and Exists('$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets')" />
 
 </Project>

@@ -5,7 +5,7 @@
     <DisplayName>JD.Efcpt.Build for Visual Studio</DisplayName>
     <Description xml:space="preserve">Adds a "Tools &gt; Entity Framework &gt; JD.Efcpt" menu for on-demand EF Core model regeneration and a build-status tool window for the JD.Efcpt.Build MSBuild pipeline. Does not modify or replace EF Core Power Tools.</Description>
     <MoreInfo>https://github.com/JerrettDavis/JD.Efcpt.Build</MoreInfo>
-    <License>..\..\..\LICENSE</License>
+    <License>LICENSE</License>
     <Tags>Entity Framework;EF Core;Scaffolding;JD.Efcpt.Build;Code Generation</Tags>
   </Metadata>
   <Installation>
