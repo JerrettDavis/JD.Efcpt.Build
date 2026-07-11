@@ -354,7 +354,23 @@ public sealed class OfflineModeTests(ITestOutputHelper output) : TinyBddXunitBas
                     RenamingPath = ctx.setup.RenamingPath,
                     TemplateDir = ctx.setup.TemplateDir,
                     OutputDir = ctx.setup.OutputDir,
-                    ToolMode = "auto",
+                    // Deliberately NOT "auto": RunEfcpt.ExecuteCore sets
+                    // forceManifestOnNonWindows = !IsWindows && !HasExplicitPath(ToolPath), and
+                    // ToolIsAutoOrManifest treats "auto" as manifest-mode whenever
+                    // forceManifestOnNonWindows is true - regardless of whether a manifest
+                    // actually exists. Since this scenario intentionally has no manifest and an
+                    // empty ToolPath, "auto" would resolve via the dotnet-tool-run branch on
+                    // Linux/macOS (invoking fakeDotNet, never fakeGlobalTool) while resolving via
+                    // the Default/global-tool branch on Windows (where forceManifestOnNonWindows
+                    // is always false) - a platform-dependent divergence baked into the product's
+                    // "auto" mode by design (see the ToolMode doc comment: "use a local tool
+                    // manifest if one is discovered ... otherwise fall back to the global tool",
+                    // combined with the non-Windows fragile-PATH guard). "global" is any
+                    // non-"auto"/"tool-manifest" value, which per that same doc comment "behaves
+                    // like the global tool mode" unconditionally on every platform, so this test
+                    // exercises the Default branch (ctx.ToolCommand invoked directly) identically
+                    // on Windows and Linux.
+                    ToolMode = "global",
                     ToolPackageId = "ErikEJ.EFCorePowerTools.Cli",
                     // Stands in for a real global tool resolvable on PATH: the Default branch of
                     // ToolResolutionStrategy invokes ctx.ToolCommand directly as the executable.
