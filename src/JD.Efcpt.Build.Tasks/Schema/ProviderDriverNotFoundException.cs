@@ -29,13 +29,16 @@ internal sealed class ProviderDriverNotFoundException : Exception
     /// <remarks>
     /// This table is the single source of truth for the provider-to-package mapping and
     /// is intended to be reused by later phases when satellite packages are introduced.
+    /// <c>mysql</c> maps to <c>MySqlConnector</c> (not the driver's own package name,
+    /// <c>MySqlConnector</c>, though they happen to coincide here) to match the actual
+    /// <c>JD.Efcpt.Build.MySqlConnector</c> satellite package - see that project's csproj.
     /// </remarks>
     public static IReadOnlyDictionary<string, string?> PackageSuffixesByProvider { get; } =
         new Dictionary<string, string?>
         {
             ["mssql"] = null,
             ["postgres"] = "PostgreSQL",
-            ["mysql"] = "MySQL",
+            ["mysql"] = "MySqlConnector",
             ["sqlite"] = "Sqlite",
             ["oracle"] = "Oracle",
             ["firebird"] = "Firebird",

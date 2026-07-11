@@ -58,7 +58,6 @@
   -->
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" VersionOverride="6.1.4" />
-    <PackageReference Include="MySqlConnector" />
     <PackageReference Include="Microsoft.Data.Sqlite.Core" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" />
     <!--
@@ -75,6 +74,10 @@
     those projects' csproj files, which carry the same conditional splits over unchanged. Do not
     add either back here; the whole point of extraction is to keep them out of the core package's
     dependency graph.
+
+    MySqlConnector moved to the JD.Efcpt.Build.MySqlConnector satellite package - see that
+    project's csproj. Do not add it back here; the whole point of extraction is to keep it out of
+    the core package's dependency graph.
   -->
 
   <!--

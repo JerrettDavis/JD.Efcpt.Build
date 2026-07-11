@@ -685,6 +685,13 @@
           "xunit.extensibility.core": "[2.9.3]"
         }
       },
+      "jd.efcpt.build.mysqlconnector": {
+        "type": "Project",
+        "dependencies": {
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
+          "MySqlConnector": "[2.5.0, )"
+        }
+      },
       "jd.efcpt.build.oracle": {
         "type": "Project",
         "dependencies": {
@@ -719,7 +726,6 @@
           "Microsoft.Build.Utilities.Core": "[18.7.1, )",
           "Microsoft.Data.SqlClient": "[6.1.4, )",
           "Microsoft.Data.Sqlite.Core": "[9.0.14, )",
-          "MySqlConnector": "[2.5.0, )",
           "PatternKit.Core": "[0.34.4, )",
           "System.IO.Hashing": "[10.0.5, )"
         }

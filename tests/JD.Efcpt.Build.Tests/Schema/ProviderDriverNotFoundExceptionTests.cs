@@ -15,7 +15,7 @@ public sealed class ProviderDriverNotFoundExceptionTests(ITestOutputHelper outpu
     [Scenario("Message includes provider name and exact install command for a satellite provider")]
     [Theory]
     [InlineData("postgres", "PostgreSQL")]
-    [InlineData("mysql", "MySQL")]
+    [InlineData("mysql", "MySqlConnector")]
     [InlineData("sqlite", "Sqlite")]
     [InlineData("oracle", "Oracle")]
     [InlineData("firebird", "Firebird")]

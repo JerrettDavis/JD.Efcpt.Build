@@ -42,6 +42,13 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     private static readonly string[] PostgresSearchPaths =
         [Path.GetDirectoryName(typeof(DatabaseProviderFactoryTests).Assembly.Location)!];
 
+    /// <summary>
+    /// MySqlConnector is a satellite provider; see <see cref="SnowflakeSearchPaths"/> remarks -
+    /// same reasoning applies (test-only ProjectReference to JD.Efcpt.Build.MySqlConnector).
+    /// </summary>
+    private static readonly string[] MySqlSearchPaths =
+        [Path.GetDirectoryName(typeof(DatabaseProviderFactoryTests).Assembly.Location)!];
+
     #region NormalizeProvider Tests
 
     [Scenario("Normalizes SQL Server provider aliases")]
@@ -215,8 +222,12 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_mysql_connection()
     {
-        await Given("mysql provider and connection string", () => ("mysql", "Server=localhost;Database=test"))
-            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2))
+        // MySqlConnector is a satellite provider (JD.Efcpt.Build.MySqlConnector) and no longer
+        // resolves in-assembly - see the Snowflake connection test above for why a search path
+        // is required.
+        await Given("mysql provider, connection string, and a matching search path",
+                () => ("mysql", "Server=localhost;Database=test", MySqlSearchPaths))
+            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2, t.Item3))
             .Then("returns MySqlConnection", conn => conn is MySqlConnection)
             .Finally(conn => conn.Dispose())
             .AssertPassed();
@@ -315,8 +326,9 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_mysql_schema_reader()
     {
-        await Given("mysql provider", () => "mysql")
-            .When("schema reader created", p => DatabaseProviderFactory.CreateSchemaReader(p))
+        // See the MySQL connection test above for why a search path is required here.
+        await Given("mysql provider and a matching search path", () => ("mysql", MySqlSearchPaths))
+            .When("schema reader created", t => DatabaseProviderFactory.CreateSchemaReader(t.Item1, t.Item2))
             .Then("returns MySqlSchemaReader", reader => reader is MySqlSchemaReader)
             .AssertPassed();
     }

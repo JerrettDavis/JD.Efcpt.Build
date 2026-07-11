@@ -52,12 +52,12 @@ internal sealed class ProviderAdapterResolver
         new Dictionary<string, Func<IProviderAdapter>>
         {
             ["mssql"] = () => new SqlServerProviderAdapter(),
-            ["mysql"] = () => new MySqlProviderAdapter(),
             ["sqlite"] = () => new SqliteProviderAdapter(),
             ["firebird"] = () => new FirebirdProviderAdapter()
-            // "snowflake", "oracle", and "postgres" are intentionally absent: they were
+            // "snowflake", "oracle", "postgres", and "mysql" are intentionally absent: they were
             // extracted into satellite packages (JD.Efcpt.Build.Snowflake, .Oracle,
-            // .PostgreSQL) and now resolve exclusively via ResolveFromSatellitePackage below.
+            // .PostgreSQL, .MySqlConnector) and now resolve exclusively via
+            // ResolveFromSatellitePackage below.
         };
 
     private readonly ConcurrentDictionary<string, IProviderAdapter> _cache = new();

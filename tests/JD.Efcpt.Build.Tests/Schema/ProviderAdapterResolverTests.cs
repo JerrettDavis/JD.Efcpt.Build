@@ -23,16 +23,6 @@ public sealed class ProviderAdapterResolverTests(ITestOutputHelper output) : Tin
             .AssertPassed();
     }
 
-    [Scenario("Resolves MySQL adapter")]
-    [Fact]
-    public async Task Resolves_mysql_adapter()
-    {
-        await Given("a resolver", () => new ProviderAdapterResolver())
-            .When("resolved for mysql", r => r.Resolve("mysql"))
-            .Then("returns a non-null MySqlProviderAdapter", adapter => adapter is MySqlProviderAdapter)
-            .AssertPassed();
-    }
-
     [Scenario("Resolves SQLite adapter")]
     [Fact]
     public async Task Resolves_sqlite_adapter()
@@ -196,6 +186,52 @@ public sealed class ProviderAdapterResolverTests(ITestOutputHelper output) : Tin
 
     #endregion
 
+    #region Satellite Provider: MySqlConnector
+
+    /// <summary>
+    /// MySqlConnector is a satellite provider (JD.Efcpt.Build.MySqlConnector); see the Snowflake
+    /// region above for why a search path is required and how the Tests project makes this DLL
+    /// available.
+    /// </summary>
+    private static readonly string[] MySqlSearchPaths =
+        [Path.GetDirectoryName(typeof(ProviderAdapterResolverTests).Assembly.Location)!];
+
+    [Scenario("Resolves MySQL adapter dynamically from a satellite provider search path")]
+    [Fact]
+    public async Task Resolves_mysql_adapter_from_search_path()
+    {
+        await Given("a resolver and this test assembly's own directory as a provider search path",
+                () => (Resolver: new ProviderAdapterResolver(), SearchPaths: MySqlSearchPaths))
+            .When("resolved for mysql", t => t.Resolver.Resolve("mysql", t.SearchPaths))
+            .Then("returns a non-null MySqlProviderAdapter", adapter => adapter is MySqlProviderAdapter)
+            .AssertPassed();
+    }
+
+    [Scenario("Throws ProviderDriverNotFoundException for MySQL when no search path contains its assembly")]
+    [Fact]
+    public async Task Throws_for_mysql_without_matching_search_path()
+    {
+        await Given("a resolver with no search paths", () => new ProviderAdapterResolver())
+            .When("resolved for mysql", r =>
+            {
+                try
+                {
+                    r.Resolve("mysql");
+                    return (Exception?)null;
+                }
+                catch (Exception ex)
+                {
+                    return ex;
+                }
+            })
+            .Then("throws ProviderDriverNotFoundException with the install command",
+                ex => ex is ProviderDriverNotFoundException &&
+                      ex.Message.Contains("dotnet add package JD.Efcpt.Build.MySqlConnector"))
+            .AssertPassed();
+    }
+
+    #endregion
+
     #region Unknown Provider
 
     [Scenario("Throws ProviderDriverNotFoundException for an unresolvable provider")]
@@ -228,10 +264,11 @@ public sealed class ProviderAdapterResolverTests(ITestOutputHelper output) : Tin
     [Fact]
     public async Task Caches_resolved_adapter_per_instance()
     {
-        // Uses "mysql" (still resolved in-assembly) rather than an extracted satellite provider,
-        // so this caching behavior test doesn't depend on satellite search-path plumbing.
+        // Uses "mssql" (the only provider that always resolves in-assembly, since it ships
+        // bundled with the core package) rather than an extracted satellite provider, so this
+        // caching behavior test doesn't depend on satellite search-path plumbing.
         await Given("a resolver", () => new ProviderAdapterResolver())
-            .When("resolved twice for the same provider", r => (First: r.Resolve("mysql"), Second: r.Resolve("mysql")))
+            .When("resolved twice for the same provider", r => (First: r.Resolve("mssql"), Second: r.Resolve("mssql")))
             .Then("both calls return the same instance", t => ReferenceEquals(t.First, t.Second))
             .AssertPassed();
     }
@@ -241,7 +278,7 @@ public sealed class ProviderAdapterResolverTests(ITestOutputHelper output) : Tin
     public async Task Does_not_share_cache_across_instances()
     {
         await Given("two independent resolvers", () => (First: new ProviderAdapterResolver(), Second: new ProviderAdapterResolver()))
-            .When("each resolves the same provider", t => (FirstAdapter: t.First.Resolve("mysql"), SecondAdapter: t.Second.Resolve("mysql")))
+            .When("each resolves the same provider", t => (FirstAdapter: t.First.Resolve("mssql"), SecondAdapter: t.Second.Resolve("mssql")))
             .Then("the adapters are distinct instances", t => !ReferenceEquals(t.FirstAdapter, t.SecondAdapter))
             .AssertPassed();
     }

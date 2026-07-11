@@ -8,7 +8,7 @@ namespace JD.Efcpt.Build.Tasks.Schema.Providers;
 /// <summary>
 /// Reads schema metadata from MySQL/MariaDB databases using GetSchema() for standard metadata.
 /// </summary>
-internal sealed class MySqlSchemaReader : SchemaReaderBase
+public sealed class MySqlSchemaReader : SchemaReaderBase
 {
     /// <summary>
     /// Creates a MySQL database connection for the specified connection string.
