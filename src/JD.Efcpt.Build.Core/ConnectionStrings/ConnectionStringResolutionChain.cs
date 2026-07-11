@@ -149,7 +149,23 @@ public static class ConnectionStringResolutionChain
 
     private static string? ResolveFromSource(ConnectionStringResolutionContext ctx)
     {
-        var source = ctx.SourceResolver?.Resolve(ctx.ConnectionStringSource);
+        IConnectionStringSource? source;
+        try
+        {
+            source = ctx.SourceResolver?.Resolve(ctx.ConnectionStringSource);
+        }
+        catch (Exception ex)
+        {
+            // The resolver itself threw (e.g. a satellite assembly was found but failed to load
+            // or instantiate) - this is a resolution failure (JD0030), distinct from "no matching
+            // source was found at all" (JD0033, handled by the null check below).
+            throw new ConnectionStringSourceException(
+                ConnectionStringSourceException.SourceResolutionFailedCode,
+                ctx.ConnectionStringSource,
+                $"Resolving connection-string source '{ctx.ConnectionStringSource}' threw an unexpected exception: {ex.Message} See {SourceDocsUrl} for details.",
+                ex);
+        }
+
         if (source is null)
             throw ConnectionStringSourceException.SourceNotInstalled(ctx.ConnectionStringSource);
 
