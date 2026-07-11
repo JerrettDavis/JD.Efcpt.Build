@@ -613,7 +613,10 @@ public sealed class RunEfcpt : Task
 
         ToolRestoreStrategy.Value.Execute(in restoreContext);
 
-        ProcessRunner.RunOrThrow(log, invokeExe, invokeArgs, invokeCwd);
+        // Pass the connection string (when in connection-string mode) as the known secret so
+        // ProcessRunner redacts it by exact value from the command echo, the child tool's
+        // StdOut/StdErr, and any failure exception message - never from the executed args.
+        ProcessRunner.RunOrThrow(log, invokeExe, invokeArgs, invokeCwd, secretToRedact: connectionStringForRedaction);
 
         // Populate the build profile with the generated model files so consumers (e.g. the
         // VS Code extension) can report an accurate model count instead of always zero.

@@ -21,11 +21,16 @@ public static class SecretRedaction
 
     private const string Mask = "***";
 
-    // Matches ADO.NET / ODBC style sensitive key-value pairs (Password, Pwd, User ID, Uid).
-    // The key (including '=') is captured so only the value - up to the next ';' or closing
-    // quote - is masked, leaving non-sensitive keys (Server, Database, ...) visible.
+    // Matches ADO.NET / ODBC / cloud-provider style sensitive key-value pairs. The key
+    // (including '=') is captured so only the value is masked, leaving non-sensitive keys
+    // (Server, Database, ...) visible. The value match is quote-aware: a double- or
+    // single-quoted value is matched in full (so an embedded ';' inside quotes does not end the
+    // value early), otherwise the value runs to the next ';'. Matching quoted values fully is
+    // essential - a naive "[^;\"]*" would match ZERO characters against Password="p@ss;word",
+    // leaving the secret intact after a fake mask.
     private static readonly Regex SensitiveKeyValuePattern = new(
-        "(?<key>(?:\\b(?:password|pwd|user\\s*id|uid)\\s*=))(?<val>[^;\"]*)",
+        "(?<key>\\b(?:password|pwd|user\\s*id|uid|access\\s*token|accountkey|shared\\s*access\\s*signature|sas\\s*token)\\s*=)" +
+        "(?<val>\"[^\"]*\"|'[^']*'|[^;]*)",
         RegexOptions.IgnoreCase
 #if !NETFRAMEWORK
         | RegexOptions.Compiled

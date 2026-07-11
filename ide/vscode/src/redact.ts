@@ -9,9 +9,14 @@
  * the `vscode` API, so this is unit-testable in plain Node/mocha.
  */
 
-// Captures the key (incl. '=') so only the value up to the next ';', quote, or
-// end-of-line is masked, leaving non-sensitive keys (Server, Database, ...) visible.
-const SENSITIVE_KEY_VALUE = /(\b(?:password|pwd|user\s*id|uid)\s*=)([^;"'\r\n]*)/gi;
+// Captures the key (incl. '=') so only the value is masked, leaving non-sensitive
+// keys (Server, Database, ...) visible. The value match is quote-aware: a quoted
+// value is matched in full (so an embedded ';' inside quotes does not end it early —
+// a naive [^;"']* would match ZERO chars against Password="p@ss;word" and leave the
+// secret intact), otherwise the value runs to the next ';' or end-of-line. Mirrors
+// the server-side JD.Efcpt.Build.Core SecretRedaction helper, incl. cloud keys.
+const SENSITIVE_KEY_VALUE =
+  /(\b(?:password|pwd|user\s*id|uid|access\s*token|accountkey|shared\s*access\s*signature|sas\s*token)\s*=)("[^"]*"|'[^']*'|[^;\r\n]*)/gi;
 
 const MASK = '***';
 

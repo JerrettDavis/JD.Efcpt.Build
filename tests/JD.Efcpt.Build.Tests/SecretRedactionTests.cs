@@ -42,6 +42,45 @@ public sealed class SecretRedactionTests
         Assert.Contains("***", result);
     }
 
+    [Theory]
+    [InlineData("Password=\"p@ss;word\";", "p@ss;word")]
+    [InlineData("Pwd='x;y';", "x;y")]
+    [InlineData("Password=\"a;b\";Server=db;", "a;b")]
+    public void MaskSecrets_masks_quoted_values_containing_semicolons(string input, string secret)
+    {
+        // Regression: a naive [^;"]* value match matches ZERO chars against a quoted value,
+        // leaving the secret intact after a fake mask. The value match must be quote-aware.
+        var result = SecretRedaction.MaskSecrets(input);
+
+        Assert.DoesNotContain(secret, result);
+        Assert.Contains("***", result);
+    }
+
+    [Fact]
+    public void MaskSecrets_keeps_non_secret_keys_visible_when_masking_quoted_value()
+    {
+        var result = SecretRedaction.MaskSecrets("Server=db;Password=\"a;b\";Database=App;");
+
+        Assert.DoesNotContain("\"a;b\"", result);
+        Assert.Contains("Server=db", result);
+        Assert.Contains("Database=App", result);
+    }
+
+    [Theory]
+    [InlineData("AccessToken=abc123;", "abc123")]
+    [InlineData("access token=abc123;", "abc123")]
+    [InlineData("AccountKey=Zm9vYmFy;", "Zm9vYmFy")]
+    [InlineData("SharedAccessSignature=sv=2020&sig=deadbeef;", "deadbeef")]
+    [InlineData("shared access signature=sig123;", "sig123")]
+    [InlineData("SAS Token=tok999;", "tok999")]
+    public void MaskSecrets_masks_cloud_provider_credential_keys(string input, string secret)
+    {
+        var result = SecretRedaction.MaskSecrets(input);
+
+        Assert.DoesNotContain(secret, result);
+        Assert.Contains("***", result);
+    }
+
     [Fact]
     public void MaskSecrets_returns_empty_for_null_or_empty()
     {
