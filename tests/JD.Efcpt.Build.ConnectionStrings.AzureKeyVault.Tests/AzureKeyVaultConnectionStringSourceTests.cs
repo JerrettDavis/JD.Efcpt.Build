@@ -266,6 +266,7 @@ public sealed class AzureKeyVaultConnectionStringSourceTests(ITestOutputHelper o
     #region Real Endpoint (skipped by default)
 
     [SkippableFact]
+    [Trait("Category", "Integration")]
     public void Real_key_vault_endpoint_resolves_secret()
     {
         var vaultUri = Environment.GetEnvironmentVariable("EFCPT_TEST_AZURE_KEYVAULT_URI");

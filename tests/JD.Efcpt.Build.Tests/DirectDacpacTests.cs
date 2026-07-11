@@ -285,6 +285,7 @@ public sealed partial class DirectDacpacTests(ITestOutputHelper output) : TinyBd
 
     [Scenario("Pipeline succeeds with real efcpt using direct DACPAC")]
     [Fact]
+    [Trait("Category", "Integration")]
     public async Task Pipeline_succeeds_with_direct_dacpac_real_efcpt()
     {
         await Given("pre-built DACPAC file", SetupWithPrebuiltDacpac)

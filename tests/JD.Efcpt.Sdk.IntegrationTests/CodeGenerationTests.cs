@@ -7,6 +7,7 @@ namespace JD.Efcpt.Sdk.IntegrationTests;
 /// Detailed tests for code generation output.
 /// </summary>
 [Collection("Code Generation Tests")]
+[Trait("Category", "Integration")]
 public class CodeGenerationTests : IDisposable
 {
     private readonly SdkPackageTestFixture _fixture;

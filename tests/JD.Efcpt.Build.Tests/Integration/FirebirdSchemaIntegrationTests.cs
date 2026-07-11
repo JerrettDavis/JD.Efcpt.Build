@@ -17,6 +17,7 @@ namespace JD.Efcpt.Build.Tests.Integration;
 /// </summary>
 [Feature("FirebirdSchemaReader: reads and fingerprints Firebird schema using Testcontainers")]
 [Collection(nameof(AssemblySetup))]
+[Trait("Category", "Integration")]
 public sealed partial class FirebirdSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record TestContext(

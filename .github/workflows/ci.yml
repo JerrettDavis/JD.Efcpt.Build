@@ -7,10 +7,14 @@ on:
     branches: [ main ]
   workflow_dispatch: 
     inputs: 
-      reason: 
-        description: 'Reason'     
+      reason:
+        description: 'Reason'
         required: false
         default: 'Manual run'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   DOTNET_NOLOGO: true
@@ -117,6 +121,123 @@ jobs:
           verbose: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  # Cross-OS build + unit test matrix (#191).
+  #
+  # This is deliberately ADDITIVE to `pr-checks` above, not a replacement for it:
+  #   - `pr-checks` (ubuntu-only) remains the merge-gating job and is the only job that runs the
+  #     FULL test suite, including Testcontainers/live-DB/real-efcpt integration tests, and
+  #     publishes code coverage. Its job id/name is unchanged.
+  #   - `build-test-matrix` proves the library actually builds and its unit tests actually pass on
+  #     windows-latest and macos-latest, not just ubuntu - most importantly the windows leg
+  #     exercises the net472 MSBuild-host task-loading path (Visual Studio's Framework MSBuild)
+  #     that an ubuntu-only pipeline can never reach, and macos catches path-separator /
+  #     line-ending assumptions.
+  #   - Integration tests (Testcontainers, live cloud secrets, the real `efcpt` CLI) are excluded
+  #     here via `--filter "Category!=Integration"` because Linux-container-backed Testcontainers
+  #     do not run on windows/macos GitHub-hosted runners, and because those tests are already
+  #     covered by `pr-checks`. See tests tagged `[Trait("Category", "Integration")]`.
+  build-test-matrix:
+    name: build-test-matrix
+    if: github.event_name == 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Restore
+        run: dotnet restore JD.Efcpt.Build.sln --use-lock-file
+
+      - name: Build (Release)
+        run: dotnet build JD.Efcpt.Build.sln --configuration Release --no-restore /p:ContinuousIntegrationBuild=true
+
+      # Category!=Integration excludes Testcontainers/live-DB/real-efcpt tests (they require
+      # Docker with Linux containers and/or the erikej.efcorepowertools.cli global tool, neither
+      # of which is installed on this leg - those tests keep running on ubuntu via `pr-checks`).
+      - name: Test (excluding integration)
+        run: dotnet test JD.Efcpt.Build.sln --configuration Release --no-build --filter "Category!=Integration"
+
+  # Samples build (#191): proves the documentation samples under samples/ actually compile in CI,
+  # without a live database. Every sample is built with -p:EfcptEnabled=false, which fully
+  # short-circuits the JD.Efcpt.Build/JD.Efcpt.Sdk generation pipeline (see
+  # src/JD.Efcpt.Build/buildTransitive/JD.Efcpt.Build.props) so no DB connection, DACPAC query, or
+  # `efcpt` invocation ever happens - this job only proves the sample *projects* are well-formed
+  # and reference real, resolvable packages/SDKs, not that generation works end to end (that is
+  # covered by the integration tests in `pr-checks`).
+  samples-build:
+    name: samples-build
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Restore and build library
+        run: |
+          dotnet restore JD.Efcpt.Build.sln --use-lock-file
+          dotnet build JD.Efcpt.Build.sln --configuration Release --no-restore /p:ContinuousIntegrationBuild=true
+
+      - name: Pack local NuGet feed consumed by samples
+        run: |
+          dotnet pack JD.Efcpt.Build.sln --configuration Release --no-build -o ./artifacts -p:ContinuousIntegrationBuild=true
+          mkdir -p pkg
+          cp artifacts/JD.Efcpt.Sdk.*.nupkg pkg/
+
+      # samples/Samples.sln aggregates a stale project reference (simple-sql-integration, removed
+      # from the repo) and cannot currently be restored as a whole; build each sample
+      # solution/project individually instead (see samples/README.md for what each demonstrates).
+      - name: Build samples (EfcptEnabled=false - no live DB required)
+        shell: bash
+        run: |
+          set -euo pipefail
+          declare -a SAMPLES=(
+            "samples/sdk-zero-config/SdkZeroConfigSample.sln"
+            "samples/dacpac-zero-config/ZeroConfigDacpac.sln"
+            "samples/microsoft-build-sql-zero-config/ZeroConfigMsBuildSql.sln"
+            "samples/simple-generation/SimpleGenerationSample.sln"
+            "samples/msbuild-sdk-sql-proj-generation/SimpleGenerationSample.sln"
+            "samples/schema-organization/SchemaOrganization.sln"
+            "samples/custom-renaming/CustomRenaming.sln"
+            "samples/database-first-sql-generation/DatabaseFirstSqlProj.sln"
+            "samples/connection-string-sqlite/ConnectionStringSqliteSample.sln"
+            "samples/connection-string-mssql/ConnectionStringMssql.sln"
+            "samples/aspnet-core-appsettings/AspNetCoreAppSettings.sln"
+            "samples/split-data-and-models-between-multiple-projects/SampleApp.slnx"
+          )
+          for sample in "${SAMPLES[@]}"; do
+            echo "::group::Build $sample"
+            dotnet restore "$sample"
+            dotnet build "$sample" --configuration Release --no-restore -p:EfcptEnabled=false
+            echo "::endgroup::"
+          done
+
+          # custom-provider is a bare class library (no .sln); it never contacts a real database -
+          # its ISchemaReader returns SchemaModel.Empty - so it needs no EfcptEnabled override.
+          echo "::group::Build samples/custom-provider/Acme.Efcpt.Mongo"
+          dotnet build samples/custom-provider/Acme.Efcpt.Mongo --configuration Release
+          echo "::endgroup::"
 
   release:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'

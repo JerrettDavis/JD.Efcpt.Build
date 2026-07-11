@@ -251,6 +251,7 @@ public sealed partial class PipelineTests(ITestOutputHelper output) : TinyBddXun
 
     [Scenario("End-to-end builds real dacpac and runs real efcpt CLI")]
     [Fact]
+    [Trait("Category", "Integration")]
     public Task End_to_end_generates_dacpac_and_runs_real_efcpt()
         => Given("folders setup", SetupFolders)
             .When("resolve inputs", ResolveInputs)

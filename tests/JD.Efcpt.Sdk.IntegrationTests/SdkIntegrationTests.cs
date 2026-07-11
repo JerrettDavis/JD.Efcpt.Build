@@ -6,6 +6,7 @@ namespace JD.Efcpt.Sdk.IntegrationTests;
 #region Net8.0 SDK Tests
 
 [Collection("SDK Net8.0 Tests")]
+[Trait("Category", "Integration")]
 public class SdkNet80Tests : IDisposable
 {
     private readonly SdkPackageTestFixture _fixture;
@@ -113,6 +114,7 @@ public class SdkNet80Tests : IDisposable
 #region Net9.0 SDK Tests
 
 [Collection("SDK Net9.0 Tests")]
+[Trait("Category", "Integration")]
 public class SdkNet90Tests : IDisposable
 {
     private readonly SdkPackageTestFixture _fixture;
@@ -163,6 +165,7 @@ public class SdkNet90Tests : IDisposable
 #region Net10.0 SDK Tests
 
 [Collection("SDK Net10.0 Tests")]
+[Trait("Category", "Integration")]
 public class SdkNet100Tests : IDisposable
 {
     private readonly SdkPackageTestFixture _fixture;
@@ -213,6 +216,7 @@ public class SdkNet100Tests : IDisposable
 #region PackageReference (JD.Efcpt.Build) Tests
 
 [Collection("Build Package Tests")]
+[Trait("Category", "Integration")]
 public class BuildPackageTests : IDisposable
 {
     private readonly SdkPackageTestFixture _fixture;

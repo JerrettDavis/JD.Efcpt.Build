@@ -9,6 +9,7 @@ namespace JD.Efcpt.Sdk.IntegrationTests;
 /// These tests will use binlog and detailed logging to trace target execution.
 /// </summary>
 [Collection("SQL Generation Tests")]
+[Trait("Category", "Integration")]
 public class SqlProjectTargetDiagnosticTests : IAsyncDisposable
 {
     private readonly SdkPackageTestFixture _fixture;
