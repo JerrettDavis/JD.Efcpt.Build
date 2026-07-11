@@ -231,4 +231,42 @@ public sealed class ProviderAdapterResolverCustomProviderTests(ITestOutputHelper
     }
 
     #endregion
+
+    #region JD0018: ReflectionTypeLoadException detail flattening (missing transitive dependency)
+
+    [Scenario("FlattenLoaderExceptions surfaces the underlying loader-exception detail, not the generic type-load message")]
+    [Fact]
+    public async Task Flattens_loader_exceptions_into_detail()
+    {
+        await Given("a ReflectionTypeLoadException carrying a real missing-dependency loader exception", () =>
+                new System.Reflection.ReflectionTypeLoadException(
+                    classes: [null],
+                    exceptions: [new FileNotFoundException("Could not load file or assembly 'MongoDB.Driver, Version=2.0.0.0'.")]))
+            .When("flattened", ex => ProviderAdapterResolver.FlattenLoaderExceptions(ex))
+            .Then("contains the actual missing dependency", detail => detail.Contains("MongoDB.Driver"))
+            .And("does not degrade to the generic type-load wording",
+                detail => !detail.Contains("Unable to load one or more of the requested types"))
+            .AssertPassed();
+    }
+
+    [Scenario("FlattenLoaderExceptions joins multiple distinct loader-exception messages")]
+    [Fact]
+    public async Task Flattens_multiple_loader_exceptions()
+    {
+        await Given("a ReflectionTypeLoadException carrying two distinct loader exceptions", () =>
+                new System.Reflection.ReflectionTypeLoadException(
+                    classes: [null, null],
+                    exceptions:
+                    [
+                        new FileNotFoundException("Could not load file or assembly 'Acme.One'."),
+                        new FileNotFoundException("Could not load file or assembly 'Acme.Two'.")
+                    ]))
+            .When("flattened", ex => ProviderAdapterResolver.FlattenLoaderExceptions(ex))
+            .Then("includes the first dependency", detail => detail.Contains("Acme.One"))
+            .And("includes the second dependency", detail => detail.Contains("Acme.Two"))
+            .And("joins them with a separator", detail => detail.Contains(";"))
+            .AssertPassed();
+    }
+
+    #endregion
 }

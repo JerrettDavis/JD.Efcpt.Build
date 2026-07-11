@@ -128,9 +128,9 @@ Explicit connection string configuration provided but failed to resolve, falling
 
 ---
 
-## Custom Provider Errors (JD0017-JD0019, JD0040)
+## Custom Provider Errors (JD0017-JD0019, JD0040-JD0041)
 
-Codes `JD0017`-`JD0019` and `JD0040` are emitted by `QuerySchemaMetadata` (via
+Codes `JD0017`-`JD0019` and `JD0040`-`JD0041` are emitted by `QuerySchemaMetadata` (via
 `DatabaseProviderFactory` / `ProviderAdapterResolver`) when a **custom database provider** is
 registered via `@(EfcptCustomProvider)` (see [Custom Providers](custom-providers.md)). Custom
 providers load and execute third-party code at build time and are disabled by default -
@@ -223,6 +223,30 @@ package). Every custom provider assembly must contain exactly one such type.
   with a public parameterless constructor
 - Verify the project references `JD.Efcpt.Build.Providers.Abstractions` and implements the
   interface from that package - see [Custom Providers](custom-providers.md)
+
+---
+
+### JD0041: Custom Provider Registration Misconfigured
+**Severity**: Error
+**Task**: QuerySchemaMetadata
+
+An `@(EfcptCustomProvider)` item is malformed: a blank provider key (`Include`), a missing
+`AssemblyName` metadata value, or a duplicate provider key. Like the JD0019 collision check, this
+validation runs unconditionally over every registered custom provider, regardless of which
+provider `EfcptProvider` currently selects - so a broken registration is diagnosed with a precise
+code instead of silently disappearing or resurfacing later as a misleading generic JD0014.
+
+**Example**:
+```
+error JD0041: Custom provider 'acme-mongo' is missing required AssemblyName metadata. Add
+<AssemblyName>...</AssemblyName> to the @(EfcptCustomProvider) item.
+```
+
+**Resolution**:
+- Give every `@(EfcptCustomProvider)` item a non-empty `Include` (provider key)
+- Set the required `AssemblyName` metadata on each item to the simple assembly name (without the
+  `.dll` extension) containing your `IProviderAdapter`
+- Ensure each provider key is declared only once
 
 ---
 
@@ -460,8 +484,8 @@ when a pluggable connection-string source is selected via `EfcptConnectionString
 [Connection-String Sources](connection-string-sources.md)) and resolution does not succeed.
 Selecting a source is fail-closed: none of these ever fall back to file/`.sqlproj` resolution.
 `JD0035`-`JD0039` are reserved for future connection-string sources. (`JD0017`-`JD0019` and
-`JD0040` are used separately by the [customProviders plugin registry](custom-providers.md) - see
-[Custom Provider Errors](#custom-provider-errors-jd0017-jd0019-jd0040) above.)
+`JD0040`-`JD0041` are used separately by the [customProviders plugin registry](custom-providers.md) - see
+[Custom Provider Errors](#custom-provider-errors-jd0017-jd0019-jd0040-jd0041) above.)
 
 ### JD0030: Connection-String Source Resolution Failed
 **Severity**: Error

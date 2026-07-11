@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Reflection;
 using JD.Efcpt.Build.Tasks.Schema.Providers;
 
 namespace JD.Efcpt.Build.Tasks.Schema;
@@ -237,6 +238,19 @@ internal sealed class ProviderAdapterResolver
         {
             throw;
         }
+        catch (ReflectionTypeLoadException rtle) when (isCustom)
+        {
+            // A missing/unresolvable transitive dependency surfaces as ReflectionTypeLoadException
+            // from Assembly.GetTypes() (inside CreateAdapterInstance) with the real cause buried in
+            // LoaderExceptions - flatten those into the message so the user sees the actual missing
+            // dependency (e.g. "Could not load file or assembly 'MongoDB.Driver...'") instead of the
+            // generic "Unable to load one or more of the requested types" text. Still fail-closed
+            // (JD0018), and preserve the original as InnerException.
+            throw new CustomProviderException(
+                CustomProviderException.AssemblyLoadFailedCode,
+                $"Custom provider '{normalizedProvider}' assembly '{assemblyPath}' was found, " +
+                $"but its types failed to load: {FlattenLoaderExceptions(rtle)}", rtle);
+        }
         catch (Exception ex)
         {
             if (isCustom)
@@ -247,6 +261,32 @@ internal sealed class ProviderAdapterResolver
 
             throw new ProviderDriverNotFoundException(normalizedProvider, ex);
         }
+    }
+
+    /// <summary>
+    /// Flattens the <see cref="ReflectionTypeLoadException.LoaderExceptions"/> of
+    /// <paramref name="ex"/> into a single human-readable string, joining the distinct underlying
+    /// loader-failure messages (typically a missing transitive dependency) so they surface in the
+    /// thrown <see cref="CustomProviderException"/> instead of being silently dropped behind the
+    /// generic "Unable to load one or more of the requested types" text.
+    /// </summary>
+    /// <param name="ex">The reflection type-load exception whose loader exceptions to flatten.</param>
+    /// <returns>
+    /// The joined distinct loader-exception messages, or <paramref name="ex"/>'s own message when
+    /// no loader-exception detail is available.
+    /// </returns>
+    internal static string FlattenLoaderExceptions(ReflectionTypeLoadException ex)
+    {
+        var messages = (ex.LoaderExceptions ?? [])
+            .Where(e => e is not null)
+            .Select(e => e!.Message)
+            .Where(m => !string.IsNullOrWhiteSpace(m))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        return messages.Length == 0
+            ? ex.Message
+            : string.Join("; ", messages);
     }
 
     /// <summary>

@@ -38,8 +38,15 @@ public sealed class CustomProviderException : Exception
     public const string NoAdapterFoundCode = "JD0040";
 
     /// <summary>
+    /// Error code JD0041: a custom provider registration is malformed - a blank provider key
+    /// (item identity), a missing <c>AssemblyName</c> metadata value, or a duplicate provider key.
+    /// </summary>
+    public const string MisconfiguredRegistrationCode = "JD0041";
+
+    /// <summary>
     /// Gets the JD-coded error code (<see cref="NotAllowedCode"/>, <see cref="AssemblyLoadFailedCode"/>,
-    /// <see cref="CollidesWithBuiltInCode"/>, or <see cref="NoAdapterFoundCode"/>).
+    /// <see cref="CollidesWithBuiltInCode"/>, <see cref="NoAdapterFoundCode"/>, or
+    /// <see cref="MisconfiguredRegistrationCode"/>).
     /// </summary>
     public string Code { get; }
 

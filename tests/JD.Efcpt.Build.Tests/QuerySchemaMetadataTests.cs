@@ -143,5 +143,72 @@ public sealed class QuerySchemaMetadataTests(ITestOutputHelper output) : TinyBdd
             .AssertPassed();
     }
 
+    [Scenario("A custom provider item with blank AssemblyName metadata fails the task with JD0041")]
+    [Fact]
+    public async Task Custom_provider_blank_assembly_name_fails_jd0041()
+    {
+        await Given("a registered custom provider item missing AssemblyName metadata", () =>
+                ExecuteWithCustomProvider(
+                    "mssql", // a valid, selected built-in provider - proves validation is unconditional
+                    [new Microsoft.Build.Utilities.TaskItem("acme-mongo")],
+                    allowCustomProviders: true))
+            .Then("Execute() returns false", r => r.Success == false)
+            .And("JD0041 is logged", r => r.Engine.Errors.Any(e => e.Code == "JD0041"))
+            .Finally(r => r.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("A custom provider item with a blank provider key fails the task with JD0041")]
+    [Fact]
+    public async Task Custom_provider_blank_key_fails_jd0041()
+    {
+        await Given("a registered custom provider item with a blank/whitespace key", () =>
+                ExecuteWithCustomProvider(
+                    "mssql",
+                    [new Microsoft.Build.Utilities.TaskItem("   ", new Dictionary<string, string> { ["AssemblyName"] = "Acme.Efcpt.Mongo" })],
+                    allowCustomProviders: true))
+            .Then("Execute() returns false", r => r.Success == false)
+            .And("JD0041 is logged", r => r.Engine.Errors.Any(e => e.Code == "JD0041"))
+            .Finally(r => r.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("A duplicate custom provider key fails the task with JD0041")]
+    [Fact]
+    public async Task Custom_provider_duplicate_key_fails_jd0041()
+    {
+        await Given("two registered custom provider items sharing the same key", () =>
+                ExecuteWithCustomProvider(
+                    "mssql",
+                    [
+                        new Microsoft.Build.Utilities.TaskItem("acme-mongo", new Dictionary<string, string> { ["AssemblyName"] = "Acme.Efcpt.Mongo" }),
+                        new Microsoft.Build.Utilities.TaskItem("acme-mongo", new Dictionary<string, string> { ["AssemblyName"] = "Acme.Efcpt.Mongo.Other" })
+                    ],
+                    allowCustomProviders: true))
+            .Then("Execute() returns false", r => r.Success == false)
+            .And("JD0041 is logged", r => r.Engine.Errors.Any(e => e.Code == "JD0041"))
+            .Finally(r => r.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("A well-formed custom provider registration passes JD0041 validation (built-in provider selected)")]
+    [Fact]
+    public async Task Wellformed_custom_provider_passes_validation()
+    {
+        // A well-formed (key + AssemblyName), non-duplicate custom provider registration must NOT
+        // trip JD0041 - and since the selected Provider here is the built-in mssql, the task
+        // proceeds past validation without any custom-provider error code.
+        await Given("a well-formed custom provider item, with a built-in provider selected", () =>
+                ExecuteWithCustomProvider(
+                    "mssql",
+                    [new Microsoft.Build.Utilities.TaskItem("acme-mongo", new Dictionary<string, string> { ["AssemblyName"] = "Acme.Efcpt.Mongo" })],
+                    allowCustomProviders: true))
+            .Then("no JD0041 is logged", r => !r.Engine.Errors.Any(e => e.Code == "JD0041"))
+            .And("no JD0019 collision is logged", r => !r.Engine.Errors.Any(e => e.Code == "JD0019"))
+            .And("no JD0017 opt-in error is logged", r => !r.Engine.Errors.Any(e => e.Code == "JD0017"))
+            .Finally(r => r.Dispose())
+            .AssertPassed();
+    }
+
     #endregion
 }

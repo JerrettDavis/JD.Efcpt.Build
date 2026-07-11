@@ -129,7 +129,7 @@ this property has no effect on them.
 
 ## Troubleshooting
 
-See [Error Codes Reference](error-codes.md#custom-provider-errors-jd0017-jd0019-jd0040) for the
+See [Error Codes Reference](error-codes.md#custom-provider-errors-jd0017-jd0019-jd0040-jd0041) for the
 full list, but in short:
 
 | Code | Cause | Fix |
@@ -138,6 +138,7 @@ full list, but in short:
 | `JD0018` | Assembly not found on any search path, or found but failed to load/instantiate | Verify `AssemblyName`/`SearchPath` metadata; check the inner exception for the underlying load failure |
 | `JD0019` | Custom provider key collides with a built-in provider key/alias | Rename the `@(EfcptCustomProvider)` item's identity |
 | `JD0040` | Assembly loaded, but contains no concrete `IProviderAdapter` | Ensure exactly one public, concrete `IProviderAdapter` type with a public parameterless constructor |
+| `JD0041` | Registration is malformed - blank key, missing `AssemblyName`, or duplicate key | Give every item a non-empty key and `AssemblyName`, and declare each key only once |
 
 ## See Also
 

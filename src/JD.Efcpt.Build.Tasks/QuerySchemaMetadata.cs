@@ -129,8 +129,14 @@ public sealed class QuerySchemaMetadata : Task
 
         try
         {
-            // #184: build the custom provider registry and enforce the security gate BEFORE any
-            // assembly (built-in or custom) is loaded.
+            // #184: validate, build the custom provider registry, and enforce the security gate
+            // BEFORE any assembly (built-in or custom) is loaded. The validation and collision
+            // checks run UNCONDITIONALLY over every @(EfcptCustomProvider) item - even the ones the
+            // active Provider doesn't select - so a misconfigured registration is diagnosed with a
+            // precise JD0041/JD0019 code instead of silently disappearing or resurfacing later as a
+            // misleading generic JD0014.
+            ValidateCustomProviderRegistrations(EfcptCustomProviders);
+
             var customProviderAssemblies = BuildCustomProviderAssemblyMap(EfcptCustomProviders);
             var effectiveSearchPaths = CombineSearchPaths(ProviderSearchPaths, EfcptCustomProviders);
 
@@ -235,9 +241,56 @@ public sealed class QuerySchemaMetadata : Task
     }
 
     /// <summary>
+    /// Eagerly validates every <see cref="EfcptCustomProviders"/> item's shape, throwing
+    /// <see cref="CustomProviderException"/> (<see cref="CustomProviderException.MisconfiguredRegistrationCode"/>,
+    /// <c>JD0041</c>) for a blank provider key, a missing <c>AssemblyName</c> metadata value, or a
+    /// duplicate provider key.
+    /// </summary>
+    /// <remarks>
+    /// Runs over all items regardless of which provider is selected (like
+    /// <see cref="CheckForBuiltInCollisions"/>), so a broken registration produces an actionable
+    /// <c>JD0041</c> at the earliest possible point rather than being silently skipped by
+    /// <see cref="BuildCustomProviderAssemblyMap"/> and later falling through to a misleading
+    /// generic <c>JD0014</c>.
+    /// </remarks>
+    private static void ValidateCustomProviderRegistrations(ITaskItem[] items)
+    {
+        var seenKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var item in items)
+        {
+            var key = item.ItemSpec.Trim();
+            if (key.Length == 0)
+            {
+                throw new CustomProviderException(
+                    CustomProviderException.MisconfiguredRegistrationCode,
+                    "An @(EfcptCustomProvider) item has a blank provider key (Include); each " +
+                    "custom provider must specify a non-empty key.");
+            }
+
+            var assemblyName = item.GetMetadata("AssemblyName");
+            if (string.IsNullOrWhiteSpace(assemblyName))
+            {
+                throw new CustomProviderException(
+                    CustomProviderException.MisconfiguredRegistrationCode,
+                    $"Custom provider '{key}' is missing required AssemblyName metadata. Add " +
+                    "<AssemblyName>...</AssemblyName> to the @(EfcptCustomProvider) item.");
+            }
+
+            if (!seenKeys.Add(key))
+            {
+                throw new CustomProviderException(
+                    CustomProviderException.MisconfiguredRegistrationCode,
+                    $"Custom provider key '{key}' is declared more than once.");
+            }
+        }
+    }
+
+    /// <summary>
     /// Builds the custom provider key -&gt; simple assembly name map from
-    /// <see cref="EfcptCustomProviders"/>, keyed case-insensitively. Items with no
-    /// <c>AssemblyName</c> metadata are skipped.
+    /// <see cref="EfcptCustomProviders"/>, keyed case-insensitively. Assumes the items have
+    /// already passed <see cref="ValidateCustomProviderRegistrations"/> (so every item has a
+    /// non-blank key and <c>AssemblyName</c>); items are otherwise defensively skipped.
     /// </summary>
     private static IReadOnlyDictionary<string, string> BuildCustomProviderAssemblyMap(ITaskItem[] items)
     {
