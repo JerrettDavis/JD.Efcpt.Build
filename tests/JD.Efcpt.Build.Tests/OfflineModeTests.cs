@@ -46,6 +46,90 @@ public sealed class OfflineModeTests(ITestOutputHelper output) : TinyBddXunitBas
         public bool IsGlobalToolInstalled(string toolCommand) => false;
     }
 
+    /// <summary>
+    /// An <see cref="ISdkProbe"/> that reports the global tool as installed and throws if the
+    /// dnx-related probe methods are invoked - used for the global-tool-on-PATH offline scenario,
+    /// where only <see cref="IsGlobalToolInstalled"/> should ever be consulted.
+    /// </summary>
+    private sealed class GlobalToolOnlySdkProbe : ISdkProbe
+    {
+        public bool IsDotNet10SdkInstalled(string dotnetExe) =>
+            throw new InvalidOperationException("IsDotNet10SdkInstalled should not be called in this scenario.");
+
+        public bool IsDnxAvailable(string dotnetExe) =>
+            throw new InvalidOperationException("IsDnxAvailable should not be called in this scenario.");
+
+        public bool IsGlobalToolInstalled(string toolCommand) => true;
+    }
+
+    /// <summary>
+    /// An <see cref="ISdkProbe"/> that records how many times each probe method is invoked,
+    /// while deterministically reporting every capability as unavailable (so it never itself
+    /// steers tool resolution toward dnx or the global tool) - used for the offline=false
+    /// gate-regression scenario, where we want to observe what actually got called rather than
+    /// assert nothing was.
+    /// </summary>
+    private sealed class CountingSdkProbe : ISdkProbe
+    {
+        public int IsDotNet10SdkInstalledCalls { get; private set; }
+        public int IsDnxAvailableCalls { get; private set; }
+        public int IsGlobalToolInstalledCalls { get; private set; }
+
+        public bool IsDotNet10SdkInstalled(string dotnetExe)
+        {
+            IsDotNet10SdkInstalledCalls++;
+            return false;
+        }
+
+        public bool IsDnxAvailable(string dotnetExe)
+        {
+            IsDnxAvailableCalls++;
+            return false;
+        }
+
+        public bool IsGlobalToolInstalled(string toolCommand)
+        {
+            IsGlobalToolInstalledCalls++;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Writes a trivial, real, always-succeeding Windows batch script that appends its own
+    /// invocation (prefixed with <paramref name="label"/>) to <paramref name="captureFile"/> and
+    /// exits 0. Standing in for <c>dotnet</c> or a global tool executable lets tests assert
+    /// exactly which commands were (or were not) invoked, without depending on a real dotnet
+    /// tool installation being present on the test machine.
+    /// </summary>
+    private static string WriteCaptureScript(TestFolder folder, string scriptName, string label, string captureFile)
+    {
+        var path = Path.Combine(folder.CreateDir("tools"), scriptName);
+        File.WriteAllText(path, $"@echo off\r\necho {label} %* >> \"{captureFile}\"\r\nexit /b 0\r\n");
+        return path;
+    }
+
+    /// <summary>
+    /// Writes a minimal, valid <c>.config/dotnet-tools.json</c> manifest under
+    /// <paramref name="folder"/>'s root that lists an entry for the efcpt tool - matching the
+    /// default <c>ToolPackageId</c> (<c>ErikEJ.EFCorePowerTools.Cli</c>) and <c>ToolCommand</c>
+    /// (<c>efcpt</c>) used throughout these tests.
+    /// </summary>
+    private static void WriteEfcptToolManifest(TestFolder folder) =>
+        folder.WriteFile(
+            ".config/dotnet-tools.json",
+            """
+            {
+              "version": 1,
+              "isRoot": true,
+              "tools": {
+                "erikej.efcorepowertools.cli": {
+                  "version": "10.0.0",
+                  "commands": [ "efcpt" ]
+                }
+              }
+            }
+            """);
+
     private sealed record SetupState(
         TestFolder Folder,
         string WorkingDir,
@@ -192,6 +276,221 @@ public sealed class OfflineModeTests(ITestOutputHelper output) : TinyBddXunitBas
             .Then("task succeeds", r => r.Success)
             .And("OfflineMode defaults to false", r => r.Task.OfflineMode == "false")
             .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    // The four scenarios above all short-circuit before the `!ctx.Offline` STRATEGY gates:
+    // Offline_with_explicit_tool_path_skips_all_probes resolves via the explicit-ToolPath leg
+    // (the very first `.When` in ToolResolutionStrategy, unconditional on Offline), and
+    // Offline_mode_disabled_by_default uses EFCPT_FAKE_EFCPT, which returns before tool
+    // resolution runs at all. The scenarios below exercise the `!ctx.Offline`-gated branches
+    // directly - tool-manifest resolution/restore and the global-tool/update-global path - to
+    // prove offline mode actually gates them (and that the gate isn't inverted or always-on).
+
+    private sealed record CaptureResult(SetupState Setup, RunEfcpt Task, bool Success, string CaptureFile);
+
+    [Scenario("Offline mode with a present, tool-listing manifest resolves via 'dotnet tool run' and never probes dnx or the global tool, and never restores")]
+    [Fact]
+    public async Task Offline_with_manifest_listing_tool_resolves_via_tool_run_without_restore()
+    {
+        await Given("inputs for DACPAC mode with a real tool manifest listing the efcpt tool, and a capturing fake dotnet", () =>
+            {
+                var setup = SetupForDacpacMode();
+                WriteEfcptToolManifest(setup.Folder);
+                var captureFile = Path.Combine(setup.Folder.Root, "dotnet-invocations.log");
+                var fakeDotNet = WriteCaptureScript(setup.Folder, "fake-dotnet.cmd", "DOTNET", captureFile);
+                return (setup, captureFile, fakeDotNet);
+            })
+            .When("task executes offline, TFM net10.0, no explicit ToolPath, with a throwing probe", ctx =>
+            {
+                var task = new RunEfcpt
+                {
+                    BuildEngine = ctx.setup.Engine,
+                    WorkingDirectory = ctx.setup.WorkingDir,
+                    DacpacPath = ctx.setup.DacpacPath,
+                    ConfigPath = ctx.setup.ConfigPath,
+                    RenamingPath = ctx.setup.RenamingPath,
+                    TemplateDir = ctx.setup.TemplateDir,
+                    OutputDir = ctx.setup.OutputDir,
+                    ToolMode = "auto",
+                    ToolPackageId = "ErikEJ.EFCorePowerTools.Cli",
+                    ToolCommand = "efcpt",
+                    TargetFramework = "net10.0",
+                    OfflineMode = "true",
+                    ToolPath = "",
+                    DotNetExe = ctx.fakeDotNet,
+                    Probe = new ThrowingSdkProbe()
+                };
+
+                var success = task.Execute();
+                return new CaptureResult(ctx.setup, task, success, ctx.captureFile);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("no error is logged", r => r.Setup.Engine.Errors.Count == 0)
+            .And("dotnet was invoked exactly once, via 'tool run efcpt'", r =>
+            {
+                var lines = File.ReadAllLines(r.CaptureFile);
+                return lines.Length == 1 &&
+                       lines[0].Contains("tool run", StringComparison.OrdinalIgnoreCase) &&
+                       lines[0].Contains("efcpt", StringComparison.OrdinalIgnoreCase);
+            })
+            .And("tool restore was never invoked", r =>
+                !File.ReadAllText(r.CaptureFile).Contains("tool restore", StringComparison.OrdinalIgnoreCase))
+            .And("dnx was never invoked", r =>
+                !File.ReadAllText(r.CaptureFile).Contains("dnx", StringComparison.OrdinalIgnoreCase))
+            .And("global tool update was never invoked", r =>
+                !File.ReadAllText(r.CaptureFile).Contains("tool update", StringComparison.OrdinalIgnoreCase))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Offline mode with no manifest but a global tool on PATH succeeds directly and never updates the global tool")]
+    [Fact]
+    public async Task Offline_with_global_tool_on_path_succeeds_without_update()
+    {
+        await Given("inputs for DACPAC mode with no manifest, a fake global-tool executable, and a capturing fake dotnet", () =>
+            {
+                var setup = SetupForDacpacMode();
+                var globalToolCaptureFile = Path.Combine(setup.Folder.Root, "global-tool-invocations.log");
+                var dotNetCaptureFile = Path.Combine(setup.Folder.Root, "dotnet-invocations.log");
+                var fakeGlobalTool = WriteCaptureScript(setup.Folder, "fake-efcpt-global.cmd", "GLOBALTOOL", globalToolCaptureFile);
+                var fakeDotNet = WriteCaptureScript(setup.Folder, "fake-dotnet.cmd", "DOTNET", dotNetCaptureFile);
+                return (setup, globalToolCaptureFile, dotNetCaptureFile, fakeGlobalTool, fakeDotNet);
+            })
+            .When("task executes offline with no manifest, no ToolPath, and IsGlobalToolInstalled=true", ctx =>
+            {
+                var task = new RunEfcpt
+                {
+                    BuildEngine = ctx.setup.Engine,
+                    WorkingDirectory = ctx.setup.WorkingDir,
+                    DacpacPath = ctx.setup.DacpacPath,
+                    ConfigPath = ctx.setup.ConfigPath,
+                    RenamingPath = ctx.setup.RenamingPath,
+                    TemplateDir = ctx.setup.TemplateDir,
+                    OutputDir = ctx.setup.OutputDir,
+                    ToolMode = "auto",
+                    ToolPackageId = "ErikEJ.EFCorePowerTools.Cli",
+                    // Stands in for a real global tool resolvable on PATH: the Default branch of
+                    // ToolResolutionStrategy invokes ctx.ToolCommand directly as the executable.
+                    ToolCommand = ctx.fakeGlobalTool,
+                    TargetFramework = "net8.0",
+                    OfflineMode = "true",
+                    ToolPath = "",
+                    DotNetExe = ctx.fakeDotNet,
+                    Probe = new GlobalToolOnlySdkProbe()
+                };
+
+                var success = task.Execute();
+                return (Result: new CaptureResult(ctx.setup, task, success, ctx.globalToolCaptureFile), ctx.dotNetCaptureFile);
+            })
+            .Then("task succeeds", r => r.Result.Success)
+            .And("no error is logged", r => r.Result.Setup.Engine.Errors.Count == 0)
+            .And("the global tool executable was invoked directly, exactly once", r =>
+            {
+                var lines = File.ReadAllLines(r.Result.CaptureFile);
+                return lines.Length == 1 && lines[0].StartsWith("GLOBALTOOL", StringComparison.Ordinal);
+            })
+            .And("dotnet (and therefore 'tool update --global') was never invoked", r =>
+                !File.Exists(r.dotNetCaptureFile))
+            .Finally(r => r.Result.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("EFCPT_OFFLINE environment variable alone (no EfcptOfflineMode property) reproduces offline pre-flight behavior")]
+    [Fact]
+    public async Task Offline_env_var_alone_triggers_jd0026()
+    {
+        await Given("inputs for DACPAC mode with no pre-provisioned tool", SetupForDacpacMode)
+            .When("task executes with EFCPT_OFFLINE set but OfflineMode left at its default", s =>
+            {
+                Environment.SetEnvironmentVariable("EFCPT_OFFLINE", "true");
+                try
+                {
+                    var task = new RunEfcpt
+                    {
+                        BuildEngine = s.Engine,
+                        WorkingDirectory = s.WorkingDir,
+                        DacpacPath = s.DacpacPath,
+                        ConfigPath = s.ConfigPath,
+                        RenamingPath = s.RenamingPath,
+                        TemplateDir = s.TemplateDir,
+                        OutputDir = s.OutputDir,
+                        ToolMode = "auto",
+                        ToolPackageId = "ErikEJ.EFCorePowerTools.Cli",
+                        TargetFramework = "net8.0",
+                        // OfflineMode intentionally left unset (defaults to "false") - only the
+                        // EFCPT_OFFLINE environment variable signals offline. This exercises the
+                        // task-level OR-in at RunEfcpt.cs (`OfflineMode.IsTrue() ||
+                        // Environment.GetEnvironmentVariable("EFCPT_OFFLINE").IsTrue()`), which is
+                        // independent of the MSBuild-property-level bridge added to
+                        // BuildTransitivePropsFactory (verified separately via the generated
+                        // buildTransitive/*.props XML, since exercising MSBuild property
+                        // evaluation itself would require a full MSBuild target harness rather
+                        // than this task-level unit test).
+                        ToolPath = "",
+                        Probe = new AllUnavailableSdkProbe()
+                    };
+
+                    var success = task.Execute();
+                    return new TaskResult(s, task, success);
+                }
+                finally
+                {
+                    Environment.SetEnvironmentVariable("EFCPT_OFFLINE", null);
+                }
+            })
+            .Then("task fails", r => !r.Success)
+            .And("OfflineMode property itself is still the default 'false'", r => r.Task.OfflineMode == "false")
+            .And("the error carries the JD0026 code", r =>
+                r.Setup.Engine.Errors.Any(e => e.Code == "JD0026"))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Offline=false gate-regression: a present manifest is restored normally, proving the !ctx.Offline gate is not inverted or always-on")]
+    [Fact]
+    public async Task Offline_disabled_gate_regression_manifest_restore_runs()
+    {
+        await Given("inputs for DACPAC mode with a real tool manifest, offline explicitly disabled, and a capturing fake dotnet", () =>
+            {
+                var setup = SetupForDacpacMode();
+                WriteEfcptToolManifest(setup.Folder);
+                var captureFile = Path.Combine(setup.Folder.Root, "dotnet-invocations.log");
+                var fakeDotNet = WriteCaptureScript(setup.Folder, "fake-dotnet.cmd", "DOTNET", captureFile);
+                return (setup, captureFile, fakeDotNet);
+            })
+            .When("task executes with OfflineMode=false, TFM net8.0, manifest present, counting probe", ctx =>
+            {
+                var probe = new CountingSdkProbe();
+                var task = new RunEfcpt
+                {
+                    BuildEngine = ctx.setup.Engine,
+                    WorkingDirectory = ctx.setup.WorkingDir,
+                    DacpacPath = ctx.setup.DacpacPath,
+                    ConfigPath = ctx.setup.ConfigPath,
+                    RenamingPath = ctx.setup.RenamingPath,
+                    TemplateDir = ctx.setup.TemplateDir,
+                    OutputDir = ctx.setup.OutputDir,
+                    ToolMode = "auto",
+                    ToolPackageId = "ErikEJ.EFCorePowerTools.Cli",
+                    ToolCommand = "efcpt",
+                    TargetFramework = "net8.0",
+                    OfflineMode = "false",
+                    ToolPath = "",
+                    DotNetExe = ctx.fakeDotNet,
+                    Probe = probe
+                };
+
+                var success = task.Execute();
+                return (Result: new CaptureResult(ctx.setup, task, success, ctx.captureFile), Probe: probe);
+            })
+            .Then("task succeeds", r => r.Result.Success)
+            .And("no error is logged", r => r.Result.Setup.Engine.Errors.Count == 0)
+            .And("tool restore DID run (the normal, non-offline path)", r =>
+                File.ReadAllText(r.Result.CaptureFile).Contains("tool restore", StringComparison.OrdinalIgnoreCase))
+            .And("tool run also ran, after restore", r =>
+                File.ReadAllText(r.Result.CaptureFile).Contains("tool run", StringComparison.OrdinalIgnoreCase))
+            .Finally(r => r.Result.Setup.Folder.Dispose())
             .AssertPassed();
     }
 }
