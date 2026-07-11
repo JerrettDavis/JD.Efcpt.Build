@@ -1,6 +1,7 @@
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using JD.Efcpt.Build.Core.Logging;
 
 namespace JD.Efcpt.Build.Core.Config;
 
@@ -19,41 +20,71 @@ public static class EfcptConfigGenerator
     };
 
     /// <summary>
+    /// Bounded per-request timeout for the online schema fetch. Keeps <c>init --online</c>
+    /// aligned with the tool's documented offline-first (&lt;10s) design instead of blocking on
+    /// <see cref="HttpClient"/>'s 100s default when a URL is unreachable.
+    /// </summary>
+    private static readonly TimeSpan OnlineFetchTimeout = TimeSpan.FromSeconds(10);
+
+    /// <summary>
     /// Generates a default efcpt-config.json from a schema URL.
     /// </summary>
-    /// <param name="schemaUrl">URL to the schema (optional, tries primary then fallback)</param>
+    /// <param name="schemaUrl">
+    /// Explicit schema URL to fetch. When <see langword="null"/>, the primary GitHub URL is tried
+    /// first and, on any failure, the fallback mirror is used (the failure and the URL that
+    /// ultimately supplied the schema are reported via <paramref name="log"/>).
+    /// </param>
     /// <param name="dbContextName">Optional custom DbContext name (default: "ApplicationDbContext")</param>
     /// <param name="rootNamespace">Optional custom root namespace (default: "EfcptProject")</param>
+    /// <param name="log">
+    /// Optional build log used to surface a primary-URL failure (type + message) before falling
+    /// back, and to record which URL ultimately supplied the schema. When <see langword="null"/>,
+    /// the fetch proceeds silently (fallback still occurs, but without a diagnostic trail).
+    /// </param>
     /// <returns>Generated JSON string</returns>
+    /// <remarks>
+    /// A single <see cref="HttpClient"/> with a bounded <see cref="OnlineFetchTimeout"/> is used
+    /// for the fetch. The previous "probe primary, then re-fetch" double round-trip has been
+    /// collapsed into a single primary <c>GetStringAsync</c> (falling back to the mirror on
+    /// failure), so a healthy primary URL is fetched exactly once.
+    /// </remarks>
     public static async Task<string> GenerateFromUrlAsync(
         string? schemaUrl = null,
         string? dbContextName = null,
-        string? rootNamespace = null)
+        string? rootNamespace = null,
+        IBuildLog? log = null)
     {
-        schemaUrl ??= await TryGetSchemaUrlAsync();
+        using var client = new HttpClient { Timeout = OnlineFetchTimeout };
 
-        using var client = new HttpClient();
-        var schemaJson = await client.GetStringAsync(schemaUrl);
-        return GenerateFromSchema(schemaJson, dbContextName, rootNamespace, schemaUrl);
-    }
+        string resolvedUrl;
+        string schemaJson;
 
-    /// <summary>
-    /// Tries to fetch schema from primary URL, falling back to secondary if needed.
-    /// </summary>
-    private static async Task<string> TryGetSchemaUrlAsync()
-    {
-        using var client = new HttpClient();
-        client.Timeout = TimeSpan.FromSeconds(5);
-
-        try
+        if (!string.IsNullOrWhiteSpace(schemaUrl))
         {
-            await client.GetStringAsync(PrimarySchemaUrl);
-            return PrimarySchemaUrl;
+            // Caller pinned an explicit URL: fetch it directly, no primary/fallback dance.
+            resolvedUrl = schemaUrl!;
+            schemaJson = await client.GetStringAsync(resolvedUrl);
         }
-        catch
+        else
         {
-            return FallbackSchemaUrl;
+            try
+            {
+                resolvedUrl = PrimarySchemaUrl;
+                schemaJson = await client.GetStringAsync(PrimarySchemaUrl);
+            }
+            catch (Exception ex)
+            {
+                // Don't silently swap to the mirror: surface why the primary failed so a
+                // stale/renamed primary URL is diagnosable rather than invisibly masked.
+                log?.Warn(
+                    $"Primary schema URL failed ({ex.GetType().Name}: {ex.Message}); falling back to {FallbackSchemaUrl}");
+                resolvedUrl = FallbackSchemaUrl;
+                schemaJson = await client.GetStringAsync(FallbackSchemaUrl);
+            }
         }
+
+        log?.Info($"Fetched efcpt-config schema from {resolvedUrl}");
+        return GenerateFromSchema(schemaJson, dbContextName, rootNamespace, resolvedUrl);
     }
 
     /// <summary>

@@ -43,7 +43,8 @@ jd-efcpt init [<output-dir>] [--provider <name>] [--dbcontext-name <name>] [--na
 | `--dbcontext-name` | Name of the generated `DbContext` class (default: `ApplicationDbContext`). |
 | `--namespace` | Root namespace for generated code (default: `EfcptProject`). |
 | `--force` | Overwrite an existing `efcpt-config.json`. Without it, `init` refuses to clobber a file that's already there. |
-| `--online` | Fetch the latest `efcpt-config` schema from GitHub instead of the schema bundled with the tool. |
+| `--online` | Fetch the latest `efcpt-config` schema from GitHub instead of the schema bundled with the tool. When the primary schema URL fails, `init` logs the failure (exception type + message) before falling back to the mirror, and reports which URL supplied the schema. |
+| `--verbose` | Emit detailed diagnostics, including the full exception (type + stack trace) on failure. |
 
 **Offline by default.** `init` generates the config from the JSON schema bundled inside the
 `jd-efcpt` package itself - no network access is required, and the command works the same in an
@@ -86,6 +87,7 @@ jd-efcpt doctor [--target-framework <tfm>] [--tool-mode <mode>] [--tool-package-
 | `--auto-acquire` | Diagnose as if `EfcptAutoAcquireTool` were enabled (default: `true`). |
 | `--strict` | Exit with code `1` (instead of `2`) when no viable execution path is found - useful as a CI gate. |
 | `--working-dir` | Working directory used for tool-manifest discovery (default: current directory). |
+| `--verbose` | Emit full exception details (type + stack trace) on an unexpected failure. |
 
 Example:
 
@@ -113,6 +115,7 @@ Verdict: dnx execution will be used: dotnet dnx ErikEJ.EFCorePowerTools.Cli --ye
 | `0` | A viable execution path was found. |
 | `2` | No viable execution path was found, and `--strict` was **not** passed - advisory only, useful for a human reading the report. |
 | `1` | No viable execution path was found, and `--strict` **was** passed - useful for scripting a CI gate (`jd-efcpt doctor --strict || exit 1`). |
+| `3` | An unexpected error occurred while running the diagnosis (e.g. the SDK probe threw). Distinct from `1` so a genuine crash is never mistaken for a clean strict-no-path result; pass `--verbose` for the full exception details. |
 
 ## When to use the CLI vs. `EfcptDoctor`
 

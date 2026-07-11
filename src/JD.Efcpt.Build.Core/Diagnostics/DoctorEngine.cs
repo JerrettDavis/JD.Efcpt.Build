@@ -110,6 +110,20 @@ public static class DoctorEngine
             globalToolResolvable, hasExplicitToolPath, explicitToolPathExists,
             dnxUsable, autoAcquireEffective);
 
+        // Additive advisory (does not affect the verdict or HasViablePath): when no viable path
+        // was found AND the 'dotnet' muxer can't even be located on PATH, the SDK/dnx probes
+        // above returned false because they could not run at all (a launch failure collapses to
+        // ProbeOutcome.Transient -> false), not because the SDK is genuinely absent. Surface that
+        // so "SDK 10+ installed: False" isn't misread as a definitive answer. This is a pure
+        // PATH/file lookup (SdkProbeCache.ResolveDotnetExecutable) - it spawns no process - and is
+        // inserted before the verdict so the verdict remains the last message.
+        if (!hasViablePath && SdkProbeCache.ResolveDotnetExecutable(inputs.DotNetExe) is null)
+        {
+            messages.Add(
+                $"(note: the SDK/dnx probes were inconclusive - '{(string.IsNullOrWhiteSpace(inputs.DotNetExe) ? "dotnet" : inputs.DotNetExe)}' " +
+                "could not be located on PATH, so it may not be launchable; verify the .NET SDK is installed and 'dotnet' is on PATH)");
+        }
+
         messages.Add($"Verdict: {verdict}");
 
         return (verdict, hasViablePath, messages);

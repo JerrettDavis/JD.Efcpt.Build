@@ -337,6 +337,39 @@ public sealed partial class DoctorEngineTests(ITestOutputHelper output) : TinyBd
             .AssertPassed();
     }
 
+    [Scenario("When no viable path is found and 'dotnet' is unresolvable on PATH, an advisory is appended before the verdict")]
+    [Fact]
+    public async Task Unresolvable_dotnet_appends_probe_advisory()
+    {
+        await Given("global tool mode, nothing resolvable, and a bogus dotnet executable not on PATH", () =>
+            {
+                var folder = new TestFolder();
+                var inputs = new DoctorInputs(
+                    TargetFramework: "net8.0",
+                    ToolMode: "global",
+                    ToolPackageId: "ErikEJ.EFCorePowerTools.Cli",
+                    ToolVersion: "",
+                    ToolCommand: "efcpt",
+                    ToolPath: "",
+                    DotNetExe: "definitely-not-dotnet-xyz-12345",
+                    WorkingDirectory: folder.Root,
+                    Offline: false,
+                    AutoAcquire: false,
+                    Strict: false);
+                return new SetupState(folder, inputs, new FakeSdkProbe { GlobalToolInstalled = false });
+            })
+            .When("Diagnose is called", Diagnose)
+            .Then("no viable path is reported", r => !r.HasViablePath)
+            .And("an inconclusive-probe advisory naming the bogus dotnet is present", r =>
+                r.Messages.Any(m => m.Contains("SDK/dnx probes were inconclusive")
+                                    && m.Contains("definitely-not-dotnet-xyz-12345")))
+            .And("the advisory is placed immediately before the verdict (verdict stays last)", r =>
+                r.Messages[^1] == $"Verdict: {r.Verdict}"
+                && r.Messages[^2].Contains("SDK/dnx probes were inconclusive"))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
     [Scenario("Diagnose reports every message in the same order EfcptDoctor logged them pre-#181")]
     [Fact]
     public async Task Diagnose_reports_messages_in_expected_order()

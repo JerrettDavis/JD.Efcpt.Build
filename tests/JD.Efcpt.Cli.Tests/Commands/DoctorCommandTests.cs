@@ -27,6 +27,13 @@ public sealed partial class DoctorCommandTests(ITestOutputHelper output) : TinyB
         public bool IsGlobalToolInstalled(string toolCommand) => GlobalToolInstalled;
     }
 
+    private sealed class ThrowingSdkProbe : ISdkProbe
+    {
+        public bool IsDotNet10SdkInstalled(string dotnetExe) => throw new InvalidOperationException("boom");
+        public bool IsDnxAvailable(string dotnetExe) => throw new InvalidOperationException("boom");
+        public bool IsGlobalToolInstalled(string toolCommand) => throw new InvalidOperationException("boom");
+    }
+
     private sealed record SetupState(TestFolder Folder, DoctorInputs Inputs, FakeSdkProbe Probe);
     private sealed record RunResult(TestFolder Folder, int ExitCode);
 
@@ -90,6 +97,23 @@ public sealed partial class DoctorCommandTests(ITestOutputHelper output) : TinyB
             })
             .When("doctor runs", RunDoctor)
             .Then("exit code is 1", r => r.ExitCode == DoctorCommand.ExitNoViablePathStrict)
+            .Finally(r => r.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("An unexpected probe failure exits 3 (distinct from strict-no-path's 1)")]
+    [Fact]
+    public async Task Unexpected_failure_exits_three()
+    {
+        await Given("a probe that throws when invoked", () =>
+            {
+                var folder = new TestFolder();
+                return new RunResult(folder,
+                    DoctorCommand.Execute(new ConsoleBuildLog(), Inputs(folder, strict: true), new ThrowingSdkProbe()));
+            })
+            .When("the exit code is inspected", r => r)
+            .Then("exit code is 3", r => r.ExitCode == DoctorCommand.ExitUnexpectedError)
+            .And("3 is distinct from the strict-no-path exit code", r => DoctorCommand.ExitUnexpectedError != DoctorCommand.ExitNoViablePathStrict)
             .Finally(r => r.Folder.Dispose())
             .AssertPassed();
     }

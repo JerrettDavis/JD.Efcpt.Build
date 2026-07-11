@@ -24,6 +24,13 @@ public static class DoctorCommand
     /// <summary>Exit code when no viable execution path was found and <c>--strict</c> was passed.</summary>
     public const int ExitNoViablePathStrict = 1;
 
+    /// <summary>
+    /// Exit code for an unexpected failure (e.g. the SDK probe throws). Distinct from
+    /// <see cref="ExitNoViablePathStrict"/> (1) so a genuine crash can never be mistaken for a
+    /// clean "strict, no viable path" result.
+    /// </summary>
+    public const int ExitUnexpectedError = 3;
+
     /// <summary>Builds the <c>doctor</c> subcommand.</summary>
     public static Command Build()
     {
@@ -79,6 +86,11 @@ public static class DoctorCommand
             DefaultValueFactory = _ => ""
         };
 
+        var verboseOption = new Option<bool>("--verbose")
+        {
+            Description = "Emit full exception details (type + stack trace) on an unexpected failure."
+        };
+
         var command = new Command("doctor", "Diagnose how the efcpt tool would be resolved and run.")
         {
             targetFrameworkOption,
@@ -89,12 +101,13 @@ public static class DoctorCommand
             offlineOption,
             autoAcquireOption,
             strictOption,
-            workingDirOption
+            workingDirOption,
+            verboseOption
         };
 
         command.SetAction(parseResult =>
         {
-            var log = new ConsoleBuildLog();
+            var log = new ConsoleBuildLog { Verbose = parseResult.GetValue(verboseOption) };
             var inputs = new DoctorInputs(
                 TargetFramework: parseResult.GetValue(targetFrameworkOption) ?? "",
                 ToolMode: parseResult.GetValue(toolModeOption) ?? "auto",
@@ -122,19 +135,32 @@ public static class DoctorCommand
     /// <returns>
     /// <see cref="ExitViable"/> (0) if a viable path was found; <see cref="ExitNoViablePathStrict"/>
     /// (1) if none was found and <see cref="DoctorInputs.Strict"/> is <see langword="true"/>;
-    /// otherwise <see cref="ExitNoViablePathAdvisory"/> (2).
+    /// <see cref="ExitNoViablePathAdvisory"/> (2) if none was found without <c>--strict</c>; or
+    /// <see cref="ExitUnexpectedError"/> (3) if the diagnosis itself threw unexpectedly.
     /// </returns>
     public static int Execute(ConsoleBuildLog log, DoctorInputs inputs, ISdkProbe probe)
     {
-        var (verdict, hasViablePath, messages) = DoctorEngine.Diagnose(inputs, probe);
+        try
+        {
+            var (verdict, hasViablePath, messages) = DoctorEngine.Diagnose(inputs, probe);
 
-        foreach (var message in messages)
-            log.Info(message);
+            foreach (var message in messages)
+                log.Info(message);
 
-        if (hasViablePath)
-            return ExitViable;
+            if (hasViablePath)
+                return ExitViable;
 
-        log.Error(verdict);
-        return inputs.Strict ? ExitNoViablePathStrict : ExitNoViablePathAdvisory;
+            log.Error(verdict);
+            return inputs.Strict ? ExitNoViablePathStrict : ExitNoViablePathAdvisory;
+        }
+        catch (Exception ex)
+        {
+            // A genuine crash (e.g. a probe throwing) must not masquerade as exit 1
+            // (strict-no-path). Report it and return the distinct ExitUnexpectedError (3).
+            log.Error($"{ex.GetType().Name}: {ex.Message}");
+            if (log.Verbose)
+                log.Error(ex.ToString());
+            return ExitUnexpectedError;
+        }
     }
 }

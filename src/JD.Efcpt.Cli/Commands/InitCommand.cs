@@ -51,6 +51,11 @@ public static class InitCommand
             Description = "Fetch the latest efcpt-config schema from GitHub instead of using the schema bundled with this tool."
         };
 
+        var verboseOption = new Option<bool>("--verbose")
+        {
+            Description = "Emit detailed diagnostics, including full exception details (type + stack trace) on failure."
+        };
+
         var command = new Command("init", "Bootstrap an efcpt-config.json file.")
         {
             outputDirArgument,
@@ -58,12 +63,13 @@ public static class InitCommand
             dbContextNameOption,
             namespaceOption,
             forceOption,
-            onlineOption
+            onlineOption,
+            verboseOption
         };
 
         command.SetAction(async (parseResult, cancellationToken) =>
         {
-            var log = new ConsoleBuildLog();
+            var log = new ConsoleBuildLog { Verbose = parseResult.GetValue(verboseOption) };
             return await ExecuteAsync(
                 log,
                 parseResult.GetValue(outputDirArgument),
@@ -118,7 +124,8 @@ public static class InitCommand
             if (online)
             {
                 log.Info("Fetching efcpt-config schema from GitHub (--online)...");
-                json = await EfcptConfigGenerator.GenerateFromUrlAsync(dbContextName: dbContextName, rootNamespace: rootNamespace);
+                json = await EfcptConfigGenerator.GenerateFromUrlAsync(
+                    dbContextName: dbContextName, rootNamespace: rootNamespace, log: log);
             }
             else
             {
@@ -150,7 +157,12 @@ public static class InitCommand
         }
         catch (Exception ex)
         {
-            log.Error(ex.Message);
+            // Always surface the exception type alongside the message so a bare "file not found"
+            // or "unauthorized" is attributable; the full ToString() (type + stack) is gated
+            // behind --verbose to keep the default output clean.
+            log.Error($"{ex.GetType().Name}: {ex.Message}");
+            if (log.Verbose)
+                log.Error(ex.ToString());
             return 1;
         }
     }
