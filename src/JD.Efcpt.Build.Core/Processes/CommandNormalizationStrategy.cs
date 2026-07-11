@@ -3,7 +3,7 @@ using PatternKit.Behavioral.Strategy;
 using JD.Efcpt.Build.Tasks.Compatibility;
 #endif
 
-namespace JD.Efcpt.Build.Tasks.Strategies;
+namespace JD.Efcpt.Build.Core.Processes;
 
 /// <summary>
 /// Record representing a process command with its executable and arguments.

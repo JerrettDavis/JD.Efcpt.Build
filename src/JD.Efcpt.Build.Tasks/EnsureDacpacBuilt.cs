@@ -1,5 +1,5 @@
+using JD.Efcpt.Build.Core.Processes;
 using JD.Efcpt.Build.Tasks.Decorators;
-using JD.Efcpt.Build.Tasks.Strategies;
 using Microsoft.Build.Framework;
 using PatternKit.Behavioral.Strategy;
 using Task = Microsoft.Build.Utilities.Task;

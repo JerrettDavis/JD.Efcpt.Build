@@ -1,12 +1,11 @@
 using System.Diagnostics;
 using System.Text;
 using JD.Efcpt.Build.Core.Logging;
-using JD.Efcpt.Build.Tasks.Strategies;
 #if NETFRAMEWORK
 using JD.Efcpt.Build.Tasks.Compatibility;
 #endif
 
-namespace JD.Efcpt.Build.Tasks;
+namespace JD.Efcpt.Build.Core.Processes;
 
 /// <summary>
 /// Encapsulates the result of a process execution.
@@ -31,15 +30,16 @@ public readonly record struct ProcessResult(
 /// </summary>
 /// <remarks>
 /// <para>
-/// This class provides a unified process execution mechanism used by <see cref="RunEfcpt"/>
-/// and <see cref="EnsureDacpacBuilt"/> tasks, eliminating code duplication.
+/// This class provides a unified process execution mechanism used by
+/// <c>JD.Efcpt.Build.Tasks.RunEfcpt</c> and <c>JD.Efcpt.Build.Tasks.EnsureDacpacBuilt</c>, and by
+/// this assembly's <c>DefaultToolAcquirer</c>, eliminating code duplication.
 /// </para>
 /// <para>
 /// All commands are normalized using <see cref="CommandNormalizationStrategy"/> to handle
 /// cross-platform differences (e.g., cmd.exe wrapping on Windows).
 /// </para>
 /// </remarks>
-internal static class ProcessRunner
+public static class ProcessRunner
 {
     /// <summary>
     /// Runs a process and returns the result without throwing on non-zero exit code.
