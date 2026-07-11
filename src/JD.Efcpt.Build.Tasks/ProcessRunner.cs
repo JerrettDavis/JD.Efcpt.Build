@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using JD.Efcpt.Build.Core.Logging;
 using JD.Efcpt.Build.Tasks.Strategies;
 #if NETFRAMEWORK
 using JD.Efcpt.Build.Tasks.Compatibility;

@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using JD.Efcpt.Build.Tasks.Config;
+using JD.Efcpt.Build.Core.Config;
 using JD.Efcpt.Build.Tests.Infrastructure;
 using Xunit;
 

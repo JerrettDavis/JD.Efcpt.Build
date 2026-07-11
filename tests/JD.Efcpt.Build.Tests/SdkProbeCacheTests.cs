@@ -1,4 +1,5 @@
 using System.Threading;
+using JD.Efcpt.Build.Core.Diagnostics;
 using JD.Efcpt.Build.Tasks.Utilities;
 using JD.Efcpt.Build.Tests.Infrastructure;
 using TinyBDD;

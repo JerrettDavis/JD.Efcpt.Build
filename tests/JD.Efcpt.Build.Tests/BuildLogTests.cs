@@ -1,3 +1,4 @@
+using JD.Efcpt.Build.Core.Logging;
 using JD.Efcpt.Build.Tests.Infrastructure;
 using Microsoft.Build.Framework;
 using TinyBDD;
@@ -215,7 +216,7 @@ public sealed partial class BuildLogTests(ITestOutputHelper output) : TinyBddXun
             .When("Log is called with None level", s =>
             {
                 var log = new Tasks.BuildLog(s.Engine.TaskLoggingHelper, "minimal");
-                log.Log(Tasks.MessageLevel.None, "Should not appear");
+                log.Log(MessageLevel.None, "Should not appear");
                 return s;
             })
             .Then("no message is logged", s => s.Engine.Messages.All(m => m.Message != "Should not appear"))
@@ -232,7 +233,7 @@ public sealed partial class BuildLogTests(ITestOutputHelper output) : TinyBddXun
             .When("Log is called with Info level", s =>
             {
                 var log = new Tasks.BuildLog(s.Engine.TaskLoggingHelper, "minimal");
-                log.Log(Tasks.MessageLevel.Info, "Info via Log method");
+                log.Log(MessageLevel.Info, "Info via Log method");
                 return s;
             })
             .Then("message is logged", s =>
@@ -250,7 +251,7 @@ public sealed partial class BuildLogTests(ITestOutputHelper output) : TinyBddXun
             .When("Log is called with Warn level", s =>
             {
                 var log = new Tasks.BuildLog(s.Engine.TaskLoggingHelper, "minimal");
-                log.Log(Tasks.MessageLevel.Warn, "Warning via Log method");
+                log.Log(MessageLevel.Warn, "Warning via Log method");
                 return s;
             })
             .Then("warning is logged", s =>
@@ -266,7 +267,7 @@ public sealed partial class BuildLogTests(ITestOutputHelper output) : TinyBddXun
             .When("Log is called with Warn level and code", s =>
             {
                 var log = new Tasks.BuildLog(s.Engine.TaskLoggingHelper, "minimal");
-                log.Log(Tasks.MessageLevel.Warn, "Warning with code via Log", "EFCPT100");
+                log.Log(MessageLevel.Warn, "Warning with code via Log", "EFCPT100");
                 return s;
             })
             .Then("warning is logged", s =>
@@ -284,7 +285,7 @@ public sealed partial class BuildLogTests(ITestOutputHelper output) : TinyBddXun
             .When("Log is called with Error level", s =>
             {
                 var log = new Tasks.BuildLog(s.Engine.TaskLoggingHelper, "minimal");
-                log.Log(Tasks.MessageLevel.Error, "Error via Log method");
+                log.Log(MessageLevel.Error, "Error via Log method");
                 return s;
             })
             .Then("error is logged", s =>
@@ -300,7 +301,7 @@ public sealed partial class BuildLogTests(ITestOutputHelper output) : TinyBddXun
             .When("Log is called with Error level and code", s =>
             {
                 var log = new Tasks.BuildLog(s.Engine.TaskLoggingHelper, "minimal");
-                log.Log(Tasks.MessageLevel.Error, "Error with code via Log", "EFCPT200");
+                log.Log(MessageLevel.Error, "Error with code via Log", "EFCPT200");
                 return s;
             })
             .Then("error is logged", s =>
@@ -318,7 +319,7 @@ public sealed partial class BuildLogTests(ITestOutputHelper output) : TinyBddXun
             .When("Log is called with Error level and empty code", s =>
             {
                 var log = new Tasks.BuildLog(s.Engine.TaskLoggingHelper, "minimal");
-                log.Log(Tasks.MessageLevel.Error, "Error without code", "");
+                log.Log(MessageLevel.Error, "Error without code", "");
                 return s;
             })
             .Then("error is logged", s =>
@@ -336,7 +337,7 @@ public sealed partial class BuildLogTests(ITestOutputHelper output) : TinyBddXun
             .When("Log is called with Warn level and null code", s =>
             {
                 var log = new Tasks.BuildLog(s.Engine.TaskLoggingHelper, "minimal");
-                log.Log(Tasks.MessageLevel.Warn, "Warning without code", null);
+                log.Log(MessageLevel.Warn, "Warning without code", null);
                 return s;
             })
             .Then("warning is logged", s =>
@@ -361,8 +362,8 @@ public sealed partial class NullBuildLogTests(ITestOutputHelper output) : TinyBd
         await Given("the NullBuildLog class", () => true)
             .When("accessing Instance twice", _ =>
             {
-                var first = Tasks.NullBuildLog.Instance;
-                var second = Tasks.NullBuildLog.Instance;
+                var first = NullBuildLog.Instance;
+                var second = NullBuildLog.Instance;
                 return (first, second);
             })
             .Then("same instance is returned", r => ReferenceEquals(r.first, r.second))
@@ -373,7 +374,7 @@ public sealed partial class NullBuildLogTests(ITestOutputHelper output) : TinyBd
     [Fact]
     public async Task Info_does_not_throw()
     {
-        await Given("a NullBuildLog instance", () => Tasks.NullBuildLog.Instance)
+        await Given("a NullBuildLog instance", () => NullBuildLog.Instance)
             .When("Info is called", log =>
             {
                 log.Info("Test message");
@@ -387,7 +388,7 @@ public sealed partial class NullBuildLogTests(ITestOutputHelper output) : TinyBd
     [Fact]
     public async Task Detail_does_not_throw()
     {
-        await Given("a NullBuildLog instance", () => Tasks.NullBuildLog.Instance)
+        await Given("a NullBuildLog instance", () => NullBuildLog.Instance)
             .When("Detail is called", log =>
             {
                 log.Detail("Detailed message");
@@ -401,7 +402,7 @@ public sealed partial class NullBuildLogTests(ITestOutputHelper output) : TinyBd
     [Fact]
     public async Task Warn_does_not_throw()
     {
-        await Given("a NullBuildLog instance", () => Tasks.NullBuildLog.Instance)
+        await Given("a NullBuildLog instance", () => NullBuildLog.Instance)
             .When("Warn is called", log =>
             {
                 log.Warn("Warning message");
@@ -415,7 +416,7 @@ public sealed partial class NullBuildLogTests(ITestOutputHelper output) : TinyBd
     [Fact]
     public async Task Warn_with_code_does_not_throw()
     {
-        await Given("a NullBuildLog instance", () => Tasks.NullBuildLog.Instance)
+        await Given("a NullBuildLog instance", () => NullBuildLog.Instance)
             .When("Warn with code is called", log =>
             {
                 log.Warn("CODE001", "Warning with code");
@@ -429,7 +430,7 @@ public sealed partial class NullBuildLogTests(ITestOutputHelper output) : TinyBd
     [Fact]
     public async Task Error_does_not_throw()
     {
-        await Given("a NullBuildLog instance", () => Tasks.NullBuildLog.Instance)
+        await Given("a NullBuildLog instance", () => NullBuildLog.Instance)
             .When("Error is called", log =>
             {
                 log.Error("Error message");
@@ -443,7 +444,7 @@ public sealed partial class NullBuildLogTests(ITestOutputHelper output) : TinyBd
     [Fact]
     public async Task Error_with_code_does_not_throw()
     {
-        await Given("a NullBuildLog instance", () => Tasks.NullBuildLog.Instance)
+        await Given("a NullBuildLog instance", () => NullBuildLog.Instance)
             .When("Error with code is called", log =>
             {
                 log.Error("CODE002", "Error with code");
@@ -457,7 +458,7 @@ public sealed partial class NullBuildLogTests(ITestOutputHelper output) : TinyBd
     [Fact]
     public async Task All_methods_can_be_called_in_sequence()
     {
-        await Given("a NullBuildLog instance", () => Tasks.NullBuildLog.Instance)
+        await Given("a NullBuildLog instance", () => NullBuildLog.Instance)
             .When("all methods are called", log =>
             {
                 log.Info("Info");
@@ -476,8 +477,8 @@ public sealed partial class NullBuildLogTests(ITestOutputHelper output) : TinyBd
     [Fact]
     public async Task Implements_IBuildLog()
     {
-        await Given("a NullBuildLog instance", () => Tasks.NullBuildLog.Instance)
-            .When("checking interface", log => log is Tasks.IBuildLog)
+        await Given("a NullBuildLog instance", () => NullBuildLog.Instance)
+            .When("checking interface", log => log is IBuildLog)
             .Then("implements IBuildLog", result => result)
             .AssertPassed();
     }
@@ -486,13 +487,13 @@ public sealed partial class NullBuildLogTests(ITestOutputHelper output) : TinyBd
     [Fact]
     public async Task Log_does_not_throw()
     {
-        await Given("a NullBuildLog instance", () => Tasks.NullBuildLog.Instance)
+        await Given("a NullBuildLog instance", () => NullBuildLog.Instance)
             .When("Log is called with various levels", log =>
             {
-                log.Log(Tasks.MessageLevel.None, "None message");
-                log.Log(Tasks.MessageLevel.Info, "Info message");
-                log.Log(Tasks.MessageLevel.Warn, "Warn message", "CODE");
-                log.Log(Tasks.MessageLevel.Error, "Error message", null);
+                log.Log(MessageLevel.None, "None message");
+                log.Log(MessageLevel.Info, "Info message");
+                log.Log(MessageLevel.Warn, "Warn message", "CODE");
+                log.Log(MessageLevel.Error, "Error message", null);
                 return true;
             })
             .Then("no exception is thrown", success => success)

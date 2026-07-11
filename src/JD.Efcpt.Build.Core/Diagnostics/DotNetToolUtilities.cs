@@ -1,12 +1,12 @@
 using System.Diagnostics;
 using System.Text;
 
-namespace JD.Efcpt.Build.Tasks.Utilities;
+namespace JD.Efcpt.Build.Core.Diagnostics;
 
 /// <summary>
 /// Shared utilities for dotnet tool resolution and framework detection.
 /// </summary>
-internal static class DotNetToolUtilities
+public static class DotNetToolUtilities
 {
     /// <summary>
     /// Timeout in milliseconds for external process operations (SDK checks, dnx availability).
@@ -25,10 +25,11 @@ internal static class DotNetToolUtilities
     /// </returns>
     /// <remarks>
     /// The underlying process spawn is memoized via <see cref="SdkProbeCache"/> under the
-    /// <c>"list-sdks"</c> probe name, shared with <see cref="RunEfcpt"/>'s equivalent probe so
-    /// the two tasks reuse a single result within the same build session. Only a determinate
-    /// probe result is memoized - a transient failure (process launch hiccup, timeout) is
-    /// retried on the next call rather than being cached as a permanent negative.
+    /// <c>"list-sdks"</c> probe name, shared with <c>JD.Efcpt.Build.Tasks.RunEfcpt</c>'s
+    /// equivalent probe so callers in both assemblies reuse a single result within the same
+    /// build session. Only a determinate probe result is memoized - a transient failure (process
+    /// launch hiccup, timeout) is retried on the next call rather than being cached as a
+    /// permanent negative.
     /// </remarks>
     public static bool IsDotNet10SdkInstalled(string dotnetExe) =>
         SdkProbeCache.GetOrProbe("list-sdks", dotnetExe, () => ProbeDotNet10SdkInstalled(dotnetExe));
@@ -230,6 +231,81 @@ internal static class DotNetToolUtilities
 
         return ProbeOutcome.Unavailable;
     }
+
+    /// <summary>
+    /// Checks if dnx (dotnet native execution) is available by running `dotnet dnx --help`.
+    /// </summary>
+    /// <param name="dotnetExe">Path to the dotnet executable (typically "dotnet" or "dotnet.exe").</param>
+    /// <returns><c>true</c> if the <c>dnx --help</c> invocation exits with code 0; otherwise <c>false</c>.</returns>
+    /// <remarks>
+    /// <para>
+    /// This is a distinct probe from <see cref="IsDnxAvailable"/> - memoized under a different
+    /// cache key (<c>"dnx-help"</c>, matching the command actually run: <c>dotnet dnx --help</c>,
+    /// vs. <c>"list-runtimes"</c>'s <c>dotnet --list-runtimes</c>). It exists so
+    /// <c>DefaultSdkProbe</c> (used by both <c>RunEfcpt</c> and <c>EfcptDoctor</c>) can
+    /// reuse the exact same probe mechanics and cache key that
+    /// <c>JD.Efcpt.Build.Tasks.RunEfcpt</c>'s own (pre-#181) private dnx-availability check used,
+    /// preserving #186 behavior exactly across the Core extraction.
+    /// </para>
+    /// </remarks>
+    public static bool IsDnxHelpAvailable(string dotnetExe) =>
+        SdkProbeCache.GetOrProbe("dnx-help", dotnetExe, () => ProbeDnxHelpAvailable(dotnetExe));
+
+    /// <summary>
+    /// Performs the actual `dotnet dnx --help` process spawn. Not memoized itself - callers
+    /// should go through <see cref="IsDnxHelpAvailable"/>.
+    /// </summary>
+    /// <param name="dotnetExe">Path to the dotnet executable.</param>
+    /// <returns>
+    /// <see cref="ProbeOutcome.Available"/> if dnx responds successfully;
+    /// <see cref="ProbeOutcome.Unavailable"/> if the probe ran to completion with a non-zero
+    /// exit code; or <see cref="ProbeOutcome.Transient"/> if the probe could not produce a
+    /// determinate answer (launch failure, timeout, unexpected exception).
+    /// </returns>
+    private static ProbeOutcome ProbeDnxHelpAvailable(string dotnetExe)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = dotnetExe,
+                Arguments = "dnx --help",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var p = Process.Start(psi);
+            if (p is null) return ProbeOutcome.Transient;
+
+            if (!p.WaitForExit(ProcessTimeoutMs))
+            {
+                try { p.Kill(); } catch { /* best effort */ }
+                return ProbeOutcome.Transient;
+            }
+
+            return MapExitCodeOutcome(p.ExitCode);
+        }
+        catch
+        {
+            return ProbeOutcome.Transient;
+        }
+    }
+
+    /// <summary>
+    /// Pure decision logic for a completed <c>dotnet dnx --help</c> invocation: maps its exit
+    /// code to a probe outcome. Extracted from <see cref="ProbeDnxHelpAvailable"/> so it can be
+    /// unit tested without spawning a process; the timeout/launch-failure/exception paths remain
+    /// in the caller since they are inherent to the process spawn itself.
+    /// </summary>
+    /// <param name="exitCode">The exit code of the completed process.</param>
+    /// <returns>
+    /// <see cref="ProbeOutcome.Available"/> if <paramref name="exitCode"/> is zero;
+    /// otherwise <see cref="ProbeOutcome.Unavailable"/>.
+    /// </returns>
+    internal static ProbeOutcome MapExitCodeOutcome(int exitCode) =>
+        exitCode == 0 ? ProbeOutcome.Available : ProbeOutcome.Unavailable;
 
     /// <summary>
     /// Determines if the target framework is .NET 10.0 or later.

@@ -1,4 +1,4 @@
-namespace JD.Efcpt.Build.Tasks.Utilities;
+namespace JD.Efcpt.Build.Core.Diagnostics;
 
 /// <summary>
 /// The result of an SDK/dnx capability probe, distinguishing a genuine (stable) answer from a
@@ -11,7 +11,7 @@ namespace JD.Efcpt.Build.Tasks.Utilities;
 /// transient failure must be distinguishable from a real, determinate answer - otherwise it
 /// gets cached as a permanent negative and never retried.
 /// </remarks>
-internal enum ProbeOutcome
+public enum ProbeOutcome
 {
     /// <summary>
     /// The probe ran to completion and the probed capability is present. This is a real,

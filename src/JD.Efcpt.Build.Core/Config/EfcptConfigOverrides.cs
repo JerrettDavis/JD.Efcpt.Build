@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace JD.Efcpt.Build.Tasks.Config;
+namespace JD.Efcpt.Build.Core.Config;
 
 /// <summary>
 /// Represents overrides for efcpt-config.json. Null values mean "no override".

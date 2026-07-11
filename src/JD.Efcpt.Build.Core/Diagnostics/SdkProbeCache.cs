@@ -1,8 +1,7 @@
 using System.Collections.Concurrent;
 using System.Globalization;
-using System.IO;
 
-namespace JD.Efcpt.Build.Tasks.Utilities;
+namespace JD.Efcpt.Build.Core.Diagnostics;
 
 /// <summary>
 /// Process-wide, thread-safe memoization cache for expensive .NET SDK/dnx capability probes
@@ -43,8 +42,15 @@ namespace JD.Efcpt.Build.Tasks.Utilities;
 /// race to probe the same key simultaneously, the underlying probe factory delegate is
 /// guaranteed to execute exactly once; all callers observe the same result.
 /// </para>
+/// <para>
+/// This cache is a single static class shared by every caller loaded into the process -
+/// including <c>JD.Efcpt.Build.Tasks.RunEfcpt</c>'s own SDK/dnx probes and this assembly's
+/// <c>DotNetToolUtilities</c> and <c>DefaultSdkProbe</c> - so probe results (and their cache
+/// keys) are genuinely shared across both assemblies as long as callers use the same
+/// probe-name/<c>dotnetExe</c> pair.
+/// </para>
 /// </remarks>
-internal static class SdkProbeCache
+public static class SdkProbeCache
 {
     /// <summary>
     /// Sentinel stamp value used when the muxer path cannot be resolved to an existing file
@@ -86,7 +92,7 @@ internal static class SdkProbeCache
     /// <see cref="ProbeOutcome.Transient"/>, which is reported as a negative result for this
     /// call only and is never cached).
     /// </returns>
-    internal static bool GetOrProbe(string probeName, string? dotnetExe, Func<ProbeOutcome> probe)
+    public static bool GetOrProbe(string probeName, string? dotnetExe, Func<ProbeOutcome> probe)
     {
         var key = BuildKey(probeName, dotnetExe);
         var lazy = Cache.GetOrAdd(key, _ => new Lazy<ProbeOutcome>(
@@ -112,7 +118,7 @@ internal static class SdkProbeCache
     /// Clears all cached probe results. Intended for test isolation; production code should
     /// never need to call this since the cache is scoped to a single build session (process).
     /// </summary>
-    internal static void Clear() => Cache.Clear();
+    public static void Clear() => Cache.Clear();
 
     /// <summary>
     /// Builds the composite cache key for a probe: the probe name, the caller-supplied dotnet
@@ -160,7 +166,7 @@ internal static class SdkProbeCache
     /// </remarks>
     /// <param name="dotnetExe">The bare command or path supplied by the caller (e.g. <c>"dotnet"</c>).</param>
     /// <returns>The fully-qualified path if resolved; otherwise <see langword="null"/>.</returns>
-    internal static string? ResolveDotnetExecutable(string? dotnetExe)
+    public static string? ResolveDotnetExecutable(string? dotnetExe)
     {
         if (string.IsNullOrEmpty(dotnetExe))
             return null;

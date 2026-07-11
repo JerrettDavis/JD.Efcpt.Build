@@ -1,4 +1,4 @@
-using JD.Efcpt.Build.Tasks;
+using JD.Efcpt.Build.Core;
 using JD.Efcpt.Build.Tests.Infrastructure;
 using TinyBDD;
 using TinyBDD.Xunit;

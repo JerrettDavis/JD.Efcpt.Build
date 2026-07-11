@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using JD.Efcpt.Build.Core.Logging;
 using JD.Efcpt.Build.Tasks;
 using JD.Efcpt.Build.Tasks.Utilities;
 using JD.Efcpt.Build.Tests.Infrastructure;

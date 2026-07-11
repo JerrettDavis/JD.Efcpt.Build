@@ -1,3 +1,4 @@
+using JD.Efcpt.Build.Core;
 using JD.Efcpt.Build.Tasks.ConnectionStrings;
 using PatternKit.Behavioral.Chain;
 

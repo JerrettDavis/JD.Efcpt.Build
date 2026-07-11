@@ -46,7 +46,24 @@
     <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 
+  <!-- Framework assembly needed for net472: EfcptConfigGenerator uses HttpClient to fetch the schema. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\JD.Efcpt.Build.Providers.Abstractions\JD.Efcpt.Build.Providers.Abstractions.csproj" />
+  </ItemGroup>
+
+  <!--
+    Exposes internal "map-helper" methods (pure exit-code/output -> ProbeOutcome decision logic,
+    e.g. DotNetToolUtilities.MapListSdksOutcome) to test projects so they can be unit tested
+    without spawning a process, while keeping them out of the assembly's public surface.
+    JD.Efcpt.Build.Tests references these during the #181 migration (until its relevant test
+    files relocate to JD.Efcpt.Build.Core.Tests); JD.Efcpt.Build.Core.Tests is the permanent home.
+  -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="JD.Efcpt.Build.Tests" />
+    <InternalsVisibleTo Include="JD.Efcpt.Build.Core.Tests" />
   </ItemGroup>
 </Project>

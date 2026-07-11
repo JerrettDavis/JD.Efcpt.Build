@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text;
+using JD.Efcpt.Build.Core;
 using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Extensions;
 using Microsoft.Build.Framework;

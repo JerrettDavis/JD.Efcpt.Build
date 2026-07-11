@@ -1,5 +1,7 @@
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using JD.Efcpt.Build.Core;
+using JD.Efcpt.Build.Core.Logging;
 using JD.Efcpt.Build.Tasks.Chains;
 using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Extensions;

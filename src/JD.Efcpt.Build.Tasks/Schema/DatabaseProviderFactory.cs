@@ -1,7 +1,5 @@
 using System.Data.Common;
-#if NETFRAMEWORK
-using JD.Efcpt.Build.Tasks.Compatibility;
-#endif
+using JD.Efcpt.Build.Core.Providers;
 
 namespace JD.Efcpt.Build.Tasks.Schema;
 
@@ -12,7 +10,9 @@ namespace JD.Efcpt.Build.Tasks.Schema;
 /// Connection and schema-reader construction is delegated to <see cref="IProviderAdapter"/>
 /// implementations resolved via <see cref="Resolver"/>; see <see cref="ProviderAdapterResolver"/>
 /// for the phased design that will let later phases move drivers into satellite packages
-/// without changing this factory's public surface.
+/// without changing this factory's public surface. Provider name normalization itself is
+/// delegated to <see cref="ProviderNames"/> (moved to <c>JD.Efcpt.Build.Core</c> in #181 so the
+/// jd-efcpt CLI can share the exact same alias/display-name list).
 /// </remarks>
 internal static class DatabaseProviderFactory
 {
@@ -27,27 +27,7 @@ internal static class DatabaseProviderFactory
     /// <summary>
     /// Known provider identifiers mapped to their canonical names.
     /// </summary>
-    public static string NormalizeProvider(string provider)
-    {
-#if NETFRAMEWORK
-        NetFrameworkPolyfills.ThrowIfNullOrWhiteSpace(provider, nameof(provider));
-#else
-        ArgumentException.ThrowIfNullOrWhiteSpace(provider);
-#endif
-
-        return provider.ToLowerInvariant() switch
-        {
-            "mssql" or "sqlserver" or "sql-server" => "mssql",
-            "postgres" or "postgresql" or "pgsql" => "postgres",
-            "mysql" or "mariadb" => "mysql",
-            "sqlite" or "sqlite3" => "sqlite",
-            "oracle" or "oracledb" => "oracle",
-            "firebird" or "fb" => "firebird",
-            "snowflake" or "sf" => "snowflake",
-            _ => throw new NotSupportedException($"Database provider '{provider}' is not supported. " +
-                "Supported providers: mssql, postgres, mysql, sqlite, oracle, firebird, snowflake")
-        };
-    }
+    public static string NormalizeProvider(string provider) => ProviderNames.Normalize(provider);
 
     /// <summary>
     /// Creates a DbConnection for the specified provider.
@@ -90,20 +70,5 @@ internal static class DatabaseProviderFactory
     /// <summary>
     /// Gets the display name for a provider.
     /// </summary>
-    public static string GetProviderDisplayName(string provider)
-    {
-        var normalized = NormalizeProvider(provider);
-
-        return normalized switch
-        {
-            "mssql" => "SQL Server",
-            "postgres" => "PostgreSQL",
-            "mysql" => "MySQL/MariaDB",
-            "sqlite" => "SQLite",
-            "oracle" => "Oracle",
-            "firebird" => "Firebird",
-            "snowflake" => "Snowflake",
-            _ => provider
-        };
-    }
+    public static string GetProviderDisplayName(string provider) => ProviderNames.GetDisplayName(provider);
 }

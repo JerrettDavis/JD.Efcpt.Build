@@ -1,4 +1,4 @@
-namespace JD.Efcpt.Build.Tasks;
+namespace JD.Efcpt.Build.Core.Logging;
 
 /// <summary>
 /// Defines the severity level for build messages.

@@ -1,13 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Threading.Tasks;
 
-namespace JD.Efcpt.Build.Tasks.Config;
+namespace JD.Efcpt.Build.Core.Config;
 
 /// <summary>
 /// Generates efcpt-config.json from the EFCorePowerTools JSON schema.
@@ -49,7 +44,7 @@ public static class EfcptConfigGenerator
     {
         using var client = new HttpClient();
         client.Timeout = TimeSpan.FromSeconds(5);
-        
+
         try
         {
             await client.GetStringAsync(PrimarySchemaUrl);
@@ -99,7 +94,7 @@ public static class EfcptConfigGenerator
             throw new InvalidOperationException("Failed to parse schema JSON");
 
         var config = new JsonObject();
-        
+
         // Add $schema property first
         schemaUrl ??= PrimarySchemaUrl;
         config["$schema"] = schemaUrl;
@@ -280,7 +275,7 @@ public static class EfcptConfigGenerator
                 defaultValue = JsonValue.Create(false);
                 return true;
             }
-            
+
             defaultValue = null;
             return false;
         }

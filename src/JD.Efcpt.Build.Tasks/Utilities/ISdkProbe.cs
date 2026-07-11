@@ -1,3 +1,5 @@
+using JD.Efcpt.Build.Core.Diagnostics;
+
 namespace JD.Efcpt.Build.Tasks.Utilities;
 
 /// <summary>

@@ -1,3 +1,5 @@
+using JD.Efcpt.Build.Core;
+using JD.Efcpt.Build.Core.Diagnostics;
 using JD.Efcpt.Build.Tasks.Extensions;
 using JD.Efcpt.Build.Tasks.Utilities;
 using Microsoft.Build.Framework;

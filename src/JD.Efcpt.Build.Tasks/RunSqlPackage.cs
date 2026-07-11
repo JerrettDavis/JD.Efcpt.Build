@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Text;
+using JD.Efcpt.Build.Core.Diagnostics;
+using JD.Efcpt.Build.Core.Logging;
 using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Extensions;
 using JD.Efcpt.Build.Tasks.Utilities;

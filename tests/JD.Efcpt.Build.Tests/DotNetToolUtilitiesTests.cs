@@ -1,3 +1,4 @@
+using JD.Efcpt.Build.Core.Diagnostics;
 using JD.Efcpt.Build.Tasks.Utilities;
 using TinyBDD;
 using TinyBDD.Xunit;

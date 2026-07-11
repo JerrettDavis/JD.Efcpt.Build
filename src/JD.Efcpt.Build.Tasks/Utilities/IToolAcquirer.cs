@@ -1,3 +1,5 @@
+using JD.Efcpt.Build.Core.Logging;
+
 namespace JD.Efcpt.Build.Tasks.Utilities;
 
 /// <summary>
