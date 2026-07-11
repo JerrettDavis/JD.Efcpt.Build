@@ -353,14 +353,15 @@ error JD0024: Failed to create target directory 'C:\output\scripts': Access deni
 ---
 
 ### JD0025: Failed to Add SQL File Warnings
-**Severity**: Error
+**Severity**: Warning
 **Task**: AddSqlFileWarnings
 
-An exception occurred while adding auto-generation warning headers to SQL files.
+An exception occurred while adding an auto-generation warning header to a SQL file. Processing
+continues for the remaining files.
 
 **Example**:
 ```
-error JD0025: Failed to add SQL file warnings: Access to the path is denied
+warning JD0025: Failed to process Table1.sql: Access to the path is denied
 ```
 
 **Resolution**:

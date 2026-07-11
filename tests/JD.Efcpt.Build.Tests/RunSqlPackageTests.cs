@@ -451,6 +451,125 @@ public sealed partial class RunSqlPackageTests(ITestOutputHelper output) : TinyB
         .AssertPassed();
     }
 
+    [Scenario("SqlPackage process start exception produces JD0023 error")]
+    [Fact]
+    public async Task SqlPackage_execution_exception_error()
+    {
+        await Given("a tool path that exists but is not a valid executable", () =>
+        {
+            var state = Setup();
+            var toolPath = Path.Combine(state.TempDir, "sqlpackage.exe");
+            // Not a valid PE image - Process.Start will throw when attempting to launch it.
+            File.WriteAllText(toolPath, "not a real executable");
+            return (state, toolPath);
+        })
+        .When("task is executed", s =>
+        {
+            var task = new RunSqlPackage
+            {
+                BuildEngine = s.state.Engine,
+                WorkingDirectory = s.state.TempDir,
+                ConnectionString = "Server=test;Database=test",
+                TargetDirectory = s.state.TempDir,
+                ToolPath = s.toolPath,
+                LogVerbosity = "minimal"
+            };
+            var result = task.Execute();
+            return (s.state, result, s.state.Engine.Errors);
+        })
+        .Then("task fails", r => !r.result)
+        .And("exactly one error is logged and it is JD0023", r =>
+            r.Errors.Count == 1 &&
+            r.Errors[0].Code == "JD0023" &&
+            r.Errors[0].Message?.Contains("SqlPackage execution failed") == true)
+        .And("no stray JD0022 is logged", r => r.Errors.All(e => e.Code != "JD0022"))
+        .Finally(r => Cleanup(r.state))
+        .AssertPassed();
+    }
+
+    [Scenario("SqlPackage non-zero exit code produces exactly JD0022 error")]
+    [SkippableFact]
+    public async Task SqlPackage_non_zero_exit_produces_jd0022()
+    {
+        var dotnet = FindDotnetExecutable();
+        // If a dotnet host cannot be located (highly unusual in a .NET test run), there is no
+        // genuine real-process way to force a non-zero exit here; skip rather than assert falsely.
+        Skip.If(dotnet is null, "dotnet host executable could not be located.");
+
+        await Given("a real executable (dotnet) that starts but exits non-zero on the sqlpackage args", () =>
+        {
+            var state = Setup();
+            // The dotnet muxer starts successfully (so no JD0023 exception path) but treats the
+            // sqlpackage-style '/Action:Extract ...' arguments as an unknown command and exits
+            // with a non-zero code - exercising the genuine JD0022 non-zero-exit path.
+            return (state, dotnet: dotnet!);
+        })
+        .When("task is executed", s =>
+        {
+            var task = new RunSqlPackage
+            {
+                BuildEngine = s.state.Engine,
+                WorkingDirectory = s.state.TempDir,
+                ConnectionString = "Server=test;Database=test",
+                TargetDirectory = s.state.TempDir,
+                ToolPath = s.dotnet,
+                LogVerbosity = "minimal"
+            };
+            var result = task.Execute();
+            return (s.state, result, s.state.Engine.Errors);
+        })
+        .Then("task fails", r => !r.result)
+        .And("exactly one error is logged and it is JD0022", r =>
+            r.Errors.Count == 1 &&
+            r.Errors[0].Code == "JD0022" &&
+            r.Errors[0].Message?.Contains("exit code") == true)
+        .And("no stray JD0023 is logged", r => r.Errors.All(e => e.Code != "JD0023"))
+        .Finally(r => Cleanup(r.state))
+        .AssertPassed();
+    }
+
+    /// <summary>
+    /// Locates a real <c>dotnet</c> host executable via DOTNET_ROOT, PATH, then the current
+    /// process path. Returns <see langword="null"/> if none can be found.
+    /// </summary>
+    private static string? FindDotnetExecutable()
+    {
+        var exe = OperatingSystem.IsWindows() ? "dotnet.exe" : "dotnet";
+
+        foreach (var root in new[]
+                 {
+                     Environment.GetEnvironmentVariable("DOTNET_ROOT"),
+                     Environment.GetEnvironmentVariable("DOTNET_ROOT(x64)")
+                 })
+        {
+            if (!string.IsNullOrEmpty(root))
+            {
+                var candidate = Path.Combine(root, exe);
+                if (File.Exists(candidate))
+                    return candidate;
+            }
+        }
+
+        var path = Environment.GetEnvironmentVariable("PATH") ?? "";
+        foreach (var dir in path.Split(Path.PathSeparator))
+        {
+            if (string.IsNullOrWhiteSpace(dir))
+                continue;
+            var candidate = Path.Combine(dir.Trim(), exe);
+            if (File.Exists(candidate))
+                return candidate;
+        }
+
+        var processPath = Environment.ProcessPath;
+        if (processPath != null &&
+            Path.GetFileNameWithoutExtension(processPath).Equals("dotnet", StringComparison.OrdinalIgnoreCase))
+        {
+            return processPath;
+        }
+
+        return null;
+    }
+
     [Scenario("Invalid target directory produces JD0024 error")]
     [Fact]
     public async Task Invalid_target_directory_error()
