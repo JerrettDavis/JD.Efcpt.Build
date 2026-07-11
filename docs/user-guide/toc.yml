@@ -18,6 +18,8 @@
   href: efcpt-compatibility.md
 - name: Split Outputs
   href: split-outputs.md
+- name: Tool Acquisition
+  href: tool-acquisition.md
 - name: Advanced Topics
   href: advanced.md
 - name: Troubleshooting

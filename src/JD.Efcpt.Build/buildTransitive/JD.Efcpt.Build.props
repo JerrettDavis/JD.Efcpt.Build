@@ -27,6 +27,7 @@
     <EfcptDotNetExe Condition="'$(EfcptDotNetExe)'==''">dotnet</EfcptDotNetExe>
     <EfcptOfflineMode Condition="'$(EfcptOfflineMode)'=='' and ('$(EFCPT_OFFLINE)'=='true' or '$(EFCPT_OFFLINE)'=='yes' or '$(EFCPT_OFFLINE)'=='on' or '$(EFCPT_OFFLINE)'=='1' or '$(EFCPT_OFFLINE)'=='enable' or '$(EFCPT_OFFLINE)'=='enabled' or '$(EFCPT_OFFLINE)'=='y')">true</EfcptOfflineMode>
     <EfcptOfflineMode Condition="'$(EfcptOfflineMode)'==''">false</EfcptOfflineMode>
+    <EfcptAutoAcquireTool Condition="'$(EfcptAutoAcquireTool)'==''">true</EfcptAutoAcquireTool>
     <EfcptFingerprintFile Condition="'$(EfcptFingerprintFile)'==''">$(EfcptOutput)fingerprint.txt</EfcptFingerprintFile>
     <EfcptStampFile Condition="'$(EfcptStampFile)'==''">$(EfcptOutput).efcpt.stamp</EfcptStampFile>
     <EfcptDetectGeneratedFileChanges Condition="'$(EfcptDetectGeneratedFileChanges)'==''">false</EfcptDetectGeneratedFileChanges>

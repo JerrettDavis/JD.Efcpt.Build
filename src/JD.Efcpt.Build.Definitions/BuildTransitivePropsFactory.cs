@@ -56,6 +56,11 @@ public static class BuildTransitivePropsFactory
                     // enable offline mode.
                     group.Property<EfcptOfflineMode>( "true", "'$(EfcptOfflineMode)'=='' and ('$(EFCPT_OFFLINE)'=='true' or '$(EFCPT_OFFLINE)'=='yes' or '$(EFCPT_OFFLINE)'=='on' or '$(EFCPT_OFFLINE)'=='1' or '$(EFCPT_OFFLINE)'=='enable' or '$(EFCPT_OFFLINE)'=='enabled' or '$(EFCPT_OFFLINE)'=='y')");
                     group.Property<EfcptOfflineMode>( "false", "'$(EfcptOfflineMode)'==''");
+                    // .NET 8/9 automatic tool acquisition (#186): when no hermetic, network-free
+                    // way to run the efcpt tool is otherwise available, RunEfcpt bootstraps an
+                    // obj-local tool manifest and installs the tool into it. EfcptOfflineMode
+                    // always takes precedence over this property - see RunEfcpt.AcquireToolIfNeeded.
+                    group.Property<EfcptAutoAcquireTool>( "true", "'$(EfcptAutoAcquireTool)'==''");
                     group.Property<EfcptFingerprintFile>( "$(EfcptOutput)fingerprint.txt", "'$(EfcptFingerprintFile)'==''");
                     group.Property<EfcptStampFile>( "$(EfcptOutput).efcpt.stamp", "'$(EfcptStampFile)'==''");
                     group.Property<EfcptDetectGeneratedFileChanges>( "false", "'$(EfcptDetectGeneratedFileChanges)'==''");
@@ -163,6 +168,11 @@ public static class BuildTransitivePropsFactory
                     // enable offline mode.
                     group.Property<EfcptOfflineMode>( "true", "'$(EfcptOfflineMode)'=='' and ('$(EFCPT_OFFLINE)'=='true' or '$(EFCPT_OFFLINE)'=='yes' or '$(EFCPT_OFFLINE)'=='on' or '$(EFCPT_OFFLINE)'=='1' or '$(EFCPT_OFFLINE)'=='enable' or '$(EFCPT_OFFLINE)'=='enabled' or '$(EFCPT_OFFLINE)'=='y')");
                     group.Property<EfcptOfflineMode>( "false", "'$(EfcptOfflineMode)'==''");
+                    // .NET 8/9 automatic tool acquisition (#186): when no hermetic, network-free
+                    // way to run the efcpt tool is otherwise available, RunEfcpt bootstraps an
+                    // obj-local tool manifest and installs the tool into it. EfcptOfflineMode
+                    // always takes precedence over this property - see RunEfcpt.AcquireToolIfNeeded.
+                    group.Property<EfcptAutoAcquireTool>( "true", "'$(EfcptAutoAcquireTool)'==''");
                     group.Property<EfcptFingerprintFile>( "$(EfcptOutput)fingerprint.txt", "'$(EfcptFingerprintFile)'==''");
                     group.Property<EfcptStampFile>( "$(EfcptOutput).efcpt.stamp", "'$(EfcptStampFile)'==''");
                     group.Property<EfcptDetectGeneratedFileChanges>( "false", "'$(EfcptDetectGeneratedFileChanges)'==''");
@@ -248,6 +258,10 @@ public static class BuildTransitivePropsFactory
   public readonly struct EfcptAppSettings : IMsBuildPropertyName
   {
     public string Name => "EfcptAppSettings";
+  }
+  public readonly struct EfcptAutoAcquireTool : IMsBuildPropertyName
+  {
+    public string Name => "EfcptAutoAcquireTool";
   }
   public readonly struct EfcptAutoDetectWarningLevel : IMsBuildPropertyName
   {

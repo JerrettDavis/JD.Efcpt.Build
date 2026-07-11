@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using JD.Efcpt.Build.Tasks.Strategies;
 #if NETFRAMEWORK
 using JD.Efcpt.Build.Tasks.Compatibility;
@@ -47,13 +48,22 @@ internal static class ProcessRunner
     /// <param name="args">Command line arguments.</param>
     /// <param name="workingDir">Working directory for the process.</param>
     /// <param name="environmentVariables">Optional environment variables to set.</param>
+    /// <param name="timeoutMs">
+    /// Optional bounded timeout in milliseconds. When <see langword="null"/> (the default), the
+    /// process is awaited with no timeout - identical to this method's original behavior, so
+    /// existing callers are unaffected. When specified, the process is force-killed and a
+    /// <see cref="ProcessResult"/> with a non-zero exit code and a descriptive
+    /// <see cref="ProcessResult.StdErr"/> message is returned if it has not exited within
+    /// <paramref name="timeoutMs"/>, instead of blocking indefinitely.
+    /// </param>
     /// <returns>A <see cref="ProcessResult"/> containing exit code and captured output.</returns>
     public static ProcessResult Run(
         IBuildLog log,
         string fileName,
         string args,
         string workingDir,
-        IDictionary<string, string>? environmentVariables = null)
+        IDictionary<string, string>? environmentVariables = null,
+        int? timeoutMs = null)
     {
         var normalized = CommandNormalizationStrategy.Normalize(fileName, args);
         log.Info($"> {normalized.FileName} {normalized.Args}");
@@ -83,11 +93,45 @@ internal static class ProcessRunner
         using var p = Process.Start(psi)
             ?? throw new InvalidOperationException($"Failed to start: {normalized.FileName}");
 
-        var stdout = p.StandardOutput.ReadToEnd();
-        var stderr = p.StandardError.ReadToEnd();
+        if (timeoutMs is not int timeout)
+        {
+            // Unbounded (legacy) path - unchanged behavior for existing callers that don't pass
+            // a timeout.
+            var legacyStdout = p.StandardOutput.ReadToEnd();
+            var legacyStderr = p.StandardError.ReadToEnd();
+            p.WaitForExit();
+
+            return new ProcessResult(p.ExitCode, legacyStdout, legacyStderr);
+        }
+
+        // Bounded path: read output asynchronously via events so a hung/slow process (e.g. a
+        // blocked/slow NuGet feed during 'dotnet tool install') can be detected and killed after
+        // `timeout` ms instead of blocking the build forever - synchronous ReadToEnd() would
+        // never return if the process never writes/closes its output streams.
+        var stdoutBuilder = new StringBuilder();
+        var stderrBuilder = new StringBuilder();
+        p.OutputDataReceived += (_, e) => { if (e.Data != null) stdoutBuilder.AppendLine(e.Data); };
+        p.ErrorDataReceived += (_, e) => { if (e.Data != null) stderrBuilder.AppendLine(e.Data); };
+        p.BeginOutputReadLine();
+        p.BeginErrorReadLine();
+
+        if (!p.WaitForExit(timeout))
+        {
+            try { p.Kill(); } catch { /* best effort */ }
+            try { p.WaitForExit(2000); } catch { /* best effort */ }
+
+            return new ProcessResult(
+                -1,
+                stdoutBuilder.ToString(),
+                $"Process timed out after {timeout / 1000.0:0.#}s and was killed: " +
+                $"{normalized.FileName} {normalized.Args}");
+        }
+
+        // Ensure the async redirected-stream event handlers have finished flushing before we
+        // read the accumulated builders (recommended pattern per Process.WaitForExit docs).
         p.WaitForExit();
 
-        return new ProcessResult(p.ExitCode, stdout, stderr);
+        return new ProcessResult(p.ExitCode, stdoutBuilder.ToString(), stderrBuilder.ToString());
     }
 
     /// <summary>
