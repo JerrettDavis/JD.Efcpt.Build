@@ -197,11 +197,11 @@ public sealed class RunSqlPackage : Task
                 }
             }
         }
-        else
-        {
-            log.Error("JD0022", "SqlPackage extract failed");
-        }
 
+        // On failure, ExecuteSqlPackage has already logged the specific coded error
+        // (JD0021 start failure / JD0022 non-zero exit code / JD0023 exception). Do NOT
+        // re-log a generic JD0022 here - that would mislabel the JD0021/JD0023 cases and
+        // produce a duplicate/spurious error, defeating the per-code drift reconciliation.
         return success;
     }
 
@@ -380,50 +380,64 @@ public sealed class RunSqlPackage : Task
 
         log.Detail($"Running: {toolInfo.Executable} {fullArgs}");
 
-        using var process = Process.Start(psi);
-        if (process == null)
+        try
         {
-            log.Error("JD0021", "Failed to start sqlpackage process");
+            using var process = Process.Start(psi);
+            if (process == null)
+            {
+                log.Error("JD0021", "Failed to start sqlpackage process");
+                return false;
+            }
+
+            var output = new StringBuilder();
+            var error = new StringBuilder();
+
+            process.OutputDataReceived += (sender, e) =>
+            {
+                if (!string.IsNullOrEmpty(e.Data))
+                {
+                    output.AppendLine(e.Data);
+                    log.Detail(e.Data);
+                }
+            };
+
+            process.ErrorDataReceived += (sender, e) =>
+            {
+                if (!string.IsNullOrEmpty(e.Data))
+                {
+                    error.AppendLine(e.Data);
+                    log.Detail(e.Data);
+                }
+            };
+
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            process.WaitForExit();
+
+            if (process.ExitCode != 0)
+            {
+                log.Error("JD0022", $"SqlPackage failed with exit code {process.ExitCode}");
+                if (error.Length > 0)
+                {
+                    log.Detail($"SqlPackage error output:\n{error}");
+                }
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            // Include the exception type name so hard-to-diagnose cases (e.g. a Win32Exception
+            // from Process.Start) are identifiable, and route the full ToString() (type +
+            // message + stack) to Detail - mirroring how the exit-code path sends stderr to
+            // Detail - since the previous unhandled-exception behavior surfaced a full stack
+            // via the task decorator.
+            log.Error("JD0023", $"SqlPackage execution failed ({ex.GetType().Name}): {ex.Message}");
+            log.Detail(ex.ToString());
             return false;
         }
-
-        var output = new StringBuilder();
-        var error = new StringBuilder();
-
-        process.OutputDataReceived += (sender, e) =>
-        {
-            if (!string.IsNullOrEmpty(e.Data))
-            {
-                output.AppendLine(e.Data);
-                log.Detail(e.Data);
-            }
-        };
-
-        process.ErrorDataReceived += (sender, e) =>
-        {
-            if (!string.IsNullOrEmpty(e.Data))
-            {
-                error.AppendLine(e.Data);
-                log.Detail(e.Data);
-            }
-        };
-
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
-
-        process.WaitForExit();
-
-        if (process.ExitCode != 0)
-        {
-            log.Error("JD0022", $"SqlPackage failed with exit code {process.ExitCode}");
-            if (error.Length > 0)
-            {
-                log.Detail($"SqlPackage error output:\n{error}");
-            }
-            return false;
-        }
-
-        return true;
     }
 
     /// <summary>

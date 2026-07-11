@@ -279,7 +279,8 @@ public sealed partial class AddSqlFileWarningsTests(ITestOutputHelper output) : 
         })
         .Then("task succeeds", r => r.result)
         .And("processes two files successfully", r => r.FilesProcessed == 2)
-        .And("warning is logged for failed file", r => r.Warnings.Any(w => w.Message?.Contains("Failed to process") == true))
+        .And("JD0025 warning is logged for failed file", r =>
+            r.Warnings.Any(w => w.Code == "JD0025" && w.Message?.Contains("Failed to process") == true))
         .Finally(r =>
         {
             // Remove read-only attribute before cleanup
@@ -325,9 +326,8 @@ public sealed partial class AddSqlFileWarningsTests(ITestOutputHelper output) : 
         .AssertPassed();
     }
 
-    // Note: JD0025 error path (top-level exception) is difficult to test in a unit test
-    // as it requires triggering an unhandled exception during Directory.GetFiles or file processing.
-    // This error path exists for unexpected failures and is covered by the error handling
-    // implementation in AddSqlFileWarnings.cs:79-84
+    // Note: the JD0025 warning path (per-file exception while adding the header) is exercised
+    // by Continues_when_individual_file_fails above, which triggers a real IOException via a
+    // read-only file and asserts the JD0025 code on the resulting warning.
 }
 

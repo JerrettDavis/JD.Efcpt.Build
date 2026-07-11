@@ -77,7 +77,7 @@ public sealed class AddSqlFileWarnings : Task
             }
             catch (Exception ex)
             {
-                log.Warn($"Failed to process {Path.GetFileName(sqlFile)}: {ex.Message}");
+                log.Warn("JD0025", $"Failed to process {Path.GetFileName(sqlFile)}: {ex.Message}");
             }
         }
 
