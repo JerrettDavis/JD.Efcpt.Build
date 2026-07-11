@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json;
 using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Extensions;
 using JD.Efcpt.Build.Tasks.Schema;
@@ -363,9 +364,75 @@ public sealed class RunEfcpt : Task
             .Build());
 
     private static bool ToolIsAutoOrManifest(ToolResolutionContext ctx) =>
-        ctx.ToolMode.EqualsIgnoreCase("tool-manifest") ||
-        (ctx.ToolMode.EqualsIgnoreCase("auto") &&
-        (ctx.ManifestDir is not null || ctx.ForceManifestOnNonWindows));
+        ToolModeUsesManifest(ctx.ToolMode, ctx.ManifestDir, ctx.ForceManifestOnNonWindows);
+
+    /// <summary>
+    /// Determines whether <paramref name="toolMode"/> would actually resolve to using a local
+    /// tool manifest - i.e. <c>tool-manifest</c> mode, or <c>auto</c> mode with a discovered
+    /// manifest directory or a forced manifest fallback (non-Windows, no explicit ToolPath).
+    /// </summary>
+    /// <remarks>
+    /// This is the same condition <see cref="ToolResolutionStrategy"/> uses (via
+    /// <see cref="ToolIsAutoOrManifest"/>) to pick the tool-manifest invocation branch, extracted
+    /// so the offline pre-flight check in <see cref="ExecuteCore"/> can apply it before a
+    /// <see cref="ToolResolutionContext"/> exists.
+    /// </remarks>
+    private static bool ToolModeUsesManifest(string toolMode, string? manifestDir, bool forceManifestOnNonWindows) =>
+        toolMode.EqualsIgnoreCase("tool-manifest") ||
+        (toolMode.EqualsIgnoreCase("auto") &&
+        (manifestDir is not null || forceManifestOnNonWindows));
+
+    /// <summary>
+    /// Reads a discovered <c>.config/dotnet-tools.json</c> manifest and determines whether it
+    /// lists an entry for the target efcpt tool - matched either by package id or by exposing a
+    /// command name matching <paramref name="toolCommand"/>.
+    /// </summary>
+    /// <remarks>
+    /// This is a local file read only (no network access), so it is safe to call from the
+    /// offline pre-flight path. Any parse failure - missing file, malformed JSON, or an
+    /// unexpected shape - is tolerated by returning <c>false</c> (i.e. "does not prove
+    /// runnability") rather than throwing, since a corrupt manifest is exactly the kind of
+    /// situation the strengthened pre-flight check is meant to catch.
+    /// </remarks>
+    private static bool ManifestListsTool(string manifestDir, string toolPackageId, string toolCommand)
+    {
+        try
+        {
+            var manifestPath = Path.Combine(manifestDir, ".config", "dotnet-tools.json");
+            if (!File.Exists(manifestPath)) return false;
+
+            using var stream = File.OpenRead(manifestPath);
+            using var doc = JsonDocument.Parse(stream);
+
+            if (!doc.RootElement.TryGetProperty("tools", out var tools) || tools.ValueKind != JsonValueKind.Object)
+                return false;
+
+            foreach (var tool in tools.EnumerateObject())
+            {
+                if (tool.Name.EqualsIgnoreCase(toolPackageId))
+                    return true;
+
+                if (tool.Value.ValueKind == JsonValueKind.Object &&
+                    tool.Value.TryGetProperty("commands", out var commands) &&
+                    commands.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var command in commands.EnumerateArray())
+                    {
+                        if (command.ValueKind == JsonValueKind.String &&
+                            command.GetString().EqualsIgnoreCase(toolCommand))
+                            return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+        catch
+        {
+            // Malformed/unreadable manifest: don't treat it as proof of runnability.
+            return false;
+        }
+    }
 
     private static readonly Lazy<ActionStrategy<ToolRestoreContext>> ToolRestoreStrategy = new(() =>
         ActionStrategy<ToolRestoreContext>.Create()
@@ -455,18 +522,43 @@ public sealed class RunEfcpt : Task
         // convention documented on this task).
         var offline = OfflineMode.IsTrue() || Environment.GetEnvironmentVariable("EFCPT_OFFLINE").IsTrue();
 
+        // On non-Windows, a bare efcpt executable is unlikely to exist unless explicitly provided
+        // via ToolPath. To avoid fragile PATH assumptions on CI agents, treat "auto" as
+        // "tool-manifest" whenever a manifest is present *or* when running on non-Windows and
+        // no explicit ToolPath was supplied. Computed here (before the offline pre-flight check)
+        // so that check can use the same "would this ToolMode actually use the manifest?" logic
+        // as the real tool-resolution strategy below.
+#if NETFRAMEWORK
+        var forceManifestOnNonWindows = !OperatingSystemPolyfill.IsWindows() && !PathUtils.HasExplicitPath(ToolPath);
+#else
+        var forceManifestOnNonWindows = !OperatingSystem.IsWindows() && !PathUtils.HasExplicitPath(ToolPath);
+#endif
+
         if (offline)
         {
             log.Info("[Efcpt] Offline mode enabled (EfcptOfflineMode=true): dnx execution, tool-manifest restore, and global tool update are skipped.");
 
             // Pre-flight: offline mode only works if the tool is already guaranteed runnable
             // without any network access - an explicit, existing ToolPath; a discovered tool
-            // manifest (assumed already restored, since we cannot restore it now); or a global
-            // tool already resolvable on PATH. If none apply, fail actionably rather than let a
-            // later step hang or fail obscurely against a missing tool.
+            // manifest that will actually be used (same condition as ToolIsAutoOrManifest) and
+            // that genuinely lists the target tool (assumed already restored, since we cannot
+            // restore it now); or a global tool already resolvable on PATH. If none apply, fail
+            // actionably rather than let a later step hang or fail obscurely against a missing
+            // tool.
+            //
+            // The manifest leg is deliberately stricter than "a dotnet-tools.json exists
+            // somewhere above WorkingDirectory": a manifest that ToolMode wouldn't even use, or
+            // that doesn't list this tool (stale, foreign, or never-restored), is not proof the
+            // tool is runnable - it would otherwise pass pre-flight here and only fail later with
+            // a cryptic `dotnet tool run` error instead of the actionable JD0026.
+            var manifestIsRunnable =
+                manifestDir is not null &&
+                ToolModeUsesManifest(mode, manifestDir, forceManifestOnNonWindows) &&
+                ManifestListsTool(manifestDir, ToolPackageId, ToolCommand);
+
             var isRunnableOffline =
                 (PathUtils.HasExplicitPath(ToolPath) && File.Exists(PathUtils.FullPath(ToolPath, workingDir))) ||
-                manifestDir is not null ||
+                manifestIsRunnable ||
                 Probe.IsGlobalToolInstalled(ToolCommand);
 
             if (!isRunnableOffline)
@@ -476,16 +568,6 @@ public sealed class RunEfcpt : Task
                 return false;
             }
         }
-
-        // On non-Windows, a bare efcpt executable is unlikely to exist unless explicitly provided
-        // via ToolPath. To avoid fragile PATH assumptions on CI agents, treat "auto" as
-        // "tool-manifest" whenever a manifest is present *or* when running on non-Windows and
-        // no explicit ToolPath was supplied.
-#if NETFRAMEWORK
-        var forceManifestOnNonWindows = !OperatingSystemPolyfill.IsWindows() && !PathUtils.HasExplicitPath(ToolPath);
-#else
-        var forceManifestOnNonWindows = !OperatingSystem.IsWindows() && !PathUtils.HasExplicitPath(ToolPath);
-#endif
 
         // Use the Strategy pattern to resolve tool invocation
         var context = new ToolResolutionContext(
