@@ -48,6 +48,20 @@
   </ItemGroup>
 
   <!--
+    JD.MSBuild.Fluent's generator (JDMSBuildFluentGenerate) reflects over $(TargetPath) - i.e.
+    this project's own compiled JD.Efcpt.Build.dll - looking for the type named by
+    JDMSBuildFluentDefinitionType. A ProjectReference is NOT sufficient: GenerateMSBuildAssets
+    only inspects types physically compiled into the loaded assembly file, not types in
+    referenced assemblies. So the JD.Efcpt.Build.Definitions sources are compiled directly into
+    this assembly instead of (only) referenced.
+  -->
+  <ItemGroup>
+    <Compile Include="../JD.Efcpt.Build.Definitions/**/*.cs"
+             Exclude="../JD.Efcpt.Build.Definitions/obj/**;../JD.Efcpt.Build.Definitions/bin/**"
+             LinkBase="Definitions" />
+  </ItemGroup>
+
+  <!--
     NOTE: We use build/ (not buildTransitive/) so that targets only apply to
     projects that DIRECTLY reference this package. This prevents transitive
     consumers (e.g., WebApi referencing DataAccess) from triggering model generation.

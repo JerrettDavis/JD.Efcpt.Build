@@ -16,11 +16,14 @@ public static class SharedPropertyGroups
     public static void ConfigureTaskAssemblyResolution(PropsGroupBuilder group)
     {
         group.ResolveMultiTargetedTaskAssembly(
-            folderProperty: "_EfcptTasksFolder",
-            assemblyProperty: "_EfcptTaskAssembly",
-            assemblyFileName: "JD.Efcpt.Build.Tasks.dll",
-            nugetTasksPath: "$(MSBuildThisFileDirectory)..\\tasks",
-            localProjectPath: "$(MSBuildThisFileDirectory)..\\..\\JD.Efcpt.Build.Tasks");
+            "_EfcptTasksFolder",
+            "_EfcptTaskAssembly",
+            "JD.Efcpt.Build.Tasks.dll",
+            "JD.Efcpt.Build",
+            ("net10.0", "18.0"),
+            ("net9.0", "17.12"),
+            ("net8.0", "15.0"),
+            ("net472", "15.0"));
     }
 
     /// <summary>
@@ -37,10 +40,10 @@ public static class SharedPropertyGroups
     /// </remarks>
     public static void ConfigureNullableReferenceTypes(PropsGroupBuilder group)
     {
-        group.Property<EfcptConfigUseNullableReferenceTypes>("true", 
+        group.Property("EfcptConfigUseNullableReferenceTypes", "true",
             "'$(EfcptConfigUseNullableReferenceTypes)'=='' and ('$(Nullable)'=='enable' or '$(Nullable)'=='Enable')");
-        
-        group.Property<EfcptConfigUseNullableReferenceTypes>("false",
+
+        group.Property("EfcptConfigUseNullableReferenceTypes", "false",
             "'$(EfcptConfigUseNullableReferenceTypes)'=='' and '$(Nullable)'!=''");
     }
 
@@ -57,7 +60,7 @@ public static class SharedPropertyGroups
     /// </remarks>
     public static void ConfigureDesignTimeBuildGuard(PropsGroupBuilder group)
     {
-        group.Property<EfcptEnabled>("false",
+        group.Property("EfcptEnabled", "false",
             "'$(EfcptEnabled)'=='true' and '$(DesignTimeBuild)'=='true' and '$(EfcptRunDuringDesignTimeBuild)'!='true'");
     }
 }

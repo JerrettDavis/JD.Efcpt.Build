@@ -41,7 +41,7 @@ public static class UsingTasksRegistry
     public static void RegisterAll(TargetsBuilder t)
     {
         t.RegisterTasks(
-            assemblyPath: "$(_EfcptTaskAssembly)",
+            assemblyPathProperty: "$(_EfcptTaskAssembly)",
             taskNamespace: "JD.Efcpt.Build.Tasks",
             taskNames: TaskNames);
     }

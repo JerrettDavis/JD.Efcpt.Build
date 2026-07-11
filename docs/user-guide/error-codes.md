@@ -249,6 +249,37 @@ error JD0025: Failed to add SQL file warnings: Access to the path is denied
 
 ---
 
+### JD0026: Efcpt Tool Not Available Offline
+**Severity**: Error
+**Task**: RunEfcpt
+
+`EfcptOfflineMode` (or the `EFCPT_OFFLINE` environment variable) is enabled, but the efcpt tool
+is not guaranteed to run without a network call - no explicit, existing `EfcptToolPath` was
+provided, no tool manifest was discovered, and no global tool was found on `PATH`. Offline mode
+never spawns `dnx`, restores a tool manifest, or updates a global tool, since all three require
+network access.
+
+**Example**:
+```
+error JD0026: EfcptOfflineMode is enabled, but the efcpt tool is not guaranteed to run without a
+network call. Offline mode will not spawn dnx, restore a tool manifest, or update a global tool,
+since all three require network access. Pre-provision the tool before building offline using one
+of the following: (1) a local tool manifest - run: dotnet new tool-manifest && dotnet tool
+install ErikEJ.EFCorePowerTools.Cli --version 10.*; (2) a global tool - run: dotnet tool install
+--global ErikEJ.EFCorePowerTools.Cli --version 10.*; or (3) set EfcptToolPath to an explicit,
+pre-installed efcpt executable. ...
+```
+
+**Resolution**:
+- Pre-provision a local tool manifest and restore it before the offline build runs: `dotnet new
+  tool-manifest && dotnet tool install ErikEJ.EFCorePowerTools.Cli --version 10.*`
+- Or install the tool as a global tool ahead of time: `dotnet tool install --global
+  ErikEJ.EFCorePowerTools.Cli --version 10.*`
+- Or set `EfcptToolPath` to an explicit, pre-installed efcpt executable
+- See [offline.md](offline.md) for the full offline/air-gapped build workflow
+
+---
+
 ## Troubleshooting Tips
 
 ### General Troubleshooting Steps

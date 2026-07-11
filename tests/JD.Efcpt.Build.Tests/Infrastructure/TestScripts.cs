@@ -76,4 +76,64 @@ internal static class TestScripts
         TestFileSystem.MakeExecutable(sh);
         return sh;
     }
+
+    /// <summary>
+    /// Writes a trivial, real, always-succeeding script standing in for a tool executable that
+    /// exits 0 and does nothing else. On Windows this is a <c>.cmd</c> batch file (invoked via
+    /// <c>cmd.exe /c</c> by <c>CommandNormalizationStrategy</c>); on Linux/macOS it is a shell
+    /// script with a shebang and the executable bit set, launched directly by
+    /// <see cref="System.Diagnostics.Process"/> without any wrapper.
+    /// </summary>
+    /// <param name="folder">The test folder to write the script into (under its "tools" dir).</param>
+    /// <param name="baseName">The script's base name, without extension.</param>
+    /// <returns>The full path to the created script.</returns>
+    public static string CreateAlwaysSucceedsScript(TestFolder folder, string baseName)
+    {
+        var toolDir = folder.CreateDir("tools");
+
+        if (OperatingSystem.IsWindows())
+        {
+            var path = Path.Combine(toolDir, $"{baseName}.cmd");
+            File.WriteAllText(path, "@echo off\r\nexit /b 0\r\n");
+            return path;
+        }
+
+        var shPath = Path.Combine(toolDir, $"{baseName}.sh");
+        File.WriteAllText(shPath, "#!/bin/sh\nexit 0\n");
+        TestFileSystem.MakeExecutable(shPath);
+        return shPath;
+    }
+
+    /// <summary>
+    /// Writes a trivial, real, always-succeeding script standing in for <c>dotnet</c> or a global
+    /// tool executable that appends its own invocation (prefixed with <paramref name="label"/>,
+    /// followed by its arguments) to <paramref name="captureFile"/> and exits 0. Standing in for a
+    /// real executable lets tests assert exactly which commands were (or were not) invoked,
+    /// without depending on a real dotnet tool installation being present on the test machine.
+    /// On Windows this is a <c>.cmd</c> batch file (invoked via <c>cmd.exe /c</c> by
+    /// <c>CommandNormalizationStrategy</c>); on Linux/macOS it is a shell script with a shebang
+    /// and the executable bit set, launched directly by <see cref="System.Diagnostics.Process"/>
+    /// without any wrapper.
+    /// </summary>
+    /// <param name="folder">The test folder to write the script into (under its "tools" dir).</param>
+    /// <param name="baseName">The script's base name, without extension.</param>
+    /// <param name="label">The label prefixed to each captured invocation line.</param>
+    /// <param name="captureFile">The file the script appends its invocation line to.</param>
+    /// <returns>The full path to the created script.</returns>
+    public static string CreateCaptureScript(TestFolder folder, string baseName, string label, string captureFile)
+    {
+        var toolDir = folder.CreateDir("tools");
+
+        if (OperatingSystem.IsWindows())
+        {
+            var path = Path.Combine(toolDir, $"{baseName}.cmd");
+            File.WriteAllText(path, $"@echo off\r\necho {label} %* >> \"{captureFile}\"\r\nexit /b 0\r\n");
+            return path;
+        }
+
+        var shPath = Path.Combine(toolDir, $"{baseName}.sh");
+        File.WriteAllText(shPath, $"#!/bin/sh\necho {label} \"$@\" >> \"{captureFile}\"\nexit 0\n");
+        TestFileSystem.MakeExecutable(shPath);
+        return shPath;
+    }
 }
