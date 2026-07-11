@@ -1,0 +1,76 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!--
+      net48: Visual Studio 2022's process requires .NET Framework 4.8 (Community.VisualStudio.Toolkit.17's
+      NuGet dependency group is declared for .NETFramework4.8 specifically - a net472 TFM does not
+      satisfy it and silently resolves zero dependencies), so the VSIX must target net48 regardless
+      of what the rest of the repo targets. This project is intentionally NOT part of
+      JD.Efcpt.Build.sln (its VSSDK/net48 dependency chain would break the ubuntu `dotnet build
+      JD.Efcpt.Build.sln` CI job) - see ide/vs/JD.Efcpt.Vs.sln, which is the only sln that includes
+      it, and .github/workflows/vsix.yml, the windows-only CI that builds it.
+    -->
+    <TargetFramework>net48</TargetFramework>
+    <RootNamespace>JD.Efcpt.VsExtension</RootNamespace>
+    <AssemblyName>JD.Efcpt.VsExtension</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <UseWPF>true</UseWPF>
+
+    <!-- This project pulls in Visual Studio SDK / VSSDK.BuildTools packages that are not part of
+         the repo's shared, centrally-managed package set (those packages are only relevant to
+         this Windows-only VSIX), so it opts out of central package management locally rather than
+         growing Directory.Packages.props with VS-SDK-only entries every other project would see. -->
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+
+    <!-- Standard SDK-style VSIX project settings (Community.VisualStudio.Toolkit / VSSDK.BuildTools conventions). -->
+    <GeneratePkgDefFile>true</GeneratePkgDefFile>
+    <UseCodebase>true</UseCodebase>
+    <IncludeAssemblyInVSIXContainer>true</IncludeAssemblyInVSIXContainer>
+    <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>
+    <IncludeDebugSymbolsInLocalVSIXDeployment>false</IncludeDebugSymbolsInLocalVSIXDeployment>
+    <CopyOutputSymbolsToOutputDirectory>false</CopyOutputSymbolsToOutputDirectory>
+    <CopyBuildOutputToOutputDirectory>true</CopyBuildOutputToOutputDirectory>
+    <CreateVsixContainer>true</CreateVsixContainer>
+    <DeployExtension Condition="'$(Configuration)' == 'Debug'">true</DeployExtension>
+    <DeployExtension Condition="'$(Configuration)' != 'Debug'">false</DeployExtension>
+    <StartAction>Program</StartAction>
+    <StartArguments>/rootsuffix Exp</StartArguments>
+    <MinimumVisualStudioVersion>17.0</MinimumVisualStudioVersion>
+    <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+    <ExcludeFromSourceOnlyBuild>true</ExcludeFromSourceOnlyBuild>
+    <OverrideVSIXManifestValues>false</OverrideVSIXManifestValues>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Community.VisualStudio.Toolkit.17" Version="17.0.533" />
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.13.40008" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.14.2094">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Shared, IDE-agnostic parsing/reading logic - see the remarks on JD.Efcpt.Ide.Core. This
+         is the ONLY project reference; the VSIX has no dependency on JD.Efcpt.Build.Core or any
+         other MSBuild-task assembly, since it drives regeneration by shelling out to `dotnet
+         build` rather than calling into the task pipeline directly. -->
+    <ProjectReference Include="..\JD.Efcpt.Ide.Core\JD.Efcpt.Ide.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="source.extension.vsixmanifest">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <VSCTCompile Include="JdEfcptCommandTable.vsct">
+      <ResourceName>Menus.ctmenu</ResourceName>
+    </VSCTCompile>
+  </ItemGroup>
+
+
+</Project>

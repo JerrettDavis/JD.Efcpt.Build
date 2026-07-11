@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!--
+      netstandard2.0 keeps this assembly loadable by BOTH the net472 VSIX (Visual Studio's process
+      is .NET Framework) and any future cross-platform IDE-agnostic host. It intentionally has no
+      dependency on the Visual Studio SDK so it stays unit-testable on ubuntu CI (see
+      JD.Efcpt.Ide.Core.Tests), mirroring the pure-logic split used by ide/vscode/src/*.ts.
+    -->
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AssemblyName>JD.Efcpt.Ide.Core</AssemblyName>
+    <RootNamespace>JD.Efcpt.Ide.Core</RootNamespace>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <!--
+    Own, distinct command set (guidJdEfcptCommandSet) and own submenu (JdEfcptSubMenu) placed
+    directly under the top-level Tools menu (IDM_VS_MENU_TOOLS). This deliberately does NOT reuse
+    any GUID, menu, or group belonging to ErikEJ.EFCorePowerTools.Cli / EF Core Power Tools, so
+    the two extensions cannot collide even though both surface "Entity Framework" tooling - see
+    docs/user-guide/visual-studio.md.
+  -->
+
+  <Extern href="stdidcmd.h"/>
+  <Extern href="vsshlids.h"/>
+
+  <Commands package="guidJdEfcptPackage">
+    <Menus>
+      <Menu guid="guidJdEfcptCommandSet" id="JdEfcptSubMenu" priority="0x0700" type="Menu">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS"/>
+        <Strings>
+          <ButtonText>Entity Framework</ButtonText>
+          <CommandName>JdEfcptSubMenu</CommandName>
+        </Strings>
+      </Menu>
+    </Menus>
+
+    <Groups>
+      <Group guid="guidJdEfcptCommandSet" id="JdEfcptSubMenuGroup" priority="0x0100">
+        <Parent guid="guidJdEfcptCommandSet" id="JdEfcptSubMenu" />
+      </Group>
+    </Groups>
+
+    <Buttons>
+      <Button guid="guidJdEfcptCommandSet" id="cmdidRegenerateModels" priority="0x0100" type="Button">
+        <Parent guid="guidJdEfcptCommandSet" id="JdEfcptSubMenuGroup" />
+        <Strings>
+          <ButtonText>JD.Efcpt: Regenerate Models</ButtonText>
+          <LocCanonicalName>.JdEfcpt.RegenerateModels</LocCanonicalName>
+        </Strings>
+      </Button>
+
+      <Button guid="guidJdEfcptCommandSet" id="cmdidShowBuildStatus" priority="0x0101" type="Button">
+        <Parent guid="guidJdEfcptCommandSet" id="JdEfcptSubMenuGroup" />
+        <Strings>
+          <ButtonText>JD.Efcpt: Show Build Status</ButtonText>
+          <LocCanonicalName>.JdEfcpt.ShowBuildStatus</LocCanonicalName>
+        </Strings>
+      </Button>
+    </Buttons>
+  </Commands>
+
+  <Symbols>
+    <!-- This is the package GUID -->
+    <GuidSymbol name="guidJdEfcptPackage" value="{bd8d1ff2-daba-4b79-bac9-e0f905e352d8}" />
+
+    <!-- This is the GUID used to group the menu, group and command IDs together -->
+    <GuidSymbol name="guidJdEfcptCommandSet" value="{90ca1843-99b1-4955-b9e7-b59b12e40dd6}">
+      <IDSymbol name="JdEfcptSubMenu" value="0x1020" />
+      <IDSymbol name="JdEfcptSubMenuGroup" value="0x1021" />
+      <IDSymbol name="cmdidRegenerateModels" value="0x0100" />
+      <IDSymbol name="cmdidShowBuildStatus" value="0x0101" />
+    </GuidSymbol>
+  </Symbols>
+</CommandTable>

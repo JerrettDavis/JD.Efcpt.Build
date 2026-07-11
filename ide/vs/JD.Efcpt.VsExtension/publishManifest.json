@@ -1,0 +1,10 @@
+{
+  "$schema": "http://json.schemastore.org/vsix-publish",
+  "publisher": "JerrettDavis",
+  "categories": [
+    "Coding"
+  ],
+  "identity": {
+    "internalName": "JD.Efcpt.VsExtension"
+  }
+}

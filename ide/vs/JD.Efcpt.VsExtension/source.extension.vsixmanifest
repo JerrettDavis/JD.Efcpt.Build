@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
+  <Metadata>
+    <Identity Id="C84B6124-10B5-46FC-AAA5-5BC6ECF31463" Version="1.0.0" Language="en-US" Publisher="JerrettDavis" />
+    <DisplayName>JD.Efcpt.Build for Visual Studio</DisplayName>
+    <Description xml:space="preserve">Adds a "Tools &gt; Entity Framework &gt; JD.Efcpt" menu for on-demand EF Core model regeneration and a build-status tool window for the JD.Efcpt.Build MSBuild pipeline. Does not modify or replace EF Core Power Tools.</Description>
+    <MoreInfo>https://github.com/JerrettDavis/JD.Efcpt.Build</MoreInfo>
+    <License>..\..\..\LICENSE</License>
+    <Tags>Entity Framework;EF Core;Scaffolding;JD.Efcpt.Build;Code Generation</Tags>
+  </Metadata>
+  <Installation>
+    <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0,19.0)">
+      <ProductArchitecture>amd64</ProductArchitecture>
+    </InstallationTarget>
+    <InstallationTarget Id="Microsoft.VisualStudio.Pro" Version="[17.0,19.0)">
+      <ProductArchitecture>amd64</ProductArchitecture>
+    </InstallationTarget>
+    <InstallationTarget Id="Microsoft.VisualStudio.Enterprise" Version="[17.0,19.0)">
+      <ProductArchitecture>amd64</ProductArchitecture>
+    </InstallationTarget>
+  </Installation>
+  <Dependencies>
+    <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.8,)" />
+  </Dependencies>
+  <Prerequisites>
+    <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[17.0,19.0)" DisplayName="Visual Studio core editor" />
+  </Prerequisites>
+</PackageManifest>

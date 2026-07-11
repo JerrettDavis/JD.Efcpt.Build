@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "runId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "startTime": "2024-01-11T12:00:00Z",
+  "endTime": "2024-01-11T12:01:30Z",
+  "duration": "PT1M30S",
+  "status": "Success",
+  "project": {
+    "path": "/path/to/MyProject.csproj",
+    "name": "MyProject",
+    "targetFramework": "net9.0",
+    "configuration": "Debug"
+  },
+  "configuration": {
+    "provider": "mssql"
+  },
+  "buildGraph": {
+    "nodes": [],
+    "totalTasks": 2,
+    "successfulTasks": 2,
+    "failedTasks": 0,
+    "skippedTasks": 0
+  },
+  "artifacts": [
+    { "path": "/output/Customer.g.cs", "type": "GeneratedModel", "size": 2048 },
+    { "path": "/output/Order.g.cs", "type": "GeneratedModel", "size": 3072 },
+    { "path": "/output/DbContext.g.cs", "type": "GeneratedDbContext", "size": 4096 }
+  ],
+  "metadata": {},
+  "diagnostics": [
+    { "level": "Warning", "code": "JD0001", "message": "Configuration file mismatch", "timestamp": "2024-01-11T12:01:00Z" }
+  ]
+}
