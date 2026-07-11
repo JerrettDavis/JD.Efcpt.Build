@@ -263,5 +263,62 @@ public sealed partial class DotNetToolUtilitiesTests(ITestOutputHelper output) :
             .Then($"returns {expected}", result => result == expected)
             .AssertPassed();
     }
+
+    // MapListSdksOutcome / MapListRuntimesOutcome are the pure decision-logic seams extracted
+    // from ProbeDotNet10SdkInstalled / ProbeDnxAvailable so the exit-code/output parsing can be
+    // unit tested directly, without spawning a real `dotnet` process.
+
+    [Scenario("MapListSdksOutcome reports Unavailable for a non-zero exit code regardless of output")]
+    [Fact]
+    public async Task MapListSdksOutcome_reports_unavailable_for_nonzero_exit_code()
+    {
+        await Given("a non-zero exit code and output that would otherwise qualify", () => (ExitCode: 1, Output: "10.0.100 [C:\\dotnet\\sdk]"))
+            .When("MapListSdksOutcome is called", args => DotNetToolUtilities.MapListSdksOutcome(args.ExitCode, args.Output))
+            .Then("returns Unavailable", result => result == ProbeOutcome.Unavailable)
+            .AssertPassed();
+    }
+
+    [Scenario("MapListSdksOutcome reports Available when a qualifying SDK version is listed")]
+    [Theory]
+    [InlineData("10.0.100 [C:\\Program Files\\dotnet\\sdk]", true)]
+    [InlineData("9.0.100 [C:\\Program Files\\dotnet\\sdk]\n10.0.100 [C:\\Program Files\\dotnet\\sdk]", true)]
+    [InlineData("11.0.100 [C:\\Program Files\\dotnet\\sdk]", true)]
+    [InlineData("9.0.100 [C:\\Program Files\\dotnet\\sdk]\n8.0.404 [C:\\Program Files\\dotnet\\sdk]", false)]
+    [InlineData("", false)]
+    [InlineData("not-a-version-line", false)]
+    public async Task MapListSdksOutcome_maps_output_to_expected_outcome(string output, bool expectAvailable)
+    {
+        await Given("a zero exit code and captured `dotnet --list-sdks` output", () => output)
+            .When("MapListSdksOutcome is called", o => DotNetToolUtilities.MapListSdksOutcome(0, o))
+            .Then($"returns {(expectAvailable ? "Available" : "Unavailable")}", result =>
+                result == (expectAvailable ? ProbeOutcome.Available : ProbeOutcome.Unavailable))
+            .AssertPassed();
+    }
+
+    [Scenario("MapListRuntimesOutcome reports Unavailable for a non-zero exit code regardless of output")]
+    [Fact]
+    public async Task MapListRuntimesOutcome_reports_unavailable_for_nonzero_exit_code()
+    {
+        await Given("a non-zero exit code and output that would otherwise qualify", () => (ExitCode: 1, Output: "Microsoft.NETCore.App 10.0.0 [C:\\dotnet\\shared]"))
+            .When("MapListRuntimesOutcome is called", args => DotNetToolUtilities.MapListRuntimesOutcome(args.ExitCode, args.Output))
+            .Then("returns Unavailable", result => result == ProbeOutcome.Unavailable)
+            .AssertPassed();
+    }
+
+    [Scenario("MapListRuntimesOutcome reports Available when a qualifying runtime is listed")]
+    [Theory]
+    [InlineData("Microsoft.NETCore.App 10.0.0 [C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App]", true)]
+    [InlineData("Microsoft.NETCore.App 9.0.0 [C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App]", false)]
+    [InlineData("malformed-line-with-no-version", false)]
+    [InlineData("", false)]
+    [InlineData("   \nMicrosoft.NETCore.App 10.0.0 [C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App]", true)] // blank line is skipped before the qualifying line
+    public async Task MapListRuntimesOutcome_maps_output_to_expected_outcome(string output, bool expectAvailable)
+    {
+        await Given("a zero exit code and captured `dotnet --list-runtimes` output", () => output)
+            .When("MapListRuntimesOutcome is called", o => DotNetToolUtilities.MapListRuntimesOutcome(0, o))
+            .Then($"returns {(expectAvailable ? "Available" : "Unavailable")}", result =>
+                result == (expectAvailable ? ProbeOutcome.Available : ProbeOutcome.Unavailable))
+            .AssertPassed();
+    }
 }
 
