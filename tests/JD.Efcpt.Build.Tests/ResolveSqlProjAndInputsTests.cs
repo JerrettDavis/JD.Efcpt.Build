@@ -959,5 +959,197 @@ public sealed partial class ResolveSqlProjAndInputsTests(ITestOutputHelper outpu
         var engine = new TestBuildEngine();
         return new SolutionScanSetup(folder, projectDir, "", solutionPath, engine);
     }
+
+    // ========== Pluggable Connection-String Source Tests (#188) ==========
+
+    private static SetupState SetupSourceTestProject()
+    {
+        var folder = new TestFolder();
+        var projectDir = folder.Root;
+        var csproj = folder.WriteFile("MyApp.csproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup></Project>");
+        var engine = new TestBuildEngine();
+        return new SetupState(folder, engine, projectDir, csproj, "", "", "", "", "");
+    }
+
+    [Scenario("EfcptConnectionStringSource=env resolves via the environment variable source")]
+    [Fact]
+    public async Task Source_env_resolves_connection_string()
+    {
+        const string envVar = "EFCPT_TEST_SOURCE_ENV_1";
+        await Given("a project selecting the env source", () =>
+            {
+                var setup = SetupSourceTestProject();
+                Environment.SetEnvironmentVariable(envVar, "Server=source-env-host;Database=SourceEnvDb;");
+                return setup;
+            })
+            .When("execute task with EfcptConnectionStringSource=env", setup =>
+            {
+                var task = new ResolveSqlProjAndInputs
+                {
+                    BuildEngine = setup.Engine,
+                    ProjectFullPath = setup.Csproj,
+                    ProjectDirectory = setup.ProjectDir,
+                    Configuration = "Debug",
+                    ProjectReferences = [],
+                    OutputDir = Path.Combine(setup.ProjectDir, "obj", "efcpt"),
+                    DefaultsRoot = TestPaths.DefaultsRoot,
+                    EfcptConnectionStringSource = "env",
+                    EfcptConnectionStringEnvVar = envVar
+                };
+                var success = task.Execute();
+                return new TaskResult(setup, task, success);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("connection string resolved from the env source", r => r.Task.ResolvedConnectionString == "Server=source-env-host;Database=SourceEnvDb;")
+            .And("uses connection string mode", r => r.Task.UseConnectionString == "true")
+            .Finally(r =>
+            {
+                Environment.SetEnvironmentVariable(envVar, null);
+                r.Setup.Folder.Dispose();
+            })
+            .AssertPassed();
+    }
+
+    [Scenario("EfcptConnectionStringSource=env with the variable unset fails closed with JD0031")]
+    [Fact]
+    public async Task Source_env_unset_fails_with_jd0031()
+    {
+        const string envVar = "EFCPT_TEST_SOURCE_ENV_UNSET";
+        await Given("a project selecting the env source with the variable unset", () =>
+            {
+                Environment.SetEnvironmentVariable(envVar, null);
+                return SetupSourceTestProject();
+            })
+            .When("execute task with EfcptConnectionStringSource=env", setup =>
+            {
+                var task = new ResolveSqlProjAndInputs
+                {
+                    BuildEngine = setup.Engine,
+                    ProjectFullPath = setup.Csproj,
+                    ProjectDirectory = setup.ProjectDir,
+                    Configuration = "Debug",
+                    ProjectReferences = [],
+                    OutputDir = Path.Combine(setup.ProjectDir, "obj", "efcpt"),
+                    DefaultsRoot = TestPaths.DefaultsRoot,
+                    EfcptConnectionStringSource = "env",
+                    EfcptConnectionStringEnvVar = envVar
+                };
+                var success = task.Execute();
+                return new TaskResult(setup, task, success);
+            })
+            .Then("task fails", r => !r.Success)
+            .And("an error with code JD0031 is logged", r => r.Setup.Engine.Errors.Any(e => e.Code == "JD0031"))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Selecting an unregistered satellite source key fails closed with JD0033 and install guidance")]
+    [Fact]
+    public async Task Source_unregistered_key_fails_with_jd0033()
+    {
+        await Given("a project selecting azure-keyvault with no satellite installed", SetupSourceTestProject)
+            .When("execute task with EfcptConnectionStringSource=azure-keyvault", setup =>
+            {
+                var task = new ResolveSqlProjAndInputs
+                {
+                    BuildEngine = setup.Engine,
+                    ProjectFullPath = setup.Csproj,
+                    ProjectDirectory = setup.ProjectDir,
+                    Configuration = "Debug",
+                    ProjectReferences = [],
+                    OutputDir = Path.Combine(setup.ProjectDir, "obj", "efcpt"),
+                    DefaultsRoot = TestPaths.DefaultsRoot,
+                    EfcptConnectionStringSource = "azure-keyvault",
+                    EfcptKeyVaultUri = "https://example.vault.azure.net/",
+                    EfcptKeyVaultSecretName = "MySecret"
+                };
+                var success = task.Execute();
+                return new TaskResult(setup, task, success);
+            })
+            .Then("task fails", r => !r.Success)
+            .And("an error with code JD0033 is logged", r => r.Setup.Engine.Errors.Any(e => e.Code == "JD0033"))
+            .And("the message includes install guidance", r =>
+                r.Setup.Engine.Errors.Any(e => e.Message != null && e.Message.Contains("dotnet add package JD.Efcpt.Build.ConnectionStrings.AzureKeyVault")))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("A failing source does not fall through to an explicit connection string")]
+    [Fact]
+    public async Task Source_failure_does_not_fall_through_to_explicit_connection_string()
+    {
+        const string envVar = "EFCPT_TEST_SOURCE_ENV_NO_FALLTHROUGH";
+        await Given("a project with a failing source and a valid explicit connection string", () =>
+            {
+                Environment.SetEnvironmentVariable(envVar, null);
+                return SetupSourceTestProject();
+            })
+            .When("execute task with both configured", setup =>
+            {
+                var task = new ResolveSqlProjAndInputs
+                {
+                    BuildEngine = setup.Engine,
+                    ProjectFullPath = setup.Csproj,
+                    ProjectDirectory = setup.ProjectDir,
+                    Configuration = "Debug",
+                    ProjectReferences = [],
+                    OutputDir = Path.Combine(setup.ProjectDir, "obj", "efcpt"),
+                    DefaultsRoot = TestPaths.DefaultsRoot,
+                    EfcptConnectionStringSource = "env",
+                    EfcptConnectionStringEnvVar = envVar,
+                    EfcptConnectionString = "Server=should-not-be-used;"
+                };
+                var success = task.Execute();
+                return new TaskResult(setup, task, success);
+            })
+            .Then("task fails instead of using the explicit connection string", r => !r.Success)
+            .And("an error with code JD0031 is logged", r => r.Setup.Engine.Errors.Any(e => e.Code == "JD0031"))
+            .And("the explicit connection string was never used as output", r => r.Task.ResolvedConnectionString != "Server=should-not-be-used;")
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Dump file redacts a connection string resolved from a pluggable source")]
+    [Fact]
+    public async Task Dump_file_redacts_source_resolved_connection_string()
+    {
+        const string envVar = "EFCPT_TEST_SOURCE_ENV_REDACT";
+        await Given("a project selecting the env source with DumpResolvedInputs enabled", () =>
+            {
+                var setup = SetupSourceTestProject();
+                Environment.SetEnvironmentVariable(envVar, "Server=secret-host;Database=SecretDb;Password=hunter2;");
+                return setup;
+            })
+            .When("execute task with DumpResolvedInputs=true", setup =>
+            {
+                var outputDir = Path.Combine(setup.ProjectDir, "obj", "efcpt");
+                var task = new ResolveSqlProjAndInputs
+                {
+                    BuildEngine = setup.Engine,
+                    ProjectFullPath = setup.Csproj,
+                    ProjectDirectory = setup.ProjectDir,
+                    Configuration = "Debug",
+                    ProjectReferences = [],
+                    OutputDir = outputDir,
+                    DefaultsRoot = TestPaths.DefaultsRoot,
+                    EfcptConnectionStringSource = "env",
+                    EfcptConnectionStringEnvVar = envVar,
+                    DumpResolvedInputs = "true"
+                };
+                var success = task.Execute();
+                var dumpPath = Path.Combine(outputDir, "resolved-inputs.json");
+                var dumpContents = File.Exists(dumpPath) ? File.ReadAllText(dumpPath) : "";
+                return (Setup: setup, Task: task, Success: success, DumpContents: dumpContents);
+            })
+            .Then("task succeeds", t => t.Success)
+            .And("dump file does not contain the raw connection string", t => !t.DumpContents.Contains("hunter2"))
+            .And("dump file contains the redaction marker with the source key", t => t.DumpContents.Contains("(redacted: sourced from env)"))
+            .Finally(t =>
+            {
+                Environment.SetEnvironmentVariable(envVar, null);
+                t.Setup.Folder.Dispose();
+            })
+            .AssertPassed();
+    }
 }
 

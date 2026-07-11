@@ -4,6 +4,7 @@ using JD.Efcpt.Build.Core;
 using JD.Efcpt.Build.Core.ConnectionStrings;
 using JD.Efcpt.Build.Core.Logging;
 using JD.Efcpt.Build.Tasks.Chains;
+using JD.Efcpt.Build.Tasks.ConnectionStrings;
 using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Extensions;
 using Microsoft.Build.Framework;
@@ -120,6 +121,79 @@ public sealed class ResolveSqlProjAndInputs : Task
     /// Connection string key name to use from configuration files. Defaults to "DefaultConnection".
     /// </summary>
     public string EfcptConnectionStringName { get; set; } = "DefaultConnection";
+
+    /// <summary>
+    /// Optional pluggable connection-string source key (for example <c>env</c>,
+    /// <c>azure-keyvault</c>, <c>aws-secrets</c>). When set, connection string resolution is
+    /// fail-closed: the named <see cref="IConnectionStringSource"/> is resolved and used, and any
+    /// non-success outcome throws instead of falling back to file/.sqlproj resolution. When empty
+    /// (the default), behavior is unchanged from today.
+    /// </summary>
+    public string EfcptConnectionStringSource { get; set; } = "";
+
+    /// <summary>
+    /// Overrides the environment variable name read by the <c>env</c> connection-string source.
+    /// Only used when <see cref="EfcptConnectionStringSource"/> is <c>env</c>. Defaults to
+    /// <c>EFCPT_CONNECTION_STRING</c> when not set.
+    /// </summary>
+    public string EfcptConnectionStringEnvVar { get; set; } = "";
+
+    /// <summary>
+    /// The Azure Key Vault URI. Only used when <see cref="EfcptConnectionStringSource"/> is
+    /// <c>azure-keyvault</c>.
+    /// </summary>
+    public string EfcptKeyVaultUri { get; set; } = "";
+
+    /// <summary>
+    /// The Azure Key Vault secret name. Only used when <see cref="EfcptConnectionStringSource"/>
+    /// is <c>azure-keyvault</c>.
+    /// </summary>
+    public string EfcptKeyVaultSecretName { get; set; } = "";
+
+    /// <summary>
+    /// Optional Azure Key Vault secret version. Only used when
+    /// <see cref="EfcptConnectionStringSource"/> is <c>azure-keyvault</c>.
+    /// </summary>
+    public string EfcptKeyVaultSecretVersion { get; set; } = "";
+
+    /// <summary>
+    /// The AWS Secrets Manager secret id (name or ARN). Only used when
+    /// <see cref="EfcptConnectionStringSource"/> is <c>aws-secrets</c>.
+    /// </summary>
+    public string EfcptAwsSecretId { get; set; } = "";
+
+    /// <summary>
+    /// The AWS region containing the secret. Only used when
+    /// <see cref="EfcptConnectionStringSource"/> is <c>aws-secrets</c>.
+    /// </summary>
+    public string EfcptAwsRegion { get; set; } = "";
+
+    /// <summary>
+    /// Optional JSON key to extract from an AWS Secrets Manager secret whose value is a JSON
+    /// object rather than a plain string. Only used when <see cref="EfcptConnectionStringSource"/>
+    /// is <c>aws-secrets</c>.
+    /// </summary>
+    public string EfcptAwsSecretJsonKey { get; set; } = "";
+
+    /// <summary>
+    /// Controls whether connection-string source resolution avoids any network-dependent source
+    /// (for example Azure Key Vault or AWS Secrets Manager).
+    /// </summary>
+    /// <value>
+    /// Interpreted case-insensitively via the same truthy convention as other boolean-like
+    /// properties (see <see cref="Extensions.StringExtensions.IsTrue"/>). Also honours the
+    /// <c>EFCPT_OFFLINE</c> environment variable - if either is truthy, offline mode is enabled,
+    /// mirroring <c>RunEfcpt.OfflineMode</c>. Defaults to <c>"false"</c>.
+    /// </value>
+    public string OfflineMode { get; set; } = "false";
+
+    /// <summary>
+    /// Additional directories to search for a satellite connection-string-source assembly,
+    /// beyond the bundled <c>connstr-sources/{key}/</c> folder next to the task assembly.
+    /// Typically populated from the <c>EfcptConnectionStringSourceSearchPath</c> MSBuild item
+    /// group.
+    /// </summary>
+    public ITaskItem[] ConnectionStringSourceSearchPaths { get; set; } = [];
 
     /// <summary>
     /// Solution directory to probe when searching for configuration, renaming, and template assets.
@@ -251,7 +325,8 @@ public sealed class ResolveSqlProjAndInputs : Task
         string RenamingPath,
         string TemplateDir,
         string ConnectionString,
-        bool UseConnectionStringMode
+        bool UseConnectionStringMode,
+        string? ConnectionStringSourceKey = null
     );
 
     #endregion
@@ -325,7 +400,19 @@ public sealed class ResolveSqlProjAndInputs : Task
 
         Directory.CreateDirectory(OutputDir);
 
-        var resolutionState = BuildResolutionState(log);
+        ResolutionState resolutionState;
+        try
+        {
+            resolutionState = BuildResolutionState(log);
+        }
+        catch (ConnectionStringSourceException ex)
+        {
+            // Fail-closed connection-string source resolution (#188): a source was explicitly
+            // selected via EfcptConnectionStringSource and did not resolve successfully. Surface
+            // the JD-coded, actionable error and stop - never fall through to file/.sqlproj mode.
+            log.Error(ex.Code, ex.Message);
+            return false;
+        }
 
         // Set output properties
         SqlProjPath = resolutionState.SqlProjPath;
@@ -365,7 +452,8 @@ public sealed class ResolveSqlProjAndInputs : Task
         }
 
         log.Detail("Using connection string mode due to explicit configuration property");
-        return new(true, connectionString, "");
+        var sourceKey = PathUtils.HasValue(EfcptConnectionStringSource) ? EfcptConnectionStringSource : null;
+        return new(true, connectionString, "", sourceKey);
     }
 
     private TargetContext? TrySqlProjDetection(BuildLog log)
@@ -404,7 +492,8 @@ public sealed class ResolveSqlProjAndInputs : Task
     private bool HasExplicitConnectionConfig()
         => PathUtils.HasValue(EfcptConnectionString)
            || PathUtils.HasValue(EfcptAppSettings)
-           || PathUtils.HasValue(EfcptAppConfig);
+           || PathUtils.HasValue(EfcptAppConfig)
+           || PathUtils.HasValue(EfcptConnectionStringSource);
 
     private void WarnIfAutoDiscoveredConnectionStringExists(BuildLog log)
     {
@@ -417,7 +506,7 @@ public sealed class ResolveSqlProjAndInputs : Task
         }
     }
 
-    private record TargetContext(bool UseConnectionStringMode, string ConnectionString, string SqlProjPath);
+    private record TargetContext(bool UseConnectionStringMode, string ConnectionString, string SqlProjPath, string? SourceKey = null);
 
     private ResolutionState BuildResolutionState(BuildLog log)
     {
@@ -437,6 +526,7 @@ public sealed class ResolveSqlProjAndInputs : Task
         var useConnectionStringMode = targetContext?.UseConnectionStringMode ?? false;
         var connectionString = targetContext?.ConnectionString ?? "";
         var sqlProjPath = targetContext?.SqlProjPath ?? "";
+        var connectionStringSourceKey = targetContext?.SourceKey;
 
         log.Detail($"BuildResolutionState: Step 1 complete - UseConnectionStringMode={useConnectionStringMode}, " +
                    $"ConnectionString={(string.IsNullOrEmpty(connectionString) ? "(empty)" : "(set)")}, " +
@@ -523,7 +613,8 @@ public sealed class ResolveSqlProjAndInputs : Task
             RenamingPath: renamingPath,
             TemplateDir: templateDir,
             ConnectionString: connectionString,
-            UseConnectionStringMode: useConnectionStringMode
+            UseConnectionStringMode: useConnectionStringMode,
+            ConnectionStringSourceKey: connectionStringSourceKey
         );
     }
 
@@ -779,11 +870,58 @@ public sealed class ResolveSqlProjAndInputs : Task
             EfcptAppConfig: EfcptAppConfig,
             ConnectionStringName: EfcptConnectionStringName,
             ProjectDirectory: ProjectDirectory,
-            Log: log);
+            Log: log,
+            ConnectionStringSource: EfcptConnectionStringSource,
+            SourceSettings: BuildConnectionStringSourceSettings(),
+            Offline: IsOffline(),
+            SourceResolver: new SatelliteConnectionStringSourceResolver(GetConnectionStringSourceSearchPaths()));
 
         return chain.Execute(in context, out var result)
             ? result
             : null; // Fallback to .sqlproj mode
+    }
+
+    /// <summary>
+    /// Determines whether connection-string source resolution should avoid any network-dependent
+    /// source, OR-ing <see cref="OfflineMode"/> with the <c>EFCPT_OFFLINE</c> environment
+    /// variable - mirroring <c>RunEfcpt</c>'s offline precedence (see its remarks).
+    /// </summary>
+    private bool IsOffline()
+        => OfflineMode.IsTrue() || Environment.GetEnvironmentVariable("EFCPT_OFFLINE").IsTrue();
+
+    /// <summary>
+    /// Flattens <see cref="ConnectionStringSourceSearchPaths"/> into a plain path list for
+    /// <see cref="SatelliteConnectionStringSourceResolver"/>.
+    /// </summary>
+    private IReadOnlyList<string> GetConnectionStringSourceSearchPaths()
+        => (ConnectionStringSourceSearchPaths ?? [])
+            .Where(x => x?.ItemSpec != null)
+            .Select(x => x.ItemSpec)
+            .ToList();
+
+    /// <summary>
+    /// Builds the <see cref="ConnectionStringSourceContext.Settings"/> dictionary from the
+    /// per-source MSBuild properties (<see cref="EfcptConnectionStringEnvVar"/>,
+    /// <see cref="EfcptKeyVaultUri"/>, etc.), including only those that have a value so that
+    /// sources see their own <c>TryGetValue</c> semantics for "not configured".
+    /// </summary>
+    private Dictionary<string, string> BuildConnectionStringSourceSettings()
+    {
+        var settings = new Dictionary<string, string>();
+        AddSettingIfHasValue(settings, "envVar", EfcptConnectionStringEnvVar);
+        AddSettingIfHasValue(settings, "keyVaultUri", EfcptKeyVaultUri);
+        AddSettingIfHasValue(settings, "secretName", EfcptKeyVaultSecretName);
+        AddSettingIfHasValue(settings, "secretVersion", EfcptKeyVaultSecretVersion);
+        AddSettingIfHasValue(settings, "secretId", EfcptAwsSecretId);
+        AddSettingIfHasValue(settings, "region", EfcptAwsRegion);
+        AddSettingIfHasValue(settings, "secretJsonKey", EfcptAwsSecretJsonKey);
+        return settings;
+    }
+
+    private static void AddSettingIfHasValue(Dictionary<string, string> settings, string key, string value)
+    {
+        if (PathUtils.HasValue(value))
+            settings[key] = value;
     }
 
     private string? TryResolveAutoDiscoveredConnectionString(BuildLog log)
@@ -806,6 +944,13 @@ public sealed class ResolveSqlProjAndInputs : Task
 
     private void WriteDumpFile(ResolutionState state)
     {
+        // Security (#188): when the connection string came from a pluggable source (env, Azure
+        // Key Vault, AWS Secrets Manager, ...) rather than a file/.sqlproj, never write the raw
+        // secret value to this debug dump file - redact it instead.
+        var connectionStringForDump = state.ConnectionStringSourceKey is { } sourceKey
+            ? $"(redacted: sourced from {sourceKey})"
+            : state.ConnectionString;
+
         var dump =
             $"""
              "project": "{ProjectFullPath}",
@@ -813,7 +958,7 @@ public sealed class ResolveSqlProjAndInputs : Task
              "config": "{state.ConfigPath}",
              "renaming": "{state.RenamingPath}",
              "template": "{state.TemplateDir}",
-             "connectionString": "{state.ConnectionString}",
+             "connectionString": "{connectionStringForDump}",
              "useConnectionStringMode": "{state.UseConnectionStringMode}",
              "output": "{OutputDir}"
              """;
@@ -839,6 +984,16 @@ public sealed class ResolveSqlProjAndInputs : Task
         EfcptAppSettings ??= "";
         EfcptAppConfig ??= "";
         EfcptConnectionStringName ??= "DefaultConnection";
+        EfcptConnectionStringSource ??= "";
+        EfcptConnectionStringEnvVar ??= "";
+        EfcptKeyVaultUri ??= "";
+        EfcptKeyVaultSecretName ??= "";
+        EfcptKeyVaultSecretVersion ??= "";
+        EfcptAwsSecretId ??= "";
+        EfcptAwsRegion ??= "";
+        EfcptAwsSecretJsonKey ??= "";
+        OfflineMode ??= "false";
+        ConnectionStringSourceSearchPaths ??= [];
         SolutionDir ??= "";
         SolutionPath ??= "";
         ProbeSolutionDir ??= "true";
