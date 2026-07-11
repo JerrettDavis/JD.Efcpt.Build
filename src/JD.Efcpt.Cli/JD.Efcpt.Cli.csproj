@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RollForward>Major</RollForward>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+    <!-- dotnet-tool packaging -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>jd-efcpt</ToolCommandName>
+    <IsPackable>true</IsPackable>
+
+    <!-- Package Identity -->
+    <PackageId>JD.Efcpt.Cli</PackageId>
+    <Authors>Jerrett Davis</Authors>
+    <Company>JDH Productions</Company>
+
+    <!-- Package Description -->
+    <Title>jd-efcpt: CLI companion for JD.Efcpt.Build</Title>
+    <Description>dotnet-tool CLI companion for JD.Efcpt.Build. `jd-efcpt init` bootstraps an efcpt-config.json (offline-first, from the bundled schema); `jd-efcpt doctor` reports how the MSBuild pipeline would resolve and run the efcpt tool for a given target framework, without a full build.</Description>
+    <PackageTags>efcore;entity-framework;ef-core-power-tools;efcpt;dotnet-tool;cli;database-first;code-generation</PackageTags>
+    <PackageProjectUrl>https://github.com/jerrettdavis/JD.Efcpt.Build</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jerrettdavis/JD.Efcpt.Build</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JD.Efcpt.Build.Core\JD.Efcpt.Build.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Bundled schema so `jd-efcpt init` works fully offline before any network fallback. -->
+    <None Include="../../lib/efcpt-config.schema.json" Pack="true" PackagePath="tools-assets/" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>
