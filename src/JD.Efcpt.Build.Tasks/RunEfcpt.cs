@@ -6,7 +6,6 @@ using JD.Efcpt.Build.Core.Processes;
 using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Extensions;
 using JD.Efcpt.Build.Tasks.Schema;
-using JD.Efcpt.Build.Tasks.Utilities;
 using Microsoft.Build.Framework;
 using PatternKit.Behavioral.Strategy;
 using Task = Microsoft.Build.Utilities.Task;
@@ -312,17 +311,17 @@ public sealed class RunEfcpt : Task
 
     /// <summary>
     /// Testability seam for the SDK/dnx/global-tool capability probes used during tool
-    /// resolution and restore. Defaults to <see cref="Utilities.DefaultSdkProbe"/>, which
-    /// delegates to the existing memoized probes; tests may substitute a fake implementation.
+    /// resolution and restore. Defaults to <see cref="DefaultSdkProbe"/>, which delegates to the
+    /// existing memoized probes; tests may substitute a fake implementation.
     /// </summary>
     internal ISdkProbe Probe { get; set; } = new DefaultSdkProbe();
 
     /// <summary>
     /// Testability seam for tool acquisition (obj-local manifest bootstrap + <c>dotnet tool
     /// install</c>), used by <see cref="AcquireToolIfNeeded"/>. Defaults to
-    /// <see cref="Utilities.DefaultToolAcquirer"/>, which shells out via
-    /// <see cref="ProcessRunner"/>; tests may substitute a fake implementation to assert the
-    /// exact acquisition request without spawning any process or touching the network.
+    /// <see cref="DefaultToolAcquirer"/>, which shells out via <see cref="ProcessRunner"/>; tests
+    /// may substitute a fake implementation to assert the exact acquisition request without
+    /// spawning any process or touching the network.
     /// </summary>
     internal IToolAcquirer ToolAcquirer { get; set; } = new DefaultToolAcquirer();
 
@@ -409,12 +408,11 @@ public sealed class RunEfcpt : Task
     /// This is the same condition <see cref="ToolResolutionStrategy"/> uses (via
     /// <see cref="ToolIsAutoOrManifest"/>) to pick the tool-manifest invocation branch, extracted
     /// so the offline pre-flight check in <see cref="ExecuteCore"/> can apply it before a
-    /// <see cref="ToolResolutionContext"/> exists.
+    /// <see cref="ToolResolutionContext"/> exists. Delegates to <see cref="DoctorEngine"/> (#181)
+    /// so <c>EfcptDoctor</c>'s verdict can never drift out of sync with this resolution logic.
     /// </remarks>
     internal static bool ToolModeUsesManifest(string toolMode, string? manifestDir, bool forceManifestOnNonWindows) =>
-        toolMode.EqualsIgnoreCase("tool-manifest") ||
-        (toolMode.EqualsIgnoreCase("auto") &&
-        (manifestDir is not null || forceManifestOnNonWindows));
+        DoctorEngine.ToolModeUsesManifest(toolMode, manifestDir, forceManifestOnNonWindows);
 
     /// <summary>
     /// Reads a discovered <c>.config/dotnet-tools.json</c> manifest and determines whether it
@@ -426,47 +424,12 @@ public sealed class RunEfcpt : Task
     /// offline pre-flight path. Any parse failure - missing file, malformed JSON, or an
     /// unexpected shape - is tolerated by returning <c>false</c> (i.e. "does not prove
     /// runnability") rather than throwing, since a corrupt manifest is exactly the kind of
-    /// situation the strengthened pre-flight check is meant to catch.
+    /// situation the strengthened pre-flight check is meant to catch. Delegates to
+    /// <see cref="DoctorEngine"/> (#181) so <c>EfcptDoctor</c>'s verdict can never drift out of
+    /// sync with this resolution logic.
     /// </remarks>
-    internal static bool ManifestListsTool(string manifestDir, string toolPackageId, string toolCommand)
-    {
-        try
-        {
-            var manifestPath = Path.Combine(manifestDir, ".config", "dotnet-tools.json");
-            if (!File.Exists(manifestPath)) return false;
-
-            using var stream = File.OpenRead(manifestPath);
-            using var doc = JsonDocument.Parse(stream);
-
-            if (!doc.RootElement.TryGetProperty("tools", out var tools) || tools.ValueKind != JsonValueKind.Object)
-                return false;
-
-            foreach (var tool in tools.EnumerateObject())
-            {
-                if (tool.Name.EqualsIgnoreCase(toolPackageId))
-                    return true;
-
-                if (tool.Value.ValueKind == JsonValueKind.Object &&
-                    tool.Value.TryGetProperty("commands", out var commands) &&
-                    commands.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var command in commands.EnumerateArray())
-                    {
-                        if (command.ValueKind == JsonValueKind.String &&
-                            command.GetString().EqualsIgnoreCase(toolCommand))
-                            return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-        catch
-        {
-            // Malformed/unreadable manifest: don't treat it as proof of runnability.
-            return false;
-        }
-    }
+    internal static bool ManifestListsTool(string manifestDir, string toolPackageId, string toolCommand) =>
+        DoctorEngine.ManifestListsTool(manifestDir, toolPackageId, toolCommand);
 
     private static readonly Lazy<ActionStrategy<ToolRestoreContext>> ToolRestoreStrategy = new(() =>
         ActionStrategy<ToolRestoreContext>.Create()
@@ -788,49 +751,11 @@ public sealed class RunEfcpt : Task
     /// Internal (not private) so <see cref="EfcptDoctor"/> can call the exact same TFM-parsing
     /// logic <see cref="ToolResolutionStrategy"/> and <see cref="AcquireToolIfNeeded"/> use,
     /// rather than a separately-maintained copy that could drift on odd TFM shapes (see #186
-    /// adversarial review).
+    /// adversarial review). Delegates to <see cref="DoctorEngine"/> (#181), which now owns the
+    /// canonical implementation shared with the doctor verdict engine.
     /// </remarks>
-    internal static bool IsDotNet10OrLater(string targetFramework)
-    {
-        if (string.IsNullOrWhiteSpace(targetFramework))
-            return false;
-
-        try
-        {
-            // Parse target framework to get major version (e.g., "net8.0" -> 8, "net10.0" -> 10)
-            if (!targetFramework.StartsWith("net", StringComparison.OrdinalIgnoreCase))
-                return false;
-
-            var versionPart = targetFramework[3..];
-
-            // Trim at the first '.' or '-' after "net" to handle formats like:
-            // - "net10.0"           -> "10"
-            // - "net10.0-windows"   -> "10"
-            // - "net10-windows"     -> "10"
-            var dotIndex = versionPart.IndexOf('.');
-            var hyphenIndex = versionPart.IndexOf('-');
-
-            var cutIndex = (dotIndex >= 0, hyphenIndex >= 0) switch
-            {
-                (true, true) => Math.Min(dotIndex, hyphenIndex),
-                (true, false) => dotIndex,
-                (false, true) => hyphenIndex,
-                _ => -1
-            };
-
-            if (cutIndex > 0)
-                versionPart = versionPart[..cutIndex];
-
-            if (int.TryParse(versionPart, out var version))
-                return version >= 10;
-
-            return false;
-        }
-        catch
-        {
-            return false;
-        }
-    }
+    internal static bool IsDotNet10OrLater(string targetFramework) =>
+        DoctorEngine.IsDotNet10OrLater(targetFramework);
 
     /// <summary>
     /// Checks if .NET SDK version 10 or later is installed.
@@ -1059,16 +984,10 @@ public sealed class RunEfcpt : Task
         return path;
     }
 
-    internal static string? FindManifestDir(string start)
-    {
-        var dir = new DirectoryInfo(start);
-        while (dir is not null)
-        {
-            var manifest = Path.Combine(dir.FullName, ".config", "dotnet-tools.json");
-            if (File.Exists(manifest)) return dir.FullName;
-            dir = dir.Parent;
-        }
-
-        return null;
-    }
+    /// <summary>
+    /// Walks up from <paramref name="start"/> looking for a <c>.config/dotnet-tools.json</c> tool
+    /// manifest. Delegates to <see cref="DoctorEngine"/> (#181), which now owns the canonical
+    /// implementation shared with the doctor verdict engine.
+    /// </summary>
+    internal static string? FindManifestDir(string start) => DoctorEngine.FindManifestDir(start);
 }

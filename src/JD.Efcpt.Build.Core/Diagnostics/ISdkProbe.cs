@@ -1,10 +1,9 @@
-using JD.Efcpt.Build.Core.Diagnostics;
-
-namespace JD.Efcpt.Build.Tasks.Utilities;
+namespace JD.Efcpt.Build.Core.Diagnostics;
 
 /// <summary>
 /// Testability seam over the SDK/dnx/global-tool capability probes used during
-/// <see cref="RunEfcpt"/> tool resolution and restore.
+/// <c>JD.Efcpt.Build.Tasks.RunEfcpt</c> tool resolution and restore, and by
+/// <c>JD.Efcpt.Build.Tasks.EfcptDoctor</c>/<see cref="DoctorEngine"/>.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -14,13 +13,17 @@ namespace JD.Efcpt.Build.Tasks.Utilities;
 /// without needing to mock <c>Process.Start</c> itself.
 /// </para>
 /// <para>
-/// The production implementation, <see cref="DefaultSdkProbe"/>, does not reimplement probing
-/// logic; it simply delegates to the existing memoized probes on <see cref="RunEfcpt"/> (which
-/// are backed by <see cref="SdkProbeCache"/>, introduced in #187) so behavior and caching are
-/// unchanged by introducing this seam.
+/// The production implementation, <see cref="DefaultSdkProbe"/>, delegates to
+/// <see cref="DotNetToolUtilities"/> (backed by <see cref="SdkProbeCache"/>) rather than to
+/// <c>RunEfcpt</c>'s own probe methods, since this assembly cannot reference
+/// <c>JD.Efcpt.Build.Tasks</c>. <see cref="DotNetToolUtilities.IsDotNet10SdkInstalled"/> shares
+/// the exact same <c>"list-sdks"</c> cache key <c>RunEfcpt</c>'s own probe uses, and
+/// <see cref="DotNetToolUtilities.IsDnxHelpAvailable"/> shares the exact same <c>"dnx-help"</c>
+/// cache key/command <c>RunEfcpt</c>'s own probe uses - so behavior and caching are unchanged by
+/// introducing this seam and moving it into this assembly (see #181).
 /// </para>
 /// </remarks>
-internal interface ISdkProbe
+public interface ISdkProbe
 {
     /// <summary>
     /// Checks if the .NET 10.0 (or later) SDK is installed for the given <c>dotnet</c> executable.
@@ -36,25 +39,23 @@ internal interface ISdkProbe
 
     /// <summary>
     /// Checks whether a global dotnet tool command is resolvable on <c>PATH</c>, without spawning
-    /// a process. Used for offline pre-flight validation - see <see cref="RunEfcpt"/>'s
-    /// <c>JD0026</c> guard.
+    /// a process. Used for offline pre-flight validation - see <c>RunEfcpt</c>'s <c>JD0026</c> guard.
     /// </summary>
     /// <param name="toolCommand">The tool command name (e.g. <c>efcpt</c>).</param>
     bool IsGlobalToolInstalled(string toolCommand);
 }
 
 /// <summary>
-/// Production <see cref="ISdkProbe"/> implementation that delegates to the existing, memoized
-/// SDK/dnx probes on <see cref="RunEfcpt"/> (backed by <see cref="SdkProbeCache"/>) and to
-/// <see cref="SdkProbeCache"/>'s <c>PATH</c> resolution helper for the global-tool check.
+/// Production <see cref="ISdkProbe"/> implementation that delegates to
+/// <see cref="DotNetToolUtilities"/> (backed by <see cref="SdkProbeCache"/>).
 /// </summary>
-internal sealed class DefaultSdkProbe : ISdkProbe
+public sealed class DefaultSdkProbe : ISdkProbe
 {
     /// <inheritdoc />
-    public bool IsDotNet10SdkInstalled(string dotnetExe) => RunEfcpt.IsDotNet10SdkInstalled(dotnetExe);
+    public bool IsDotNet10SdkInstalled(string dotnetExe) => DotNetToolUtilities.IsDotNet10SdkInstalled(dotnetExe);
 
     /// <inheritdoc />
-    public bool IsDnxAvailable(string dotnetExe) => RunEfcpt.IsDnxAvailable(dotnetExe);
+    public bool IsDnxAvailable(string dotnetExe) => DotNetToolUtilities.IsDnxHelpAvailable(dotnetExe);
 
     /// <inheritdoc />
     public bool IsGlobalToolInstalled(string toolCommand) =>

@@ -4,7 +4,6 @@ using JD.Efcpt.Build.Core.Diagnostics;
 using JD.Efcpt.Build.Core.Logging;
 using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Extensions;
-using JD.Efcpt.Build.Tasks.Utilities;
 using Microsoft.Build.Framework;
 using Task = Microsoft.Build.Utilities.Task;
 #if NETFRAMEWORK

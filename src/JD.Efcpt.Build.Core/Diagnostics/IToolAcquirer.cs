@@ -1,7 +1,7 @@
 using JD.Efcpt.Build.Core.Logging;
 using JD.Efcpt.Build.Core.Processes;
 
-namespace JD.Efcpt.Build.Tasks.Utilities;
+namespace JD.Efcpt.Build.Core.Diagnostics;
 
 /// <summary>
 /// A request to bootstrap an obj-local dotnet tool manifest and install a specific tool
@@ -9,12 +9,12 @@ namespace JD.Efcpt.Build.Tasks.Utilities;
 /// </summary>
 /// <param name="ManifestDir">
 /// The directory in which to create (or reuse) <c>.config/dotnet-tools.json</c> - normally
-/// <see cref="RunEfcpt.WorkingDirectory"/> (obj/efcpt).
+/// <c>JD.Efcpt.Build.Tasks.RunEfcpt.WorkingDirectory</c> (obj/efcpt).
 /// </param>
 /// <param name="DotNetExe">Path to (or bare name of) the <c>dotnet</c> executable to invoke.</param>
 /// <param name="ToolPackageId">The dotnet tool package id to install (e.g. <c>ErikEJ.EFCorePowerTools.Cli</c>).</param>
 /// <param name="ToolVersion">Optional version constraint; empty means "latest".</param>
-internal readonly record struct ToolAcquisitionRequest(
+public readonly record struct ToolAcquisitionRequest(
     string ManifestDir,
     string DotNetExe,
     string ToolPackageId,
@@ -28,7 +28,7 @@ internal readonly record struct ToolAcquisitionRequest(
 /// When <paramref name="Success"/> is <see langword="false"/>, a human-readable description of
 /// what failed (captured process output, or an exception message); otherwise <see langword="null"/>.
 /// </param>
-internal readonly record struct ToolAcquisitionOutcome(bool Success, string? ErrorMessage)
+public readonly record struct ToolAcquisitionOutcome(bool Success, string? ErrorMessage)
 {
     /// <summary>Creates a successful outcome.</summary>
     public static ToolAcquisitionOutcome Ok() => new(true, null);
@@ -39,8 +39,8 @@ internal readonly record struct ToolAcquisitionOutcome(bool Success, string? Err
 
 /// <summary>
 /// Testability seam over dotnet tool acquisition (obj-local manifest bootstrap + install), used
-/// by <see cref="RunEfcpt"/>'s auto-acquisition path (<c>EfcptAutoAcquireTool</c>) for .NET 8/9
-/// projects where dnx is not usable.
+/// by <c>JD.Efcpt.Build.Tasks.RunEfcpt</c>'s auto-acquisition path (<c>EfcptAutoAcquireTool</c>)
+/// for .NET 8/9 projects where dnx is not usable.
 /// </summary>
 /// <remarks>
 /// Extracting this behind an interface lets tests substitute a fake implementation to assert the
@@ -48,7 +48,7 @@ internal readonly record struct ToolAcquisitionOutcome(bool Success, string? Err
 /// have produced - without spawning any process or touching the network, mirroring the role
 /// <see cref="ISdkProbe"/> plays for the SDK/dnx/global-tool capability probes.
 /// </remarks>
-internal interface IToolAcquirer
+public interface IToolAcquirer
 {
     /// <summary>
     /// Bootstraps a local tool manifest in <see cref="ToolAcquisitionRequest.ManifestDir"/> (via
@@ -68,15 +68,15 @@ internal interface IToolAcquirer
 /// translated by the caller into the actionable, coded <c>JD0027</c> error rather than an
 /// exception with a raw stack trace.
 /// </summary>
-internal sealed class DefaultToolAcquirer : IToolAcquirer
+public sealed class DefaultToolAcquirer : IToolAcquirer
 {
     /// <summary>
     /// Bounded timeout, in milliseconds, applied to the <c>dotnet new tool-manifest</c> and
     /// <c>dotnet tool install</c> process calls issued by <see cref="Acquire"/>. Generous enough
     /// to accommodate legitimate installs against a slow NuGet feed, while guaranteeing a blocked
     /// or unreachable feed fails the build (as JD0027) instead of hanging it forever - since
-    /// <see cref="RunEfcpt.AutoAcquireTool"/> defaults to <c>true</c>, a hang here would silently
-    /// hang otherwise-unrelated builds.
+    /// <c>RunEfcpt.AutoAcquireTool</c> defaults to <c>true</c>, a hang here would silently hang
+    /// otherwise-unrelated builds.
     /// </summary>
     private const int AcquisitionTimeoutMs = 180_000;
 

@@ -1,12 +1,7 @@
-using JD.Efcpt.Build.Core;
 using JD.Efcpt.Build.Core.Diagnostics;
 using JD.Efcpt.Build.Tasks.Extensions;
-using JD.Efcpt.Build.Tasks.Utilities;
 using Microsoft.Build.Framework;
 using Task = Microsoft.Build.Utilities.Task;
-#if NETFRAMEWORK
-using JD.Efcpt.Build.Tasks.Compatibility;
-#endif
 
 namespace JD.Efcpt.Build.Tasks;
 
@@ -30,11 +25,13 @@ namespace JD.Efcpt.Build.Tasks;
 /// <c>-p:EfcptDoctorStrict=true</c>) and no viable execution path was found.
 /// </para>
 /// <para>
-/// Deliberately reuses <see cref="RunEfcpt"/>'s own manifest-discovery and mode-resolution
-/// helpers (<see cref="RunEfcpt.FindManifestDir"/>, <see cref="RunEfcpt.ManifestListsTool"/>,
-/// <see cref="RunEfcpt.ToolModeUsesManifest"/>) and the <see cref="ISdkProbe"/> seam introduced
-/// in #185, so the reported verdict can never drift out of sync with the actual resolution logic
-/// in <see cref="RunEfcpt"/>.
+/// The actual diagnosis (message-building and verdict branch ladder) lives in
+/// <see cref="DoctorEngine.Diagnose"/> (extracted in #181 alongside the
+/// <c>JD.Efcpt.Build.Core</c> library extraction) so it can be unit tested and reused by the
+/// jd-efcpt CLI's <c>doctor</c> command without any MSBuild task infrastructure. This task's
+/// <see cref="Execute"/> only builds a <see cref="DoctorInputs"/> snapshot from its MSBuild
+/// properties, calls the engine, and copies the result to its output properties/log - the
+/// verdict strings and branch logic are unchanged from before the extraction.
 /// </para>
 /// </remarks>
 public sealed class EfcptDoctor : Task
@@ -109,64 +106,22 @@ public sealed class EfcptDoctor : Task
     /// <inheritdoc />
     public override bool Execute()
     {
-        var messages = new List<string>();
-        var workingDir = string.IsNullOrWhiteSpace(WorkingDirectory)
-            ? Directory.GetCurrentDirectory()
-            : Path.GetFullPath(WorkingDirectory);
-
         var offline = OfflineMode.IsTrue() || Environment.GetEnvironmentVariable("EFCPT_OFFLINE").IsTrue();
-        var autoAcquireRequested = AutoAcquireTool.IsTrue();
-        var autoAcquireEffective = autoAcquireRequested && !offline;
 
-        var majorVersion = DotNetToolUtilities.ParseTargetFrameworkVersion(TargetFramework);
-        messages.Add(
-            $"TargetFramework: '{(string.IsNullOrWhiteSpace(TargetFramework) ? "(not specified)" : TargetFramework)}' " +
-            $"(parsed major version: {(majorVersion?.ToString() ?? "unknown")})");
+        var inputs = new DoctorInputs(
+            TargetFramework: TargetFramework,
+            ToolMode: ToolMode,
+            ToolPackageId: ToolPackageId,
+            ToolVersion: ToolVersion,
+            ToolCommand: ToolCommand,
+            ToolPath: ToolPath,
+            DotNetExe: DotNetExe,
+            WorkingDirectory: WorkingDirectory,
+            Offline: offline,
+            AutoAcquire: AutoAcquireTool.IsTrue(),
+            Strict: Strict.IsTrue());
 
-        var sdk10Installed = Probe.IsDotNet10SdkInstalled(DotNetExe);
-        messages.Add($"SDK 10+ installed: {sdk10Installed}");
-
-        var dnxAvailable = Probe.IsDnxAvailable(DotNetExe);
-        messages.Add($"dnx available: {dnxAvailable}");
-
-        // Reuses RunEfcpt's own TFM-parsing logic (promoted to internal static for #186) rather
-        // than DotNetToolUtilities.IsDotNet10OrLater, so the doctor's verdict can never drift
-        // from the actual resolution/acquisition logic in RunEfcpt on odd TFM shapes.
-        var dnxUsable = !offline && RunEfcpt.IsDotNet10OrLater(TargetFramework) && sdk10Installed && dnxAvailable;
-        messages.Add($"dnx usable for this build: {dnxUsable}");
-
-#if NETFRAMEWORK
-        var forceManifestOnNonWindows = !OperatingSystemPolyfill.IsWindows() && !PathUtils.HasExplicitPath(ToolPath);
-#else
-        var forceManifestOnNonWindows = !OperatingSystem.IsWindows() && !PathUtils.HasExplicitPath(ToolPath);
-#endif
-
-        var manifestDir = RunEfcpt.FindManifestDir(workingDir);
-        messages.Add($"Tool manifest discovered: {manifestDir ?? "(none found)"}");
-
-        var manifestUsesMode = RunEfcpt.ToolModeUsesManifest(ToolMode, manifestDir, forceManifestOnNonWindows);
-        var manifestListsTool = manifestDir is not null && RunEfcpt.ManifestListsTool(manifestDir, ToolPackageId, ToolCommand);
-        if (manifestDir is not null)
-            messages.Add($"Manifest lists '{ToolPackageId}' / command '{ToolCommand}': {manifestListsTool}");
-
-        var globalToolResolvable = Probe.IsGlobalToolInstalled(ToolCommand);
-        messages.Add($"Global tool '{ToolCommand}' resolvable on PATH: {globalToolResolvable}");
-
-        var hasExplicitToolPath = PathUtils.HasExplicitPath(ToolPath);
-        var explicitToolPathExists = hasExplicitToolPath && File.Exists(PathUtils.FullPath(ToolPath, workingDir));
-        messages.Add(hasExplicitToolPath
-            ? $"Explicit ToolPath: '{ToolPath}' (exists: {explicitToolPathExists})"
-            : "Explicit ToolPath: (not set)");
-
-        messages.Add($"EfcptOfflineMode: {offline}");
-        messages.Add($"EfcptAutoAcquireTool: {autoAcquireRequested} (effective, offline-adjusted: {autoAcquireEffective})");
-
-        var (verdict, hasViablePath) = DetermineVerdict(
-            workingDir, manifestDir, manifestUsesMode, manifestListsTool,
-            globalToolResolvable, hasExplicitToolPath, explicitToolPathExists,
-            dnxUsable, offline, autoAcquireEffective);
-
-        messages.Add($"Verdict: {verdict}");
+        var (verdict, hasViablePath, messages) = DoctorEngine.Diagnose(inputs, Probe);
 
         foreach (var message in messages)
             Log.LogMessage(MessageImportance.High, $"[EfcptDoctor] {message}");
@@ -186,80 +141,5 @@ public sealed class EfcptDoctor : Task
         }
 
         return true;
-    }
-
-    private (string Verdict, bool HasViablePath) DetermineVerdict(
-        string workingDir,
-        string? manifestDir,
-        bool manifestUsesMode,
-        bool manifestListsTool,
-        bool globalToolResolvable,
-        bool hasExplicitToolPath,
-        bool explicitToolPathExists,
-        bool dnxUsable,
-        bool offline,
-        bool autoAcquireEffective)
-    {
-        if (hasExplicitToolPath && explicitToolPathExists)
-            return ($"Explicit ToolPath will be used directly: '{ToolPath}'.", true);
-
-        if (hasExplicitToolPath)
-            return ($"ToolPath is set but the file does not exist: '{ToolPath}'. Fix ToolPath, " +
-                     "or clear it to fall back to automatic resolution.", false);
-
-        if (dnxUsable)
-            return ($"dnx execution will be used: dotnet dnx {ToolPackageId} --yes -- ...", true);
-
-        if (manifestUsesMode && manifestListsTool)
-            return ($"Tool-manifest resolution will be used: dotnet tool run {ToolCommand} (manifest: '{manifestDir}').", true);
-
-        if (manifestUsesMode && manifestDir is not null)
-        {
-            if (offline)
-                return ($"A tool manifest was found at '{manifestDir}' but does not list '{ToolPackageId}', and " +
-                        "EfcptOfflineMode prevents restoring it. Pre-provision the tool or disable offline mode.", false);
-
-            // Consistent with RunEfcpt.AcquireToolIfNeeded (#186 adversarial-review fix): a
-            // manifest that doesn't list the tool is NOT auto-restorable via 'dotnet tool
-            // restore' (restore only reinstalls tools already listed in the manifest) - it
-            // requires EfcptAutoAcquireTool to install the missing entry, or it's a dead end.
-            if (autoAcquireEffective)
-                return ($"A tool manifest was found at '{manifestDir}' but does not list '{ToolPackageId}'; " +
-                        $"EfcptAutoAcquireTool will install '{ToolPackageId}' into the existing manifest at " +
-                        "build time.", true);
-
-            return ($"A tool manifest was found at '{manifestDir}' but does not list '{ToolPackageId}', and " +
-                    $"EfcptAutoAcquireTool is disabled. Run 'dotnet tool install {ToolPackageId}' in " +
-                    $"'{manifestDir}', set EfcptAutoAcquireTool=true, or set an explicit ToolPath.", false);
-        }
-
-        if (manifestUsesMode)
-        {
-            if (autoAcquireEffective)
-                return ($"No tool manifest found; EfcptAutoAcquireTool will bootstrap one at " +
-                         $"'{workingDir}' and install '{ToolPackageId}' at build time.", true);
-
-            return offline
-                ? ("No tool manifest found and EfcptOfflineMode prevents acquisition/restore. Pre-provision " +
-                   "a manifest or global tool, set an explicit ToolPath, or disable offline mode.", false)
-                : ($"No tool manifest found and EfcptAutoAcquireTool is disabled. Run 'dotnet new " +
-                   $"tool-manifest && dotnet tool install {ToolPackageId}' in '{workingDir}', set " +
-                   "EfcptAutoAcquireTool=true, or set an explicit ToolPath.", false);
-        }
-
-        if (globalToolResolvable)
-            return ($"Global tool resolution will be used: '{ToolCommand}' is already resolvable on PATH.", true);
-
-        if (autoAcquireEffective)
-            return ($"No global tool found; EfcptAutoAcquireTool will bootstrap a local manifest at " +
-                     $"'{workingDir}' and install '{ToolPackageId}' at build time.", true);
-
-        var fix = offline
-            ? $"EfcptOfflineMode prevents acquisition. Pre-provision the tool (dotnet tool install --global " +
-              $"{ToolPackageId}, or a committed tool manifest), or disable offline mode."
-            : $"Install the tool globally (dotnet tool install --global {ToolPackageId}), commit a tool " +
-              "manifest, set EfcptAutoAcquireTool=true, or set an explicit ToolPath.";
-
-        return ($"No viable execution path found for TargetFramework='{TargetFramework}'. {fix}", false);
     }
 }
