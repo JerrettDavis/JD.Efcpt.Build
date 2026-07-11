@@ -80,6 +80,11 @@ public static class BuildTransitivePropsFactory
                     group.Property<EfcptFingerprintFile>( "$(EfcptOutput)fingerprint.txt", "'$(EfcptFingerprintFile)'==''");
                     group.Property<EfcptStampFile>( "$(EfcptOutput).efcpt.stamp", "'$(EfcptStampFile)'==''");
                     group.Property<EfcptDetectGeneratedFileChanges>( "false", "'$(EfcptDetectGeneratedFileChanges)'==''");
+                    // Extension-facing forced regeneration (#191, prerequisite for VS #182 / VS
+                    // Code #183 integrations): when true, bypasses the fingerprint/incremental
+                    // cache for one build and always re-runs EfcptGenerateModels. Must stay
+                    // "false" here to preserve today's incremental/fingerprint-gated default.
+                    group.Property<EfcptForceRegenerate>( "false", "'$(EfcptForceRegenerate)'==''");
                     group.Property<EfcptLogVerbosity>( "minimal", "'$(EfcptLogVerbosity)'==''");
                     group.Property<EfcptDumpResolvedInputs>( "false", "'$(EfcptDumpResolvedInputs)'==''");
                     group.Property<EfcptAutoDetectWarningLevel>( "Info", "'$(EfcptAutoDetectWarningLevel)'==''");
@@ -522,6 +527,10 @@ public static class BuildTransitivePropsFactory
   public readonly struct EfcptFingerprintFile : IMsBuildPropertyName
   {
     public string Name => "EfcptFingerprintFile";
+  }
+  public readonly struct EfcptForceRegenerate : IMsBuildPropertyName
+  {
+    public string Name => "EfcptForceRegenerate";
   }
   public readonly struct EfcptForceUpdateCheck : IMsBuildPropertyName
   {

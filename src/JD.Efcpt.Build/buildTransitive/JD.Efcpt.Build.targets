@@ -176,7 +176,11 @@
     </ComputeFingerprint>
   </Target>
   <Target Name="BeforeEfcptGeneration" DependsOnTargets="EfcptComputeFingerprint" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'" />
-  <Target Name="EfcptGenerateModels" BeforeTargets="CoreCompile" DependsOnTargets="BeforeEfcptGeneration" Inputs="$(_EfcptDacpacPath);$(_EfcptStagedConfig);$(_EfcptStagedRenaming)" Outputs="$(EfcptStampFile)" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and ('$(_EfcptFingerprintChanged)' == 'true' or !Exists('$(EfcptStampFile)'))">
+  <Target Name="_EfcptForceRegenerateInvalidateStamp" BeforeTargets="EfcptGenerateModels" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptForceRegenerate)' == 'true'">
+    <Message Text="[Efcpt] EfcptForceRegenerate=true - forcing full model regeneration (bypassing fingerprint/incremental cache) for this build." Importance="normal" />
+    <Delete Condition="Exists('$(EfcptStampFile)')" Files="$(EfcptStampFile)" />
+  </Target>
+  <Target Name="EfcptGenerateModels" BeforeTargets="CoreCompile" DependsOnTargets="BeforeEfcptGeneration" Inputs="$(_EfcptDacpacPath);$(_EfcptStagedConfig);$(_EfcptStagedRenaming)" Outputs="$(EfcptStampFile)" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and ('$(_EfcptFingerprintChanged)' == 'true' or !Exists('$(EfcptStampFile)') or '$(EfcptForceRegenerate)' == 'true')">
     <MakeDir Directories="$(EfcptGeneratedDir)" />
     <RunEfcpt AutoAcquireTool="$(EfcptAutoAcquireTool)" ConfigPath="$(_EfcptStagedConfig)" ConnectionString="$(_EfcptResolvedConnectionString)" DacpacPath="$(_EfcptDacpacPath)" DotNetExe="$(EfcptDotNetExe)" LogVerbosity="$(EfcptLogVerbosity)" OfflineMode="$(EfcptOfflineMode)" OutputDir="$(EfcptGeneratedDir)" ProjectPath="$(MSBuildProjectFullPath)" Provider="$(EfcptProvider)" RenamingPath="$(_EfcptStagedRenaming)" TargetFramework="$(TargetFramework)" TemplateDir="$(_EfcptStagedTemplateDir)" ToolCommand="$(EfcptToolCommand)" ToolMode="$(EfcptToolMode)" ToolPackageId="$(EfcptToolPackageId)" ToolPath="$(EfcptToolPath)" ToolRestore="$(EfcptToolRestore)" ToolVersion="$(EfcptToolVersion)" UseConnectionStringMode="$(_EfcptUseConnectionString)" WorkingDirectory="$(EfcptOutput)" />
     <RenameGeneratedFiles GeneratedDir="$(EfcptGeneratedDir)" LogVerbosity="$(EfcptLogVerbosity)" />
