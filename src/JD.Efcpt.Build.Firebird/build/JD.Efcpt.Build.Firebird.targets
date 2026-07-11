@@ -1,0 +1,24 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--
+    Appends this package's deployed provider directory to @(EfcptProviderSearchPath), which
+    QuerySchemaMetadata (in JD.Efcpt.Build.Tasks, via ProviderAdapterResolver) reads to locate
+    JD.Efcpt.Build.Firebird.dll at build time.
+
+    This computes its own tasks-folder selection instead of depending on $(_EfcptTasksFolder)
+    (set by JD.Efcpt.Build.targets) being evaluated first: NuGet does not guarantee this
+    package's build/ import runs after the core package's, so this mirrors that same
+    MSBuildRuntimeType/MSBuildVersion selection logic independently, reusing $(_EfcptTasksFolder)
+    when it happens to already be set to avoid recomputation.
+  -->
+  <PropertyGroup>
+    <_EfcptFirebirdTasksFolder Condition="'$(_EfcptFirebirdTasksFolder)' == '' and '$(_EfcptTasksFolder)' != ''">$(_EfcptTasksFolder)</_EfcptFirebirdTasksFolder>
+    <_EfcptFirebirdTasksFolder Condition="'$(_EfcptFirebirdTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.14'))">net10.0</_EfcptFirebirdTasksFolder>
+    <_EfcptFirebirdTasksFolder Condition="'$(_EfcptFirebirdTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core' and $([MSBuild]::VersionGreaterThanOrEquals('$(MSBuildVersion)', '17.12'))">net9.0</_EfcptFirebirdTasksFolder>
+    <_EfcptFirebirdTasksFolder Condition="'$(_EfcptFirebirdTasksFolder)' == '' and '$(MSBuildRuntimeType)' == 'Core'">net8.0</_EfcptFirebirdTasksFolder>
+    <_EfcptFirebirdTasksFolder Condition="'$(_EfcptFirebirdTasksFolder)' == ''">net472</_EfcptFirebirdTasksFolder>
+    <_EfcptFirebirdProviderDir>$(MSBuildThisFileDirectory)..\tasks\$(_EfcptFirebirdTasksFolder)\providers\firebird</_EfcptFirebirdProviderDir>
+  </PropertyGroup>
+  <ItemGroup Condition="Exists('$(_EfcptFirebirdProviderDir)')">
+    <EfcptProviderSearchPath Include="$(_EfcptFirebirdProviderDir)" />
+  </ItemGroup>
+</Project>

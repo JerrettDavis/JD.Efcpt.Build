@@ -99,16 +99,23 @@ public sealed partial class MySqlSchemaIntegrationTests(ITestOutputHelper output
         return new SchemaResult(ctx, schema);
     }
 
+    // MySqlConnector is a satellite provider (JD.Efcpt.Build.MySqlConnector); its adapter DLL is
+    // only present here because the Tests project has a test-only ProjectReference to it, which
+    // places the DLL in this test assembly's own output directory. See
+    // ProviderAdapterResolverTests for the same pattern applied to the resolver directly.
+    private static readonly string[] MySqlSearchPaths =
+        [Path.GetDirectoryName(typeof(MySqlSchemaIntegrationTests).Assembly.Location)!];
+
     private static SchemaResult ExecuteReadSchemaViaFactory(TestContext ctx)
     {
-        var reader = DatabaseProviderFactory.CreateSchemaReader("mysql");
+        var reader = DatabaseProviderFactory.CreateSchemaReader("mysql", MySqlSearchPaths);
         var schema = reader.ReadSchema(ctx.ConnectionString);
         return new SchemaResult(ctx, schema);
     }
 
     private static SchemaResult ExecuteReadSchemaViaMariaDbAlias(TestContext ctx)
     {
-        var reader = DatabaseProviderFactory.CreateSchemaReader("mariadb");
+        var reader = DatabaseProviderFactory.CreateSchemaReader("mariadb", MySqlSearchPaths);
         var schema = reader.ReadSchema(ctx.ConnectionString);
         return new SchemaResult(ctx, schema);
     }

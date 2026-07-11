@@ -115,16 +115,23 @@ public sealed partial class FirebirdSchemaIntegrationTests(ITestOutputHelper out
         return new SchemaResult(ctx, schema);
     }
 
+    // Firebird is a satellite provider (JD.Efcpt.Build.Firebird); its adapter DLL is only
+    // present here because the Tests project has a test-only ProjectReference to it, which
+    // places the DLL in this test assembly's own output directory. See
+    // ProviderAdapterResolverTests for the same pattern applied to the resolver directly.
+    private static readonly string[] FirebirdSearchPaths =
+        [Path.GetDirectoryName(typeof(FirebirdSchemaIntegrationTests).Assembly.Location)!];
+
     private static SchemaResult ExecuteReadSchemaViaFactory(TestContext ctx)
     {
-        var reader = DatabaseProviderFactory.CreateSchemaReader("firebird");
+        var reader = DatabaseProviderFactory.CreateSchemaReader("firebird", FirebirdSearchPaths);
         var schema = reader.ReadSchema(ctx.ConnectionString);
         return new SchemaResult(ctx, schema);
     }
 
     private static SchemaResult ExecuteReadSchemaViaFbAlias(TestContext ctx)
     {
-        var reader = DatabaseProviderFactory.CreateSchemaReader("fb");
+        var reader = DatabaseProviderFactory.CreateSchemaReader("fb", FirebirdSearchPaths);
         var schema = reader.ReadSchema(ctx.ConnectionString);
         return new SchemaResult(ctx, schema);
     }

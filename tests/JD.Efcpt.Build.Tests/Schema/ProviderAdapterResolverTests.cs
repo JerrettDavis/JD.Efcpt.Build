@@ -23,63 +23,281 @@ public sealed class ProviderAdapterResolverTests(ITestOutputHelper output) : Tin
             .AssertPassed();
     }
 
-    [Scenario("Resolves PostgreSQL adapter")]
+    #endregion
+
+    #region Satellite Provider: Snowflake
+
+    /// <summary>
+    /// Snowflake was the first provider extracted into a satellite package
+    /// (JD.Efcpt.Build.Snowflake), so it now resolves exclusively through
+    /// <see cref="ProviderAdapterResolver"/>'s dynamic-loading path rather than the in-assembly
+    /// dictionary. The Tests project ProjectReferences JD.Efcpt.Build.Snowflake (test-only
+    /// weight), so its built adapter DLL is already sitting in this test assembly's own output
+    /// directory - pointing ProviderSearchPaths there exercises the exact same
+    /// find-load-instantiate path a real satellite package install goes through.
+    /// </summary>
+    private static readonly string[] TestAssemblyDirectorySearchPath =
+        [Path.GetDirectoryName(typeof(ProviderAdapterResolverTests).Assembly.Location)!];
+
+    [Scenario("Resolves Snowflake adapter dynamically from a satellite provider search path")]
     [Fact]
-    public async Task Resolves_postgres_adapter()
+    public async Task Resolves_snowflake_adapter_from_search_path()
     {
-        await Given("a resolver", () => new ProviderAdapterResolver())
-            .When("resolved for postgres", r => r.Resolve("postgres"))
-            .Then("returns a non-null PostgreSqlProviderAdapter", adapter => adapter is PostgreSqlProviderAdapter)
+        await Given("a resolver and this test assembly's own directory as a provider search path",
+                () => (Resolver: new ProviderAdapterResolver(), SearchPaths: TestAssemblyDirectorySearchPath))
+            .When("resolved for snowflake", t => t.Resolver.Resolve("snowflake", t.SearchPaths))
+            .Then("returns a non-null SnowflakeProviderAdapter", adapter => adapter is SnowflakeProviderAdapter)
             .AssertPassed();
     }
 
-    [Scenario("Resolves MySQL adapter")]
+    [Scenario("Throws ProviderDriverNotFoundException for Snowflake when no search path contains its assembly")]
     [Fact]
-    public async Task Resolves_mysql_adapter()
+    public async Task Throws_for_snowflake_without_matching_search_path()
     {
-        await Given("a resolver", () => new ProviderAdapterResolver())
-            .When("resolved for mysql", r => r.Resolve("mysql"))
-            .Then("returns a non-null MySqlProviderAdapter", adapter => adapter is MySqlProviderAdapter)
+        await Given("a resolver with no search paths", () => new ProviderAdapterResolver())
+            .When("resolved for snowflake", r =>
+            {
+                try
+                {
+                    r.Resolve("snowflake");
+                    return (Exception?)null;
+                }
+                catch (Exception ex)
+                {
+                    return ex;
+                }
+            })
+            .Then("throws ProviderDriverNotFoundException with the install command",
+                ex => ex is ProviderDriverNotFoundException &&
+                      ex.Message.Contains("dotnet add package JD.Efcpt.Build.Snowflake"))
             .AssertPassed();
     }
 
-    [Scenario("Resolves SQLite adapter")]
-    [Fact]
-    public async Task Resolves_sqlite_adapter()
-    {
-        await Given("a resolver", () => new ProviderAdapterResolver())
-            .When("resolved for sqlite", r => r.Resolve("sqlite"))
-            .Then("returns a non-null SqliteProviderAdapter", adapter => adapter is SqliteProviderAdapter)
-            .AssertPassed();
-    }
+    #endregion
 
-    [Scenario("Resolves Oracle adapter")]
+    #region Satellite Provider: Oracle
+
+    /// <summary>
+    /// Oracle is a satellite provider (JD.Efcpt.Build.Oracle); see the Snowflake region above
+    /// for why a search path is required and how the Tests project makes this DLL available.
+    /// </summary>
+    private static readonly string[] OracleSearchPath =
+        [Path.GetDirectoryName(typeof(ProviderAdapterResolverTests).Assembly.Location)!];
+
+    [Scenario("Resolves Oracle adapter dynamically from a satellite provider search path")]
     [Fact]
-    public async Task Resolves_oracle_adapter()
+    public async Task Resolves_oracle_adapter_from_search_path()
     {
-        await Given("a resolver", () => new ProviderAdapterResolver())
-            .When("resolved for oracle", r => r.Resolve("oracle"))
+        await Given("a resolver and this test assembly's own directory as a provider search path",
+                () => (Resolver: new ProviderAdapterResolver(), SearchPaths: OracleSearchPath))
+            .When("resolved for oracle", t => t.Resolver.Resolve("oracle", t.SearchPaths))
             .Then("returns a non-null OracleProviderAdapter", adapter => adapter is OracleProviderAdapter)
             .AssertPassed();
     }
 
-    [Scenario("Resolves Firebird adapter")]
+    [Scenario("Throws ProviderDriverNotFoundException for Oracle when no search path contains its assembly")]
     [Fact]
-    public async Task Resolves_firebird_adapter()
+    public async Task Throws_for_oracle_without_matching_search_path()
     {
-        await Given("a resolver", () => new ProviderAdapterResolver())
-            .When("resolved for firebird", r => r.Resolve("firebird"))
+        await Given("a resolver with no search paths", () => new ProviderAdapterResolver())
+            .When("resolved for oracle", r =>
+            {
+                try
+                {
+                    r.Resolve("oracle");
+                    return (Exception?)null;
+                }
+                catch (Exception ex)
+                {
+                    return ex;
+                }
+            })
+            .Then("throws ProviderDriverNotFoundException with the install command",
+                ex => ex is ProviderDriverNotFoundException &&
+                      ex.Message.Contains("dotnet add package JD.Efcpt.Build.Oracle"))
+            .AssertPassed();
+    }
+
+    #endregion
+
+    #region Satellite Provider: PostgreSQL
+
+    /// <summary>
+    /// PostgreSQL is a satellite provider (JD.Efcpt.Build.PostgreSQL); see the Snowflake region
+    /// above for why a search path is required and how the Tests project makes this DLL
+    /// available.
+    /// </summary>
+    private static readonly string[] PostgresSearchPath =
+        [Path.GetDirectoryName(typeof(ProviderAdapterResolverTests).Assembly.Location)!];
+
+    [Scenario("Resolves PostgreSQL adapter dynamically from a satellite provider search path")]
+    [Fact]
+    public async Task Resolves_postgres_adapter_from_search_path()
+    {
+        await Given("a resolver and this test assembly's own directory as a provider search path",
+                () => (Resolver: new ProviderAdapterResolver(), SearchPaths: PostgresSearchPath))
+            .When("resolved for postgres", t => t.Resolver.Resolve("postgres", t.SearchPaths))
+            .Then("returns a non-null PostgreSqlProviderAdapter", adapter => adapter is PostgreSqlProviderAdapter)
+            .AssertPassed();
+    }
+
+    [Scenario("Throws ProviderDriverNotFoundException for PostgreSQL when no search path contains its assembly")]
+    [Fact]
+    public async Task Throws_for_postgres_without_matching_search_path()
+    {
+        await Given("a resolver with no search paths", () => new ProviderAdapterResolver())
+            .When("resolved for postgres", r =>
+            {
+                try
+                {
+                    r.Resolve("postgres");
+                    return (Exception?)null;
+                }
+                catch (Exception ex)
+                {
+                    return ex;
+                }
+            })
+            .Then("throws ProviderDriverNotFoundException with the install command",
+                ex => ex is ProviderDriverNotFoundException &&
+                      ex.Message.Contains("dotnet add package JD.Efcpt.Build.PostgreSQL"))
+            .AssertPassed();
+    }
+
+    #endregion
+
+    #region Satellite Provider: MySqlConnector
+
+    /// <summary>
+    /// MySqlConnector is a satellite provider (JD.Efcpt.Build.MySqlConnector); see the Snowflake
+    /// region above for why a search path is required and how the Tests project makes this DLL
+    /// available.
+    /// </summary>
+    private static readonly string[] MySqlSearchPaths =
+        [Path.GetDirectoryName(typeof(ProviderAdapterResolverTests).Assembly.Location)!];
+
+    [Scenario("Resolves MySQL adapter dynamically from a satellite provider search path")]
+    [Fact]
+    public async Task Resolves_mysql_adapter_from_search_path()
+    {
+        await Given("a resolver and this test assembly's own directory as a provider search path",
+                () => (Resolver: new ProviderAdapterResolver(), SearchPaths: MySqlSearchPaths))
+            .When("resolved for mysql", t => t.Resolver.Resolve("mysql", t.SearchPaths))
+            .Then("returns a non-null MySqlProviderAdapter", adapter => adapter is MySqlProviderAdapter)
+            .AssertPassed();
+    }
+
+    [Scenario("Throws ProviderDriverNotFoundException for MySQL when no search path contains its assembly")]
+    [Fact]
+    public async Task Throws_for_mysql_without_matching_search_path()
+    {
+        await Given("a resolver with no search paths", () => new ProviderAdapterResolver())
+            .When("resolved for mysql", r =>
+            {
+                try
+                {
+                    r.Resolve("mysql");
+                    return (Exception?)null;
+                }
+                catch (Exception ex)
+                {
+                    return ex;
+                }
+            })
+            .Then("throws ProviderDriverNotFoundException with the install command",
+                ex => ex is ProviderDriverNotFoundException &&
+                      ex.Message.Contains("dotnet add package JD.Efcpt.Build.MySqlConnector"))
+            .AssertPassed();
+    }
+
+    #endregion
+
+    #region Satellite Provider: Firebird
+
+    /// <summary>
+    /// Firebird is a satellite provider (JD.Efcpt.Build.Firebird); see the Snowflake region
+    /// above for why a search path is required and how the Tests project makes this DLL
+    /// available.
+    /// </summary>
+    private static readonly string[] FirebirdSearchPaths =
+        [Path.GetDirectoryName(typeof(ProviderAdapterResolverTests).Assembly.Location)!];
+
+    [Scenario("Resolves Firebird adapter dynamically from a satellite provider search path")]
+    [Fact]
+    public async Task Resolves_firebird_adapter_from_search_path()
+    {
+        await Given("a resolver and this test assembly's own directory as a provider search path",
+                () => (Resolver: new ProviderAdapterResolver(), SearchPaths: FirebirdSearchPaths))
+            .When("resolved for firebird", t => t.Resolver.Resolve("firebird", t.SearchPaths))
             .Then("returns a non-null FirebirdProviderAdapter", adapter => adapter is FirebirdProviderAdapter)
             .AssertPassed();
     }
 
-    [Scenario("Resolves Snowflake adapter")]
+    [Scenario("Throws ProviderDriverNotFoundException for Firebird when no search path contains its assembly")]
     [Fact]
-    public async Task Resolves_snowflake_adapter()
+    public async Task Throws_for_firebird_without_matching_search_path()
     {
-        await Given("a resolver", () => new ProviderAdapterResolver())
-            .When("resolved for snowflake", r => r.Resolve("snowflake"))
-            .Then("returns a non-null SnowflakeProviderAdapter", adapter => adapter is SnowflakeProviderAdapter)
+        await Given("a resolver with no search paths", () => new ProviderAdapterResolver())
+            .When("resolved for firebird", r =>
+            {
+                try
+                {
+                    r.Resolve("firebird");
+                    return (Exception?)null;
+                }
+                catch (Exception ex)
+                {
+                    return ex;
+                }
+            })
+            .Then("throws ProviderDriverNotFoundException with the install command",
+                ex => ex is ProviderDriverNotFoundException &&
+                      ex.Message.Contains("dotnet add package JD.Efcpt.Build.Firebird"))
+            .AssertPassed();
+    }
+
+    #endregion
+
+    #region Satellite Provider: Sqlite
+
+    /// <summary>
+    /// Sqlite is a satellite provider (JD.Efcpt.Build.Sqlite); see the Snowflake region above
+    /// for why a search path is required and how the Tests project makes this DLL available.
+    /// </summary>
+    private static readonly string[] SqliteSearchPaths =
+        [Path.GetDirectoryName(typeof(ProviderAdapterResolverTests).Assembly.Location)!];
+
+    [Scenario("Resolves SQLite adapter dynamically from a satellite provider search path")]
+    [Fact]
+    public async Task Resolves_sqlite_adapter_from_search_path()
+    {
+        await Given("a resolver and this test assembly's own directory as a provider search path",
+                () => (Resolver: new ProviderAdapterResolver(), SearchPaths: SqliteSearchPaths))
+            .When("resolved for sqlite", t => t.Resolver.Resolve("sqlite", t.SearchPaths))
+            .Then("returns a non-null SqliteProviderAdapter", adapter => adapter is SqliteProviderAdapter)
+            .AssertPassed();
+    }
+
+    [Scenario("Throws ProviderDriverNotFoundException for SQLite when no search path contains its assembly")]
+    [Fact]
+    public async Task Throws_for_sqlite_without_matching_search_path()
+    {
+        await Given("a resolver with no search paths", () => new ProviderAdapterResolver())
+            .When("resolved for sqlite", r =>
+            {
+                try
+                {
+                    r.Resolve("sqlite");
+                    return (Exception?)null;
+                }
+                catch (Exception ex)
+                {
+                    return ex;
+                }
+            })
+            .Then("throws ProviderDriverNotFoundException with the install command",
+                ex => ex is ProviderDriverNotFoundException &&
+                      ex.Message.Contains("dotnet add package JD.Efcpt.Build.Sqlite"))
             .AssertPassed();
     }
 
@@ -117,8 +335,11 @@ public sealed class ProviderAdapterResolverTests(ITestOutputHelper output) : Tin
     [Fact]
     public async Task Caches_resolved_adapter_per_instance()
     {
+        // Uses "mssql" (the only provider that always resolves in-assembly, since it ships
+        // bundled with the core package) rather than an extracted satellite provider, so this
+        // caching behavior test doesn't depend on satellite search-path plumbing.
         await Given("a resolver", () => new ProviderAdapterResolver())
-            .When("resolved twice for the same provider", r => (First: r.Resolve("postgres"), Second: r.Resolve("postgres")))
+            .When("resolved twice for the same provider", r => (First: r.Resolve("mssql"), Second: r.Resolve("mssql")))
             .Then("both calls return the same instance", t => ReferenceEquals(t.First, t.Second))
             .AssertPassed();
     }
@@ -128,7 +349,7 @@ public sealed class ProviderAdapterResolverTests(ITestOutputHelper output) : Tin
     public async Task Does_not_share_cache_across_instances()
     {
         await Given("two independent resolvers", () => (First: new ProviderAdapterResolver(), Second: new ProviderAdapterResolver()))
-            .When("each resolves the same provider", t => (FirstAdapter: t.First.Resolve("mysql"), SecondAdapter: t.Second.Resolve("mysql")))
+            .When("each resolves the same provider", t => (FirstAdapter: t.First.Resolve("mssql"), SecondAdapter: t.Second.Resolve("mssql")))
             .Then("the adapters are distinct instances", t => !ReferenceEquals(t.FirstAdapter, t.SecondAdapter))
             .AssertPassed();
     }

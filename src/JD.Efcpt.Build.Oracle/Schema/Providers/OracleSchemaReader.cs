@@ -7,7 +7,12 @@ namespace JD.Efcpt.Build.Tasks.Schema.Providers;
 /// <summary>
 /// Reads schema metadata from Oracle databases using GetSchema() for standard metadata.
 /// </summary>
-internal sealed class OracleSchemaReader : ISchemaReader
+/// <remarks>
+/// Public (rather than internal) so <c>ProviderAdapterResolver</c> in <c>JD.Efcpt.Build.Tasks</c>
+/// can reflection-load and instantiate <see cref="OracleProviderAdapter"/> (which constructs
+/// this reader) after locating this satellite package's assembly.
+/// </remarks>
+public sealed class OracleSchemaReader : ISchemaReader
 {
     /// <summary>
     /// Reads the complete schema from an Oracle database.
@@ -147,8 +152,14 @@ internal sealed class OracleSchemaReader : ISchemaReader
                     (indexRow[uniquenessCol]?.ToString()).EqualsIgnoreCase("UNIQUE");
 
                 // Check if it's a primary key index (Oracle names them with _PK suffix typically)
+                // Uses IndexOf rather than the Contains(string, StringComparison) overload: that
+                // overload's availability on net472 depends on which netstandard.dll compat
+                // facade this project's dependency graph happens to resolve (observed to differ
+                // between satellite projects with different driver packages - see
+                // JD.Efcpt.Build.Firebird's FirebirdSchemaReader for a project where the
+                // overload was genuinely unavailable), so IndexOf is used everywhere for safety.
                 var isPrimary = indexName.EndsWith("_PK", StringComparison.OrdinalIgnoreCase) ||
-                    indexName.Contains("PRIMARY", StringComparison.OrdinalIgnoreCase);
+                    indexName.IndexOf("PRIMARY", StringComparison.OrdinalIgnoreCase) >= 0;
 
                 return IndexModel.Create(
                     indexName,

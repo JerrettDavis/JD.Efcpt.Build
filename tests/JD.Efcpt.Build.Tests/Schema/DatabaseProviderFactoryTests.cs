@@ -19,6 +19,50 @@ namespace JD.Efcpt.Build.Tests.Schema;
 [Collection(nameof(AssemblySetup))]
 public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
+    /// <summary>
+    /// Snowflake is a satellite provider; its adapter DLL is only present because the Tests
+    /// project has a test-only ProjectReference to JD.Efcpt.Build.Snowflake, which places it in
+    /// this test assembly's own output directory. See ProviderAdapterResolverTests for the same
+    /// pattern applied to the resolver directly.
+    /// </summary>
+    private static readonly string[] SnowflakeSearchPaths =
+        [Path.GetDirectoryName(typeof(DatabaseProviderFactoryTests).Assembly.Location)!];
+
+    /// <summary>
+    /// Oracle is a satellite provider; see <see cref="SnowflakeSearchPaths"/> remarks - same
+    /// reasoning applies (test-only ProjectReference to JD.Efcpt.Build.Oracle).
+    /// </summary>
+    private static readonly string[] OracleSearchPaths =
+        [Path.GetDirectoryName(typeof(DatabaseProviderFactoryTests).Assembly.Location)!];
+
+    /// <summary>
+    /// PostgreSQL is a satellite provider; see <see cref="SnowflakeSearchPaths"/> remarks - same
+    /// reasoning applies (test-only ProjectReference to JD.Efcpt.Build.PostgreSQL).
+    /// </summary>
+    private static readonly string[] PostgresSearchPaths =
+        [Path.GetDirectoryName(typeof(DatabaseProviderFactoryTests).Assembly.Location)!];
+
+    /// <summary>
+    /// MySqlConnector is a satellite provider; see <see cref="SnowflakeSearchPaths"/> remarks -
+    /// same reasoning applies (test-only ProjectReference to JD.Efcpt.Build.MySqlConnector).
+    /// </summary>
+    private static readonly string[] MySqlSearchPaths =
+        [Path.GetDirectoryName(typeof(DatabaseProviderFactoryTests).Assembly.Location)!];
+
+    /// <summary>
+    /// Firebird is a satellite provider; see <see cref="SnowflakeSearchPaths"/> remarks - same
+    /// reasoning applies (test-only ProjectReference to JD.Efcpt.Build.Firebird).
+    /// </summary>
+    private static readonly string[] FirebirdSearchPaths =
+        [Path.GetDirectoryName(typeof(DatabaseProviderFactoryTests).Assembly.Location)!];
+
+    /// <summary>
+    /// Sqlite is a satellite provider; see <see cref="SnowflakeSearchPaths"/> remarks - same
+    /// reasoning applies (test-only ProjectReference to JD.Efcpt.Build.Sqlite).
+    /// </summary>
+    private static readonly string[] SqliteSearchPaths =
+        [Path.GetDirectoryName(typeof(DatabaseProviderFactoryTests).Assembly.Location)!];
+
     #region NormalizeProvider Tests
 
     [Scenario("Normalizes SQL Server provider aliases")]
@@ -177,8 +221,12 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_postgres_connection()
     {
-        await Given("postgres provider and connection string", () => ("postgres", "Host=localhost;Database=test"))
-            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2))
+        // PostgreSQL is a satellite provider (JD.Efcpt.Build.PostgreSQL) and no longer resolves
+        // in-assembly - see the Snowflake connection test above for why a search path is
+        // required.
+        await Given("postgres provider, connection string, and a matching search path",
+                () => ("postgres", "Host=localhost;Database=test", PostgresSearchPaths))
+            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2, t.Item3))
             .Then("returns NpgsqlConnection", conn => conn is NpgsqlConnection)
             .Finally(conn => conn.Dispose())
             .AssertPassed();
@@ -188,8 +236,12 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_mysql_connection()
     {
-        await Given("mysql provider and connection string", () => ("mysql", "Server=localhost;Database=test"))
-            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2))
+        // MySqlConnector is a satellite provider (JD.Efcpt.Build.MySqlConnector) and no longer
+        // resolves in-assembly - see the Snowflake connection test above for why a search path
+        // is required.
+        await Given("mysql provider, connection string, and a matching search path",
+                () => ("mysql", "Server=localhost;Database=test", MySqlSearchPaths))
+            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2, t.Item3))
             .Then("returns MySqlConnection", conn => conn is MySqlConnection)
             .Finally(conn => conn.Dispose())
             .AssertPassed();
@@ -199,8 +251,12 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_sqlite_connection()
     {
-        await Given("sqlite provider and connection string", () => ("sqlite", "Data Source=:memory:"))
-            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2))
+        // Sqlite is a satellite provider (JD.Efcpt.Build.Sqlite) and no longer resolves
+        // in-assembly - see the Snowflake connection test above for why a search path is
+        // required.
+        await Given("sqlite provider, connection string, and a matching search path",
+                () => ("sqlite", "Data Source=:memory:", SqliteSearchPaths))
+            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2, t.Item3))
             .Then("returns SqliteConnection", conn => conn is SqliteConnection)
             .Finally(conn => conn.Dispose())
             .AssertPassed();
@@ -210,8 +266,12 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_oracle_connection()
     {
-        await Given("oracle provider and connection string", () => ("oracle", "Data Source=localhost:1521/ORCL"))
-            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2))
+        // Oracle is a satellite provider (JD.Efcpt.Build.Oracle) and no longer resolves
+        // in-assembly - see the Snowflake connection test above for why a search path is
+        // required.
+        await Given("oracle provider, connection string, and a matching search path",
+                () => ("oracle", "Data Source=localhost:1521/ORCL", OracleSearchPaths))
+            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2, t.Item3))
             .Then("returns OracleConnection", conn => conn is OracleConnection)
             .Finally(conn => conn.Dispose())
             .AssertPassed();
@@ -221,8 +281,12 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_firebird_connection()
     {
-        await Given("firebird provider and connection string", () => ("firebird", "Database=localhost:test.fdb"))
-            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2))
+        // Firebird is a satellite provider (JD.Efcpt.Build.Firebird) and no longer resolves
+        // in-assembly - see the Snowflake connection test above for why a search path is
+        // required.
+        await Given("firebird provider, connection string, and a matching search path",
+                () => ("firebird", "Database=localhost:test.fdb", FirebirdSearchPaths))
+            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2, t.Item3))
             .Then("returns FbConnection", conn => conn is FbConnection)
             .Finally(conn => conn.Dispose())
             .AssertPassed();
@@ -232,8 +296,13 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_snowflake_connection()
     {
-        await Given("snowflake provider and connection string", () => ("snowflake", "account=test;user=test"))
-            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2))
+        // Snowflake is a satellite provider (JD.Efcpt.Build.Snowflake) and no longer resolves
+        // in-assembly - point at this test assembly's own output directory, where the Tests
+        // project's test-only ProjectReference to JD.Efcpt.Build.Snowflake already placed its
+        // built adapter DLL.
+        await Given("snowflake provider, connection string, and a matching search path",
+                () => ("snowflake", "account=test;user=test", SnowflakeSearchPaths))
+            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2, t.Item3))
             .Then("returns SnowflakeDbConnection", conn => conn is SnowflakeDbConnection)
             .Finally(conn => conn.Dispose())
             .AssertPassed();
@@ -242,6 +311,17 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     #endregion
 
     #region CreateSchemaReader Tests
+
+    [Scenario("Creates Snowflake schema reader")]
+    [Fact]
+    public async Task Creates_snowflake_schema_reader()
+    {
+        // See the Snowflake connection test above for why a search path is required here.
+        await Given("snowflake provider and a matching search path", () => ("snowflake", SnowflakeSearchPaths))
+            .When("schema reader created", t => DatabaseProviderFactory.CreateSchemaReader(t.Item1, t.Item2))
+            .Then("returns SnowflakeSchemaReader", reader => reader is SnowflakeSchemaReader)
+            .AssertPassed();
+    }
 
     [Scenario("Creates SQL Server schema reader")]
     [Fact]
@@ -257,8 +337,9 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_postgres_schema_reader()
     {
-        await Given("postgres provider", () => "postgres")
-            .When("schema reader created", p => DatabaseProviderFactory.CreateSchemaReader(p))
+        // See the PostgreSQL connection test above for why a search path is required here.
+        await Given("postgres provider and a matching search path", () => ("postgres", PostgresSearchPaths))
+            .When("schema reader created", t => DatabaseProviderFactory.CreateSchemaReader(t.Item1, t.Item2))
             .Then("returns PostgreSqlSchemaReader", reader => reader is PostgreSqlSchemaReader)
             .AssertPassed();
     }
@@ -267,8 +348,9 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_mysql_schema_reader()
     {
-        await Given("mysql provider", () => "mysql")
-            .When("schema reader created", p => DatabaseProviderFactory.CreateSchemaReader(p))
+        // See the MySQL connection test above for why a search path is required here.
+        await Given("mysql provider and a matching search path", () => ("mysql", MySqlSearchPaths))
+            .When("schema reader created", t => DatabaseProviderFactory.CreateSchemaReader(t.Item1, t.Item2))
             .Then("returns MySqlSchemaReader", reader => reader is MySqlSchemaReader)
             .AssertPassed();
     }
@@ -277,8 +359,9 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_sqlite_schema_reader()
     {
-        await Given("sqlite provider", () => "sqlite")
-            .When("schema reader created", p => DatabaseProviderFactory.CreateSchemaReader(p))
+        // See the SQLite connection test above for why a search path is required here.
+        await Given("sqlite provider and a matching search path", () => ("sqlite", SqliteSearchPaths))
+            .When("schema reader created", t => DatabaseProviderFactory.CreateSchemaReader(t.Item1, t.Item2))
             .Then("returns SqliteSchemaReader", reader => reader is SqliteSchemaReader)
             .AssertPassed();
     }
@@ -287,8 +370,9 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_oracle_schema_reader()
     {
-        await Given("oracle provider", () => "oracle")
-            .When("schema reader created", p => DatabaseProviderFactory.CreateSchemaReader(p))
+        // See the Oracle connection test above for why a search path is required here.
+        await Given("oracle provider and a matching search path", () => ("oracle", OracleSearchPaths))
+            .When("schema reader created", t => DatabaseProviderFactory.CreateSchemaReader(t.Item1, t.Item2))
             .Then("returns OracleSchemaReader", reader => reader is OracleSchemaReader)
             .AssertPassed();
     }
@@ -297,19 +381,10 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_firebird_schema_reader()
     {
-        await Given("firebird provider", () => "firebird")
-            .When("schema reader created", p => DatabaseProviderFactory.CreateSchemaReader(p))
+        // See the Firebird connection test above for why a search path is required here.
+        await Given("firebird provider and a matching search path", () => ("firebird", FirebirdSearchPaths))
+            .When("schema reader created", t => DatabaseProviderFactory.CreateSchemaReader(t.Item1, t.Item2))
             .Then("returns FirebirdSchemaReader", reader => reader is FirebirdSchemaReader)
-            .AssertPassed();
-    }
-
-    [Scenario("Creates Snowflake schema reader")]
-    [Fact]
-    public async Task Creates_snowflake_schema_reader()
-    {
-        await Given("snowflake provider", () => "snowflake")
-            .When("schema reader created", p => DatabaseProviderFactory.CreateSchemaReader(p))
-            .Then("returns SnowflakeSchemaReader", reader => reader is SnowflakeSchemaReader)
             .AssertPassed();
     }
 

@@ -685,24 +685,60 @@
           "xunit.extensibility.core": "[2.9.3]"
         }
       },
+      "jd.efcpt.build.firebird": {
+        "type": "Project",
+        "dependencies": {
+          "FirebirdSql.Data.FirebirdClient": "[10.3.4, )",
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )"
+        }
+      },
+      "jd.efcpt.build.mysqlconnector": {
+        "type": "Project",
+        "dependencies": {
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
+          "MySqlConnector": "[2.5.0, )"
+        }
+      },
+      "jd.efcpt.build.oracle": {
+        "type": "Project",
+        "dependencies": {
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
+          "Oracle.ManagedDataAccess.Core": "[23.26.100, )"
+        }
+      },
+      "jd.efcpt.build.postgresql": {
+        "type": "Project",
+        "dependencies": {
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
+          "Npgsql": "[9.0.5, )"
+        }
+      },
       "jd.efcpt.build.providers.abstractions": {
         "type": "Project"
+      },
+      "jd.efcpt.build.snowflake": {
+        "type": "Project",
+        "dependencies": {
+          "AWSSDK.Core": "[4.0.3.18, )",
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
+          "Snowflake.Data": "[5.4.1, )"
+        }
+      },
+      "jd.efcpt.build.sqlite": {
+        "type": "Project",
+        "dependencies": {
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
+          "Microsoft.Data.Sqlite.Core": "[9.0.14, )"
+        }
       },
       "jd.efcpt.build.tasks": {
         "type": "Project",
         "dependencies": {
-          "AWSSDK.Core": "[4.0.3.18, )",
-          "FirebirdSql.Data.FirebirdClient": "[10.3.4, )",
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
           "Microsoft.Build.Framework": "[18.7.1, )",
           "Microsoft.Build.Utilities.Core": "[18.7.1, )",
           "Microsoft.Data.SqlClient": "[6.1.4, )",
-          "Microsoft.Data.Sqlite.Core": "[9.0.14, )",
-          "MySqlConnector": "[2.5.0, )",
-          "Npgsql": "[9.0.5, )",
-          "Oracle.ManagedDataAccess.Core": "[23.26.100, )",
           "PatternKit.Core": "[0.34.4, )",
-          "Snowflake.Data": "[5.4.1, )",
           "System.IO.Hashing": "[10.0.5, )"
         }
       },

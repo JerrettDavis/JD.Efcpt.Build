@@ -21,9 +21,14 @@ namespace JD.Efcpt.Build.Tasks.Schema.Providers;
 /// LocalStack Pro account with LOCALSTACK_AUTH_TOKEN for Snowflake emulation.
 /// The implementation follows the same patterns as other tested schema readers.
 /// </para>
+/// <para>
+/// Public (rather than internal) so <c>ProviderAdapterResolver</c> in <c>JD.Efcpt.Build.Tasks</c>
+/// can reflection-load and instantiate <see cref="SnowflakeProviderAdapter"/> (which constructs
+/// this reader) after locating this satellite package's assembly.
+/// </para>
 /// </remarks>
 [ExcludeFromCodeCoverage]
-internal sealed class SnowflakeSchemaReader : ISchemaReader
+public sealed class SnowflakeSchemaReader : ISchemaReader
 {
     /// <summary>
     /// Reads the complete schema from a Snowflake database.

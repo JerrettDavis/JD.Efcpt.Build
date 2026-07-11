@@ -7,7 +7,12 @@ namespace JD.Efcpt.Build.Tasks.Schema.Providers;
 /// <see cref="IProviderAdapter"/> for Snowflake, wrapping <see cref="SnowflakeDbConnection"/> and
 /// <see cref="SnowflakeSchemaReader"/>.
 /// </summary>
-internal sealed class SnowflakeProviderAdapter : IProviderAdapter
+/// <remarks>
+/// Public (rather than internal) so <c>ProviderAdapterResolver</c> in <c>JD.Efcpt.Build.Tasks</c>
+/// can reflection-load and instantiate this type after locating this satellite package's
+/// assembly - see that type's discovery contract for satellite provider assemblies.
+/// </remarks>
+public sealed class SnowflakeProviderAdapter : IProviderAdapter
 {
     /// <summary>
     /// Creates a Snowflake connection.

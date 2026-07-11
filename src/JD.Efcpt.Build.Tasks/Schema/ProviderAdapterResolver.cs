@@ -51,13 +51,12 @@ internal sealed class ProviderAdapterResolver
     private static readonly IReadOnlyDictionary<string, Func<IProviderAdapter>> AdapterFactoriesByProvider =
         new Dictionary<string, Func<IProviderAdapter>>
         {
-            ["mssql"] = () => new SqlServerProviderAdapter(),
-            ["postgres"] = () => new PostgreSqlProviderAdapter(),
-            ["mysql"] = () => new MySqlProviderAdapter(),
-            ["sqlite"] = () => new SqliteProviderAdapter(),
-            ["oracle"] = () => new OracleProviderAdapter(),
-            ["firebird"] = () => new FirebirdProviderAdapter(),
-            ["snowflake"] = () => new SnowflakeProviderAdapter()
+            ["mssql"] = () => new SqlServerProviderAdapter()
+            // "snowflake", "oracle", "postgres", "mysql", "firebird", and "sqlite" are
+            // intentionally absent: they were extracted into satellite packages
+            // (JD.Efcpt.Build.Snowflake, .Oracle, .PostgreSQL, .MySqlConnector, .Firebird,
+            // .Sqlite) and now resolve exclusively via ResolveFromSatellitePackage below.
+            // "mssql" is the only provider that remains bundled with the core package - see #189.
         };
 
     private readonly ConcurrentDictionary<string, IProviderAdapter> _cache = new();

@@ -20,6 +20,18 @@
       references its types directly - see the fixture project's remarks.
     -->
     <ProjectReference Include="..\Fixtures\JD.Efcpt.Build.TestProvider\JD.Efcpt.Build.TestProvider.csproj" />
+    <!--
+      Test-only reference to every satellite provider project so resolver tests can point
+      ProviderSearchPaths at this test assembly's own build output directory (where the
+      ProjectReference copies each provider's DLL) and exercise the same reflection-loading path
+      a real satellite package install goes through.
+    -->
+    <ProjectReference Include="..\..\src\JD.Efcpt.Build.Snowflake\JD.Efcpt.Build.Snowflake.csproj" />
+    <ProjectReference Include="..\..\src\JD.Efcpt.Build.Oracle\JD.Efcpt.Build.Oracle.csproj" />
+    <ProjectReference Include="..\..\src\JD.Efcpt.Build.PostgreSQL\JD.Efcpt.Build.PostgreSQL.csproj" />
+    <ProjectReference Include="..\..\src\JD.Efcpt.Build.MySqlConnector\JD.Efcpt.Build.MySqlConnector.csproj" />
+    <ProjectReference Include="..\..\src\JD.Efcpt.Build.Firebird\JD.Efcpt.Build.Firebird.csproj" />
+    <ProjectReference Include="..\..\src\JD.Efcpt.Build.Sqlite\JD.Efcpt.Build.Sqlite.csproj" />
   </ItemGroup>
 
   <ItemGroup>

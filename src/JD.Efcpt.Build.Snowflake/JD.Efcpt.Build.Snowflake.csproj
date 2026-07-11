@@ -1,0 +1,109 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- Multi-target to match JD.Efcpt.Build.Tasks so the adapter loads under any supported MSBuild host. -->
+    <TargetFrameworks>net472;net8.0;net9.0;net10.0</TargetFrameworks>
+    <IsPackable>true</IsPackable>
+
+    <AssemblyName>JD.Efcpt.Build.Snowflake</AssemblyName>
+    <RootNamespace>JD.Efcpt.Build.Tasks.Schema.Providers</RootNamespace>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <LangVersion>latest</LangVersion>
+
+    <Nullable Condition="'$(TargetFramework)' == 'net472'">annotations</Nullable>
+    <NoWarn Condition="'$(TargetFramework)' == 'net472'">$(NoWarn);CS8632</NoWarn>
+
+    <!--
+      This assembly is never referenced at compile time by a consuming project - it's located by
+      ProviderAdapterResolver and loaded via reflection at MSBuild task-execution time (see
+      IncludeSnowflakeProviderAssembliesInPack below). So it must NOT go into the standard lib/
+      NuGet folder (which would make it a compile-time reference), and its own driver packages
+      (Snowflake.Data, AWSSDK.Core) must NOT be declared as NuGet dependencies of this package -
+      their DLLs are bundled directly instead.
+    -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <NoWarn>$(NoWarn);NU5128;NU5100</NoWarn>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+    <!-- Package Identity -->
+    <PackageId>JD.Efcpt.Build.Snowflake</PackageId>
+    <Title>JD.Efcpt.Build Snowflake Provider</Title>
+    <Authors>Jerrett Davis</Authors>
+    <Company>JDH Productions</Company>
+    <Description>Snowflake database provider driver for JD.Efcpt.Build. Install alongside JD.Efcpt.Build and set EfcptProvider=snowflake to scaffold EF Core models from a Snowflake database during your build. See https://jerrettdavis.github.io/JD.Efcpt.Build/user-guide/provider-support.html for the full dependency chain (JD.Efcpt.Build.Snowflake -> Snowflake.Data -> AWSSDK.Core).</Description>
+    <PackageTags>efcore;entity-framework;efcpt;msbuild;snowflake;database-first;code-generation</PackageTags>
+    <PackageProjectUrl>https://github.com/jerrettdavis/JD.Efcpt.Build</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jerrettdavis/JD.Efcpt.Build</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Shared IProviderAdapter/ISchemaReader contracts - see that project's remarks. -->
+    <ProjectReference Include="..\JD.Efcpt.Build.Providers.Abstractions\JD.Efcpt.Build.Providers.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Snowflake.Data" />
+    <!--
+      Override vulnerable AWSSDK.Core transitive dependency from Snowflake.Data. This quirk was
+      carried over unchanged from JD.Efcpt.Build.Tasks.csproj when Snowflake was extracted - do
+      not drop it without re-checking Snowflake.Data's current AWSSDK.Core requirement.
+    -->
+    <PackageReference Include="AWSSDK.Core" VersionOverride="4.0.3.18" />
+  </ItemGroup>
+
+  <!-- Polyfills for net472: provides IsExternalInit, init accessors, etc. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <PackageReference Include="PolySharp">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <!-- DataTable.AsEnumerable() lives in System.Data.DataSetExtensions, not part of the default
+       net472 reference set - see JD.Efcpt.Build.Providers.Abstractions.csproj for the same fix. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <Reference Include="System.Data.DataSetExtensions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="build\JD.Efcpt.Build.Snowflake.targets" Pack="true" PackagePath="build" />
+  </ItemGroup>
+
+  <!--
+    Collect this project's own build output (the adapter DLL + Snowflake.Data/AWSSDK.Core and
+    their transitive dependencies) into tasks/{tfm}/providers/snowflake inside the nupkg, mirroring
+    how JD.Efcpt.Build.csproj collects JD.Efcpt.Build.Tasks's output into tasks/{tfm}. The shared
+    Providers.Abstractions DLL is deliberately excluded: it already ships inside the core
+    JD.Efcpt.Build package next to JD.Efcpt.Build.Tasks.dll, and by the time ProviderAdapterResolver
+    resolves any provider (including this one) that copy is already loaded in the same load
+    context/AppDomain, so a second copy here would be redundant, unused weight.
+  -->
+  <Target Name="IncludeSnowflakeProviderAssembliesInPack" BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <_SnowflakeProviderFiles Include="bin\$(Configuration)\net472\*.dll" Condition="Exists('bin\$(Configuration)\net472\JD.Efcpt.Build.Snowflake.dll')" TargetFrameworkFolder="net472" />
+      <_SnowflakeProviderFiles Include="bin\$(Configuration)\net8.0\*.dll" Condition="Exists('bin\$(Configuration)\net8.0\JD.Efcpt.Build.Snowflake.dll')" TargetFrameworkFolder="net8.0" />
+      <_SnowflakeProviderFiles Include="bin\$(Configuration)\net9.0\*.dll" Condition="Exists('bin\$(Configuration)\net9.0\JD.Efcpt.Build.Snowflake.dll')" TargetFrameworkFolder="net9.0" />
+      <_SnowflakeProviderFiles Include="bin\$(Configuration)\net10.0\*.dll" Condition="Exists('bin\$(Configuration)\net10.0\JD.Efcpt.Build.Snowflake.dll')" TargetFrameworkFolder="net10.0" />
+      <_SnowflakeProviderFiles Remove="@(_SnowflakeProviderFiles)" Condition="'%(Filename)' == 'JD.Efcpt.Build.Providers.Abstractions'" />
+      <None Include="@(_SnowflakeProviderFiles)" Pack="true" PackagePath="tasks\%(_SnowflakeProviderFiles.TargetFrameworkFolder)\providers\snowflake" />
+    </ItemGroup>
+  </Target>
+
+  <!--
+    Native runtimes (Snowflake's sf_mini_core native library) ship under a runtimes/ folder in the
+    driver package - sweep those into the satellite pack layout too, mirroring how the main
+    package's IncludeTaskAssembliesInPack collects Tasks's own runtimes folder.
+  -->
+  <Target Name="IncludeSnowflakeProviderRuntimesInPack" BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <_SnowflakeProviderRuntimeFiles Include="bin\$(Configuration)\net472\runtimes\**\*" Condition="Exists('bin\$(Configuration)\net472\runtimes')" TargetFrameworkFolder="net472" />
+      <_SnowflakeProviderRuntimeFiles Include="bin\$(Configuration)\net8.0\runtimes\**\*" Condition="Exists('bin\$(Configuration)\net8.0\runtimes')" TargetFrameworkFolder="net8.0" />
+      <_SnowflakeProviderRuntimeFiles Include="bin\$(Configuration)\net9.0\runtimes\**\*" Condition="Exists('bin\$(Configuration)\net9.0\runtimes')" TargetFrameworkFolder="net9.0" />
+      <_SnowflakeProviderRuntimeFiles Include="bin\$(Configuration)\net10.0\runtimes\**\*" Condition="Exists('bin\$(Configuration)\net10.0\runtimes')" TargetFrameworkFolder="net10.0" />
+      <None Include="@(_SnowflakeProviderRuntimeFiles)" Pack="true" PackagePath="tasks\%(_SnowflakeProviderRuntimeFiles.TargetFrameworkFolder)\providers\snowflake\runtimes" />
+    </ItemGroup>
+  </Target>
+</Project>

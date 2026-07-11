@@ -23,6 +23,15 @@ namespace JD.Efcpt.Build.Tests.Schema;
 [Collection(nameof(AssemblySetup))]
 public sealed partial class SnowflakeSchemaReaderTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
+    /// <summary>
+    /// Snowflake is a satellite provider (JD.Efcpt.Build.Snowflake); its adapter DLL is only
+    /// present here because the Tests project has a test-only ProjectReference to it, which
+    /// places the DLL in this test assembly's own output directory. See
+    /// ProviderAdapterResolverTests for the same pattern applied to the resolver directly.
+    /// </summary>
+    private static readonly string[] SnowflakeSearchPaths =
+        [Path.GetDirectoryName(typeof(SnowflakeSchemaReaderTests).Assembly.Location)!];
+
     #region Test Helpers
 
     /// <summary>
@@ -578,9 +587,12 @@ public sealed partial class SnowflakeSchemaReaderTests(ITestOutputHelper output)
     [Fact]
     public async Task Factory_creates_correct_reader()
     {
-        await Given("snowflake provider", () => "snowflake")
-            .When("schema reader created", provider =>
-                DatabaseProviderFactory.CreateSchemaReader(provider))
+        // Snowflake is a satellite provider and no longer resolves in-assembly - point at this
+        // test assembly's own output directory, where the Tests project's test-only
+        // ProjectReference to JD.Efcpt.Build.Snowflake already placed its built adapter DLL.
+        await Given("snowflake provider and a matching search path", () => ("snowflake", SnowflakeSearchPaths))
+            .When("schema reader created", t =>
+                DatabaseProviderFactory.CreateSchemaReader(t.Item1, t.Item2))
             .Then("returns SnowflakeSchemaReader", reader => reader is SnowflakeSchemaReader)
             .AssertPassed();
     }
@@ -589,9 +601,10 @@ public sealed partial class SnowflakeSchemaReaderTests(ITestOutputHelper output)
     [Fact]
     public async Task Sf_alias_creates_correct_reader()
     {
-        await Given("sf provider alias", () => "sf")
-            .When("schema reader created", provider =>
-                DatabaseProviderFactory.CreateSchemaReader(provider))
+        // See the comment on Factory_creates_correct_reader for why a search path is required.
+        await Given("sf provider alias and a matching search path", () => ("sf", SnowflakeSearchPaths))
+            .When("schema reader created", t =>
+                DatabaseProviderFactory.CreateSchemaReader(t.Item1, t.Item2))
             .Then("returns SnowflakeSchemaReader", reader => reader is SnowflakeSchemaReader)
             .AssertPassed();
     }

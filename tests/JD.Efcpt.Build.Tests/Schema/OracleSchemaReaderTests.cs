@@ -17,6 +17,15 @@ namespace JD.Efcpt.Build.Tests.Schema;
 [Collection(nameof(AssemblySetup))]
 public sealed partial class OracleSchemaReaderTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
+    /// <summary>
+    /// Oracle is a satellite provider (JD.Efcpt.Build.Oracle); its adapter DLL is only present
+    /// here because the Tests project has a test-only ProjectReference to it, which places the
+    /// DLL in this test assembly's own output directory. See ProviderAdapterResolverTests for
+    /// the same pattern applied to the resolver directly.
+    /// </summary>
+    private static readonly string[] OracleSearchPaths =
+        [Path.GetDirectoryName(typeof(OracleSchemaReaderTests).Assembly.Location)!];
+
     #region Test Helpers
 
     /// <summary>
@@ -655,9 +664,12 @@ public sealed partial class OracleSchemaReaderTests(ITestOutputHelper output) : 
     [Fact]
     public async Task Factory_creates_correct_reader()
     {
-        await Given("oracle provider", () => "oracle")
-            .When("schema reader created", provider =>
-                DatabaseProviderFactory.CreateSchemaReader(provider))
+        // Oracle is a satellite provider and no longer resolves in-assembly - point at this
+        // test assembly's own output directory, where the Tests project's test-only
+        // ProjectReference to JD.Efcpt.Build.Oracle already placed its built adapter DLL.
+        await Given("oracle provider and a matching search path", () => ("oracle", OracleSearchPaths))
+            .When("schema reader created", t =>
+                DatabaseProviderFactory.CreateSchemaReader(t.Item1, t.Item2))
             .Then("returns OracleSchemaReader", reader => reader is OracleSchemaReader)
             .AssertPassed();
     }
@@ -666,9 +678,10 @@ public sealed partial class OracleSchemaReaderTests(ITestOutputHelper output) : 
     [Fact]
     public async Task Oracledb_alias_creates_correct_reader()
     {
-        await Given("oracledb provider alias", () => "oracledb")
-            .When("schema reader created", provider =>
-                DatabaseProviderFactory.CreateSchemaReader(provider))
+        // See the comment on Factory_creates_correct_reader for why a search path is required.
+        await Given("oracledb provider alias and a matching search path", () => ("oracledb", OracleSearchPaths))
+            .When("schema reader created", t =>
+                DatabaseProviderFactory.CreateSchemaReader(t.Item1, t.Item2))
             .Then("returns OracleSchemaReader", reader => reader is OracleSchemaReader)
             .AssertPassed();
     }

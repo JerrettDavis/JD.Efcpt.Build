@@ -8,7 +8,12 @@ namespace JD.Efcpt.Build.Tasks.Schema.Providers;
 /// <summary>
 /// Reads schema metadata from PostgreSQL databases using GetSchema() for standard metadata.
 /// </summary>
-internal sealed class PostgreSqlSchemaReader : SchemaReaderBase
+/// <remarks>
+/// Public (rather than internal) so <c>ProviderAdapterResolver</c> in <c>JD.Efcpt.Build.Tasks</c>
+/// can reflection-load and instantiate <see cref="PostgreSqlProviderAdapter"/> (which constructs
+/// this reader) after locating this satellite package's assembly.
+/// </remarks>
+public sealed class PostgreSqlSchemaReader : SchemaReaderBase
 {
     /// <summary>
     /// Creates a PostgreSQL database connection for the specified connection string.

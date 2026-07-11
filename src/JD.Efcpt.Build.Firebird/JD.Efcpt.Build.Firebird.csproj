@@ -1,0 +1,89 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- Multi-target to match JD.Efcpt.Build.Tasks so the adapter loads under any supported MSBuild host. -->
+    <TargetFrameworks>net472;net8.0;net9.0;net10.0</TargetFrameworks>
+    <IsPackable>true</IsPackable>
+
+    <AssemblyName>JD.Efcpt.Build.Firebird</AssemblyName>
+    <RootNamespace>JD.Efcpt.Build.Tasks.Schema.Providers</RootNamespace>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <LangVersion>latest</LangVersion>
+
+    <Nullable Condition="'$(TargetFramework)' == 'net472'">annotations</Nullable>
+    <NoWarn Condition="'$(TargetFramework)' == 'net472'">$(NoWarn);CS8632</NoWarn>
+
+    <!--
+      This assembly is never referenced at compile time by a consuming project - it's located by
+      ProviderAdapterResolver and loaded via reflection at MSBuild task-execution time (see
+      IncludeFirebirdProviderAssembliesInPack below). So it must NOT go into the standard lib/
+      NuGet folder (which would make it a compile-time reference), and its own driver package
+      (FirebirdSql.Data.FirebirdClient) must NOT be declared as a NuGet dependency of this
+      package - its DLLs are bundled directly instead.
+    -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <NoWarn>$(NoWarn);NU5128;NU5100</NoWarn>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+    <!-- Package Identity -->
+    <PackageId>JD.Efcpt.Build.Firebird</PackageId>
+    <Title>JD.Efcpt.Build Firebird Provider</Title>
+    <Authors>Jerrett Davis</Authors>
+    <Company>JDH Productions</Company>
+    <Description>Firebird database provider driver for JD.Efcpt.Build. Install alongside JD.Efcpt.Build and set EfcptProvider=firebird to scaffold EF Core models from a Firebird database during your build. See https://jerrettdavis.github.io/JD.Efcpt.Build/user-guide/provider-support.html for the full dependency chain (JD.Efcpt.Build.Firebird -> FirebirdSql.Data.FirebirdClient).</Description>
+    <PackageTags>efcore;entity-framework;efcpt;msbuild;firebird;database-first;code-generation</PackageTags>
+    <PackageProjectUrl>https://github.com/jerrettdavis/JD.Efcpt.Build</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jerrettdavis/JD.Efcpt.Build</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Shared IProviderAdapter/ISchemaReader contracts - see that project's remarks. -->
+    <ProjectReference Include="..\JD.Efcpt.Build.Providers.Abstractions\JD.Efcpt.Build.Providers.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FirebirdSql.Data.FirebirdClient" />
+  </ItemGroup>
+
+  <!-- Polyfills for net472: provides IsExternalInit, init accessors, etc. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <PackageReference Include="PolySharp">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <!-- DataTable.AsEnumerable() lives in System.Data.DataSetExtensions, not part of the default
+       net472 reference set - see JD.Efcpt.Build.Providers.Abstractions.csproj for the same fix. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <Reference Include="System.Data.DataSetExtensions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="build\JD.Efcpt.Build.Firebird.targets" Pack="true" PackagePath="build" />
+  </ItemGroup>
+
+  <!--
+    Collect this project's own build output (the adapter DLL + FirebirdSql.Data.FirebirdClient
+    and its transitive dependencies) into tasks/{tfm}/providers/firebird inside the nupkg,
+    mirroring how JD.Efcpt.Build.csproj collects JD.Efcpt.Build.Tasks's output into tasks/{tfm}.
+    The shared Providers.Abstractions DLL is deliberately excluded: it already ships inside the
+    core JD.Efcpt.Build package next to JD.Efcpt.Build.Tasks.dll, and by the time
+    ProviderAdapterResolver resolves any provider (including this one) that copy is already
+    loaded in the same load context/AppDomain, so a second copy here would be redundant, unused
+    weight.
+  -->
+  <Target Name="IncludeFirebirdProviderAssembliesInPack" BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <_FirebirdProviderFiles Include="bin\$(Configuration)\net472\*.dll" Condition="Exists('bin\$(Configuration)\net472\JD.Efcpt.Build.Firebird.dll')" TargetFrameworkFolder="net472" />
+      <_FirebirdProviderFiles Include="bin\$(Configuration)\net8.0\*.dll" Condition="Exists('bin\$(Configuration)\net8.0\JD.Efcpt.Build.Firebird.dll')" TargetFrameworkFolder="net8.0" />
+      <_FirebirdProviderFiles Include="bin\$(Configuration)\net9.0\*.dll" Condition="Exists('bin\$(Configuration)\net9.0\JD.Efcpt.Build.Firebird.dll')" TargetFrameworkFolder="net9.0" />
+      <_FirebirdProviderFiles Include="bin\$(Configuration)\net10.0\*.dll" Condition="Exists('bin\$(Configuration)\net10.0\JD.Efcpt.Build.Firebird.dll')" TargetFrameworkFolder="net10.0" />
+      <_FirebirdProviderFiles Remove="@(_FirebirdProviderFiles)" Condition="'%(Filename)' == 'JD.Efcpt.Build.Providers.Abstractions'" />
+      <None Include="@(_FirebirdProviderFiles)" Pack="true" PackagePath="tasks\%(_FirebirdProviderFiles.TargetFrameworkFolder)\providers\firebird" />
+    </ItemGroup>
+  </Target>
+</Project>

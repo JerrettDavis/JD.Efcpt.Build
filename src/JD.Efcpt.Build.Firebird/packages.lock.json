@@ -1,0 +1,77 @@
+{
+  "version": 2,
+  "dependencies": {
+    ".NETFramework,Version=v4.7.2": {
+      "FirebirdSql.Data.FirebirdClient": {
+        "type": "Direct",
+        "requested": "[10.3.4, )",
+        "resolved": "10.3.4",
+        "contentHash": "lmaY+XQvnhPl1YRrY+lzTZPD88YDbllelN5RhFMrzinqSmjWpWZRE0A4AI1L2mPBNAI346Q8MHAvnJjDPd7VnQ==",
+        "dependencies": {
+          "System.Reflection.Emit": "4.7.0",
+          "System.Threading.Tasks.Extensions": "4.6.0"
+        }
+      },
+      "PolySharp": {
+        "type": "Direct",
+        "requested": "[1.15.0, )",
+        "resolved": "1.15.0",
+        "contentHash": "FbU0El+EEjdpuIX4iDbeS7ki1uzpJPx8vbqOzEtqnl1GZeAGJfq+jCbxeJL2y0EPnUNk8dRnnqR2xnYXg9Tf+g=="
+      },
+      "System.Reflection.Emit": {
+        "type": "Transitive",
+        "resolved": "4.7.0",
+        "contentHash": "VR4kk8XLKebQ4MZuKuIni/7oh+QGFmZW3qORd1GvBq/8026OpW501SzT/oypwiQl4TvT8ErnReh/NzY9u+C6wQ=="
+      },
+      "System.Runtime.CompilerServices.Unsafe": {
+        "type": "Transitive",
+        "resolved": "6.1.0",
+        "contentHash": "5o/HZxx6RVqYlhKSq8/zronDkALJZUT2Vz0hx43f0gwe8mwlM0y2nYlqdBwLMzr262Bwvpikeb/yEwkAa5PADg=="
+      },
+      "System.Threading.Tasks.Extensions": {
+        "type": "Transitive",
+        "resolved": "4.6.0",
+        "contentHash": "I5G6Y8jb0xRtGUC9Lahy7FUvlYlnGMMkbuKAQBy8Jb7Y6Yn8OlBEiUOY0PqZ0hy6Ua8poVA1ui1tAIiXNxGdsg==",
+        "dependencies": {
+          "System.Runtime.CompilerServices.Unsafe": "6.1.0"
+        }
+      },
+      "jd.efcpt.build.providers.abstractions": {
+        "type": "Project"
+      }
+    },
+    "net10.0": {
+      "FirebirdSql.Data.FirebirdClient": {
+        "type": "Direct",
+        "requested": "[10.3.4, )",
+        "resolved": "10.3.4",
+        "contentHash": "lmaY+XQvnhPl1YRrY+lzTZPD88YDbllelN5RhFMrzinqSmjWpWZRE0A4AI1L2mPBNAI346Q8MHAvnJjDPd7VnQ=="
+      },
+      "jd.efcpt.build.providers.abstractions": {
+        "type": "Project"
+      }
+    },
+    "net8.0": {
+      "FirebirdSql.Data.FirebirdClient": {
+        "type": "Direct",
+        "requested": "[10.3.4, )",
+        "resolved": "10.3.4",
+        "contentHash": "lmaY+XQvnhPl1YRrY+lzTZPD88YDbllelN5RhFMrzinqSmjWpWZRE0A4AI1L2mPBNAI346Q8MHAvnJjDPd7VnQ=="
+      },
+      "jd.efcpt.build.providers.abstractions": {
+        "type": "Project"
+      }
+    },
+    "net9.0": {
+      "FirebirdSql.Data.FirebirdClient": {
+        "type": "Direct",
+        "requested": "[10.3.4, )",
+        "resolved": "10.3.4",
+        "contentHash": "lmaY+XQvnhPl1YRrY+lzTZPD88YDbllelN5RhFMrzinqSmjWpWZRE0A4AI1L2mPBNAI346Q8MHAvnJjDPd7VnQ=="
+      },
+      "jd.efcpt.build.providers.abstractions": {
+        "type": "Project"
+      }
+    }
+  }
+}
