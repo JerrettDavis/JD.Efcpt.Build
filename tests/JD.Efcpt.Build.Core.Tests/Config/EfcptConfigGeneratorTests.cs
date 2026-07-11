@@ -1,14 +1,11 @@
-using System;
-using System.IO;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using JD.Efcpt.Build.Core.Config;
-using JD.Efcpt.Build.Tests.Infrastructure;
+using JD.Efcpt.Build.Core.Tests.Infrastructure;
 using Xunit;
 
-namespace JD.Efcpt.Build.Tests.Config;
+namespace JD.Efcpt.Build.Core.Tests.Config;
 
-public partial class EfcptConfigGeneratorTests
+public class EfcptConfigGeneratorTests
 {
     private readonly string _schemaPath;
 
@@ -35,10 +32,10 @@ public partial class EfcptConfigGeneratorTests
         // Verify it's valid JSON
         var parsed = JsonNode.Parse(result);
         Assert.NotNull(parsed);
-        
+
         // Verify $schema property is present
         Assert.NotNull(parsed["$schema"]);
-        Assert.Equal("https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/master/samples/efcpt-config.schema.json", 
+        Assert.Equal("https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/master/samples/efcpt-config.schema.json",
             parsed["$schema"]?.GetValue<string>());
     }
 
@@ -167,11 +164,11 @@ public partial class EfcptConfigGeneratorTests
 
         // Verify indentation (should be formatted)
         Assert.Contains("  ", result);
-        
+
         // Verify type-mappings is NOT present (not required)
         Assert.DoesNotContain("\"type-mappings\":", result);
     }
-    
+
     [Fact]
     public void GenerateFromFile_OnlyIncludesRequiredProperties()
     {
@@ -181,13 +178,13 @@ public partial class EfcptConfigGeneratorTests
 
         // Assert
         Assert.NotNull(config);
-        
+
         // Verify only required sections are present
         Assert.NotNull(config["$schema"]);
         Assert.NotNull(config["code-generation"]);
         Assert.NotNull(config["names"]);
         Assert.NotNull(config["file-layout"]);
-        
+
         // Verify optional sections are NOT present
         Assert.Null(config["type-mappings"]);
         Assert.Null(config["tables"]);
@@ -195,17 +192,17 @@ public partial class EfcptConfigGeneratorTests
         Assert.Null(config["stored-procedures"]);
         Assert.Null(config["functions"]);
         Assert.Null(config["replacements"]);
-        
+
         // Verify code-generation has exactly 13 required properties
         var codeGen = config["code-generation"]?.AsObject();
         Assert.NotNull(codeGen);
         Assert.Equal(13, codeGen.Count);
-        
+
         // Verify names has exactly 2 required properties
         var names = config["names"]?.AsObject();
         Assert.NotNull(names);
         Assert.Equal(2, names.Count);
-        
+
         // Verify file-layout has exactly 1 required property
         var fileLayout = config["file-layout"]?.AsObject();
         Assert.NotNull(fileLayout);
@@ -218,9 +215,9 @@ public partial class EfcptConfigGeneratorTests
         // In a git worktree, ".git" at the root is a FILE (a gitdir pointer), not a
         // directory, so a Directory.Exists(".git") check fails and the walk-up never
         // matches. Matching on JD.Efcpt.Build.sln mirrors the existing convention in
-        // AssemblyFixture.cs / TestUtilities.cs and works in clones and worktrees alike.
-        // The walk-up itself lives in RepoRootLocator so it can be exercised directly
-        // by a regression test without depending on the real repo layout.
+        // JD.Efcpt.Build.Tests and works in clones and worktrees alike. The walk-up
+        // itself lives in RepoRootLocator so it can be exercised directly by a
+        // regression test without depending on the real repo layout.
         var fromCwd = RepoRootLocator.FindRepoRootFrom(Directory.GetCurrentDirectory());
         if (fromCwd is not null)
             return fromCwd;
@@ -282,4 +279,3 @@ public partial class EfcptConfigGeneratorTests
         }
     }
 }
-

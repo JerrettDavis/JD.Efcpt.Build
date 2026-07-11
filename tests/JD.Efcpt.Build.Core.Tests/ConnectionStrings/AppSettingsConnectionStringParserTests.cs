@@ -1,13 +1,12 @@
-using JD.Efcpt.Build.Tasks;
 using JD.Efcpt.Build.Core.ConnectionStrings;
-using JD.Efcpt.Build.Tests.Infrastructure;
+using JD.Efcpt.Build.Core.Tests.Infrastructure;
 using TinyBDD;
 using TinyBDD.Xunit;
 using Xunit;
 using Xunit.Abstractions;
 using Task = System.Threading.Tasks.Task;
 
-namespace JD.Efcpt.Build.Tests.ConnectionStrings;
+namespace JD.Efcpt.Build.Core.Tests.ConnectionStrings;
 
 [Feature("AppSettingsConnectionStringParser: parses connection strings from appsettings.json files")]
 [Collection(nameof(AssemblySetup))]
@@ -16,16 +15,9 @@ public sealed partial class AppSettingsConnectionStringParserTests(ITestOutputHe
     private sealed record SetupState(TestFolder Folder, string FilePath, string KeyName);
     private sealed record ParseResult(SetupState Setup, ConnectionStringResult Result);
 
-    private static BuildLog CreateTestLog()
-    {
-        var task = new DummyTask { BuildEngine = new TestBuildEngine() };
-        return new BuildLog(task.Log, "minimal");
-    }
-
     private static ParseResult ExecuteParse(SetupState setup)
     {
-        var parser = new AppSettingsConnectionStringParser();
-        var log = CreateTestLog();
+        var log = new RecordingBuildLog();
         var result = AppSettingsConnectionStringParser.Parse(setup.FilePath, setup.KeyName, log);
         return new ParseResult(setup, result);
     }
@@ -179,11 +171,6 @@ public sealed partial class AppSettingsConnectionStringParserTests(ITestOutputHe
             .Then("fails", r => !r.Result.Success)
             .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
-    }
-
-    private sealed class DummyTask : Microsoft.Build.Utilities.Task
-    {
-        public override bool Execute() => true;
     }
 }
 

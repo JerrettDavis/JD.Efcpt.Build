@@ -4,7 +4,7 @@ using TinyBDD.Xunit;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace JD.Efcpt.Build.Tests;
+namespace JD.Efcpt.Build.Core.Tests.Diagnostics;
 
 /// <summary>
 /// Tests for the DotNetToolUtilities class that handles .NET SDK and runtime detection.

@@ -1,12 +1,12 @@
 using System.Threading;
 using JD.Efcpt.Build.Core.Diagnostics;
-using JD.Efcpt.Build.Tests.Infrastructure;
+using JD.Efcpt.Build.Core.Tests.Infrastructure;
 using TinyBDD;
 using TinyBDD.Xunit;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace JD.Efcpt.Build.Tests;
+namespace JD.Efcpt.Build.Core.Tests.Diagnostics;
 
 /// <summary>
 /// Tests for the SdkProbeCache class that memoizes SDK/dnx capability probes so that
