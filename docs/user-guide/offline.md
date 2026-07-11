@@ -7,7 +7,8 @@ should never silently reach out to the internet.
 ## What it does
 
 When `EfcptOfflineMode` is `true` (or the `EFCPT_OFFLINE` environment variable is set to a
-truthy value), the `RunEfcpt` task refuses to spawn any of the three network-dependent code
+truthy value - see [Enabling offline mode](#enabling-offline-mode) below for the exact accepted
+values), the `RunEfcpt` task refuses to spawn any of the three network-dependent code
 paths it would otherwise use to resolve or restore the efcpt CLI:
 
 1. **dnx execution** - on .NET 10+ projects, the task would normally run `dotnet dnx <package>
@@ -67,7 +68,23 @@ set EFCPT_OFFLINE=true
 dotnet build
 ```
 
-Either is sufficient; they are OR-ed together.
+Either is sufficient; they are OR-ed together at two levels:
+
+- **MSBuild property default.** `EfcptOfflineMode`'s own default (applied only when the property
+  is not explicitly set by the project/`Directory.Build.props`) checks `$(EFCPT_OFFLINE)` -
+  MSBuild exposes process environment variables as ordinary properties, so this needs no special
+  plumbing. If `$(EFCPT_OFFLINE)` is one of the truthy tokens below, `EfcptOfflineMode` defaults
+  to `true`; this is what makes the update-check target (`_EfcptCheckForUpdates`, which reads
+  `$(EfcptOfflineMode)` directly) also skip when only the env var is set.
+- **Task-level OR.** Independently, the `RunEfcpt` task itself also reads
+  `Environment.GetEnvironmentVariable("EFCPT_OFFLINE")` at execution time and OR's it with the
+  `EfcptOfflineMode` task property, so offline behavior holds even if something explicitly set
+  `EfcptOfflineMode=false` at the MSBuild property level while `EFCPT_OFFLINE` is set in the
+  process environment.
+
+**Accepted truthy values** for `EFCPT_OFFLINE` (case-insensitive): `true`, `yes`, `on`, `1`,
+`enable`, `enabled`, `y`. Any other value - including `false`, `0`, `no`, `off`, or an empty/unset
+variable - does **not** enable offline mode via the environment variable.
 
 ## What still runs
 

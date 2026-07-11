@@ -45,6 +45,16 @@ public static class BuildTransitivePropsFactory
                     group.Property<EfcptToolCommand>( "efcpt", "'$(EfcptToolCommand)'==''");
                     group.Property<EfcptToolPath>( "", "'$(EfcptToolPath)'==''");
                     group.Property<EfcptDotNetExe>( "dotnet", "'$(EfcptDotNetExe)'==''");
+                    // EFCPT_OFFLINE env-var bridge: MSBuild exposes environment variables as
+                    // $(EFCPT_OFFLINE) automatically. When EfcptOfflineMode has not been set
+                    // explicitly, honor a truthy EFCPT_OFFLINE value as the default so the
+                    // documented "either is sufficient" contract holds even for targets/tasks
+                    // that read $(EfcptOfflineMode) directly (e.g. _EfcptCheckForUpdates).
+                    // Truthy tokens intentionally mirror StringExtensions.IsTrue() (true/yes/on/1/
+                    // enable/enabled/y); MSBuild condition equality is case-insensitive, so no
+                    // additional case variants are needed. EFCPT_OFFLINE=false/0/unset does NOT
+                    // enable offline mode.
+                    group.Property<EfcptOfflineMode>( "true", "'$(EfcptOfflineMode)'=='' and ('$(EFCPT_OFFLINE)'=='true' or '$(EFCPT_OFFLINE)'=='yes' or '$(EFCPT_OFFLINE)'=='on' or '$(EFCPT_OFFLINE)'=='1' or '$(EFCPT_OFFLINE)'=='enable' or '$(EFCPT_OFFLINE)'=='enabled' or '$(EFCPT_OFFLINE)'=='y')");
                     group.Property<EfcptOfflineMode>( "false", "'$(EfcptOfflineMode)'==''");
                     group.Property<EfcptFingerprintFile>( "$(EfcptOutput)fingerprint.txt", "'$(EfcptFingerprintFile)'==''");
                     group.Property<EfcptStampFile>( "$(EfcptOutput).efcpt.stamp", "'$(EfcptStampFile)'==''");
@@ -142,6 +152,16 @@ public static class BuildTransitivePropsFactory
                     group.Property<EfcptToolCommand>( "efcpt", "'$(EfcptToolCommand)'==''");
                     group.Property<EfcptToolPath>( "", "'$(EfcptToolPath)'==''");
                     group.Property<EfcptDotNetExe>( "dotnet", "'$(EfcptDotNetExe)'==''");
+                    // EFCPT_OFFLINE env-var bridge: MSBuild exposes environment variables as
+                    // $(EFCPT_OFFLINE) automatically. When EfcptOfflineMode has not been set
+                    // explicitly, honor a truthy EFCPT_OFFLINE value as the default so the
+                    // documented "either is sufficient" contract holds even for targets/tasks
+                    // that read $(EfcptOfflineMode) directly (e.g. _EfcptCheckForUpdates).
+                    // Truthy tokens intentionally mirror StringExtensions.IsTrue() (true/yes/on/1/
+                    // enable/enabled/y); MSBuild condition equality is case-insensitive, so no
+                    // additional case variants are needed. EFCPT_OFFLINE=false/0/unset does NOT
+                    // enable offline mode.
+                    group.Property<EfcptOfflineMode>( "true", "'$(EfcptOfflineMode)'=='' and ('$(EFCPT_OFFLINE)'=='true' or '$(EFCPT_OFFLINE)'=='yes' or '$(EFCPT_OFFLINE)'=='on' or '$(EFCPT_OFFLINE)'=='1' or '$(EFCPT_OFFLINE)'=='enable' or '$(EFCPT_OFFLINE)'=='enabled' or '$(EFCPT_OFFLINE)'=='y')");
                     group.Property<EfcptOfflineMode>( "false", "'$(EfcptOfflineMode)'==''");
                     group.Property<EfcptFingerprintFile>( "$(EfcptOutput)fingerprint.txt", "'$(EfcptFingerprintFile)'==''");
                     group.Property<EfcptStampFile>( "$(EfcptOutput).efcpt.stamp", "'$(EfcptStampFile)'==''");
