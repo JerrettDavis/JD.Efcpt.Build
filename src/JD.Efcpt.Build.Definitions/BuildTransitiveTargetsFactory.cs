@@ -63,7 +63,31 @@ public static class BuildTransitiveTargetsFactory
                 });
                 
                 UsingTasksRegistry.RegisterAll(t);
-                
+
+                // Opt-in diagnostic (#186): reports how RunEfcpt would resolve the efcpt tool
+                // for this project - TFM, SDK/dnx/manifest/global-tool state, and a verdict -
+                // without running (or installing) anything. Deliberately has no BeforeTargets so
+                // it never runs as part of a normal build; invoke explicitly via
+                // `dotnet build -t:EfcptDoctor`. Pass -p:EfcptDoctorStrict=true to fail the
+                // invocation when no viable execution path is found.
+                t.Target("EfcptDoctor", target =>
+                {
+                    target.Task("EfcptDoctor", task =>
+                    {
+                        task.Param("TargetFramework", "$(TargetFramework)");
+                        task.Param("ToolMode", "$(EfcptToolMode)");
+                        task.Param("ToolPackageId", "$(EfcptToolPackageId)");
+                        task.Param("ToolVersion", "$(EfcptToolVersion)");
+                        task.Param("ToolCommand", "$(EfcptToolCommand)");
+                        task.Param("ToolPath", "$(EfcptToolPath)");
+                        task.Param("DotNetExe", "$(EfcptDotNetExe)");
+                        task.Param("WorkingDirectory", "$(EfcptOutput)");
+                        task.Param("OfflineMode", "$(EfcptOfflineMode)");
+                        task.Param("AutoAcquireTool", "$(EfcptAutoAcquireTool)");
+                        task.Param("Strict", "$(EfcptDoctorStrict)");
+                    });
+                });
+
                 t.Target("_EfcptInitializeProfiling", target =>
                 {
                     target.BeforeTargets("_EfcptDetectSqlProject");
@@ -465,6 +489,7 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("ToolPath", "$(EfcptToolPath)");
                         task.Param("DotNetExe", "$(EfcptDotNetExe)");
                         task.Param("OfflineMode", "$(EfcptOfflineMode)");
+                        task.Param("AutoAcquireTool", "$(EfcptAutoAcquireTool)");
                         task.Param("WorkingDirectory", "$(EfcptOutput)");
                         task.Param("DacpacPath", "$(_EfcptDacpacPath)");
                         task.Param("ConnectionString", "$(_EfcptResolvedConnectionString)");
