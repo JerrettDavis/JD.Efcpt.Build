@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using JD.Efcpt.Build.Tasks.Config;
+using JD.Efcpt.Build.Tests.Infrastructure;
 using Xunit;
 
 namespace JD.Efcpt.Build.Tests.Config;
@@ -218,24 +219,67 @@ public partial class EfcptConfigGeneratorTests
         // directory, so a Directory.Exists(".git") check fails and the walk-up never
         // matches. Matching on JD.Efcpt.Build.sln mirrors the existing convention in
         // AssemblyFixture.cs / TestUtilities.cs and works in clones and worktrees alike.
-        var current = Directory.GetCurrentDirectory();
-        while (current != null)
-        {
-            if (File.Exists(Path.Combine(current, "JD.Efcpt.Build.sln")))
-                return current;
-            current = Directory.GetParent(current)?.FullName;
-        }
+        // The walk-up itself lives in RepoRootLocator so it can be exercised directly
+        // by a regression test without depending on the real repo layout.
+        var fromCwd = RepoRootLocator.FindRepoRootFrom(Directory.GetCurrentDirectory());
+        if (fromCwd is not null)
+            return fromCwd;
 
         var assemblyLocation = typeof(EfcptConfigGeneratorTests).Assembly.Location;
-        current = Path.GetDirectoryName(assemblyLocation);
-        while (current != null)
-        {
-            if (File.Exists(Path.Combine(current, "JD.Efcpt.Build.sln")))
-                return current;
-            current = Directory.GetParent(current)?.FullName;
-        }
+        var fromAssembly = RepoRootLocator.FindRepoRootFrom(Path.GetDirectoryName(assemblyLocation) ?? assemblyLocation);
+        if (fromAssembly is not null)
+            return fromAssembly;
 
         throw new DirectoryNotFoundException("Could not find repository root");
+    }
+
+    [Fact]
+    public void FindRepoRoot_DetectsRootWhenGitIsAFile_LikeInAWorktree()
+    {
+        // Regression test for #190: in a git worktree, ".git" at the root is a FILE
+        // (a gitdir pointer to the main repo's worktrees dir), not a directory. A
+        // walk-up that keys on Directory.Exists(".git") silently fails in that layout,
+        // so this simulates a worktree without needing a real one, proving detection
+        // keys on JD.Efcpt.Build.sln instead. Normal CI runs from a full clone (where
+        // ".git" is a directory), so this bug would not be caught without this test.
+        var tempRoot = Directory.CreateTempSubdirectory("efcpt-repo-root-test-");
+        try
+        {
+            File.WriteAllText(Path.Combine(tempRoot.FullName, "JD.Efcpt.Build.sln"), string.Empty);
+            File.WriteAllText(Path.Combine(tempRoot.FullName, ".git"), "gitdir: ../.git/worktrees/foo");
+
+            var nested = Directory.CreateDirectory(Path.Combine(tempRoot.FullName, "tests", "SomeProject"));
+
+            var result = RepoRootLocator.FindRepoRootFrom(nested.FullName);
+
+            Assert.Equal(tempRoot.FullName, result);
+        }
+        finally
+        {
+            tempRoot.Delete(recursive: true);
+        }
+    }
+
+    [Fact]
+    public void FindRepoRoot_DoesNotMatchOnGitDirectoryAlone_WithoutSolutionFile()
+    {
+        // Detection must key on JD.Efcpt.Build.sln, not on the presence of ".git"
+        // (file or directory). A directory containing only a ".git" directory and no
+        // solution file must not be mistaken for the repo root.
+        var tempRoot = Directory.CreateTempSubdirectory("efcpt-repo-root-test-");
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(tempRoot.FullName, ".git"));
+            var nested = Directory.CreateDirectory(Path.Combine(tempRoot.FullName, "tests", "SomeProject"));
+
+            var result = RepoRootLocator.FindRepoRootFrom(nested.FullName);
+
+            Assert.Null(result);
+        }
+        finally
+        {
+            tempRoot.Delete(recursive: true);
+        }
     }
 }
 
