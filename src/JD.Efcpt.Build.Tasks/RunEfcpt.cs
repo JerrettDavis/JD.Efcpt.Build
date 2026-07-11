@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Extensions;
+using JD.Efcpt.Build.Tasks.Schema;
 using JD.Efcpt.Build.Tasks.Utilities;
 using Microsoft.Build.Framework;
 using PatternKit.Behavioral.Strategy;
@@ -457,6 +458,23 @@ public sealed class RunEfcpt : Task
         if (offline)
         {
             log.Info("[Efcpt] Offline mode enabled (EfcptOfflineMode=true): dnx execution, tool-manifest restore, and global tool update are skipped.");
+
+            // Pre-flight: offline mode only works if the tool is already guaranteed runnable
+            // without any network access - an explicit, existing ToolPath; a discovered tool
+            // manifest (assumed already restored, since we cannot restore it now); or a global
+            // tool already resolvable on PATH. If none apply, fail actionably rather than let a
+            // later step hang or fail obscurely against a missing tool.
+            var isRunnableOffline =
+                (PathUtils.HasExplicitPath(ToolPath) && File.Exists(PathUtils.FullPath(ToolPath, workingDir))) ||
+                manifestDir is not null ||
+                Probe.IsGlobalToolInstalled(ToolCommand);
+
+            if (!isRunnableOffline)
+            {
+                var ex = new EfcptToolNotAvailableOfflineException(TargetFramework, manifestDir, ToolPath, ToolPackageId, ToolVersion);
+                log.Error("JD0026", ex.Message);
+                return false;
+            }
         }
 
         // On non-Windows, a bare efcpt executable is unlikely to exist unless explicitly provided

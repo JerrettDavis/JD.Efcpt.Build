@@ -86,7 +86,7 @@ public static class BuildTransitiveTargetsFactory
                 t.Target("_EfcptCheckForUpdates", target =>
                 {
                     target.BeforeTargets("Build");
-                    target.Condition("'$(EfcptCheckForUpdates)' == 'true' and '$(EfcptSdkVersion)' != ''");
+                    target.Condition("'$(EfcptCheckForUpdates)' == 'true' and '$(EfcptSdkVersion)' != '' and '$(EfcptOfflineMode)' != 'true'");
                     target.Task("CheckSdkVersion", task =>
                     {
                         task.Param("CurrentVersion", "$(EfcptSdkVersion)");
