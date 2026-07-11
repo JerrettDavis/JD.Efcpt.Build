@@ -62,20 +62,23 @@ internal static class RegenerateModelsService
         async Task WriteRedactedLineAsync(string line)
         {
             var redacted = SecretRedaction.MaskSecrets(line);
+            var diagnostic = JdDiagnosticParser.TryParseLine(redacted);
 
+            // The pane write AND the diagnostics.Add must both happen under the same lock: the two
+            // pump loops (stdout + stderr) run concurrently, and List<T>.Add is not thread-safe, so
+            // adding outside the lock could throw or silently drop diagnostics. Keeping both inside
+            // the single critical section serializes all mutation of `diagnostics` and the pane.
             await writeLock.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
                 await pane.WriteLineAsync(redacted).ConfigureAwait(false);
+                if (diagnostic != null)
+                    diagnostics.Add(diagnostic);
             }
             finally
             {
                 writeLock.Release();
             }
-
-            var diagnostic = JdDiagnosticParser.TryParseLine(redacted);
-            if (diagnostic != null)
-                diagnostics.Add(diagnostic);
         }
 
         var startInfo = new ProcessStartInfo("dotnet", arguments)

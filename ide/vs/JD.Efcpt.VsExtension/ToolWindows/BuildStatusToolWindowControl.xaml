@@ -5,8 +5,12 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
              d:DesignHeight="420" d:DesignWidth="360">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+    </UserControl.Resources>
     <Grid Margin="8">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -18,9 +22,16 @@
             <TextBlock Text="{Binding ProjectName}" FontWeight="Bold" VerticalAlignment="Center"/>
         </StackPanel>
 
-        <TextBlock Grid.Row="1" Text="{Binding StatusMessage}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+        <!-- Staleness / failure banner from BuildStatusEvaluator; collapsed when the profile is current. -->
+        <Border Grid.Row="1" Margin="0,0,0,8" Padding="6" Background="#33FF0000"
+                BorderBrush="#66FF0000" BorderThickness="1"
+                Visibility="{Binding HasBanner, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="{Binding Banner}" TextWrapping="Wrap" FontWeight="Bold"/>
+        </Border>
 
-        <Grid Grid.Row="2" Margin="0,0,0,8">
+        <TextBlock Grid.Row="2" Text="{Binding StatusMessage}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+        <Grid Grid.Row="3" Margin="0,0,0,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -53,7 +64,7 @@
             <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding ErrorCount}"/>
         </Grid>
 
-        <ListView Grid.Row="3" ItemsSource="{Binding Diagnostics}">
+        <ListView Grid.Row="4" ItemsSource="{Binding Diagnostics}">
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="Severity" Width="70" DisplayMemberBinding="{Binding Severity}"/>
