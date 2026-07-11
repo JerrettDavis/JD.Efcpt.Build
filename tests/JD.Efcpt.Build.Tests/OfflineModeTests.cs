@@ -95,20 +95,6 @@ public sealed class OfflineModeTests(ITestOutputHelper output) : TinyBddXunitBas
     }
 
     /// <summary>
-    /// Writes a trivial, real, always-succeeding Windows batch script that appends its own
-    /// invocation (prefixed with <paramref name="label"/>) to <paramref name="captureFile"/> and
-    /// exits 0. Standing in for <c>dotnet</c> or a global tool executable lets tests assert
-    /// exactly which commands were (or were not) invoked, without depending on a real dotnet
-    /// tool installation being present on the test machine.
-    /// </summary>
-    private static string WriteCaptureScript(TestFolder folder, string scriptName, string label, string captureFile)
-    {
-        var path = Path.Combine(folder.CreateDir("tools"), scriptName);
-        File.WriteAllText(path, $"@echo off\r\necho {label} %* >> \"{captureFile}\"\r\nexit /b 0\r\n");
-        return path;
-    }
-
-    /// <summary>
     /// Writes a minimal, valid <c>.config/dotnet-tools.json</c> manifest under
     /// <paramref name="folder"/>'s root that lists an entry for the efcpt tool - matching the
     /// default <c>ToolPackageId</c> (<c>ErikEJ.EFCorePowerTools.Cli</c>) and <c>ToolCommand</c>
@@ -166,15 +152,15 @@ public sealed class OfflineModeTests(ITestOutputHelper output) : TinyBddXunitBas
         await Given("inputs for DACPAC mode with a pre-provisioned explicit tool path", () =>
             {
                 var setup = SetupForDacpacMode();
-                var toolDir = setup.Folder.CreateDir("tools");
                 // A trivial, real, always-succeeding script stands in for the efcpt CLI. On
-                // Windows, CommandNormalizationStrategy wraps .cmd files via `cmd.exe /c`, so
-                // this genuinely spawns and exits 0 regardless of the args RunEfcpt appends -
-                // letting this test exercise real tool resolution/restore (not the
-                // EFCPT_FAKE_EFCPT short-circuit, which returns before any of that runs) while
-                // still asserting the (throwing) probe is never invoked.
-                var toolPath = Path.Combine(toolDir, "fake-efcpt.cmd");
-                File.WriteAllText(toolPath, "@echo off\r\nexit /b 0\r\n");
+                // Windows this is a .cmd file (CommandNormalizationStrategy wraps it via
+                // `cmd.exe /c`); on Linux/macOS it's a shell script with a shebang and the
+                // executable bit set, launched directly. Either way it genuinely spawns and
+                // exits 0 regardless of the args RunEfcpt appends - letting this test exercise
+                // real tool resolution/restore (not the EFCPT_FAKE_EFCPT short-circuit, which
+                // returns before any of that runs) while still asserting the (throwing) probe is
+                // never invoked.
+                var toolPath = TestScripts.CreateAlwaysSucceedsScript(setup.Folder, "fake-efcpt");
                 return (setup, toolPath);
             })
             .When("task executes offline with a throwing probe", ctx =>
@@ -298,7 +284,7 @@ public sealed class OfflineModeTests(ITestOutputHelper output) : TinyBddXunitBas
                 var setup = SetupForDacpacMode();
                 WriteEfcptToolManifest(setup.Folder);
                 var captureFile = Path.Combine(setup.Folder.Root, "dotnet-invocations.log");
-                var fakeDotNet = WriteCaptureScript(setup.Folder, "fake-dotnet.cmd", "DOTNET", captureFile);
+                var fakeDotNet = TestScripts.CreateCaptureScript(setup.Folder, "fake-dotnet", "DOTNET", captureFile);
                 return (setup, captureFile, fakeDotNet);
             })
             .When("task executes offline, TFM net10.0, no explicit ToolPath, with a throwing probe", ctx =>
@@ -353,8 +339,8 @@ public sealed class OfflineModeTests(ITestOutputHelper output) : TinyBddXunitBas
                 var setup = SetupForDacpacMode();
                 var globalToolCaptureFile = Path.Combine(setup.Folder.Root, "global-tool-invocations.log");
                 var dotNetCaptureFile = Path.Combine(setup.Folder.Root, "dotnet-invocations.log");
-                var fakeGlobalTool = WriteCaptureScript(setup.Folder, "fake-efcpt-global.cmd", "GLOBALTOOL", globalToolCaptureFile);
-                var fakeDotNet = WriteCaptureScript(setup.Folder, "fake-dotnet.cmd", "DOTNET", dotNetCaptureFile);
+                var fakeGlobalTool = TestScripts.CreateCaptureScript(setup.Folder, "fake-efcpt-global", "GLOBALTOOL", globalToolCaptureFile);
+                var fakeDotNet = TestScripts.CreateCaptureScript(setup.Folder, "fake-dotnet", "DOTNET", dotNetCaptureFile);
                 return (setup, globalToolCaptureFile, dotNetCaptureFile, fakeGlobalTool, fakeDotNet);
             })
             .When("task executes offline with no manifest, no ToolPath, and IsGlobalToolInstalled=true", ctx =>
@@ -456,7 +442,7 @@ public sealed class OfflineModeTests(ITestOutputHelper output) : TinyBddXunitBas
                 var setup = SetupForDacpacMode();
                 WriteEfcptToolManifest(setup.Folder);
                 var captureFile = Path.Combine(setup.Folder.Root, "dotnet-invocations.log");
-                var fakeDotNet = WriteCaptureScript(setup.Folder, "fake-dotnet.cmd", "DOTNET", captureFile);
+                var fakeDotNet = TestScripts.CreateCaptureScript(setup.Folder, "fake-dotnet", "DOTNET", captureFile);
                 return (setup, captureFile, fakeDotNet);
             })
             .When("task executes with OfflineMode=false, TFM net8.0, manifest present, counting probe", ctx =>
