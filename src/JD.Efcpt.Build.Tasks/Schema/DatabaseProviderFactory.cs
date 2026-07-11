@@ -27,7 +27,50 @@ internal static class DatabaseProviderFactory
     /// <summary>
     /// Known provider identifiers mapped to their canonical names.
     /// </summary>
-    public static string NormalizeProvider(string provider) => ProviderNames.Normalize(provider);
+    /// <exception cref="NotSupportedException">
+    /// Thrown when <paramref name="provider"/> is not a recognized built-in provider alias.
+    /// </exception>
+    public static string NormalizeProvider(string provider) => NormalizeProvider(provider, null);
+
+    /// <summary>
+    /// Normalizes a provider identifier, additionally admitting keys registered in
+    /// <paramref name="customProviderKeys"/> (see #184's <c>customProviders</c> plugin registry).
+    /// </summary>
+    /// <remarks>
+    /// Built-in aliases are always matched first via <see cref="ProviderNames.Normalize"/> - a
+    /// custom provider key can never shadow a built-in one, since the built-in switch is
+    /// evaluated before <paramref name="customProviderKeys"/> is even consulted. Only when the
+    /// built-in normalization throws <see cref="NotSupportedException"/> is the (lowercased,
+    /// ordinal-ignore-case) custom registry checked; a match there is returned as-is (custom
+    /// provider keys are their own canonical form - there are no aliases for them).
+    /// </remarks>
+    /// <param name="provider">The provider name (a built-in alias, or a registered custom key).</param>
+    /// <param name="customProviderKeys">
+    /// The set of registered custom provider keys (see <c>QuerySchemaMetadata.EfcptCustomProviders</c>),
+    /// or <see langword="null"/>/empty when no custom providers are registered.
+    /// </param>
+    /// <exception cref="NotSupportedException">
+    /// Thrown when <paramref name="provider"/> is neither a recognized built-in provider alias
+    /// nor a key present in <paramref name="customProviderKeys"/>.
+    /// </exception>
+    public static string NormalizeProvider(string provider, IReadOnlyCollection<string>? customProviderKeys)
+    {
+        try
+        {
+            return ProviderNames.Normalize(provider);
+        }
+        catch (NotSupportedException)
+        {
+            if (!string.IsNullOrWhiteSpace(provider) && customProviderKeys is { Count: > 0 })
+            {
+                var lowered = provider.ToLowerInvariant();
+                if (customProviderKeys.Any(k => string.Equals(k, provider, StringComparison.OrdinalIgnoreCase)))
+                    return lowered;
+            }
+
+            throw;
+        }
+    }
 
     /// <summary>
     /// Creates a DbConnection for the specified provider.

@@ -67,7 +67,7 @@ internal sealed class ProviderAdapterResolver
     /// call concurrently from multiple threads.
     /// </summary>
     /// <param name="normalizedProvider">
-    /// A provider name already normalized by <see cref="DatabaseProviderFactory.NormalizeProvider"/>.
+    /// A provider name already normalized by <see cref="DatabaseProviderFactory.NormalizeProvider(string)"/>.
     /// </param>
     /// <param name="providerSearchPaths">
     /// Additional directories to search for a satellite provider assembly, beyond the bundled
