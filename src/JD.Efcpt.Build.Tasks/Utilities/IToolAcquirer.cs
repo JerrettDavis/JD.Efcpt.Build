@@ -67,26 +67,49 @@ internal interface IToolAcquirer
 /// </summary>
 internal sealed class DefaultToolAcquirer : IToolAcquirer
 {
+    /// <summary>
+    /// Bounded timeout, in milliseconds, applied to the <c>dotnet new tool-manifest</c> and
+    /// <c>dotnet tool install</c> process calls issued by <see cref="Acquire"/>. Generous enough
+    /// to accommodate legitimate installs against a slow NuGet feed, while guaranteeing a blocked
+    /// or unreachable feed fails the build (as JD0027) instead of hanging it forever - since
+    /// <see cref="RunEfcpt.AutoAcquireTool"/> defaults to <c>true</c>, a hang here would silently
+    /// hang otherwise-unrelated builds.
+    /// </summary>
+    private const int AcquisitionTimeoutMs = 180_000;
+
     /// <inheritdoc />
     public ToolAcquisitionOutcome Acquire(ToolAcquisitionRequest request, IBuildLog log)
     {
-        Directory.CreateDirectory(request.ManifestDir);
-
-        var manifestPath = Path.Combine(request.ManifestDir, ".config", "dotnet-tools.json");
-        if (!File.Exists(manifestPath))
+        try
         {
-            var initResult = ProcessRunner.Run(log, request.DotNetExe, "new tool-manifest", request.ManifestDir);
-            if (!initResult.Success)
-                return ToolAcquisitionOutcome.Failed(DescribeFailure("dotnet new tool-manifest", initResult));
+            Directory.CreateDirectory(request.ManifestDir);
+
+            var manifestPath = Path.Combine(request.ManifestDir, ".config", "dotnet-tools.json");
+            if (!File.Exists(manifestPath))
+            {
+                var initResult = ProcessRunner.Run(
+                    log, request.DotNetExe, "new tool-manifest", request.ManifestDir, timeoutMs: AcquisitionTimeoutMs);
+                if (!initResult.Success)
+                    return ToolAcquisitionOutcome.Failed(DescribeFailure("dotnet new tool-manifest", initResult));
+            }
+
+            var versionArg = string.IsNullOrWhiteSpace(request.ToolVersion) ? "" : $" --version \"{request.ToolVersion}\"";
+            var installArgs = $"tool install {request.ToolPackageId}{versionArg}";
+            var installResult = ProcessRunner.Run(
+                log, request.DotNetExe, installArgs, request.ManifestDir, timeoutMs: AcquisitionTimeoutMs);
+            if (!installResult.Success)
+                return ToolAcquisitionOutcome.Failed(DescribeFailure($"dotnet {installArgs}", installResult));
+
+            return ToolAcquisitionOutcome.Ok();
         }
-
-        var versionArg = string.IsNullOrWhiteSpace(request.ToolVersion) ? "" : $" --version \"{request.ToolVersion}\"";
-        var installArgs = $"tool install {request.ToolPackageId}{versionArg}";
-        var installResult = ProcessRunner.Run(log, request.DotNetExe, installArgs, request.ManifestDir);
-        if (!installResult.Success)
-            return ToolAcquisitionOutcome.Failed(DescribeFailure($"dotnet {installArgs}", installResult));
-
-        return ToolAcquisitionOutcome.Ok();
+        catch (Exception ex)
+        {
+            // Guard against any unexpected failure escaping to the generic
+            // TaskExecutionDecorator stack-trace path (IOException, UnauthorizedAccessException,
+            // process-launch failures, etc.) - translate it into a Failed outcome so the caller
+            // can surface it as the actionable, coded JD0027 error instead.
+            return ToolAcquisitionOutcome.Failed(ex.Message);
+        }
     }
 
     private static string DescribeFailure(string command, ProcessResult result)
