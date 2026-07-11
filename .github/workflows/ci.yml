@@ -128,15 +128,16 @@ jobs:
   #   - `pr-checks` (ubuntu-only) remains the merge-gating job and is the only job that runs the
   #     FULL test suite, including Testcontainers/live-DB/real-efcpt integration tests, and
   #     publishes code coverage. Its job id/name is unchanged.
-  #   - `build-test-matrix` proves the library actually builds and its unit tests actually pass on
-  #     windows-latest and macos-latest, not just ubuntu - most importantly the windows leg
-  #     exercises the net472 MSBuild-host task-loading path (Visual Studio's Framework MSBuild)
-  #     that an ubuntu-only pipeline can never reach, and macos catches path-separator /
-  #     line-ending assumptions.
-  #   - Integration tests (Testcontainers, live cloud secrets, the real `efcpt` CLI) are excluded
-  #     here via `--filter "Category!=Integration"` because Linux-container-backed Testcontainers
-  #     do not run on windows/macos GitHub-hosted runners, and because those tests are already
-  #     covered by `pr-checks`. See tests tagged `[Trait("Category", "Integration")]`.
+  #   - `build-test-matrix` proves the library actually builds and its non-integration unit/logic
+  #     test suite actually passes on windows-latest and macos-latest, not just ubuntu - catching
+  #     path-separator, line-ending, and other OS-specific behavior that an ubuntu-only pipeline
+  #     can never surface.
+  #   - Integration tests (Testcontainers, live cloud secrets, the real `efcpt` CLI, and the
+  #     net472 Framework-MSBuild host tests) are excluded on EVERY leg here via
+  #     `--filter "Category!=Integration"` - they require Docker with Linux containers and/or the
+  #     efcpt tool and are not run on windows/macos GitHub-hosted runners. That coverage (including
+  #     the net472 MSBuild-host task-loading path) stays on the ubuntu `pr-checks` job, which runs
+  #     the full suite. See tests tagged `[Trait("Category", "Integration")]`.
   build-test-matrix:
     name: build-test-matrix
     if: github.event_name == 'pull_request'
@@ -199,6 +200,12 @@ jobs:
           dotnet restore JD.Efcpt.Build.sln --use-lock-file
           dotnet build JD.Efcpt.Build.sln --configuration Release --no-restore /p:ContinuousIntegrationBuild=true
 
+      # Packs the just-built library into ./artifacts (and ./pkg for the JD.Efcpt.Sdk MSBuild SDK),
+      # which each sample's nuget.config consumes as a local source. These packages carry the
+      # default 1.0.0 version, and samples reference them via Version="*" - this assumes the
+      # locally-packed 1.0.0 sorts at or above any version already published to nuget.org. Revisit
+      # this pin when a real >=1.0 release exists (a future 1.x on nuget.org would out-sort the
+      # local 1.0.0 and the samples could silently resolve the published package instead).
       - name: Pack local NuGet feed consumed by samples
         run: |
           dotnet pack JD.Efcpt.Build.sln --configuration Release --no-build -o ./artifacts -p:ContinuousIntegrationBuild=true
@@ -233,11 +240,9 @@ jobs:
             echo "::endgroup::"
           done
 
-          # custom-provider is a bare class library (no .sln); it never contacts a real database -
-          # its ISchemaReader returns SchemaModel.Empty - so it needs no EfcptEnabled override.
-          echo "::group::Build samples/custom-provider/Acme.Efcpt.Mongo"
-          dotnet build samples/custom-provider/Acme.Efcpt.Mongo --configuration Release
-          echo "::endgroup::"
+          # NOTE: samples/custom-provider/Acme.Efcpt.Mongo is intentionally NOT built here - it is
+          # a member of JD.Efcpt.Build.sln and is already compiled by the "Restore and build
+          # library" step above, so building it again would be redundant.
 
   release:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
