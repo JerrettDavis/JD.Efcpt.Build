@@ -244,8 +244,18 @@ You set `EfcptProvider` to a non-SQL-Server value but haven't installed that pro
 satellite package. The error message includes the exact `dotnet add package` command to run -
 see [Installing Provider Drivers](#installing-provider-drivers-satellite-packages).
 
+## Beyond the Built-In Providers: Custom Providers
+
+Need a database engine that isn't in the list above (MongoDB, DynamoDB, ClickHouse, etc.)? You can
+author and register your own **custom provider** - a small assembly implementing the same
+`IProviderAdapter`/`ISchemaReader` contract the built-in providers use, loaded via the identical
+satellite-package resolution machinery. This is disabled by default (custom providers execute
+third-party code at build time) and requires an explicit opt-in. See
+[Custom Providers](custom-providers.md) for the full authoring and registration guide.
+
 ## See Also
 
 - [Configuration Reference](configuration.md) - All EfcptProvider values and properties
 - [Connection String Mode](connection-string-mode.md) - Detailed live database setup
 - [Core Concepts](core-concepts.md) - How the build pipeline works
+- [Custom Providers](custom-providers.md) - Authoring and registering your own database provider

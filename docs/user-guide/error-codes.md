@@ -128,6 +128,104 @@ Explicit connection string configuration provided but failed to resolve, falling
 
 ---
 
+## Custom Provider Errors (JD0017-JD0019, JD0040)
+
+Codes `JD0017`-`JD0019` and `JD0040` are emitted by `QuerySchemaMetadata` (via
+`DatabaseProviderFactory` / `ProviderAdapterResolver`) when a **custom database provider** is
+registered via `@(EfcptCustomProvider)` (see [Custom Providers](custom-providers.md)). Custom
+providers load and execute third-party code at build time and are disabled by default -
+`EfcptAllowCustomProviders` must be set to `true` to enable them.
+
+### JD0017: Custom Provider Not Allowed
+**Severity**: Error
+**Task**: QuerySchemaMetadata
+
+`EfcptProvider` resolves to a registered custom provider key, but `EfcptAllowCustomProviders` is
+not `true`. This is a security fail-closed gate: the build stops before any custom provider
+assembly is loaded.
+
+**Example**:
+```
+error JD0017: Provider 'acme-mongo' is a custom provider. Custom providers load and execute
+third-party code at build time and are disabled by default. Set
+<EfcptAllowCustomProviders>true</EfcptAllowCustomProviders> to enable.
+```
+
+**Resolution**:
+- If you trust the custom provider assembly, set `<EfcptAllowCustomProviders>true</EfcptAllowCustomProviders>`
+- Verify `EfcptProvider` is spelled correctly if you did not intend to select a custom provider
+
+---
+
+### JD0018: Custom Provider Assembly Not Found or Failed to Load
+**Severity**: Error
+**Task**: QuerySchemaMetadata (via ProviderAdapterResolver)
+
+A registered custom provider's assembly could not be found on any provider search path, or was
+found but failed to load or instantiate (corrupt DLL, wrong architecture, missing transitive
+dependency, no accessible parameterless constructor, a constructor that throws, etc.).
+
+**Example**:
+```
+error JD0018: Custom provider 'acme-mongo' is registered, but its assembly 'Acme.Efcpt.Mongo.dll'
+was not found on any provider search path. Verify the AssemblyName metadata on the matching
+@(EfcptCustomProvider) item and, if the assembly isn't next to the task assembly, that its
+SearchPath metadata (or @(EfcptProviderSearchPath)) points at the directory containing it.
+```
+
+**Resolution**:
+- Verify the `AssemblyName` metadata on the `@(EfcptCustomProvider)` item matches the actual DLL
+  name (without the `.dll` extension)
+- Set the item's `SearchPath` metadata (or add to `@(EfcptProviderSearchPath)`) to the directory
+  containing the built assembly
+- If the assembly was found, check the inner exception for the underlying load failure (missing
+  dependency, wrong target framework, etc.)
+
+---
+
+### JD0019: Custom Provider Key Collides with a Built-In Provider
+**Severity**: Error
+**Task**: QuerySchemaMetadata
+
+An `@(EfcptCustomProvider)` item's identity (key) matches a built-in provider's key or alias
+(e.g. `mssql`, `postgres`, `sqlite`). This check runs unconditionally for every registered custom
+provider, regardless of which provider `EfcptProvider` is currently set to.
+
+**Example**:
+```
+error JD0019: Custom provider key 'postgres' collides with the built-in provider 'postgres'.
+Choose a different key for your custom provider.
+```
+
+**Resolution**:
+- Rename the `@(EfcptCustomProvider)` item's identity to a key that doesn't match any built-in
+  provider name or alias (see [Provider Support](provider-support.md) for the full built-in list)
+
+---
+
+### JD0040: Custom Provider Assembly Has No IProviderAdapter
+**Severity**: Error
+**Task**: QuerySchemaMetadata (via ProviderAdapterResolver)
+
+A registered custom provider's assembly was found and loaded successfully, but does not contain a
+concrete implementation of `IProviderAdapter`.
+
+**Example**:
+```
+error JD0040: Custom provider 'acme-mongo' assembly 'C:\...\Acme.Efcpt.Mongo.dll' was loaded
+successfully, but does not contain a concrete implementation of IProviderAdapter
+(JD.Efcpt.Build.Tasks.Schema.IProviderAdapter, from the JD.Efcpt.Build.Providers.Abstractions
+package). Every custom provider assembly must contain exactly one such type.
+```
+
+**Resolution**:
+- Ensure the assembly contains exactly one public, concrete class implementing `IProviderAdapter`
+  with a public parameterless constructor
+- Verify the project references `JD.Efcpt.Build.Providers.Abstractions` and implements the
+  interface from that package - see [Custom Providers](custom-providers.md)
+
+---
+
 ## SqlPackage and SQL Generation Errors (JD0020-JD0029)
 
 ### JD0020: Explicit Tool Path Does Not Exist
@@ -362,7 +460,8 @@ when a pluggable connection-string source is selected via `EfcptConnectionString
 [Connection-String Sources](connection-string-sources.md)) and resolution does not succeed.
 Selecting a source is fail-closed: none of these ever fall back to file/`.sqlproj` resolution.
 `JD0035`-`JD0039` are reserved for future connection-string sources. (`JD0017`-`JD0019` and
-`JD0040`+ are reserved separately for other in-flight work and are not used here.)
+`JD0040` are used separately by the [customProviders plugin registry](custom-providers.md) - see
+[Custom Provider Errors](#custom-provider-errors-jd0017-jd0019-jd0040) above.)
 
 ### JD0030: Connection-String Source Resolution Failed
 **Severity**: Error
