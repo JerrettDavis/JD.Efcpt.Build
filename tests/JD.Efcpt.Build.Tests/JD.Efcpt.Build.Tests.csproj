@@ -31,6 +31,7 @@
     <ProjectReference Include="..\..\src\JD.Efcpt.Build.PostgreSQL\JD.Efcpt.Build.PostgreSQL.csproj" />
     <ProjectReference Include="..\..\src\JD.Efcpt.Build.MySqlConnector\JD.Efcpt.Build.MySqlConnector.csproj" />
     <ProjectReference Include="..\..\src\JD.Efcpt.Build.Firebird\JD.Efcpt.Build.Firebird.csproj" />
+    <ProjectReference Include="..\..\src\JD.Efcpt.Build.Sqlite\JD.Efcpt.Build.Sqlite.csproj" />
   </ItemGroup>
 
   <ItemGroup>

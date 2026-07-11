@@ -58,7 +58,6 @@
   -->
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" VersionOverride="6.1.4" />
-    <PackageReference Include="Microsoft.Data.Sqlite.Core" />
     <!--
       Snowflake.Data (and its AWSSDK.Core VersionOverride quirk) moved to the
       JD.Efcpt.Build.Snowflake satellite package - see that project's csproj. Do not add it back
@@ -81,6 +80,11 @@
     FirebirdSql.Data.FirebirdClient moved to the JD.Efcpt.Build.Firebird satellite package - see
     that project's csproj. Do not add it back here; the whole point of extraction is to keep it
     out of the core package's dependency graph.
+
+    Microsoft.Data.Sqlite.Core moved to the JD.Efcpt.Build.Sqlite satellite package - see that
+    project's csproj. Do not add it back here; the whole point of extraction is to keep it out of
+    the core package's dependency graph. SqlServer (Microsoft.Data.SqlClient, above) is the only
+    driver that remains bundled with the core package - see #189.
   -->
 
   <!--

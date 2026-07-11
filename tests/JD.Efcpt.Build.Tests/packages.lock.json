@@ -724,6 +724,13 @@
           "Snowflake.Data": "[5.4.1, )"
         }
       },
+      "jd.efcpt.build.sqlite": {
+        "type": "Project",
+        "dependencies": {
+          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
+          "Microsoft.Data.Sqlite.Core": "[9.0.14, )"
+        }
+      },
       "jd.efcpt.build.tasks": {
         "type": "Project",
         "dependencies": {
@@ -731,7 +738,6 @@
           "Microsoft.Build.Framework": "[18.7.1, )",
           "Microsoft.Build.Utilities.Core": "[18.7.1, )",
           "Microsoft.Data.SqlClient": "[6.1.4, )",
-          "Microsoft.Data.Sqlite.Core": "[9.0.14, )",
           "PatternKit.Core": "[0.34.4, )",
           "System.IO.Hashing": "[10.0.5, )"
         }

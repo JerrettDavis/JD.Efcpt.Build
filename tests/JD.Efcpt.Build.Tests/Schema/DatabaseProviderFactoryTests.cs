@@ -56,6 +56,13 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     private static readonly string[] FirebirdSearchPaths =
         [Path.GetDirectoryName(typeof(DatabaseProviderFactoryTests).Assembly.Location)!];
 
+    /// <summary>
+    /// Sqlite is a satellite provider; see <see cref="SnowflakeSearchPaths"/> remarks - same
+    /// reasoning applies (test-only ProjectReference to JD.Efcpt.Build.Sqlite).
+    /// </summary>
+    private static readonly string[] SqliteSearchPaths =
+        [Path.GetDirectoryName(typeof(DatabaseProviderFactoryTests).Assembly.Location)!];
+
     #region NormalizeProvider Tests
 
     [Scenario("Normalizes SQL Server provider aliases")]
@@ -244,8 +251,12 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_sqlite_connection()
     {
-        await Given("sqlite provider and connection string", () => ("sqlite", "Data Source=:memory:"))
-            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2))
+        // Sqlite is a satellite provider (JD.Efcpt.Build.Sqlite) and no longer resolves
+        // in-assembly - see the Snowflake connection test above for why a search path is
+        // required.
+        await Given("sqlite provider, connection string, and a matching search path",
+                () => ("sqlite", "Data Source=:memory:", SqliteSearchPaths))
+            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2, t.Item3))
             .Then("returns SqliteConnection", conn => conn is SqliteConnection)
             .Finally(conn => conn.Dispose())
             .AssertPassed();
@@ -348,8 +359,9 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_sqlite_schema_reader()
     {
-        await Given("sqlite provider", () => "sqlite")
-            .When("schema reader created", p => DatabaseProviderFactory.CreateSchemaReader(p))
+        // See the SQLite connection test above for why a search path is required here.
+        await Given("sqlite provider and a matching search path", () => ("sqlite", SqliteSearchPaths))
+            .When("schema reader created", t => DatabaseProviderFactory.CreateSchemaReader(t.Item1, t.Item2))
             .Then("returns SqliteSchemaReader", reader => reader is SqliteSchemaReader)
             .AssertPassed();
     }

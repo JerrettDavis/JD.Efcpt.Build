@@ -23,16 +23,6 @@ public sealed class ProviderAdapterResolverTests(ITestOutputHelper output) : Tin
             .AssertPassed();
     }
 
-    [Scenario("Resolves SQLite adapter")]
-    [Fact]
-    public async Task Resolves_sqlite_adapter()
-    {
-        await Given("a resolver", () => new ProviderAdapterResolver())
-            .When("resolved for sqlite", r => r.Resolve("sqlite"))
-            .Then("returns a non-null SqliteProviderAdapter", adapter => adapter is SqliteProviderAdapter)
-            .AssertPassed();
-    }
-
     #endregion
 
     #region Satellite Provider: Snowflake
@@ -263,6 +253,51 @@ public sealed class ProviderAdapterResolverTests(ITestOutputHelper output) : Tin
             .Then("throws ProviderDriverNotFoundException with the install command",
                 ex => ex is ProviderDriverNotFoundException &&
                       ex.Message.Contains("dotnet add package JD.Efcpt.Build.Firebird"))
+            .AssertPassed();
+    }
+
+    #endregion
+
+    #region Satellite Provider: Sqlite
+
+    /// <summary>
+    /// Sqlite is a satellite provider (JD.Efcpt.Build.Sqlite); see the Snowflake region above
+    /// for why a search path is required and how the Tests project makes this DLL available.
+    /// </summary>
+    private static readonly string[] SqliteSearchPaths =
+        [Path.GetDirectoryName(typeof(ProviderAdapterResolverTests).Assembly.Location)!];
+
+    [Scenario("Resolves SQLite adapter dynamically from a satellite provider search path")]
+    [Fact]
+    public async Task Resolves_sqlite_adapter_from_search_path()
+    {
+        await Given("a resolver and this test assembly's own directory as a provider search path",
+                () => (Resolver: new ProviderAdapterResolver(), SearchPaths: SqliteSearchPaths))
+            .When("resolved for sqlite", t => t.Resolver.Resolve("sqlite", t.SearchPaths))
+            .Then("returns a non-null SqliteProviderAdapter", adapter => adapter is SqliteProviderAdapter)
+            .AssertPassed();
+    }
+
+    [Scenario("Throws ProviderDriverNotFoundException for SQLite when no search path contains its assembly")]
+    [Fact]
+    public async Task Throws_for_sqlite_without_matching_search_path()
+    {
+        await Given("a resolver with no search paths", () => new ProviderAdapterResolver())
+            .When("resolved for sqlite", r =>
+            {
+                try
+                {
+                    r.Resolve("sqlite");
+                    return (Exception?)null;
+                }
+                catch (Exception ex)
+                {
+                    return ex;
+                }
+            })
+            .Then("throws ProviderDriverNotFoundException with the install command",
+                ex => ex is ProviderDriverNotFoundException &&
+                      ex.Message.Contains("dotnet add package JD.Efcpt.Build.Sqlite"))
             .AssertPassed();
     }
 

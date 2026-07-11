@@ -57,15 +57,6 @@
           "System.Text.RegularExpressions": "4.3.1"
         }
       },
-      "Microsoft.Data.Sqlite.Core": {
-        "type": "Direct",
-        "requested": "[9.0.14, )",
-        "resolved": "9.0.14",
-        "contentHash": "EG3EHsTmmSf5Sk/JNSBMly1DZdBgg3OOb6/1Fg/eG/SEMTShpFnQPMi/PgiVfF4CPIS6d+BPrW91EeJyLhDOIQ==",
-        "dependencies": {
-          "SQLitePCLRaw.core": "2.1.10"
-        }
-      },
       "PatternKit.Core": {
         "type": "Direct",
         "requested": "[0.34.4, )",
@@ -266,14 +257,6 @@
         "dependencies": {
           "System.Buffers": "4.6.0",
           "System.Memory": "4.6.0"
-        }
-      },
-      "SQLitePCLRaw.core": {
-        "type": "Transitive",
-        "resolved": "2.1.10",
-        "contentHash": "Ii8JCbC7oiVclaE/mbDEK000EFIJ+ShRPwAvvV89GOZhQ+ZLtlnSWl6ksCNMKu/VGXA4Nfi2B7LhN/QFN9oBcw==",
-        "dependencies": {
-          "System.Memory": "4.5.3"
         }
       },
       "System.Buffers": {
@@ -508,15 +491,6 @@
           "System.Security.Cryptography.Pkcs": "9.0.11"
         }
       },
-      "Microsoft.Data.Sqlite.Core": {
-        "type": "Direct",
-        "requested": "[9.0.14, )",
-        "resolved": "9.0.14",
-        "contentHash": "EG3EHsTmmSf5Sk/JNSBMly1DZdBgg3OOb6/1Fg/eG/SEMTShpFnQPMi/PgiVfF4CPIS6d+BPrW91EeJyLhDOIQ==",
-        "dependencies": {
-          "SQLitePCLRaw.core": "2.1.10"
-        }
-      },
       "PatternKit.Core": {
         "type": "Direct",
         "requested": "[0.34.4, )",
@@ -674,11 +648,6 @@
         "resolved": "1.0.0",
         "contentHash": "N4KeF3cpcm1PUHym1RmakkzfkEv3GRMyofVv40uXsQhCQeglr2OHNcUk2WOG51AKpGO8ynGpo9M/kFXSzghwug=="
       },
-      "SQLitePCLRaw.core": {
-        "type": "Transitive",
-        "resolved": "2.1.10",
-        "contentHash": "Ii8JCbC7oiVclaE/mbDEK000EFIJ+ShRPwAvvV89GOZhQ+ZLtlnSWl6ksCNMKu/VGXA4Nfi2B7LhN/QFN9oBcw=="
-      },
       "System.ClientModel": {
         "type": "Transitive",
         "resolved": "1.8.0",
@@ -772,15 +741,6 @@
           "System.Configuration.ConfigurationManager": "8.0.1",
           "System.IdentityModel.Tokens.Jwt": "7.7.1",
           "System.Security.Cryptography.Pkcs": "8.0.1"
-        }
-      },
-      "Microsoft.Data.Sqlite.Core": {
-        "type": "Direct",
-        "requested": "[9.0.14, )",
-        "resolved": "9.0.14",
-        "contentHash": "EG3EHsTmmSf5Sk/JNSBMly1DZdBgg3OOb6/1Fg/eG/SEMTShpFnQPMi/PgiVfF4CPIS6d+BPrW91EeJyLhDOIQ==",
-        "dependencies": {
-          "SQLitePCLRaw.core": "2.1.10"
         }
       },
       "PatternKit.Core": {
@@ -940,11 +900,6 @@
         "resolved": "1.0.0",
         "contentHash": "N4KeF3cpcm1PUHym1RmakkzfkEv3GRMyofVv40uXsQhCQeglr2OHNcUk2WOG51AKpGO8ynGpo9M/kFXSzghwug=="
       },
-      "SQLitePCLRaw.core": {
-        "type": "Transitive",
-        "resolved": "2.1.10",
-        "contentHash": "Ii8JCbC7oiVclaE/mbDEK000EFIJ+ShRPwAvvV89GOZhQ+ZLtlnSWl6ksCNMKu/VGXA4Nfi2B7LhN/QFN9oBcw=="
-      },
       "System.ClientModel": {
         "type": "Transitive",
         "resolved": "1.8.0",
@@ -1038,15 +993,6 @@
           "System.Configuration.ConfigurationManager": "9.0.11",
           "System.IdentityModel.Tokens.Jwt": "7.7.1",
           "System.Security.Cryptography.Pkcs": "9.0.11"
-        }
-      },
-      "Microsoft.Data.Sqlite.Core": {
-        "type": "Direct",
-        "requested": "[9.0.14, )",
-        "resolved": "9.0.14",
-        "contentHash": "EG3EHsTmmSf5Sk/JNSBMly1DZdBgg3OOb6/1Fg/eG/SEMTShpFnQPMi/PgiVfF4CPIS6d+BPrW91EeJyLhDOIQ==",
-        "dependencies": {
-          "SQLitePCLRaw.core": "2.1.10"
         }
       },
       "PatternKit.Core": {
@@ -1205,11 +1151,6 @@
         "type": "Transitive",
         "resolved": "1.0.0",
         "contentHash": "N4KeF3cpcm1PUHym1RmakkzfkEv3GRMyofVv40uXsQhCQeglr2OHNcUk2WOG51AKpGO8ynGpo9M/kFXSzghwug=="
-      },
-      "SQLitePCLRaw.core": {
-        "type": "Transitive",
-        "resolved": "2.1.10",
-        "contentHash": "Ii8JCbC7oiVclaE/mbDEK000EFIJ+ShRPwAvvV89GOZhQ+ZLtlnSWl6ksCNMKu/VGXA4Nfi2B7LhN/QFN9oBcw=="
       },
       "System.ClientModel": {
         "type": "Transitive",

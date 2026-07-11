@@ -14,6 +14,13 @@ namespace JD.Efcpt.Build.Tests.Integration;
 [Collection(nameof(AssemblySetup))]
 public sealed partial class SqliteSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
+    // Sqlite is a satellite provider (JD.Efcpt.Build.Sqlite); its adapter DLL is only present
+    // here because the Tests project has a test-only ProjectReference to it, which places the
+    // DLL in this test assembly's own output directory. See ProviderAdapterResolverTests for
+    // the same pattern applied to the resolver directly.
+    private static readonly string[] SqliteSearchPaths =
+        [Path.GetDirectoryName(typeof(SqliteSchemaIntegrationTests).Assembly.Location)!];
+
     private sealed record TestContext(
         string ConnectionString,
         string DbPath) : IDisposable
@@ -219,7 +226,7 @@ public sealed partial class SqliteSchemaIntegrationTests(ITestOutputHelper outpu
             })
             .When("schema read via factory", ctx =>
             {
-                var reader = DatabaseProviderFactory.CreateSchemaReader("sqlite");
+                var reader = DatabaseProviderFactory.CreateSchemaReader("sqlite", SqliteSearchPaths);
                 return (ctx, schema: reader.ReadSchema(ctx.ConnectionString));
             })
             .Then("returns valid schema", r => r.schema.Tables.Count == 3)
@@ -239,7 +246,7 @@ public sealed partial class SqliteSchemaIntegrationTests(ITestOutputHelper outpu
             })
             .When("schema read via sqlite3 alias", ctx =>
             {
-                var reader = DatabaseProviderFactory.CreateSchemaReader("sqlite3");
+                var reader = DatabaseProviderFactory.CreateSchemaReader("sqlite3", SqliteSearchPaths);
                 return (ctx, schema: reader.ReadSchema(ctx.ConnectionString));
             })
             .Then("returns valid schema", r => r.schema.Tables.Count == 3)

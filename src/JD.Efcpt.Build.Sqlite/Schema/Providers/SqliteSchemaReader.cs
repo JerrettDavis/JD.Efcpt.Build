@@ -13,7 +13,7 @@ namespace JD.Efcpt.Build.Tasks.Schema.Providers;
 /// - PRAGMA index_list() for table indexes
 /// - PRAGMA index_info() for index columns
 /// </remarks>
-internal sealed class SqliteSchemaReader : ISchemaReader
+public sealed class SqliteSchemaReader : ISchemaReader
 {
     /// <summary>
     /// Reads the complete schema from a SQLite database.
