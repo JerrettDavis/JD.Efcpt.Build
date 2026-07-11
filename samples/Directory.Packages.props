@@ -1,0 +1,12 @@
+<Project>
+  <!--
+    Sample projects are stand-alone, documentation-oriented example solutions that pin their own
+    package versions inline (see each sample's *.csproj). They intentionally opt OUT of the
+    repository root's central package management (Directory.Packages.props) so that this file,
+    being the nearest Directory.Packages.props to any project under samples/, takes precedence and
+    disables CPM instead of inheriting the root's <PackageVersion> pins.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>

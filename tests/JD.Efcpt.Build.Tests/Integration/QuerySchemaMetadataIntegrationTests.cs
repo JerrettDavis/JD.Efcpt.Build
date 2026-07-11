@@ -12,6 +12,7 @@ namespace JD.Efcpt.Build.Tests.Integration;
 
 [Feature("QuerySchemaMetadata task: queries real SQL Server database schema")]
 [Collection(nameof(AssemblySetup))]
+[Trait("Category", "Integration")]
 public sealed partial class QuerySchemaMetadataIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record TestContext(

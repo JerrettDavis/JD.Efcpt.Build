@@ -12,6 +12,7 @@ namespace JD.Efcpt.Build.Tests.Integration;
 
 [Feature("End-to-End Reverse Engineering: generates and compiles EF models from SQL Server using Testcontainers")]
 [Collection(nameof(AssemblySetup))]
+[Trait("Category", "Integration")]
 public sealed partial class EndToEndReverseEngineeringTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record TestContext(

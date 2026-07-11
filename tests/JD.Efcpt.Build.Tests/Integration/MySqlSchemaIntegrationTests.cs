@@ -12,6 +12,7 @@ namespace JD.Efcpt.Build.Tests.Integration;
 
 [Feature("MySqlSchemaReader: reads and fingerprints MySQL schema using Testcontainers")]
 [Collection(nameof(AssemblySetup))]
+[Trait("Category", "Integration")]
 public sealed partial class MySqlSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record TestContext(

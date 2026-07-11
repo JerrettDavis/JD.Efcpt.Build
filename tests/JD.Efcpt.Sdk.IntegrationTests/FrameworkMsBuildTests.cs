@@ -15,6 +15,7 @@ namespace JD.Efcpt.Sdk.IntegrationTests;
 /// fallback mechanism - this is the primary validation that VS builds work.
 /// </remarks>
 [Collection("Framework MSBuild Tests")]
+[Trait("Category", "Integration")]
 public class FrameworkMsBuildTests : IDisposable
 {
     private readonly SdkPackageTestFixture _fixture;

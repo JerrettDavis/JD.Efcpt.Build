@@ -21,6 +21,7 @@ namespace JD.Efcpt.Build.Tests.Integration;
 /// </remarks>
 [Feature("OracleSchemaReader: reads and fingerprints Oracle schema using Testcontainers")]
 [Collection(nameof(AssemblySetup))]
+[Trait("Category", "Integration")]
 public sealed partial class OracleSchemaIntegrationTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
     private sealed record TestContext(

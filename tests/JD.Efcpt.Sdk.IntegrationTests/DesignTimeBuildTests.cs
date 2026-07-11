@@ -9,6 +9,7 @@ namespace JD.Efcpt.Sdk.IntegrationTests;
 /// unless the user opts back in via EfcptRunDuringDesignTimeBuild=true.
 /// </summary>
 [Collection("Design-Time Build Tests")]
+[Trait("Category", "Integration")]
 public class DesignTimeBuildTests : IDisposable
 {
     private const string SkippedMessage = "[Efcpt] Skipping EF Core Power Tools generation pipeline";

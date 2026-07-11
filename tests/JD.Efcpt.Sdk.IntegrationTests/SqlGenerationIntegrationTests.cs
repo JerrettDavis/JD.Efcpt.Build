@@ -15,6 +15,7 @@ namespace JD.Efcpt.Sdk.IntegrationTests;
 /// 2. DataAccessProject (EF Core) - generates models from DatabaseProject's DACPAC
 /// </remarks>
 [Collection("SQL Generation Tests")]
+[Trait("Category", "Integration")]
 public class SqlGenerationIntegrationTests : IAsyncDisposable
 {
     private readonly SdkPackageTestFixture _fixture;

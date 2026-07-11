@@ -292,6 +292,7 @@ public sealed class AwsSecretsManagerConnectionStringSourceTests(ITestOutputHelp
     #region Real Endpoint (skipped by default)
 
     [SkippableFact]
+    [Trait("Category", "Integration")]
     public void Real_secrets_manager_endpoint_resolves_secret()
     {
         var secretId = Environment.GetEnvironmentVariable("EFCPT_TEST_AWS_SECRET_ID");

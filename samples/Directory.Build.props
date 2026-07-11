@@ -1,0 +1,11 @@
+<Project>
+  <!--
+    Sample projects are stand-alone example solutions, not part of the library's shipped source
+    tree. Being the nearest Directory.Build.props to any project under samples/, this file takes
+    precedence over the repository root's Directory.Build.props, so samples do not inherit
+    repo-wide CI strictness (e.g. TreatWarningsAsErrors) that isn't relevant to example code.
+  -->
+  <PropertyGroup>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>

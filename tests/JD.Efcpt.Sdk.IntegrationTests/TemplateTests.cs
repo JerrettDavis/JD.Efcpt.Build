@@ -8,6 +8,7 @@ namespace JD.Efcpt.Sdk.IntegrationTests;
 /// Tests validate that the template creates projects with the expected structure and that they build correctly.
 /// </summary>
 [Collection("Template Tests")]
+[Trait("Category", "Integration")]
 public partial class TemplateTests : IDisposable
 {
     private readonly TemplateTestFixture _fixture;
