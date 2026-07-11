@@ -215,10 +215,19 @@ jobs:
       # samples/Samples.sln aggregates a stale project reference (simple-sql-integration, removed
       # from the repo) and cannot currently be restored as a whole; build each sample
       # solution/project individually instead (see samples/README.md for what each demonstrates).
+      #
+      # Each restore passes the local packed feed EXPLICITLY via --source (which overrides the
+      # NuGet.config <packageSources> for the restore) so it never depends on a given sample's
+      # per-sample nuget.config resolving the right relative path. This is belt-and-suspenders with
+      # the samples/NuGet.config fix: e.g. sdk-zero-config's nuget.config has no <clear/> and used
+      # to inherit samples/NuGet.config's bogus "../packages" source -> NU1301. nuget.org is
+      # included for the samples' EF Core / Aspire / SQL SDK dependencies; the artifacts feed
+      # (repo root, populated by the Pack step above) supplies JD.Efcpt.Build / JD.Efcpt.Sdk.
       - name: Build samples (EfcptEnabled=false - no live DB required)
         shell: bash
         run: |
           set -euo pipefail
+          FEED="$GITHUB_WORKSPACE/artifacts"
           declare -a SAMPLES=(
             "samples/sdk-zero-config/SdkZeroConfigSample.sln"
             "samples/dacpac-zero-config/ZeroConfigDacpac.sln"
@@ -235,7 +244,9 @@ jobs:
           )
           for sample in "${SAMPLES[@]}"; do
             echo "::group::Build $sample"
-            dotnet restore "$sample"
+            dotnet restore "$sample" \
+              --source "https://api.nuget.org/v3/index.json" \
+              --source "$FEED"
             dotnet build "$sample" --configuration Release --no-restore -p:EfcptEnabled=false
             echo "::endgroup::"
           done
