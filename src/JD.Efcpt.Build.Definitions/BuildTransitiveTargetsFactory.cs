@@ -286,7 +286,7 @@ public static class BuildTransitiveTargetsFactory
                 });
                 t.Target<EfcptResolveDbContextNameTarget>( target =>
                 {
-                    target.DependsOnTargets("EfcptResolveInputs;EfcptEnsureDacpac;EfcptUseDirectDacpac");
+                    target.DependsOnTargets("EfcptResolveInputs;EfcptEnsureDacpacBuilt;EfcptUseDirectDacpac");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
                     target.Task("ResolveDbContextName", task =>
                     {
@@ -305,7 +305,7 @@ public static class BuildTransitiveTargetsFactory
                 });
                 t.Target<EfcptStageInputsTarget>( target =>
                 {
-                    target.DependsOnTargets("EfcptResolveInputs;EfcptEnsureDacpac;EfcptUseDirectDacpac;EfcptResolveDbContextName");
+                    target.DependsOnTargets("EfcptResolveInputs;EfcptEnsureDacpacBuilt;EfcptUseDirectDacpac;EfcptResolveDbContextName");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
                     target.Task("StageEfcptInputs", task =>
                     {
@@ -571,7 +571,7 @@ public static class BuildTransitiveTargetsFactory
                 t.Target<EfcptAddToCompileTarget>( target =>
                 {
                     target.BeforeTargets("CoreCompile");
-                    target.DependsOnTargets("EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpac;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels;EfcptCopyDataToDataProject");
+                    target.DependsOnTargets("EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpacBuilt;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels;EfcptCopyDataToDataProject");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
                     target.ItemGroup(null, group =>
                     {
@@ -770,7 +770,7 @@ public static class BuildTransitiveTargetsFactory
   }
   public readonly struct EfcptEnsureDacpacTarget : IMsBuildTargetName
   {
-    public string Name => "EfcptEnsureDacpac";
+    public string Name => "EfcptEnsureDacpacBuilt";
   }
   public readonly struct EfcptExtractDatabaseSchemaToScriptsTarget : IMsBuildTargetName
   {
@@ -790,7 +790,7 @@ public static class BuildTransitiveTargetsFactory
   }
   public readonly struct EfcptQuerySchemaMetadataTarget : IMsBuildTargetName
   {
-    public string Name => "EfcptQuerySchemaMetadata";
+    public string Name => "EfcptQuerySchemaMetadataForDb";
   }
   public readonly struct EfcptResolveDbContextNameTarget : IMsBuildTargetName
   {

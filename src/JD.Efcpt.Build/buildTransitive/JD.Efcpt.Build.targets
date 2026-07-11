@@ -119,7 +119,7 @@
     </PropertyGroup>
     <MakeDir Directories="$(EfcptOutput)" />
   </Target>
-  <Target Name="EfcptQuerySchemaMetadata" BeforeTargets="EfcptStageInputs" AfterTargets="EfcptResolveInputs" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' == 'true'">
+  <Target Name="EfcptQuerySchemaMetadataForDb" BeforeTargets="EfcptStageInputs" AfterTargets="EfcptResolveInputs" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' == 'true'">
     <QuerySchemaMetadata ConnectionString="$(_EfcptResolvedConnectionString)" LogVerbosity="$(EfcptLogVerbosity)" OutputDir="$(EfcptOutput)" Provider="$(EfcptProvider)" ProviderSearchPaths="@(EfcptProviderSearchPath)">
       <Output TaskParameter="SchemaFingerprint" PropertyName="_EfcptSchemaFingerprint" />
     </QuerySchemaMetadata>
@@ -137,12 +137,12 @@
     <Message Text="Building SQL project: $(_EfcptSqlProj)" Importance="normal" Condition="'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptSqlProj)' != ''" />
     <MSBuild Condition="'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptSqlProj)' != ''" BuildInParallel="false" Projects="$(_EfcptSqlProj)" Properties="Configuration=$(Configuration)" Targets="Build" />
   </Target>
-  <Target Name="EfcptEnsureDacpac" DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptBuildSqlProj" Condition="'$(EfcptEnabled)' == 'true'">
+  <Target Name="EfcptEnsureDacpacBuilt" DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptBuildSqlProj" Condition="'$(EfcptEnabled)' == 'true'">
     <EnsureDacpacBuilt Condition="'$(_EfcptUseConnectionString)' != 'true' and '$(_EfcptUseDirectDacpac)' != 'true' and '$(_EfcptIsSqlProject)' != 'true'" Configuration="$(Configuration)" DotNetExe="$(EfcptDotNetExe)" LogVerbosity="$(EfcptLogVerbosity)" MsBuildExe="$(MSBuildBinPath)msbuild.exe" SqlProjPath="$(_EfcptSqlProj)">
       <Output TaskParameter="DacpacPath" PropertyName="_EfcptDacpacPath" />
     </EnsureDacpacBuilt>
   </Target>
-  <Target Name="EfcptResolveDbContextName" DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpac;EfcptUseDirectDacpac" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'">
+  <Target Name="EfcptResolveDbContextName" DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpacBuilt;EfcptUseDirectDacpac" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'">
     <ResolveDbContextName ConnectionString="$(_EfcptResolvedConnectionString)" DacpacPath="$(_EfcptDacpacPath)" ExplicitDbContextName="$(EfcptConfigDbContextName)" LogVerbosity="$(EfcptLogVerbosity)" SqlProjPath="$(_EfcptSqlProj)" UseConnectionStringMode="$(_EfcptUseConnectionString)">
       <Output TaskParameter="ResolvedDbContextName" PropertyName="_EfcptResolvedDbContextName" />
     </ResolveDbContextName>
@@ -150,7 +150,7 @@
       <EfcptConfigDbContextName>$(_EfcptResolvedDbContextName)</EfcptConfigDbContextName>
     </PropertyGroup>
   </Target>
-  <Target Name="EfcptStageInputs" DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpac;EfcptUseDirectDacpac;EfcptResolveDbContextName" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'">
+  <Target Name="EfcptStageInputs" DependsOnTargets="EfcptResolveInputs;EfcptEnsureDacpacBuilt;EfcptUseDirectDacpac;EfcptResolveDbContextName" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'">
     <StageEfcptInputs ConfigPath="$(_EfcptResolvedConfig)" LogVerbosity="$(EfcptLogVerbosity)" OutputDir="$(EfcptOutput)" ProjectDirectory="$(MSBuildProjectDirectory)" RenamingPath="$(_EfcptResolvedRenaming)" TargetFramework="$(TargetFramework)" TemplateDir="$(_EfcptResolvedTemplateDir)" TemplateOutputDir="$(EfcptGeneratedDir)">
       <Output TaskParameter="StagedConfigPath" PropertyName="_EfcptStagedConfig" />
       <Output TaskParameter="StagedRenamingPath" PropertyName="_EfcptStagedRenaming" />
@@ -218,7 +218,7 @@
     <Delete Condition="'@(_EfcptConfigurationFiles)' != ''" Files="@(_EfcptConfigurationFiles)" />
     <Message Text="Removed DbContext and configuration files from Models project" Importance="normal" Condition="'$(_EfcptHasFilesToCopy)' == 'true'" />
   </Target>
-  <Target Name="EfcptAddToCompile" BeforeTargets="CoreCompile" DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpac;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels;EfcptCopyDataToDataProject" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'">
+  <Target Name="EfcptAddToCompile" BeforeTargets="CoreCompile" DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpacBuilt;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels;EfcptCopyDataToDataProject" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'">
     <ItemGroup>
       <Compile Include="$(EfcptGeneratedDir)**\*.g.cs" Condition="'$(EfcptSplitOutputs)' != 'true'" />
       <Compile Include="$(EfcptGeneratedDir)Models\**\*.g.cs" Condition="'$(EfcptSplitOutputs)' == 'true'" />
