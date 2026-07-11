@@ -20,6 +20,8 @@
   href: split-outputs.md
 - name: Tool Acquisition
   href: tool-acquisition.md
+- name: jd-efcpt CLI
+  href: cli.md
 - name: Advanced Topics
   href: advanced.md
 - name: Troubleshooting

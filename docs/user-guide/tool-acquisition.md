@@ -113,6 +113,10 @@ as a confusing failure mid-build:
 dotnet build -t:EfcptDoctor -p:EfcptDoctorStrict=true
 ```
 
+The same report is also available without a project or a build via the `jd-efcpt` CLI's own
+`doctor` command - see [jd-efcpt CLI](cli.md#jd-efcpt-doctor). Both share the exact same diagnosis
+engine, so they can never report a different verdict for the same inputs.
+
 ## Summary
 
 | Scenario | Behavior |
