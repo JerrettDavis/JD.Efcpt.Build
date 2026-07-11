@@ -1,0 +1,23 @@
+{
+  "$schema": "https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/master/samples/efcpt-config.schema.json",
+  "names": {
+    "root-namespace": "EntityFrameworkCoreProject",
+    "dbcontext-name": "AppDbContext",
+    "dbcontext-namespace": "EntityFrameworkCoreProject.Generated",
+    "model-namespace": "EntityFrameworkCoreProject.Generated.Entities"
+  },
+  "code-generation": {
+    "use-t4": false,
+    "enable-on-configuring": false,
+    "use-nullable-reference-types": true,
+    "use-inflector": true
+  },
+  "file-layout": {
+    "output-path": "Models",
+    "output-dbcontext-path": "."
+  },
+  "tables": [
+    { "name": "[public].[customers]" },
+    { "name": "[public].[orders]" }
+  ]
+}

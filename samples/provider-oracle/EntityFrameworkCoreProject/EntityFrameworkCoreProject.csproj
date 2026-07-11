@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Suppress CS8669 for generated code that doesn't have an explicit #nullable directive. -->
+    <NoWarn>$(NoWarn);CS8669</NoWarn>
+  </PropertyGroup>
+
+  <!--
+    ============================================================================
+    JD.Efcpt.Build - Oracle Reference Sample
+    ============================================================================
+    Oracle has no DACPAC equivalent, so this sample uses Connection String Mode:
+    set EfcptConnectionString (and install JD.Efcpt.Build.Oracle) to regenerate
+    models against a real Oracle database locally.
+
+    In CI there is no live database, so EfcptEnabled stays false (see below)
+    and the project instead compiles the COMMITTED reference code under
+    Generated/, which mirrors what `efcpt` would emit for this schema.
+    ============================================================================
+  -->
+
+  <PropertyGroup>
+    <EfcptProvider>oracle</EfcptProvider>
+    <!-- Local dev: set EfcptConnectionString to enable real regeneration. CI (no connection string) stays inert. -->
+    <EfcptEnabled Condition="'$(EfcptConnectionString)' == ''">false</EfcptEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Build-time source generator tool; inert here because EfcptEnabled=false (see above). -->
+    <PackageReference Include="JD.Efcpt.Build" Version="*" />
+    <!-- EF Core runtime + Oracle provider, needed so the committed Generated/ code compiles. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.9" />
+    <PackageReference Include="Oracle.EntityFrameworkCore" Version="10.23.26200" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="efcpt-config.json" />
+  </ItemGroup>
+
+  <!--
+    When a real EfcptConnectionString IS supplied, JD.Efcpt.Build regenerates live models into
+    obj/efcpt/Generated. Exclude the committed Generated/ reference copy from compilation in that
+    case so the two don't collide on the same type names.
+  -->
+  <ItemGroup Condition="'$(EfcptEnabled)' != 'false'">
+    <Compile Remove="Generated\**\*.cs" />
+  </ItemGroup>
+
+</Project>

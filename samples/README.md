@@ -30,6 +30,21 @@ This directory contains sample projects demonstrating various usage patterns of 
 | [connection-string-mssql](#connection-string-mssql) | SQL Server + Aspire | SQL Server container with .NET Aspire |
 | [aspnet-core-appsettings](#aspnet-core-appsettings) | SQL Server + Aspire | appsettings.json + Aspire container |
 
+### Per-Provider Reference Samples
+
+Minimal reference samples for the providers that have no DACPAC support and only support
+Connection String Mode. Each commits a reference copy of the generated code so it builds in CI
+with `-p:EfcptEnabled=false` and no live database - see [Per-Provider Reference
+Samples](#per-provider-reference-samples-1) below for details.
+
+| Sample | Database Provider | EF Core Runtime Provider |
+|--------|------------------|---------------------------|
+| [provider-postgres](#provider-postgres) | PostgreSQL | `Npgsql.EntityFrameworkCore.PostgreSQL` |
+| [provider-mysql](#provider-mysql) | MySQL | `Pomelo.EntityFrameworkCore.MySql` (EF Core 9.x pin) |
+| [provider-oracle](#provider-oracle) | Oracle | `Oracle.EntityFrameworkCore` |
+| [provider-firebird](#provider-firebird) | Firebird | `FirebirdSql.EntityFrameworkCore.Firebird` |
+| [provider-snowflake](#provider-snowflake) | Snowflake | *(none - entities-only, see sample README)* |
+
 ## Input Modes
 
 JD.Efcpt.Build supports two primary input modes:
@@ -423,6 +438,81 @@ dotnet build MyApp.Api
 ```
 
 **Prerequisites:** Docker Desktop, .NET 9.0 SDK
+
+---
+
+## Per-Provider Reference Samples
+
+These five samples cover every JD.Efcpt.Build-supported provider that has no DACPAC support and
+therefore relies entirely on Connection String Mode. Rather than requiring a live database in CI,
+each one commits a reference copy of the code `efcpt` would generate under
+`EntityFrameworkCoreProject/Generated/`, so `dotnet build <sample>.sln -p:EfcptEnabled=false`
+succeeds with zero database dependency (see the `samples-build` job in
+`.github/workflows/ci.yml`). Set `EfcptConnectionString` locally to regenerate against a real
+database instead - see each sample's README for details.
+
+### provider-postgres
+
+**Location:** `provider-postgres/`
+
+PostgreSQL via Connection String Mode, using the `Npgsql.EntityFrameworkCore.PostgreSQL` runtime
+provider. See [provider-postgres/README.md](provider-postgres/README.md).
+
+**Build:**
+```bash
+dotnet build provider-postgres/ProviderPostgres.sln
+```
+
+### provider-mysql
+
+**Location:** `provider-mysql/`
+
+MySQL via Connection String Mode, using the `Pomelo.EntityFrameworkCore.MySql` runtime provider.
+Pinned to the EF Core 9.x line since Pomelo has no EF Core 10 release yet - see
+[provider-mysql/README.md](provider-mysql/README.md).
+
+**Build:**
+```bash
+dotnet build provider-mysql/ProviderMySql.sln
+```
+
+### provider-oracle
+
+**Location:** `provider-oracle/`
+
+Oracle via Connection String Mode, using the `Oracle.EntityFrameworkCore` runtime provider. See
+[provider-oracle/README.md](provider-oracle/README.md).
+
+**Build:**
+```bash
+dotnet build provider-oracle/ProviderOracle.sln
+```
+
+### provider-firebird
+
+**Location:** `provider-firebird/`
+
+Firebird via Connection String Mode, using the `FirebirdSql.EntityFrameworkCore.Firebird` runtime
+provider. See [provider-firebird/README.md](provider-firebird/README.md).
+
+**Build:**
+```bash
+dotnet build provider-firebird/ProviderFirebird.sln
+```
+
+### provider-snowflake
+
+**Location:** `provider-snowflake/`
+
+Snowflake via Connection String Mode - **entities-only**. No first-party EF Core runtime provider
+exists for Snowflake, so `AppDbContext` has entity classes and `DbSet<T>` properties but no
+`OnConfiguring`/`UseX` call. See [provider-snowflake/README.md](provider-snowflake/README.md) for
+why and how a host application would wire it up.
+
+**Build:**
+```bash
+dotnet build provider-snowflake/ProviderSnowflake.sln
+```
 
 ---
 

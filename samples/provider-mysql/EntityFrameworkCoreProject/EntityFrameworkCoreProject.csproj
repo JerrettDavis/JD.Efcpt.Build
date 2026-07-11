@@ -1,0 +1,61 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Suppress CS8669 for generated code that doesn't have an explicit #nullable directive. -->
+    <NoWarn>$(NoWarn);CS8669</NoWarn>
+  </PropertyGroup>
+
+  <!--
+    ============================================================================
+    JD.Efcpt.Build - MySQL Reference Sample
+    ============================================================================
+    MySQL has no DACPAC equivalent, so this sample uses Connection String Mode:
+    set EfcptConnectionString (and install JD.Efcpt.Build.MySqlConnector) to
+    regenerate models against a real MySQL database locally.
+
+    In CI there is no live database, so EfcptEnabled stays false (see below)
+    and the project instead compiles the COMMITTED reference code under
+    Generated/, which mirrors what `efcpt` would emit for this schema.
+
+    NOTE ON PACKAGE VERSION: Pomelo.EntityFrameworkCore.MySql's latest stable
+    release (9.0.0) only targets EF Core 9.x - there is no EF Core 10 build of
+    Pomelo yet as of writing. This project's TargetFramework is still net10.0
+    (a net10.0 app can consume a net8.0/EFCore9-targeted package fine via
+    NuGet's normal TFM fallback), but the EF Core packages below are
+    deliberately pinned to the 9.0.x line to satisfy Pomelo's dependency range
+    instead of the 10.0.x line used by the other provider samples. Revisit
+    this pin once Pomelo ships an EF Core 10 compatible release.
+    ============================================================================
+  -->
+
+  <PropertyGroup>
+    <EfcptProvider>mysql</EfcptProvider>
+    <!-- Local dev: set EfcptConnectionString to enable real regeneration. CI (no connection string) stays inert. -->
+    <EfcptEnabled Condition="'$(EfcptConnectionString)' == ''">false</EfcptEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Build-time source generator tool; inert here because EfcptEnabled=false (see above). -->
+    <PackageReference Include="JD.Efcpt.Build" Version="*" />
+    <!-- EF Core runtime + MySQL provider, pinned to 9.x - see NOTE above. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.17" />
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="efcpt-config.json" />
+  </ItemGroup>
+
+  <!--
+    When a real EfcptConnectionString IS supplied, JD.Efcpt.Build regenerates live models into
+    obj/efcpt/Generated. Exclude the committed Generated/ reference copy from compilation in that
+    case so the two don't collide on the same type names.
+  -->
+  <ItemGroup Condition="'$(EfcptEnabled)' != 'false'">
+    <Compile Remove="Generated\**\*.cs" />
+  </ItemGroup>
+
+</Project>

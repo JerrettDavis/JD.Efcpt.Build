@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Suppress CS8669 for generated code that doesn't have an explicit #nullable directive. -->
+    <NoWarn>$(NoWarn);CS8669</NoWarn>
+  </PropertyGroup>
+
+  <!--
+    ============================================================================
+    JD.Efcpt.Build - Snowflake Reference Sample (ENTITIES-ONLY)
+    ============================================================================
+    Unlike the other provider samples, this one is intentionally ENTITIES-ONLY:
+    no first-party EF Core runtime provider exists for Snowflake (no `UseSnowflake`
+    call, no runtime provider package referenced). JD.Efcpt.Build can still read
+    Snowflake schema at generation time via the JD.Efcpt.Build.Snowflake satellite
+    driver package (see README.md), but the resulting DbContext has no working
+    OnConfiguring/UseX call to actually connect at runtime - only entity classes
+    (and a DbContext exposing them as DbSet<T>) are realistic to generate/commit.
+
+    In CI there is no live database, so EfcptEnabled stays false (see below) and
+    the project compiles the COMMITTED reference code under Generated/.
+    ============================================================================
+  -->
+
+  <PropertyGroup>
+    <EfcptProvider>snowflake</EfcptProvider>
+    <!-- Local dev: set EfcptConnectionString to enable real regeneration. CI (no connection string) stays inert. -->
+    <EfcptEnabled Condition="'$(EfcptConnectionString)' == ''">false</EfcptEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Build-time source generator tool; inert here because EfcptEnabled=false (see above). -->
+    <PackageReference Include="JD.Efcpt.Build" Version="*" />
+    <!-- EF Core runtime only - no Snowflake runtime provider package exists, see NOTE above. -->
+    <!-- Microsoft.EntityFrameworkCore.Relational supplies relational fluent-API members (e.g. HasColumnType) used in OnModelCreating below, even though no specific relational provider is configured. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.9" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="efcpt-config.json" />
+  </ItemGroup>
+
+  <!--
+    When a real EfcptConnectionString IS supplied, JD.Efcpt.Build regenerates live models into
+    obj/efcpt/Generated. Exclude the committed Generated/ reference copy from compilation in that
+    case so the two don't collide on the same type names.
+  -->
+  <ItemGroup Condition="'$(EfcptEnabled)' != 'false'">
+    <Compile Remove="Generated\**\*.cs" />
+  </ItemGroup>
+
+</Project>
