@@ -68,7 +68,7 @@
   <Target Name="EfcptQueryDatabaseSchemaForSqlProj" DependsOnTargets="BeforeSqlProjGeneration" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' == 'true'">
     <Error Text="SqlProj generation requires a connection string. Set EfcptConnectionString, EfcptAppSettings, or EfcptAppConfig." Condition="'$(EfcptConnectionString)' == '' and '$(EfcptAppSettings)' == '' and '$(EfcptAppConfig)' == ''" />
     <Message Text="Querying database schema for fingerprinting..." Importance="high" />
-    <QuerySchemaMetadata ConnectionString="$(EfcptConnectionString)" LogVerbosity="$(EfcptLogVerbosity)" OutputDir="$(EfcptOutput)" Provider="$(EfcptProvider)" ProviderSearchPaths="@(EfcptProviderSearchPath)">
+    <QuerySchemaMetadata AllowCustomProviders="$(EfcptAllowCustomProviders)" ConnectionString="$(EfcptConnectionString)" EfcptCustomProviders="@(EfcptCustomProvider)" LogVerbosity="$(EfcptLogVerbosity)" OutputDir="$(EfcptOutput)" Provider="$(EfcptProvider)" ProviderSearchPaths="@(EfcptProviderSearchPath)">
       <Output TaskParameter="SchemaFingerprint" PropertyName="_EfcptSchemaFingerprint" />
     </QuerySchemaMetadata>
     <Message Text="Database schema fingerprint: $(_EfcptSchemaFingerprint)" Importance="normal" />
@@ -124,7 +124,7 @@
     <MakeDir Directories="$(EfcptOutput)" />
   </Target>
   <Target Name="EfcptQuerySchemaMetadataForDb" BeforeTargets="EfcptStageInputs" AfterTargets="EfcptResolveInputs" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptUseConnectionString)' == 'true'">
-    <QuerySchemaMetadata ConnectionString="$(_EfcptResolvedConnectionString)" LogVerbosity="$(EfcptLogVerbosity)" OutputDir="$(EfcptOutput)" Provider="$(EfcptProvider)" ProviderSearchPaths="@(EfcptProviderSearchPath)">
+    <QuerySchemaMetadata AllowCustomProviders="$(EfcptAllowCustomProviders)" ConnectionString="$(_EfcptResolvedConnectionString)" EfcptCustomProviders="@(EfcptCustomProvider)" LogVerbosity="$(EfcptLogVerbosity)" OutputDir="$(EfcptOutput)" Provider="$(EfcptProvider)" ProviderSearchPaths="@(EfcptProviderSearchPath)">
       <Output TaskParameter="SchemaFingerprint" PropertyName="_EfcptSchemaFingerprint" />
     </QuerySchemaMetadata>
   </Target>
