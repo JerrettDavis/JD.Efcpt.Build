@@ -1,19 +1,18 @@
-using JD.Efcpt.Build.Core;
-using JD.Efcpt.Build.Tasks.ConnectionStrings;
+using JD.Efcpt.Build.Core.Logging;
 using PatternKit.Behavioral.Chain;
 
-namespace JD.Efcpt.Build.Tasks.Chains;
+namespace JD.Efcpt.Build.Core.ConnectionStrings;
 
 /// <summary>
 /// Context for connection string resolution containing all configuration sources and search locations.
 /// </summary>
-internal readonly record struct ConnectionStringResolutionContext(
+public readonly record struct ConnectionStringResolutionContext(
     string ExplicitConnectionString,
     string EfcptAppSettings,
     string EfcptAppConfig,
     string ConnectionStringName,
     string ProjectDirectory,
-    BuildLog Log
+    IBuildLog Log
 );
 
 /// <summary>
@@ -32,8 +31,9 @@ internal readonly record struct ConnectionStringResolutionContext(
 /// Uses ConfigurationFileTypeValidator to ensure proper file types.
 /// Uses AppSettingsConnectionStringParser and AppConfigConnectionStringParser for parsing.
 /// </remarks>
-internal static class ConnectionStringResolutionChain
+public static class ConnectionStringResolutionChain
 {
+    /// <summary>Builds the connection-string resolution chain.</summary>
     public static ResultChain<ConnectionStringResolutionContext, string?> Build()
         => ResultChain<ConnectionStringResolutionContext, string?>.Create()
             // Branch 1: Explicit connection string property
@@ -127,11 +127,10 @@ internal static class ConnectionStringResolutionChain
         string propertyName,
         string projectDirectory,
         string connectionStringName,
-        BuildLog log)
+        IBuildLog log)
     {
         var fullPath = PathUtils.FullPath(explicitPath, projectDirectory);
 
-        var validator = new ConfigurationFileTypeValidator();
         ConfigurationFileTypeValidator.ValidateAndWarn(fullPath, propertyName, log);
 
         var result = ParseConnectionStringFromFile(fullPath, connectionStringName, log);
@@ -141,7 +140,7 @@ internal static class ConnectionStringResolutionChain
     private static string? ParseFromAutoDiscoveredAppSettings(
         string projectDirectory,
         string connectionStringName,
-        BuildLog log)
+        IBuildLog log)
     {
         // Guard against null - can occur on .NET Framework MSBuild
         if (string.IsNullOrWhiteSpace(projectDirectory) || !Directory.Exists(projectDirectory))
@@ -158,7 +157,6 @@ internal static class ConnectionStringResolutionChain
 
         foreach (var file in appSettingsFiles.OrderBy(f => f == Path.Combine(projectDirectory, "appsettings.json") ? 0 : 1))
         {
-            var parser = new AppSettingsConnectionStringParser();
             var result = AppSettingsConnectionStringParser.Parse(file, connectionStringName, log);
             if (!result.Success || string.IsNullOrWhiteSpace(result.ConnectionString))
                 continue;
@@ -173,7 +171,7 @@ internal static class ConnectionStringResolutionChain
     private static string? ParseFromAutoDiscoveredAppConfig(
         string projectDirectory,
         string connectionStringName,
-        BuildLog log)
+        IBuildLog log)
     {
         // Guard against null - can occur on .NET Framework MSBuild
         if (string.IsNullOrWhiteSpace(projectDirectory))
@@ -186,7 +184,6 @@ internal static class ConnectionStringResolutionChain
             if (!File.Exists(path))
                 continue;
 
-            var parser = new AppConfigConnectionStringParser();
             var result = AppConfigConnectionStringParser.Parse(path, connectionStringName, log);
             if (result.Success && !string.IsNullOrWhiteSpace(result.ConnectionString))
             {
@@ -201,7 +198,7 @@ internal static class ConnectionStringResolutionChain
     private static ConnectionStringResult ParseConnectionStringFromFile(
         string filePath,
         string connectionStringName,
-        BuildLog log)
+        IBuildLog log)
     {
         var ext = Path.GetExtension(filePath).ToLowerInvariant();
         return ext switch

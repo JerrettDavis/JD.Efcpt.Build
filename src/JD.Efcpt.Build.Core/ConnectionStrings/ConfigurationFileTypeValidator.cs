@@ -1,4 +1,6 @@
-namespace JD.Efcpt.Build.Tasks.ConnectionStrings;
+using JD.Efcpt.Build.Core.Logging;
+
+namespace JD.Efcpt.Build.Core.ConnectionStrings;
 
 /// <summary>
 /// Validates that configuration file paths match the expected parameter type and logs warnings for mismatches.
@@ -11,7 +13,7 @@ internal sealed class ConfigurationFileTypeValidator
     /// <param name="filePath">The path to the configuration file.</param>
     /// <param name="parameterName">The name of the parameter (e.g., "EfcptAppSettings" or "EfcptAppConfig").</param>
     /// <param name="log">The build log for warnings.</param>
-    public static void ValidateAndWarn(string filePath, string parameterName, BuildLog log)
+    public static void ValidateAndWarn(string filePath, string parameterName, IBuildLog log)
     {
         var extension = Path.GetExtension(filePath).ToLowerInvariant();
         var isJson = extension == ".json";

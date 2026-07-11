@@ -1,9 +1,9 @@
-namespace JD.Efcpt.Build.Tasks.ConnectionStrings;
+namespace JD.Efcpt.Build.Core.ConnectionStrings;
 
 /// <summary>
 /// Represents the result of attempting to resolve a connection string from a configuration file.
 /// </summary>
-internal sealed record ConnectionStringResult
+public sealed record ConnectionStringResult
 {
     /// <summary>
     /// Gets a value indicating whether the connection string was successfully resolved.

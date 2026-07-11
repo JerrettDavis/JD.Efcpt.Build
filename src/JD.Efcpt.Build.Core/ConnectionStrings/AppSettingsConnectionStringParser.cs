@@ -1,6 +1,7 @@
 using System.Text.Json;
+using JD.Efcpt.Build.Core.Logging;
 
-namespace JD.Efcpt.Build.Tasks.ConnectionStrings;
+namespace JD.Efcpt.Build.Core.ConnectionStrings;
 
 /// <summary>
 /// Parses connection strings from appsettings.json files.
@@ -14,7 +15,7 @@ internal sealed class AppSettingsConnectionStringParser
     /// <param name="connectionStringName">The name of the connection string to retrieve.</param>
     /// <param name="log">The build log for warnings and errors.</param>
     /// <returns>A result indicating success or failure, along with the connection string if found.</returns>
-    public static ConnectionStringResult Parse(string filePath, string connectionStringName, BuildLog log)
+    public static ConnectionStringResult Parse(string filePath, string connectionStringName, IBuildLog log)
     {
         try
         {

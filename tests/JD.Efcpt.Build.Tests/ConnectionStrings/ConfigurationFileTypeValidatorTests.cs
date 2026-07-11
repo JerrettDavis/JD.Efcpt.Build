@@ -1,5 +1,5 @@
 using JD.Efcpt.Build.Tasks;
-using JD.Efcpt.Build.Tasks.ConnectionStrings;
+using JD.Efcpt.Build.Core.ConnectionStrings;
 using JD.Efcpt.Build.Tests.Infrastructure;
 using TinyBDD;
 using TinyBDD.Xunit;
