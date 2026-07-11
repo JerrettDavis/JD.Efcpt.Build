@@ -64,7 +64,10 @@ export async function activate(
     watcher.onDidCreate(refresh)
   );
 
-  await recommendCSharpDevKitIfMissing(context);
+  // Fire-and-forget: this shows a UI notification whose promise only resolves on
+  // user dismissal. Awaiting it here would block activation indefinitely in a
+  // headless host (e.g. CI integration tests), so it must NOT be awaited.
+  void recommendCSharpDevKitIfMissing(context).catch(() => undefined);
 
   const existing = await vscode.workspace.findFiles(BUILD_PROFILE_GLOB, EXCLUDE_GLOB, 1);
   if (existing.length > 0) {

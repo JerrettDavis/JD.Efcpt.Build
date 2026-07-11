@@ -12,6 +12,12 @@ on:
       - 'ide/vscode/**'
       - '.github/workflows/vscode-ext.yml'
 
+# A new push supersedes an in-progress run for the same ref, so a hung run is
+# cancelled the moment the fix is pushed instead of tying up a runner for hours.
+concurrency:
+  group: vscode-ext-${{ github.ref }}
+  cancel-in-progress: true
+
 defaults:
   run:
     working-directory: ide/vscode
@@ -20,6 +26,8 @@ jobs:
   build:
     name: Build, lint, test, package
     runs-on: ubuntu-latest
+    # Hard safety cap: a hung electron test host fails in 20 min, not the 6h default.
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
@@ -45,7 +53,33 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      # Electron/VS Code needs several native libs that ubuntu-latest may not
+      # ship; a missing one can make the test host hang or crash on launch.
+      # ubuntu-latest is 24.04, where the t64 ABI transition renamed several
+      # packages (libasound2 -> libasound2t64, libatk1.0-0 -> libatk1.0-0t64,
+      # ...), so we try both the old and t64 names and skip whatever this
+      # release doesn't provide, rather than hard-failing on a renamed package.
+      # xvfb (the one strictly required for the headless display) is available
+      # on both 22.04 and 24.04.
+      - name: Install VS Code test-host system libraries
+        working-directory: ${{ github.workspace }}
+        run: |
+          sudo apt-get update
+          for pkg in \
+            xvfb \
+            libnss3 \
+            libgbm1 \
+            libxshmfence1 \
+            libatk1.0-0 libatk1.0-0t64 \
+            libatk-bridge2.0-0 libatk-bridge2.0-0t64 \
+            libgtk-3-0 libgtk-3-0t64 \
+            libasound2 libasound2t64 ; do
+            sudo apt-get install -y "$pkg" || echo "skip: $pkg not available on this release"
+          done
+
       - name: Integration tests (headless via xvfb)
+        # Belt-and-braces per-step cap so this specific step fails fast if it wedges.
+        timeout-minutes: 10
         run: xvfb-run -a npm run test:integration
 
       - name: Package extension (.vsix)
