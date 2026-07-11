@@ -1,0 +1,77 @@
+<UserControl x:Class="JD.Efcpt.VsExtension.ToolWindows.BuildStatusToolWindowControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="420" d:DesignWidth="360">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+    </UserControl.Resources>
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+            <Button Content="Refresh" Click="RefreshButton_Click" Padding="8,2" Margin="0,0,8,0"/>
+            <TextBlock Text="{Binding ProjectName}" FontWeight="Bold" VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- Staleness / failure banner from BuildStatusEvaluator; collapsed when the profile is current. -->
+        <Border Grid.Row="1" Margin="0,0,0,8" Padding="6" Background="#33FF0000"
+                BorderBrush="#66FF0000" BorderThickness="1"
+                Visibility="{Binding HasBanner, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="{Binding Banner}" TextWrapping="Wrap" FontWeight="Bold"/>
+        </Border>
+
+        <TextBlock Grid.Row="2" Text="{Binding StatusMessage}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+        <Grid Grid.Row="3" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Status:" Margin="0,0,8,2"/>
+            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Status}"/>
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="Models generated:" Margin="0,0,8,2"/>
+            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ModelCount}"/>
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Last run:" Margin="0,0,8,2"/>
+            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding LastRunTime}"/>
+
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="Duration:" Margin="0,0,8,2"/>
+            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Duration}"/>
+
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="Warnings:" Margin="0,0,8,2"/>
+            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding WarningCount}"/>
+
+            <TextBlock Grid.Row="5" Grid.Column="0" Text="Errors:" Margin="0,0,8,2"/>
+            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding ErrorCount}"/>
+        </Grid>
+
+        <ListView Grid.Row="4" ItemsSource="{Binding Diagnostics}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Severity" Width="70" DisplayMemberBinding="{Binding Severity}"/>
+                    <GridViewColumn Header="Code" Width="70" DisplayMemberBinding="{Binding Code}"/>
+                    <GridViewColumn Header="Message" Width="180" DisplayMemberBinding="{Binding Message}"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </Grid>
+</UserControl>

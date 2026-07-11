@@ -1,0 +1,116 @@
+<Project>
+
+  <!--
+    Explicit SDK import form (rather than <Project Sdk="Microsoft.NET.Sdk">) is REQUIRED here so
+    that Microsoft.VsSDK.targets can be imported AFTER the SDK's own targets. That targets file is
+    what defines the CreateVsixContainer target chain and appends it to $(PrepareForRunDependsOn)
+    (which Microsoft.Common.targets runs as part of a normal Build) - i.e. it is what actually
+    produces the .vsix. Microsoft.VSSDK.BuildTools only auto-imports path/env setup props+targets;
+    it does NOT import Microsoft.VsSDK.targets, so an SDK-style project must import it explicitly
+    (exactly as the classic VSIX project template does). Without this, msbuild compiles the DLL but
+    never packages a .vsix - see the failed CI run 29167011617.
+  -->
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+
+  <PropertyGroup>
+    <!--
+      net48: Visual Studio 2022's process requires .NET Framework 4.8 (Community.VisualStudio.Toolkit.17's
+      NuGet dependency group is declared for .NETFramework4.8 specifically - a net472 TFM does not
+      satisfy it and silently resolves zero dependencies), so the VSIX must target net48 regardless
+      of what the rest of the repo targets. This project is intentionally NOT part of
+      JD.Efcpt.Build.sln (its VSSDK/net48 dependency chain would break the ubuntu `dotnet build
+      JD.Efcpt.Build.sln` CI job) - see ide/vs/JD.Efcpt.Vs.sln, which is the only sln that includes
+      it, and .github/workflows/vsix.yml, the windows-only CI that builds it.
+    -->
+    <TargetFramework>net48</TargetFramework>
+    <RootNamespace>JD.Efcpt.VsExtension</RootNamespace>
+    <AssemblyName>JD.Efcpt.VsExtension</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <UseWPF>true</UseWPF>
+
+    <!-- This project pulls in Visual Studio SDK / VSSDK.BuildTools packages that are not part of
+         the repo's shared, centrally-managed package set (those packages are only relevant to
+         this Windows-only VSIX), so it opts out of central package management locally rather than
+         growing Directory.Packages.props with VS-SDK-only entries every other project would see. -->
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+
+    <!-- Standard SDK-style VSIX project settings (Community.VisualStudio.Toolkit / VSSDK.BuildTools conventions). -->
+    <GeneratePkgDefFile>true</GeneratePkgDefFile>
+    <UseCodebase>true</UseCodebase>
+    <IncludeAssemblyInVSIXContainer>true</IncludeAssemblyInVSIXContainer>
+    <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>
+    <IncludeDebugSymbolsInLocalVSIXDeployment>false</IncludeDebugSymbolsInLocalVSIXDeployment>
+    <CopyOutputSymbolsToOutputDirectory>false</CopyOutputSymbolsToOutputDirectory>
+    <CopyBuildOutputToOutputDirectory>true</CopyBuildOutputToOutputDirectory>
+    <CreateVsixContainer>true</CreateVsixContainer>
+    <DeployExtension Condition="'$(Configuration)' == 'Debug'">true</DeployExtension>
+    <DeployExtension Condition="'$(Configuration)' != 'Debug'">false</DeployExtension>
+    <StartAction>Program</StartAction>
+    <StartArguments>/rootsuffix Exp</StartArguments>
+    <MinimumVisualStudioVersion>17.0</MinimumVisualStudioVersion>
+    <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+    <ExcludeFromSourceOnlyBuild>true</ExcludeFromSourceOnlyBuild>
+    <OverrideVSIXManifestValues>false</OverrideVSIXManifestValues>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Community.VisualStudio.Toolkit.17" Version="17.0.533" />
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.13.40008" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.14.2094">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Shared, IDE-agnostic parsing/reading logic - see the remarks on JD.Efcpt.Ide.Core. This
+         is the ONLY project reference; the VSIX has no dependency on JD.Efcpt.Build.Core or any
+         other MSBuild-task assembly, since it drives regeneration by shelling out to `dotnet
+         build` rather than calling into the task pipeline directly. -->
+    <ProjectReference Include="..\JD.Efcpt.Ide.Core\JD.Efcpt.Ide.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="source.extension.vsixmanifest">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Ship the repo LICENSE inside the .vsix at the package root so the manifest's
+         <License>LICENSE</License> resolves to a file that actually exists in the archive
+         (a relative "..\..\..\LICENSE" escapes the package root and fails CreateVsixContainer
+         validation with VSSDK1310). Only referenced by the windows VSIX build. -->
+    <Content Include="..\..\..\LICENSE">
+      <Link>LICENSE</Link>
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <VSCTCompile Include="JdEfcptCommandTable.vsct">
+      <ResourceName>Menus.ctmenu</ResourceName>
+    </VSCTCompile>
+  </ItemGroup>
+
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+
+  <!--
+    Import the VSIX packaging targets AFTER the SDK targets so their $(PrepareForRunDependsOn)
+    additions (GeneratePkgDef/CreateVsixContainer/...) survive. $(VSToolsPath) is redirected to the
+    Microsoft.VSSDK.BuildTools package's tools folder by that package's build props, so this resolves
+    to the package copy - no VS install layout is assumed.
+
+    GUARD: only under full-framework MSBuild (Visual Studio / the windows CI, where
+    $(MSBuildRuntimeType) == 'Full'). Under `dotnet build` (MSBuildRuntimeType == 'Core') the import
+    is skipped entirely, so the net472-only VSIX build tasks are never loaded and the cross-platform
+    `dotnet build` of this project keeps compiling the DLL with 0 errors. Full .vsix packaging only
+    ever happens on the windows CI runner (or in Visual Studio).
+  -->
+  <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets"
+          Condition="'$(MSBuildRuntimeType)' == 'Full' and '$(VSToolsPath)' != '' and Exists('$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets')" />
+
+</Project>

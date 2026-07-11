@@ -1,0 +1,104 @@
+name: VSIX
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'ide/vs/**'
+      - '.github/workflows/vsix.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'ide/vs/**'
+      - '.github/workflows/vsix.yml'
+
+# A new push supersedes an in-progress run for the same ref, so a hung run is
+# cancelled the moment the fix is pushed instead of tying up a runner for hours.
+concurrency:
+  group: vsix-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build, package
+    runs-on: windows-latest
+    # Safety cap: a hung/misconfigured VSSDK build fails in 30 min, not the 6h default.
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Restore
+        run: msbuild ide/vs/JD.Efcpt.VsExtension/JD.Efcpt.VsExtension.csproj /t:Restore /p:Configuration=Release
+
+      - name: Build (Release)
+        run: msbuild ide/vs/JD.Efcpt.VsExtension/JD.Efcpt.VsExtension.csproj /p:Configuration=Release /p:DeployExtension=false
+
+      - name: Locate built .vsix
+        id: vsix
+        shell: pwsh
+        run: |
+          $vsix = Get-ChildItem -Path ide/vs/JD.Efcpt.VsExtension -Recurse -Filter *.vsix | Select-Object -First 1
+          if (-not $vsix) {
+            Write-Error "No .vsix was produced by the build."
+            exit 1
+          }
+          Write-Output "path=$($vsix.FullName)" >> $env:GITHUB_OUTPUT
+
+      - name: Upload .vsix artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: jd-efcpt-vsextension-vsix
+          path: ${{ steps.vsix.outputs.path }}
+
+  publish:
+    name: Publish to Visual Studio Marketplace
+    needs: build
+    runs-on: windows-latest
+    timeout-minutes: 30
+    # Only tags and main - never on pull requests - and only when the marketplace PAT is present,
+    # mirroring the NuGet-key guard in ci.yml (skip cleanly rather than fail when the secret is unset).
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Restore
+        run: msbuild ide/vs/JD.Efcpt.VsExtension/JD.Efcpt.VsExtension.csproj /t:Restore /p:Configuration=Release
+
+      - name: Build (Release)
+        run: msbuild ide/vs/JD.Efcpt.VsExtension/JD.Efcpt.VsExtension.csproj /p:Configuration=Release /p:DeployExtension=false
+
+      - name: Publish to Visual Studio Marketplace
+        shell: pwsh
+        env:
+          VS_MARKETPLACE_PAT: ${{ secrets.VS_MARKETPLACE_PAT }}
+        run: |
+          if ([string]::IsNullOrEmpty($env:VS_MARKETPLACE_PAT)) {
+            Write-Output "Skipping Marketplace publish: VS_MARKETPLACE_PAT secret not set."
+            exit 0
+          }
+
+          $vsix = Get-ChildItem -Path ide/vs/JD.Efcpt.VsExtension -Recurse -Filter *.vsix | Select-Object -First 1
+          if (-not $vsix) {
+            Write-Error "No .vsix was produced by the build."
+            exit 1
+          }
+
+          $vsixPublisher = Get-ChildItem -Path "${env:ProgramFiles(x86)}\Microsoft Visual Studio" -Recurse -Filter VsixPublisher.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $vsixPublisher) {
+            Write-Error "VsixPublisher.exe not found - ensure the VSIX SDK component is installed on this runner image."
+            exit 1
+          }
+
+          & $vsixPublisher.FullName publish -payload $vsix.FullName -publishManifest ide/vs/JD.Efcpt.VsExtension/publishManifest.json -personalAccessToken $env:VS_MARKETPLACE_PAT

@@ -28,6 +28,8 @@
   href: force-regenerate.md
 - name: jd-efcpt CLI
   href: cli.md
+- name: Visual Studio Extension
+  href: visual-studio.md
 - name: Advanced Topics
   href: advanced.md
 - name: Troubleshooting
