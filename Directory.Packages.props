@@ -4,6 +4,9 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="AWSSDK.Core" Version="4.0.100.2" />
+    <PackageVersion Include="AWSSDK.SecretsManager" Version="4.0.5.4" />
+    <PackageVersion Include="Azure.Identity" Version="1.21.0" />
+    <PackageVersion Include="Azure.Security.KeyVault.Secrets" Version="4.11.0" />
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
     <PackageVersion Include="FirebirdSql.Data.FirebirdClient" Version="10.3.4" />
     <PackageVersion Include="FluentAssertions" Version="8.10.0" />

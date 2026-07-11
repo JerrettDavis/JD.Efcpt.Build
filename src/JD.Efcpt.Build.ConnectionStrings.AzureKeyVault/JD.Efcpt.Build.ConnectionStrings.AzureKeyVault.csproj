@@ -1,0 +1,89 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- Multi-target to match JD.Efcpt.Build.Tasks so the source loads under any supported MSBuild host. -->
+    <TargetFrameworks>net472;net8.0;net9.0;net10.0</TargetFrameworks>
+    <IsPackable>true</IsPackable>
+
+    <AssemblyName>JD.Efcpt.Build.ConnectionStrings.AzureKeyVault</AssemblyName>
+    <RootNamespace>JD.Efcpt.Build.ConnectionStrings.AzureKeyVault</RootNamespace>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <LangVersion>latest</LangVersion>
+
+    <Nullable Condition="'$(TargetFramework)' == 'net472'">annotations</Nullable>
+    <NoWarn Condition="'$(TargetFramework)' == 'net472'">$(NoWarn);CS8632</NoWarn>
+
+    <!--
+      This assembly is never referenced at compile time by a consuming project - it's located by
+      SatelliteConnectionStringSourceResolver in JD.Efcpt.Build.Tasks and loaded via reflection at
+      MSBuild task-execution time (see IncludeAzureKeyVaultAssembliesInPack below). So it must NOT
+      go into the standard lib/ NuGet folder (which would make it a compile-time reference), and
+      its own dependencies (Azure.Security.KeyVault.Secrets, Azure.Identity) must NOT be declared
+      as NuGet dependencies of this package - their DLLs are bundled directly instead.
+    -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <NoWarn>$(NoWarn);NU5128;NU5100</NoWarn>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+    <!-- Package Identity -->
+    <PackageId>JD.Efcpt.Build.ConnectionStrings.AzureKeyVault</PackageId>
+    <Title>JD.Efcpt.Build Azure Key Vault Connection-String Source</Title>
+    <Authors>Jerrett Davis</Authors>
+    <Company>JDH Productions</Company>
+    <Description>Azure Key Vault connection-string source for JD.Efcpt.Build. Install alongside JD.Efcpt.Build and set EfcptConnectionStringSource=azure-keyvault to resolve the build-time connection string from a Key Vault secret. See https://jerrettdavis.github.io/JD.Efcpt.Build/user-guide/connection-string-sources.html for details.</Description>
+    <PackageTags>efcore;entity-framework;efcpt;msbuild;azure;keyvault;secrets;connection-string</PackageTags>
+    <PackageProjectUrl>https://github.com/jerrettdavis/JD.Efcpt.Build</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jerrettdavis/JD.Efcpt.Build</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Shared IConnectionStringSource contract - excluded from pack, like Providers.Abstractions is excluded for provider satellites. -->
+    <ProjectReference Include="..\JD.Efcpt.Build.Core\JD.Efcpt.Build.Core.csproj" Private="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Security.KeyVault.Secrets" />
+    <PackageReference Include="Azure.Identity" />
+  </ItemGroup>
+
+  <!-- Polyfills for net472: provides IsExternalInit, init accessors, etc. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <PackageReference Include="PolySharp">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="build\JD.Efcpt.Build.ConnectionStrings.AzureKeyVault.targets" Pack="true" PackagePath="build" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="JD.Efcpt.Build.ConnectionStrings.AzureKeyVault.Tests" />
+  </ItemGroup>
+
+  <!--
+    Collect this project's own build output (the source DLL + Azure.Security.KeyVault.Secrets,
+    Azure.Identity, and their transitive dependencies) into tasks/{tfm}/connstr-sources/azure-keyvault
+    inside the nupkg, mirroring how the provider satellites (e.g. JD.Efcpt.Build.PostgreSQL) collect
+    their output into tasks/{tfm}/providers/{provider}. JD.Efcpt.Build.Core, its own
+    JD.Efcpt.Build.Providers.Abstractions dependency, and PatternKit.Core are all deliberately
+    excluded: they already ship inside the core JD.Efcpt.Build package next to
+    JD.Efcpt.Build.Tasks.dll, and by the time SatelliteConnectionStringSourceResolver resolves any
+    source (including this one) those copies are already loaded in the same load
+    context/AppDomain, so second copies here would be redundant, unused weight.
+  -->
+  <Target Name="IncludeAzureKeyVaultAssembliesInPack" BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <_AzureKeyVaultFiles Include="bin\$(Configuration)\net472\*.dll" Condition="Exists('bin\$(Configuration)\net472\JD.Efcpt.Build.ConnectionStrings.AzureKeyVault.dll')" TargetFrameworkFolder="net472" />
+      <_AzureKeyVaultFiles Include="bin\$(Configuration)\net8.0\*.dll" Condition="Exists('bin\$(Configuration)\net8.0\JD.Efcpt.Build.ConnectionStrings.AzureKeyVault.dll')" TargetFrameworkFolder="net8.0" />
+      <_AzureKeyVaultFiles Include="bin\$(Configuration)\net9.0\*.dll" Condition="Exists('bin\$(Configuration)\net9.0\JD.Efcpt.Build.ConnectionStrings.AzureKeyVault.dll')" TargetFrameworkFolder="net9.0" />
+      <_AzureKeyVaultFiles Include="bin\$(Configuration)\net10.0\*.dll" Condition="Exists('bin\$(Configuration)\net10.0\JD.Efcpt.Build.ConnectionStrings.AzureKeyVault.dll')" TargetFrameworkFolder="net10.0" />
+      <_AzureKeyVaultFiles Remove="@(_AzureKeyVaultFiles)" Condition="'%(Filename)' == 'JD.Efcpt.Build.Core' or '%(Filename)' == 'JD.Efcpt.Build.Providers.Abstractions' or '%(Filename)' == 'PatternKit.Core' or '%(Filename)' == 'System.IO.Hashing'" />
+      <None Include="@(_AzureKeyVaultFiles)" Pack="true" PackagePath="tasks\%(_AzureKeyVaultFiles.TargetFrameworkFolder)\connstr-sources\azure-keyvault" />
+    </ItemGroup>
+  </Target>
+</Project>
