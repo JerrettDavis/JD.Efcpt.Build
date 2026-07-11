@@ -263,6 +263,13 @@ public sealed class RunEfcpt : Task
     /// </summary>
     public string ProjectPath { get; set; } = "";
 
+    /// <summary>
+    /// Testability seam for the SDK/dnx/global-tool capability probes used during tool
+    /// resolution and restore. Defaults to <see cref="Utilities.DefaultSdkProbe"/>, which
+    /// delegates to the existing memoized probes; tests may substitute a fake implementation.
+    /// </summary>
+    internal ISdkProbe Probe { get; set; } = new DefaultSdkProbe();
+
     private readonly record struct ToolResolutionContext(
         string ToolPath,
         string ToolMode,
@@ -274,7 +281,8 @@ public sealed class RunEfcpt : Task
         string WorkingDir,
         string Args,
         string TargetFramework,
-        BuildLog Log
+        BuildLog Log,
+        ISdkProbe Probe
     );
 
     private readonly record struct ToolInvocation(
@@ -296,7 +304,8 @@ public sealed class RunEfcpt : Task
         string ToolPackageId,
         string ToolVersion,
         string TargetFramework,
-        BuildLog Log
+        BuildLog Log,
+        ISdkProbe Probe
     );
 
     private static readonly Lazy<Strategy<ToolResolutionContext, ToolInvocation>> ToolResolutionStrategy = new(() =>
@@ -308,7 +317,7 @@ public sealed class RunEfcpt : Task
                     Args: ctx.Args,
                     Cwd: ctx.WorkingDir,
                     UseManifest: false))
-            .When((in ctx) => IsDotNet10OrLater(ctx.TargetFramework) && IsDotNet10SdkInstalled(ctx.DotNetExe) && IsDnxAvailable(ctx.DotNetExe))
+            .When((in ctx) => IsDotNet10OrLater(ctx.TargetFramework) && ctx.Probe.IsDotNet10SdkInstalled(ctx.DotNetExe) && ctx.Probe.IsDnxAvailable(ctx.DotNetExe))
             .Then((in ctx)
                 => new ToolInvocation(
                     Exe: ctx.DotNetExe,
@@ -339,8 +348,8 @@ public sealed class RunEfcpt : Task
         ActionStrategy<ToolRestoreContext>.Create()
             // Manifest restore: restore tools from local manifest
             // Skip when: dnx will be used OR no manifest directory exists
-            .When((in ctx) => ctx is { UseManifest: true, ShouldRestore: true, ManifestDir: not null } 
-                && !(IsDotNet10OrLater(ctx.TargetFramework) && IsDotNet10SdkInstalled(ctx.DotNetExe) && IsDnxAvailable(ctx.DotNetExe)))
+            .When((in ctx) => ctx is { UseManifest: true, ShouldRestore: true, ManifestDir: not null }
+                && !(IsDotNet10OrLater(ctx.TargetFramework) && ctx.Probe.IsDotNet10SdkInstalled(ctx.DotNetExe) && ctx.Probe.IsDnxAvailable(ctx.DotNetExe)))
             .Then((in ctx) =>
             {
                 var restoreCwd = ctx.ManifestDir ?? ctx.WorkingDir;
@@ -355,7 +364,7 @@ public sealed class RunEfcpt : Task
                     ShouldRestore: true,
                     HasExplicitPath: false,
                     HasPackageId: true
-                } && !(IsDotNet10OrLater(ctx.TargetFramework) && IsDotNet10SdkInstalled(ctx.DotNetExe) && IsDnxAvailable(ctx.DotNetExe)))
+                } && !(IsDotNet10OrLater(ctx.TargetFramework) && ctx.Probe.IsDotNet10SdkInstalled(ctx.DotNetExe) && ctx.Probe.IsDnxAvailable(ctx.DotNetExe)))
             .Then((in ctx) =>
             {
                 var versionArg = string.IsNullOrWhiteSpace(ctx.ToolVersion) ? "" : $" --version \"{ctx.ToolVersion}\"";
@@ -431,7 +440,7 @@ public sealed class RunEfcpt : Task
         // Use the Strategy pattern to resolve tool invocation
         var context = new ToolResolutionContext(
             ToolPath, mode, manifestDir, forceManifestOnNonWindows,
-            DotNetExe, ToolCommand, ToolPackageId, workingDir, args, TargetFramework, log);
+            DotNetExe, ToolCommand, ToolPackageId, workingDir, args, TargetFramework, log, Probe);
 
         var invocation = ToolResolutionStrategy.Value.Execute(in context);
 
@@ -458,7 +467,8 @@ public sealed class RunEfcpt : Task
             ToolPackageId: ToolPackageId,
             ToolVersion: ToolVersion,
             TargetFramework: TargetFramework,
-            Log: log
+            Log: log,
+            Probe: Probe
         );
 
         ToolRestoreStrategy.Value.Execute(in restoreContext);
