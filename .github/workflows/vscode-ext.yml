@@ -1,0 +1,102 @@
+name: VS Code Extension
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'ide/vscode/**'
+      - '.github/workflows/vscode-ext.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'ide/vscode/**'
+      - '.github/workflows/vscode-ext.yml'
+
+defaults:
+  run:
+    working-directory: ide/vscode
+
+jobs:
+  build:
+    name: Build, lint, test, package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ide/vscode/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Compile
+        run: npm run compile
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Integration tests (headless via xvfb)
+        run: xvfb-run -a npm run test:integration
+
+      - name: Package extension (.vsix)
+        run: npx @vscode/vsce package
+
+      - name: Upload .vsix artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: jd-efcpt-build-vsix
+          path: ide/vscode/*.vsix
+
+  publish:
+    name: Publish to marketplaces
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ide/vscode/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile
+        run: npm run compile
+
+      - name: Publish to Visual Studio Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -n "$VSCE_PAT" ]; then
+            npx @vscode/vsce publish -p "$VSCE_PAT"
+          else
+            echo "Skipping Marketplace publish: VSCE_PAT secret not set."
+          fi
+
+      - name: Publish to Open VSX
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          if [ -n "$OVSX_PAT" ]; then
+            npx ovsx publish -p "$OVSX_PAT"
+          else
+            echo "Skipping Open VSX publish: OVSX_PAT secret not set."
+          fi
