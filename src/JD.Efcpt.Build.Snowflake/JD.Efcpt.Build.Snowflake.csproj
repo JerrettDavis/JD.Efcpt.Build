@@ -91,4 +91,19 @@
       <None Include="@(_SnowflakeProviderFiles)" Pack="true" PackagePath="tasks\%(_SnowflakeProviderFiles.TargetFrameworkFolder)\providers\snowflake" />
     </ItemGroup>
   </Target>
+
+  <!--
+    Native runtimes (Snowflake's sf_mini_core native library) ship under a runtimes/ folder in the
+    driver package - sweep those into the satellite pack layout too, mirroring how the main
+    package's IncludeTaskAssembliesInPack collects Tasks's own runtimes folder.
+  -->
+  <Target Name="IncludeSnowflakeProviderRuntimesInPack" BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <_SnowflakeProviderRuntimeFiles Include="bin\$(Configuration)\net472\runtimes\**\*" Condition="Exists('bin\$(Configuration)\net472\runtimes')" TargetFrameworkFolder="net472" />
+      <_SnowflakeProviderRuntimeFiles Include="bin\$(Configuration)\net8.0\runtimes\**\*" Condition="Exists('bin\$(Configuration)\net8.0\runtimes')" TargetFrameworkFolder="net8.0" />
+      <_SnowflakeProviderRuntimeFiles Include="bin\$(Configuration)\net9.0\runtimes\**\*" Condition="Exists('bin\$(Configuration)\net9.0\runtimes')" TargetFrameworkFolder="net9.0" />
+      <_SnowflakeProviderRuntimeFiles Include="bin\$(Configuration)\net10.0\runtimes\**\*" Condition="Exists('bin\$(Configuration)\net10.0\runtimes')" TargetFrameworkFolder="net10.0" />
+      <None Include="@(_SnowflakeProviderRuntimeFiles)" Pack="true" PackagePath="tasks\%(_SnowflakeProviderRuntimeFiles.TargetFrameworkFolder)\providers\snowflake\runtimes" />
+    </ItemGroup>
+  </Target>
 </Project>
