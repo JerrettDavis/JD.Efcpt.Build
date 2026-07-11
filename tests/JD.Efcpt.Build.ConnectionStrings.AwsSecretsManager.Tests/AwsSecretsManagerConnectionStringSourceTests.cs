@@ -231,6 +231,26 @@ public sealed class AwsSecretsManagerConnectionStringSourceTests(ITestOutputHelp
             .AssertPassed();
     }
 
+    [Scenario("NotSupportedException (binary secret) maps to Misconfigured")]
+    [Fact]
+    public async Task Not_supported_exception_maps_to_misconfigured()
+    {
+        var client = new FakeSecretsManagerClient(throwException: new NotSupportedException(
+            "Secret 'my/binary-secret' is stored as a binary value (SecretBinary). Connection strings must be stored as a plain-text SecretString."));
+        var source = new AwsSecretsManagerConnectionStringSource(_ => client);
+        var settings = new Dictionary<string, string>
+        {
+            ["secretId"] = "my/binary-secret",
+            ["region"] = "us-east-1"
+        };
+
+        await Given("a context whose client throws NotSupportedException for a binary secret", () => BuildContext(settings))
+            .When("resolve", ctx => source.Resolve(in ctx))
+            .Then("outcome is Misconfigured", r => r.Outcome == ConnectionStringSourceOutcome.Misconfigured)
+            .And("diagnostic mentions binary", r => r.Diagnostic != null && r.Diagnostic.Contains("binary", StringComparison.OrdinalIgnoreCase))
+            .AssertPassed();
+    }
+
     [Scenario("An unexpected exception maps to Failed")]
     [Fact]
     public async Task Unexpected_exception_maps_to_failed()

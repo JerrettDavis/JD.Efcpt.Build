@@ -105,6 +105,22 @@ public sealed class ConnectionStringResolutionChainSourceTests(ITestOutputHelper
             .AssertPassed();
     }
 
+    [Scenario("Found outcome with an empty connection string throws JD0030 (contract violation, no fall-through)")]
+    [Fact]
+    public async Task Found_with_empty_connection_string_throws_jd0030()
+    {
+        var source = new FakeConnectionStringSource("fake", ConnectionStringSourceResult.Found("fake", "   "));
+        var resolver = new FakeConnectionStringSourceResolver().Register(source);
+
+        await Given("a context whose source returns Found with a whitespace connection string, plus a valid explicit connection string", () =>
+                BuildContext("fake", resolver, explicitConnectionString: "Server=should-not-be-used;"))
+            .When("execute the chain", Chain.Execute)
+            .Then("throws instead of falling through", r => r.Threw)
+            .And("with code JD0030", r => r.Exception!.Code == "JD0030")
+            .And("message calls out the contract violation", r => r.Exception!.Message.Contains("violated its contract"))
+            .AssertPassed();
+    }
+
     #endregion
 
     #region Fail-closed outcome -> JD code mapping

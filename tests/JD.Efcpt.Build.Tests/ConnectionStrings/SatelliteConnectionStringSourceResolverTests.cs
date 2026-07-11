@@ -1,3 +1,4 @@
+using System.Reflection;
 using JD.Efcpt.Build.Core.ConnectionStrings;
 using JD.Efcpt.Build.Tasks.ConnectionStrings;
 using TinyBDD;
@@ -97,6 +98,36 @@ public sealed class SatelliteConnectionStringSourceResolverTests(ITestOutputHelp
                 r => r.EnumerateCandidateDirectories("aws-secrets").ToList())
             .Then("does not include the bogus non-existent path", dirs => !dirs.Contains(bogus))
             .And("does include the valid caller path", dirs => dirs.Contains(AppContext.BaseDirectory))
+            .AssertPassed();
+    }
+
+    [Scenario("FlattenLoaderExceptions joins the distinct underlying LoaderExceptions messages")]
+    [Fact]
+    public async Task Flatten_loader_exceptions_joins_underlying_messages()
+    {
+        await Given("a ReflectionTypeLoadException with two distinct loader exceptions", () =>
+                new ReflectionTypeLoadException(
+                    classes: [null],
+                    exceptions:
+                    [
+                        new FileNotFoundException("Could not load file or assembly 'Npgsql, Version=9.0.0.0'."),
+                        new FileNotFoundException("Could not load file or assembly 'Some.Other.Dep'.")
+                    ]))
+            .When("flatten", ex => SatelliteConnectionStringSourceResolver.FlattenLoaderExceptions(ex))
+            .Then("includes the first missing dependency message", msg => msg.Contains("Npgsql, Version=9.0.0.0"))
+            .And("includes the second missing dependency message", msg => msg.Contains("Some.Other.Dep"))
+            .And("joins them with a separator", msg => msg.Contains(" | "))
+            .AssertPassed();
+    }
+
+    [Scenario("FlattenLoaderExceptions falls back to the outer message when there are no loader exceptions")]
+    [Fact]
+    public async Task Flatten_loader_exceptions_falls_back_to_outer_message()
+    {
+        await Given("a ReflectionTypeLoadException with no non-null loader exceptions", () =>
+                new ReflectionTypeLoadException(classes: [null], exceptions: [null]))
+            .When("flatten", ex => SatelliteConnectionStringSourceResolver.FlattenLoaderExceptions(ex))
+            .Then("returns a non-empty message", msg => !string.IsNullOrWhiteSpace(msg))
             .AssertPassed();
     }
 }

@@ -191,6 +191,17 @@ public static class ConnectionStringResolutionChain
 
         return result.Outcome switch
         {
+            // Enforce the IConnectionStringSource contract at the chain boundary: a source that
+            // reports Found must supply a non-empty connection string. A misbehaving (especially
+            // third-party) satellite returning Found with a null/whitespace value must fail
+            // closed with JD0030 rather than silently propagate an empty string that could read
+            // as a fall-through downstream.
+            ConnectionStringSourceOutcome.Found when string.IsNullOrWhiteSpace(result.ConnectionString) =>
+                throw new ConnectionStringSourceException(
+                    ConnectionStringSourceException.SourceResolutionFailedCode,
+                    ctx.ConnectionStringSource,
+                    $"Connection-string source '{ctx.ConnectionStringSource}' violated its contract: returned Found with an empty connection string. See {SourceDocsUrl} for details."),
+
             ConnectionStringSourceOutcome.Found =>
                 result.ConnectionString,
 

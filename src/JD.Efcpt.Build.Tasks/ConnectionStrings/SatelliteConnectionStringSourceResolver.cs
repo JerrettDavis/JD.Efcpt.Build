@@ -100,20 +100,54 @@ internal sealed class SatelliteConnectionStringSourceResolver : IConnectionStrin
         if (assemblyPath is null)
             return null;
 
-        Assembly assembly;
         try
         {
-            assembly = ProviderAssemblyLoader.LoadFromPath(assemblyPath);
+            var assembly = ProviderAssemblyLoader.LoadFromPath(assemblyPath);
+            return CreateSourceInstance(assembly)
+                ?? throw new InvalidOperationException(
+                    $"Connection-string source assembly '{assemblyPath}' for key '{sourceKey}' does not contain a concrete IConnectionStringSource implementation.");
+        }
+        catch (ReflectionTypeLoadException ex)
+        {
+            // A missing transitive dependency surfaces as ReflectionTypeLoadException from
+            // Assembly.GetTypes() (inside CreateSourceInstance) with the real cause buried in
+            // LoaderExceptions - flatten those into the message so the user sees the actual
+            // missing dependency instead of the generic "Unable to load one or more of the
+            // requested types" text.
+            throw new InvalidOperationException(
+                $"Found connection-string source assembly '{assemblyPath}' for key '{sourceKey}' but failed to load its types: {FlattenLoaderExceptions(ex)}", ex);
+        }
+        catch (InvalidOperationException)
+        {
+            // Already a clear, actionable message (e.g. no IConnectionStringSource implementation);
+            // rethrow as-is rather than double-wrapping it below.
+            throw;
         }
         catch (Exception ex)
         {
             throw new InvalidOperationException(
-                $"Found connection-string source assembly '{assemblyPath}' for key '{sourceKey}' but failed to load it.", ex);
+                $"Found connection-string source assembly '{assemblyPath}' for key '{sourceKey}' but failed to load or instantiate it: {ex.Message}", ex);
         }
+    }
 
-        return CreateSourceInstance(assembly)
-            ?? throw new InvalidOperationException(
-                $"Connection-string source assembly '{assemblyPath}' for key '{sourceKey}' does not contain a concrete IConnectionStringSource implementation.");
+    /// <summary>
+    /// Flattens the <see cref="ReflectionTypeLoadException.LoaderExceptions"/> of a
+    /// <paramref name="ex"/> into a single human-readable string, joining the distinct underlying
+    /// loader-failure messages (typically a missing transitive dependency) so they surface in the
+    /// thrown error instead of being silently dropped.
+    /// </summary>
+    internal static string FlattenLoaderExceptions(ReflectionTypeLoadException ex)
+    {
+        var messages = (ex.LoaderExceptions ?? [])
+            .Where(e => e is not null)
+            .Select(e => e!.Message)
+            .Where(m => !string.IsNullOrWhiteSpace(m))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        return messages.Length == 0
+            ? ex.Message
+            : string.Join(" | ", messages);
     }
 
     /// <summary>

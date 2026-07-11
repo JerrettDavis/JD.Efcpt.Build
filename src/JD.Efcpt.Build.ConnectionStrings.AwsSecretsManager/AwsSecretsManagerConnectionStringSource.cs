@@ -109,7 +109,16 @@ public sealed class AwsSecretsManagerConnectionStringSource : IConnectionStringS
         }
         catch (ResourceNotFoundException ex)
         {
+            // ResourceNotFoundException is a subclass of AmazonServiceException, so this specific
+            // catch MUST precede the AmazonServiceException catch below: only a genuine
+            // "secret not found" (never an auth/decryption/throttling failure) maps to NotFound.
             return ConnectionStringSourceResult.NotFound(Key, $"Secret '{secretId}' was not found in region '{regionName}'. {ex.Message}");
+        }
+        catch (NotSupportedException ex)
+        {
+            // The adapter signals an unsupported secret shape (e.g. a binary-only secret) via
+            // NotSupportedException - a user misconfiguration, not a transient service failure.
+            return ConnectionStringSourceResult.Misconfigured(Key, $"Secret '{secretId}' in region '{regionName}' cannot be used: {ex.Message}");
         }
         catch (AmazonServiceException ex)
         {

@@ -117,8 +117,8 @@ Authentication uses the AWS SDK's default credential provider chain (environment
 shared credentials file, an EC2/ECS/Lambda IAM role, etc.). No credentials are configured
 through JD.Efcpt.Build properties.
 
-**Least privilege:** grant the build identity only `secretsmanager:GetSecretValue` scoped to
-the specific secret's ARN:
+**Least privilege:** grant the build identity only `secretsmanager:GetSecretValue` and
+`secretsmanager:BatchGetSecretValue`, scoped to the specific secret's ARN:
 
 ```json
 {
@@ -126,12 +126,20 @@ the specific secret's ARN:
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": "secretsmanager:GetSecretValue",
+      "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:BatchGetSecretValue"
+      ],
       "Resource": "arn:aws:secretsmanager:us-east-1:123456789012:secret:my-app/connection-string-??????"
     }
   ]
 }
 ```
+
+> **Note:** this satellite retrieves the secret via the AWS `BatchGetSecretValue` API (current
+> AWS SDK releases no longer expose a single-secret `GetSecretValue` client method), so the
+> `secretsmanager:BatchGetSecretValue` action is required. `secretsmanager:GetSecretValue` is
+> listed alongside it for forward compatibility.
 
 ## Property reference
 
