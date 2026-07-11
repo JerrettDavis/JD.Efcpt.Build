@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using JD.Efcpt.Build.Core.Diagnostics;
 using JD.Efcpt.Build.Core.Logging;
 #if NETFRAMEWORK
 using JD.Efcpt.Build.Tasks.Compatibility;
@@ -57,6 +58,12 @@ public static class ProcessRunner
     /// <see cref="ProcessResult.StdErr"/> message is returned if it has not exited within
     /// <paramref name="timeoutMs"/>, instead of blocking indefinitely.
     /// </param>
+    /// <param name="secretToRedact">
+    /// Optional known secret (e.g. the connection string when invoking efcpt in connection-string
+    /// mode) that is removed by exact value from every piece of text this method logs. The value
+    /// passed to the process is never altered - only logged/thrown text is redacted. Generic
+    /// credential masking (<see cref="SecretRedaction.MaskSecrets"/>) is always applied on top.
+    /// </param>
     /// <returns>A <see cref="ProcessResult"/> containing exit code and captured output.</returns>
     public static ProcessResult Run(
         IBuildLog log,
@@ -64,10 +71,13 @@ public static class ProcessRunner
         string args,
         string workingDir,
         IDictionary<string, string>? environmentVariables = null,
-        int? timeoutMs = null)
+        int? timeoutMs = null,
+        string? secretToRedact = null)
     {
         var normalized = CommandNormalizationStrategy.Normalize(fileName, args);
-        log.Info($"> {normalized.FileName} {normalized.Args}");
+        // Mask credentials (e.g. a connection string passed as a positional arg) before echoing
+        // the command line to the build log. The unmasked args are still passed to the process.
+        log.Info($"> {normalized.FileName} {RedactForLog(normalized.Args, secretToRedact)}");
 
         var psi = new ProcessStartInfo
         {
@@ -125,7 +135,7 @@ public static class ProcessRunner
                 -1,
                 stdoutBuilder.ToString(),
                 $"Process timed out after {timeout / 1000.0:0.#}s and was killed: " +
-                $"{normalized.FileName} {normalized.Args}");
+                $"{normalized.FileName} {RedactForLog(normalized.Args, secretToRedact)}");
         }
 
         // Ensure the async redirected-stream event handlers have finished flushing before we
@@ -143,22 +153,30 @@ public static class ProcessRunner
     /// <param name="args">Command line arguments.</param>
     /// <param name="workingDir">Working directory for the process.</param>
     /// <param name="environmentVariables">Optional environment variables to set.</param>
+    /// <param name="secretToRedact">
+    /// Optional known secret removed by exact value from all logged/thrown text (command echo,
+    /// captured StdOut/StdErr, and the failure exception message). The executed args are never
+    /// altered. See <see cref="Run"/>.
+    /// </param>
     /// <exception cref="InvalidOperationException">Thrown when the process exits with a non-zero code.</exception>
     public static void RunOrThrow(
         IBuildLog log,
         string fileName,
         string args,
         string workingDir,
-        IDictionary<string, string>? environmentVariables = null)
+        IDictionary<string, string>? environmentVariables = null,
+        string? secretToRedact = null)
     {
-        var result = Run(log, fileName, args, workingDir, environmentVariables);
+        var result = Run(log, fileName, args, workingDir, environmentVariables, secretToRedact: secretToRedact);
 
-        if (!string.IsNullOrWhiteSpace(result.StdOut)) log.Info(result.StdOut);
-        if (!string.IsNullOrWhiteSpace(result.StdErr)) log.Error(result.StdErr);
+        // The child tool's raw StdOut/StdErr commonly embeds the connection string in driver
+        // exception text; redact before logging.
+        if (!string.IsNullOrWhiteSpace(result.StdOut)) log.Info(RedactForLog(result.StdOut, secretToRedact));
+        if (!string.IsNullOrWhiteSpace(result.StdErr)) log.Error(RedactForLog(result.StdErr, secretToRedact));
 
         if (!result.Success)
             throw new InvalidOperationException(
-                $"Process failed ({result.ExitCode}): {fileName} {args}");
+                $"Process failed ({result.ExitCode}): {fileName} {RedactForLog(args, secretToRedact)}");
     }
 
     /// <summary>
@@ -183,13 +201,23 @@ public static class ProcessRunner
 
         if (!result.Success)
         {
-            log.Error(result.StdOut);
-            log.Error(result.StdErr);
+            log.Error(RedactForLog(result.StdOut, null));
+            log.Error(RedactForLog(result.StdErr, null));
             throw new InvalidOperationException(
                 errorMessage ?? $"Build failed with exit code {result.ExitCode}");
         }
 
-        if (!string.IsNullOrWhiteSpace(result.StdOut)) log.Detail(result.StdOut);
-        if (!string.IsNullOrWhiteSpace(result.StdErr)) log.Detail(result.StdErr);
+        if (!string.IsNullOrWhiteSpace(result.StdOut)) log.Detail(RedactForLog(result.StdOut, null));
+        if (!string.IsNullOrWhiteSpace(result.StdErr)) log.Detail(RedactForLog(result.StdErr, null));
     }
+
+    /// <summary>
+    /// Redacts a single piece of text before it is written to a build log or embedded in a thrown
+    /// exception: first removes the exact known <paramref name="secretToRedact"/> value (when
+    /// provided - the primary defense on the efcpt connection-string path), then applies generic
+    /// credential masking (<see cref="SecretRedaction.MaskSecrets"/>) as a fallback for secrets
+    /// this caller doesn't know about. Never used on the arguments actually passed to the process.
+    /// </summary>
+    private static string RedactForLog(string text, string? secretToRedact)
+        => SecretRedaction.MaskSecrets(SecretRedaction.RedactConnectionString(text, secretToRedact));
 }

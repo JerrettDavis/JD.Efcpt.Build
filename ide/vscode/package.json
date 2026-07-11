@@ -1,0 +1,140 @@
+{
+  "name": "jd-efcpt-build",
+  "displayName": "JD.Efcpt.Build",
+  "description": "Trigger and observe the JD.Efcpt.Build MSBuild pipeline (EF Core Power Tools model generation) from VS Code / C# Dev Kit.",
+  "version": "0.1.0",
+  "publisher": "JerrettDavis",
+  "license": "MIT",
+  "icon": "images/icon.png",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "efcpt",
+    "ef core",
+    "entity framework",
+    "msbuild",
+    "dotnet",
+    "csharp",
+    "csdevkit"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JerrettDavis/JD.Efcpt.Build.git",
+    "directory": "ide/vscode"
+  },
+  "bugs": {
+    "url": "https://github.com/JerrettDavis/JD.Efcpt.Build/issues"
+  },
+  "homepage": "https://github.com/JerrettDavis/JD.Efcpt.Build#readme",
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "workspaceContains:**/*.csproj",
+    "onCommand:jdEfcpt.regenerateModels",
+    "onCommand:jdEfcpt.showBuildStatus"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "jdEfcpt.regenerateModels",
+        "title": "JD.Efcpt: Regenerate Models",
+        "category": "JD.Efcpt"
+      },
+      {
+        "command": "jdEfcpt.showBuildStatus",
+        "title": "JD.Efcpt: Show Build Status",
+        "category": "JD.Efcpt"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "jdEfcpt",
+          "title": "JD.Efcpt.Build",
+          "icon": "images/activitybar.svg"
+        }
+      ]
+    },
+    "views": {
+      "jdEfcpt": [
+        {
+          "id": "jdEfcpt.statusView",
+          "name": "Build Status",
+          "icon": "images/activitybar.svg",
+          "contextualTitle": "JD.Efcpt.Build Status"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "JD.Efcpt.Build",
+      "properties": {
+        "jdEfcpt.enableProfiling": {
+          "type": "boolean",
+          "default": true,
+          "description": "Pass -p:EfcptEnableProfiling=true so the build writes obj/efcpt/build-profile.json for status/diagnostics reporting."
+        },
+        "jdEfcpt.buildVerbosity": {
+          "type": "string",
+          "default": "minimal",
+          "enum": [
+            "minimal",
+            "detailed"
+          ],
+          "description": "Value passed as -p:EfcptLogVerbosity to the JD.Efcpt.Build MSBuild pipeline. Defaults to 'minimal' to reduce the risk of sensitive values (e.g. connection strings) appearing in build output."
+        },
+        "jdEfcpt.dotnetPath": {
+          "type": "string",
+          "default": "dotnet",
+          "description": "Path to the dotnet executable used to run builds."
+        }
+      }
+    },
+    "problemMatchers": [
+      {
+        "name": "jdEfcpt-msbuild",
+        "owner": "csharp",
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}"
+        ],
+        "pattern": {
+          "regexp": "^(.*?)\\((\\d+),(\\d+)\\):\\s+(error|warning)\\s+(CS\\d+):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "code": 5,
+          "message": 6
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "node esbuild.js",
+    "compile-tests": "tsc -p tsconfig.test.json",
+    "watch": "node esbuild.js --watch",
+    "lint": "eslint src --ext ts",
+    "test": "npm run test:unit",
+    "test:unit": "mocha --require ts-node/register src/test/unit/**/*.test.ts",
+    "test:integration": "npm run compile && npm run compile-tests && vscode-test",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "@types/node": "^20.14.0",
+    "@types/mocha": "^10.0.6",
+    "typescript": "^5.5.4",
+    "ts-node": "^10.9.2",
+    "esbuild": "^0.23.0",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/eslint-plugin": "^7.16.1",
+    "@typescript-eslint/parser": "^7.16.1",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^2.31.1",
+    "mocha": "^10.6.0"
+  }
+}

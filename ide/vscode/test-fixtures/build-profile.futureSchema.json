@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "2.0.0",
+  "runId": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+  "startTime": "2024-01-11T12:10:00Z",
+  "endTime": "2024-01-11T12:11:00Z",
+  "duration": "PT1M",
+  "status": "Success",
+  "project": {
+    "path": "/path/to/MyProject.csproj",
+    "name": "MyProject"
+  },
+  "artifacts": [
+    { "path": "/output/Customer.g.cs", "type": "GeneratedModel", "size": 2048 }
+  ],
+  "diagnostics": []
+}

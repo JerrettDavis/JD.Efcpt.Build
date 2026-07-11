@@ -5,6 +5,7 @@ using JD.Efcpt.Build.Core.Diagnostics;
 using JD.Efcpt.Build.Core.Processes;
 using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Extensions;
+using JD.Efcpt.Build.Tasks.Profiling;
 using JD.Efcpt.Build.Tasks.Schema;
 using Microsoft.Build.Framework;
 using PatternKit.Behavioral.Strategy;
@@ -469,10 +470,14 @@ public sealed class RunEfcpt : Task
         var workingDir = Path.GetFullPath(WorkingDirectory);
         var args = BuildArgs();
 
+        // Connection string (when in connection-string mode) is embedded verbatim in the args;
+        // redact it before any of them are written to the build log.
+        var connectionStringForRedaction = UseConnectionStringMode.IsTrue() ? ConnectionString : null;
+
         var fake = Environment.GetEnvironmentVariable("EFCPT_FAKE_EFCPT");
         if (!string.IsNullOrWhiteSpace(fake))
         {
-            log.Info($"Running in working directory {workingDir}: (fake efcpt) {args}");
+            log.Info($"Running in working directory {workingDir}: (fake efcpt) {SecretRedaction.RedactConnectionString(args, connectionStringForRedaction)}");
             log.Info($"Output will be written to {OutputDir}");
             Directory.CreateDirectory(workingDir);
             Directory.CreateDirectory(OutputDir);
@@ -500,6 +505,7 @@ public sealed class RunEfcpt : Task
             File.WriteAllText(sample, $"// generated from {DacpacPath ?? ConnectionString}");
 
             log.Detail("EFCPT_FAKE_EFCPT set; wrote sample output with Models subdirectory.");
+            RecordGeneratedArtifacts(ctx.Profiler, OutputDir);
             return true;
         }
 
@@ -582,7 +588,7 @@ public sealed class RunEfcpt : Task
         var invokeCwd = invocation.Cwd;
         var useManifest = invocation.UseManifest;
 
-        log.Info($"Running in working directory {invokeCwd}: {invokeExe} {invokeArgs}");
+        log.Info($"Running in working directory {invokeCwd}: {invokeExe} {SecretRedaction.RedactConnectionString(invokeArgs, connectionStringForRedaction)}");
         log.Info($"Output will be written to {OutputDir}");
         Directory.CreateDirectory(workingDir);
         Directory.CreateDirectory(OutputDir);
@@ -607,9 +613,58 @@ public sealed class RunEfcpt : Task
 
         ToolRestoreStrategy.Value.Execute(in restoreContext);
 
-        ProcessRunner.RunOrThrow(log, invokeExe, invokeArgs, invokeCwd);
+        // Pass the connection string (when in connection-string mode) as the known secret so
+        // ProcessRunner redacts it by exact value from the command echo, the child tool's
+        // StdOut/StdErr, and any failure exception message - never from the executed args.
+        ProcessRunner.RunOrThrow(log, invokeExe, invokeArgs, invokeCwd, secretToRedact: connectionStringForRedaction);
+
+        // Populate the build profile with the generated model files so consumers (e.g. the
+        // VS Code extension) can report an accurate model count instead of always zero.
+        RecordGeneratedArtifacts(ctx.Profiler, OutputDir);
 
         return true;
+    }
+
+    /// <summary>
+    /// Records every generated C# file under <paramref name="outputDir"/> as a
+    /// <c>GeneratedModel</c> artifact on the build profiler. Best-effort telemetry: any failure
+    /// (including a disabled/null profiler or an unreadable file) is swallowed so it can never
+    /// fail the build.
+    /// </summary>
+    private static void RecordGeneratedArtifacts(BuildProfiler? profiler, string outputDir)
+    {
+        if (profiler is not { Enabled: true })
+            return;
+
+        try
+        {
+            if (!Directory.Exists(outputDir))
+                return;
+
+            foreach (var file in Directory.EnumerateFiles(outputDir, "*.cs", SearchOption.AllDirectories))
+            {
+                long? size = null;
+                try
+                {
+                    size = new FileInfo(file).Length;
+                }
+                catch
+                {
+                    // Size is optional metadata; keep the artifact even if it can't be sized.
+                }
+
+                profiler.AddArtifact(new ArtifactInfo
+                {
+                    Path = file,
+                    Type = "GeneratedModel",
+                    Size = size
+                });
+            }
+        }
+        catch
+        {
+            // Artifact recording is best-effort; never fail the build over telemetry.
+        }
     }
 
     /// <summary>

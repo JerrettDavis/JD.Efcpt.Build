@@ -1,5 +1,6 @@
 using JD.Efcpt.Build.Core.Diagnostics;
 using JD.Efcpt.Build.Tasks;
+using JD.Efcpt.Build.Tasks.Profiling;
 using JD.Efcpt.Build.Tests.Infrastructure;
 using TinyBDD;
 using TinyBDD.Xunit;
@@ -124,6 +125,76 @@ public sealed partial class RunEfcptTests(ITestOutputHelper output) : TinyBddXun
             })
             .Finally(r => r.Setup.Folder.Dispose())
             .AssertPassed();
+    }
+
+    [Scenario("Connection string is redacted from the build log")]
+    [Fact]
+    public async Task Connection_string_is_redacted_from_log()
+    {
+        const string secret = "SuperSecretPassword123!";
+        var connectionString = $"Server=db.example.com;Database=App;User Id=sa;Password={secret};";
+
+        await Given("inputs for connection string mode", SetupForConnectionStringMode)
+            .When("task executes in fake mode with a connection string", s =>
+                ExecuteTaskWithFakeMode(s, task =>
+                {
+                    task.DacpacPath = "";
+                    task.UseConnectionStringMode = "true";
+                    task.ConnectionString = connectionString;
+                }))
+            .Then("task succeeds", r => r.Success)
+            .And("no logged message contains the raw password", r =>
+                r.Setup.Engine.Messages.All(m => !(m.Message ?? "").Contains(secret)) &&
+                r.Setup.Engine.Warnings.All(w => !(w.Message ?? "").Contains(secret)) &&
+                r.Setup.Engine.Errors.All(e => !(e.Message ?? "").Contains(secret)))
+            .And("no logged message contains the full connection string", r =>
+                r.Setup.Engine.Messages.All(m => !(m.Message ?? "").Contains(connectionString)))
+            .And("the connection string is replaced with the redaction placeholder", r =>
+                r.Setup.Engine.Messages.Any(m =>
+                    (m.Message ?? "").Contains(SecretRedaction.ConnectionStringPlaceholder)))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("Generated model files are recorded as profile artifacts")]
+    [Fact]
+    public async Task Generated_files_recorded_as_artifacts()
+    {
+        var projectPath = $"/test/artifacts-{Guid.NewGuid()}.csproj";
+        BuildProfiler? profiler = null;
+
+        try
+        {
+            await Given("a registered, enabled profiler and DACPAC-mode inputs", () =>
+                {
+                    BuildProfilerManager.Clear();
+                    profiler = BuildProfilerManager.GetOrCreate(projectPath, enabled: true, "TestProject");
+                    return SetupForDacpacMode();
+                })
+                .When("task executes in fake mode against that project", s =>
+                    ExecuteTaskWithFakeMode(s, task => task.ProjectPath = projectPath))
+                .Then("task succeeds", r => r.Success)
+                .And("the profiler captured at least one generated model artifact", _ =>
+                {
+                    var run = profiler!.GetRunOutput();
+                    return run.Artifacts.Count > 0 &&
+                           run.Artifacts.All(a => a.Type == "GeneratedModel");
+                })
+                .And("artifact count matches the generated .cs files", r =>
+                {
+                    var run = profiler!.GetRunOutput();
+                    var expected = Directory
+                        .EnumerateFiles(r.Setup.OutputDir, "*.cs", SearchOption.AllDirectories)
+                        .Count();
+                    return run.Artifacts.Count == expected && expected > 0;
+                })
+                .Finally(r => r.Setup.Folder.Dispose())
+                .AssertPassed();
+        }
+        finally
+        {
+            BuildProfilerManager.Clear();
+        }
     }
 
     [Scenario("Creates working directory if missing")]

@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "out",
+    "rootDir": "src"
+  },
+  "include": [
+    "src/test/integration/**/*.ts",
+    "src/extension.ts",
+    "src/projectDiscovery.ts",
+    "src/jdDiagnostics.ts",
+    "src/buildProfile.ts",
+    "src/regenerate.ts",
+    "src/statusBar.ts",
+    "src/statusView.ts"
+  ]
+}
