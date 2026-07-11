@@ -213,14 +213,26 @@ public partial class EfcptConfigGeneratorTests
 
     private static string FindRepoRoot()
     {
+        // Locate the repo root by the solution file rather than the ".git" entry.
+        // In a git worktree, ".git" at the root is a FILE (a gitdir pointer), not a
+        // directory, so a Directory.Exists(".git") check fails and the walk-up never
+        // matches. Matching on JD.Efcpt.Build.sln mirrors the existing convention in
+        // AssemblyFixture.cs / TestUtilities.cs and works in clones and worktrees alike.
         var current = Directory.GetCurrentDirectory();
         while (current != null)
         {
-            if (Directory.Exists(Path.Combine(current, ".git")))
+            if (File.Exists(Path.Combine(current, "JD.Efcpt.Build.sln")))
                 return current;
+            current = Directory.GetParent(current)?.FullName;
+        }
 
-            var parent = Directory.GetParent(current);
-            current = parent?.FullName;
+        var assemblyLocation = typeof(EfcptConfigGeneratorTests).Assembly.Location;
+        current = Path.GetDirectoryName(assemblyLocation);
+        while (current != null)
+        {
+            if (File.Exists(Path.Combine(current, "JD.Efcpt.Build.sln")))
+                return current;
+            current = Directory.GetParent(current)?.FullName;
         }
 
         throw new DirectoryNotFoundException("Could not find repository root");
