@@ -23,16 +23,6 @@ public sealed class ProviderAdapterResolverTests(ITestOutputHelper output) : Tin
             .AssertPassed();
     }
 
-    [Scenario("Resolves PostgreSQL adapter")]
-    [Fact]
-    public async Task Resolves_postgres_adapter()
-    {
-        await Given("a resolver", () => new ProviderAdapterResolver())
-            .When("resolved for postgres", r => r.Resolve("postgres"))
-            .Then("returns a non-null PostgreSqlProviderAdapter", adapter => adapter is PostgreSqlProviderAdapter)
-            .AssertPassed();
-    }
-
     [Scenario("Resolves MySQL adapter")]
     [Fact]
     public async Task Resolves_mysql_adapter()
@@ -160,6 +150,52 @@ public sealed class ProviderAdapterResolverTests(ITestOutputHelper output) : Tin
 
     #endregion
 
+    #region Satellite Provider: PostgreSQL
+
+    /// <summary>
+    /// PostgreSQL is a satellite provider (JD.Efcpt.Build.PostgreSQL); see the Snowflake region
+    /// above for why a search path is required and how the Tests project makes this DLL
+    /// available.
+    /// </summary>
+    private static readonly string[] PostgresSearchPath =
+        [Path.GetDirectoryName(typeof(ProviderAdapterResolverTests).Assembly.Location)!];
+
+    [Scenario("Resolves PostgreSQL adapter dynamically from a satellite provider search path")]
+    [Fact]
+    public async Task Resolves_postgres_adapter_from_search_path()
+    {
+        await Given("a resolver and this test assembly's own directory as a provider search path",
+                () => (Resolver: new ProviderAdapterResolver(), SearchPaths: PostgresSearchPath))
+            .When("resolved for postgres", t => t.Resolver.Resolve("postgres", t.SearchPaths))
+            .Then("returns a non-null PostgreSqlProviderAdapter", adapter => adapter is PostgreSqlProviderAdapter)
+            .AssertPassed();
+    }
+
+    [Scenario("Throws ProviderDriverNotFoundException for PostgreSQL when no search path contains its assembly")]
+    [Fact]
+    public async Task Throws_for_postgres_without_matching_search_path()
+    {
+        await Given("a resolver with no search paths", () => new ProviderAdapterResolver())
+            .When("resolved for postgres", r =>
+            {
+                try
+                {
+                    r.Resolve("postgres");
+                    return (Exception?)null;
+                }
+                catch (Exception ex)
+                {
+                    return ex;
+                }
+            })
+            .Then("throws ProviderDriverNotFoundException with the install command",
+                ex => ex is ProviderDriverNotFoundException &&
+                      ex.Message.Contains("dotnet add package JD.Efcpt.Build.PostgreSQL"))
+            .AssertPassed();
+    }
+
+    #endregion
+
     #region Unknown Provider
 
     [Scenario("Throws ProviderDriverNotFoundException for an unresolvable provider")]
@@ -192,8 +228,10 @@ public sealed class ProviderAdapterResolverTests(ITestOutputHelper output) : Tin
     [Fact]
     public async Task Caches_resolved_adapter_per_instance()
     {
+        // Uses "mysql" (still resolved in-assembly) rather than an extracted satellite provider,
+        // so this caching behavior test doesn't depend on satellite search-path plumbing.
         await Given("a resolver", () => new ProviderAdapterResolver())
-            .When("resolved twice for the same provider", r => (First: r.Resolve("postgres"), Second: r.Resolve("postgres")))
+            .When("resolved twice for the same provider", r => (First: r.Resolve("mysql"), Second: r.Resolve("mysql")))
             .Then("both calls return the same instance", t => ReferenceEquals(t.First, t.Second))
             .AssertPassed();
     }

@@ -70,18 +70,12 @@
   </ItemGroup>
 
   <!--
-    Framework-specific database providers.
-    Npgsql 9.x dropped netstandard2.0; use 8.x for net472.
-    Oracle.ManagedDataAccess[.Core] moved to the JD.Efcpt.Build.Oracle satellite package - see
-    that project's csproj for the same net472-vs-net8+ package split, carried over unchanged.
+    Npgsql (net472-vs-net8+ version split) and Oracle.ManagedDataAccess[.Core] moved to the
+    JD.Efcpt.Build.PostgreSQL and JD.Efcpt.Build.Oracle satellite packages respectively - see
+    those projects' csproj files, which carry the same conditional splits over unchanged. Do not
+    add either back here; the whole point of extraction is to keep them out of the core package's
+    dependency graph.
   -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
-    <PackageReference Include="Npgsql" VersionOverride="8.0.9" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' != 'net472'">
-    <PackageReference Include="Npgsql" />
-  </ItemGroup>
 
   <!--
     Polyfills for net472: provides IsExternalInit, init accessors, etc.

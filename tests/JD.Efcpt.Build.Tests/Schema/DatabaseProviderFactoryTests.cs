@@ -35,6 +35,13 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     private static readonly string[] OracleSearchPaths =
         [Path.GetDirectoryName(typeof(DatabaseProviderFactoryTests).Assembly.Location)!];
 
+    /// <summary>
+    /// PostgreSQL is a satellite provider; see <see cref="SnowflakeSearchPaths"/> remarks - same
+    /// reasoning applies (test-only ProjectReference to JD.Efcpt.Build.PostgreSQL).
+    /// </summary>
+    private static readonly string[] PostgresSearchPaths =
+        [Path.GetDirectoryName(typeof(DatabaseProviderFactoryTests).Assembly.Location)!];
+
     #region NormalizeProvider Tests
 
     [Scenario("Normalizes SQL Server provider aliases")]
@@ -193,8 +200,12 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_postgres_connection()
     {
-        await Given("postgres provider and connection string", () => ("postgres", "Host=localhost;Database=test"))
-            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2))
+        // PostgreSQL is a satellite provider (JD.Efcpt.Build.PostgreSQL) and no longer resolves
+        // in-assembly - see the Snowflake connection test above for why a search path is
+        // required.
+        await Given("postgres provider, connection string, and a matching search path",
+                () => ("postgres", "Host=localhost;Database=test", PostgresSearchPaths))
+            .When("connection created", t => DatabaseProviderFactory.CreateConnection(t.Item1, t.Item2, t.Item3))
             .Then("returns NpgsqlConnection", conn => conn is NpgsqlConnection)
             .Finally(conn => conn.Dispose())
             .AssertPassed();
@@ -293,8 +304,9 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
     [Fact]
     public async Task Creates_postgres_schema_reader()
     {
-        await Given("postgres provider", () => "postgres")
-            .When("schema reader created", p => DatabaseProviderFactory.CreateSchemaReader(p))
+        // See the PostgreSQL connection test above for why a search path is required here.
+        await Given("postgres provider and a matching search path", () => ("postgres", PostgresSearchPaths))
+            .When("schema reader created", t => DatabaseProviderFactory.CreateSchemaReader(t.Item1, t.Item2))
             .Then("returns PostgreSqlSchemaReader", reader => reader is PostgreSqlSchemaReader)
             .AssertPassed();
     }

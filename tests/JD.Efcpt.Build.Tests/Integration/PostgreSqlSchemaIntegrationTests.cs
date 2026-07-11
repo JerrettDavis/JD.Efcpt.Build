@@ -92,9 +92,16 @@ public sealed partial class PostgreSqlSchemaIntegrationTests(ITestOutputHelper o
         return new SchemaResult(ctx, schema);
     }
 
+    // PostgreSQL is a satellite provider (JD.Efcpt.Build.PostgreSQL); its adapter DLL is only
+    // present here because the Tests project has a test-only ProjectReference to it, which
+    // places the DLL in this test assembly's own output directory. See
+    // ProviderAdapterResolverTests for the same pattern applied to the resolver directly.
+    private static readonly string[] PostgresSearchPaths =
+        [Path.GetDirectoryName(typeof(PostgreSqlSchemaIntegrationTests).Assembly.Location)!];
+
     private static SchemaResult ExecuteReadSchemaViaFactory(TestContext ctx)
     {
-        var reader = DatabaseProviderFactory.CreateSchemaReader("postgres");
+        var reader = DatabaseProviderFactory.CreateSchemaReader("postgres", PostgresSearchPaths);
         var schema = reader.ReadSchema(ctx.ConnectionString);
         return new SchemaResult(ctx, schema);
     }
