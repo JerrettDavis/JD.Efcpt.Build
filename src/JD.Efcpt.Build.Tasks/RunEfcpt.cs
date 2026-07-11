@@ -264,6 +264,26 @@ public sealed class RunEfcpt : Task
     public string ProjectPath { get; set; } = "";
 
     /// <summary>
+    /// Controls whether the task avoids any network-dependent tool resolution/restore step
+    /// (dnx execution, tool-manifest restore, global tool update) and update-check calls.
+    /// </summary>
+    /// <value>
+    /// Interpreted case-insensitively via the same truthy convention as other boolean-like
+    /// properties on this task (see <see cref="Extensions.StringExtensions.IsTrue"/>). Also
+    /// honours the <c>EFCPT_OFFLINE</c> environment variable - if either is truthy, offline mode
+    /// is enabled. Defaults to <c>"false"</c>.
+    /// </value>
+    /// <remarks>
+    /// When enabled, the task will refuse to spawn any of the three network-dependent branches
+    /// (dnx, tool-manifest restore, global tool update) and instead requires the efcpt tool to
+    /// already be runnable via an explicit <see cref="ToolPath"/>, a restored tool manifest, or a
+    /// global tool already on <c>PATH</c>. If none of those are available, the task fails with
+    /// error <c>JD0026</c> instead of attempting (and blocking on) a network call. See
+    /// <c>docs/user-guide/offline.md</c>.
+    /// </remarks>
+    public string OfflineMode { get; set; } = "false";
+
+    /// <summary>
     /// Testability seam for the SDK/dnx/global-tool capability probes used during tool
     /// resolution and restore. Defaults to <see cref="Utilities.DefaultSdkProbe"/>, which
     /// delegates to the existing memoized probes; tests may substitute a fake implementation.
@@ -282,7 +302,8 @@ public sealed class RunEfcpt : Task
         string Args,
         string TargetFramework,
         BuildLog Log,
-        ISdkProbe Probe
+        ISdkProbe Probe,
+        bool Offline
     );
 
     private readonly record struct ToolInvocation(
@@ -305,7 +326,8 @@ public sealed class RunEfcpt : Task
         string ToolVersion,
         string TargetFramework,
         BuildLog Log,
-        ISdkProbe Probe
+        ISdkProbe Probe,
+        bool Offline
     );
 
     private static readonly Lazy<Strategy<ToolResolutionContext, ToolInvocation>> ToolResolutionStrategy = new(() =>
@@ -317,7 +339,7 @@ public sealed class RunEfcpt : Task
                     Args: ctx.Args,
                     Cwd: ctx.WorkingDir,
                     UseManifest: false))
-            .When((in ctx) => IsDotNet10OrLater(ctx.TargetFramework) && ctx.Probe.IsDotNet10SdkInstalled(ctx.DotNetExe) && ctx.Probe.IsDnxAvailable(ctx.DotNetExe))
+            .When((in ctx) => !ctx.Offline && IsDotNet10OrLater(ctx.TargetFramework) && ctx.Probe.IsDotNet10SdkInstalled(ctx.DotNetExe) && ctx.Probe.IsDnxAvailable(ctx.DotNetExe))
             .Then((in ctx)
                 => new ToolInvocation(
                     Exe: ctx.DotNetExe,
@@ -347,8 +369,8 @@ public sealed class RunEfcpt : Task
     private static readonly Lazy<ActionStrategy<ToolRestoreContext>> ToolRestoreStrategy = new(() =>
         ActionStrategy<ToolRestoreContext>.Create()
             // Manifest restore: restore tools from local manifest
-            // Skip when: dnx will be used OR no manifest directory exists
-            .When((in ctx) => ctx is { UseManifest: true, ShouldRestore: true, ManifestDir: not null }
+            // Skip when: offline OR dnx will be used OR no manifest directory exists
+            .When((in ctx) => !ctx.Offline && ctx is { UseManifest: true, ShouldRestore: true, ManifestDir: not null }
                 && !(IsDotNet10OrLater(ctx.TargetFramework) && ctx.Probe.IsDotNet10SdkInstalled(ctx.DotNetExe) && ctx.Probe.IsDnxAvailable(ctx.DotNetExe)))
             .Then((in ctx) =>
             {
@@ -356,9 +378,9 @@ public sealed class RunEfcpt : Task
                 ProcessRunner.RunOrThrow(ctx.Log, ctx.DotNetExe, "tool restore", restoreCwd);
             })
             // Global restore: update global tool package
-            // Skip only when dnx will be used (all three conditions: .NET 10+ target, SDK installed, dnx available)
+            // Skip when: offline OR dnx will be used (all three conditions: .NET 10+ target, SDK installed, dnx available)
             .When((in ctx)
-                => ctx is
+                => !ctx.Offline && ctx is
                 {
                     UseManifest: false,
                     ShouldRestore: true,
@@ -427,6 +449,16 @@ public sealed class RunEfcpt : Task
         var manifestDir = FindManifestDir(workingDir);
         var mode = ToolMode;
 
+        // Offline mode: OfflineMode task property OR-ed with the EFCPT_OFFLINE environment
+        // variable (test/CI escape hatch, mirroring the EFCPT_FAKE_EFCPT/EFCPT_TEST_DACPAC
+        // convention documented on this task).
+        var offline = OfflineMode.IsTrue() || Environment.GetEnvironmentVariable("EFCPT_OFFLINE").IsTrue();
+
+        if (offline)
+        {
+            log.Info("[Efcpt] Offline mode enabled (EfcptOfflineMode=true): dnx execution, tool-manifest restore, and global tool update are skipped.");
+        }
+
         // On non-Windows, a bare efcpt executable is unlikely to exist unless explicitly provided
         // via ToolPath. To avoid fragile PATH assumptions on CI agents, treat "auto" as
         // "tool-manifest" whenever a manifest is present *or* when running on non-Windows and
@@ -440,7 +472,7 @@ public sealed class RunEfcpt : Task
         // Use the Strategy pattern to resolve tool invocation
         var context = new ToolResolutionContext(
             ToolPath, mode, manifestDir, forceManifestOnNonWindows,
-            DotNetExe, ToolCommand, ToolPackageId, workingDir, args, TargetFramework, log, Probe);
+            DotNetExe, ToolCommand, ToolPackageId, workingDir, args, TargetFramework, log, Probe, offline);
 
         var invocation = ToolResolutionStrategy.Value.Execute(in context);
 
@@ -468,7 +500,8 @@ public sealed class RunEfcpt : Task
             ToolVersion: ToolVersion,
             TargetFramework: TargetFramework,
             Log: log,
-            Probe: Probe
+            Probe: Probe,
+            Offline: offline
         );
 
         ToolRestoreStrategy.Value.Execute(in restoreContext);

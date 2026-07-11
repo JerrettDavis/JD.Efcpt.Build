@@ -464,6 +464,7 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("ToolCommand", "$(EfcptToolCommand)");
                         task.Param("ToolPath", "$(EfcptToolPath)");
                         task.Param("DotNetExe", "$(EfcptDotNetExe)");
+                        task.Param("OfflineMode", "$(EfcptOfflineMode)");
                         task.Param("WorkingDirectory", "$(EfcptOutput)");
                         task.Param("DacpacPath", "$(_EfcptDacpacPath)");
                         task.Param("ConnectionString", "$(_EfcptResolvedConnectionString)");

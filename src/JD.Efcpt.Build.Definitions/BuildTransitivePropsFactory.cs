@@ -45,6 +45,7 @@ public static class BuildTransitivePropsFactory
                     group.Property<EfcptToolCommand>( "efcpt", "'$(EfcptToolCommand)'==''");
                     group.Property<EfcptToolPath>( "", "'$(EfcptToolPath)'==''");
                     group.Property<EfcptDotNetExe>( "dotnet", "'$(EfcptDotNetExe)'==''");
+                    group.Property<EfcptOfflineMode>( "false", "'$(EfcptOfflineMode)'==''");
                     group.Property<EfcptFingerprintFile>( "$(EfcptOutput)fingerprint.txt", "'$(EfcptFingerprintFile)'==''");
                     group.Property<EfcptStampFile>( "$(EfcptOutput).efcpt.stamp", "'$(EfcptStampFile)'==''");
                     group.Property<EfcptDetectGeneratedFileChanges>( "false", "'$(EfcptDetectGeneratedFileChanges)'==''");
@@ -141,6 +142,7 @@ public static class BuildTransitivePropsFactory
                     group.Property<EfcptToolCommand>( "efcpt", "'$(EfcptToolCommand)'==''");
                     group.Property<EfcptToolPath>( "", "'$(EfcptToolPath)'==''");
                     group.Property<EfcptDotNetExe>( "dotnet", "'$(EfcptDotNetExe)'==''");
+                    group.Property<EfcptOfflineMode>( "false", "'$(EfcptOfflineMode)'==''");
                     group.Property<EfcptFingerprintFile>( "$(EfcptOutput)fingerprint.txt", "'$(EfcptFingerprintFile)'==''");
                     group.Property<EfcptStampFile>( "$(EfcptOutput).efcpt.stamp", "'$(EfcptStampFile)'==''");
                     group.Property<EfcptDetectGeneratedFileChanges>( "false", "'$(EfcptDetectGeneratedFileChanges)'==''");
@@ -442,6 +444,10 @@ public static class BuildTransitivePropsFactory
   public readonly struct EfcptLogVerbosity : IMsBuildPropertyName
   {
     public string Name => "EfcptLogVerbosity";
+  }
+  public readonly struct EfcptOfflineMode : IMsBuildPropertyName
+  {
+    public string Name => "EfcptOfflineMode";
   }
   public readonly struct EfcptOutput : IMsBuildPropertyName
   {
