@@ -40,6 +40,7 @@
     <EfcptFingerprintFile Condition="'$(EfcptFingerprintFile)'==''">$(EfcptOutput)fingerprint.txt</EfcptFingerprintFile>
     <EfcptStampFile Condition="'$(EfcptStampFile)'==''">$(EfcptOutput).efcpt.stamp</EfcptStampFile>
     <EfcptDetectGeneratedFileChanges Condition="'$(EfcptDetectGeneratedFileChanges)'==''">false</EfcptDetectGeneratedFileChanges>
+    <EfcptForceRegenerate Condition="'$(EfcptForceRegenerate)'==''">false</EfcptForceRegenerate>
     <EfcptLogVerbosity Condition="'$(EfcptLogVerbosity)'==''">minimal</EfcptLogVerbosity>
     <EfcptDumpResolvedInputs Condition="'$(EfcptDumpResolvedInputs)'==''">false</EfcptDumpResolvedInputs>
     <EfcptAutoDetectWarningLevel Condition="'$(EfcptAutoDetectWarningLevel)'==''">Info</EfcptAutoDetectWarningLevel>

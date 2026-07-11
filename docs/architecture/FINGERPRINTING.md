@@ -215,12 +215,21 @@ using (var hash = new XxHash64())
 ### Location
 
 ```
-$(ProjectDir)/obj/$(Configuration)/$(TargetFramework)/.efcpt/fingerprint.txt
+$(EfcptFingerprintFile)
 ```
+which defaults to:
+```
+$(EfcptOutput)fingerprint.txt
+```
+where `$(EfcptOutput)` defaults to `$(BaseIntermediateOutputPath)efcpt\` - i.e. `obj/efcpt/`,
+**not** a per-`$(Configuration)`/`$(TargetFramework)` path (`BaseIntermediateOutputPath` is the
+shared `obj\` root, unlike `IntermediateOutputPath` which is per-configuration/TFM). See
+`buildTransitive/JD.Efcpt.Build.props` (`EfcptOutput`, `EfcptFingerprintFile`) for the
+authoritative defaults.
 
 **Example:**
 ```
-/MyProject/obj/Debug/net8.0/.efcpt/fingerprint.txt
+/MyProject/obj/efcpt/fingerprint.txt
 ```
 
 ### Content
@@ -283,7 +292,7 @@ ABC123DEF456789
 ```csharp
 public bool ShouldRegenerate()
 {
-    string fingerprintPath = Path.Combine(intermediateOutputPath, ".efcpt", "fingerprint.txt");
+    string fingerprintPath = Path.Combine(baseIntermediateOutputPath, "efcpt", "fingerprint.txt");
 
     // First build or after clean
     if (!File.Exists(fingerprintPath))
@@ -330,7 +339,7 @@ public bool ShouldRegenerate()
    dotnet build
 
    # Check if fingerprint changed
-   cat obj/Debug/net8.0/.efcpt/fingerprint.txt
+   cat obj/efcpt/fingerprint.txt
    ```
 
 3. **Look for:**
@@ -358,14 +367,19 @@ public bool ShouldRegenerate()
 
 ```bash
 # Check current fingerprint
-cat obj/Debug/net8.0/.efcpt/fingerprint.txt
+cat obj/efcpt/fingerprint.txt
 
 # Force regeneration by deleting fingerprint
-rm obj/Debug/net8.0/.efcpt/fingerprint.txt
+rm obj/efcpt/fingerprint.txt
 
 # Rebuild
 dotnet build
 ```
+
+> **Prefer `-p:EfcptForceRegenerate=true` over manually deleting the fingerprint/stamp files.**
+> It's the supported, stable way to force a full regeneration for one build (e.g. from an IDE
+> extension or CLI wrapper) without reaching into `obj/`. See
+> [force-regenerate.md](../user-guide/force-regenerate.md).
 
 **Common Causes:**
 
@@ -385,18 +399,18 @@ dotnet build
 **Diagnosis:**
 
 ```bash
-# Check intermediate output path
-dotnet build /p:IntermediateOutputPath=obj/Debug/net8.0/
+# Check the base intermediate output path
+dotnet build /p:BaseIntermediateOutputPath=obj/
 
-# Verify .efcpt directory creation
-ls -la obj/Debug/net8.0/.efcpt/
+# Verify the efcpt directory creation ($(EfcptOutput), default obj/efcpt/)
+ls -la obj/efcpt/
 ```
 
 **Common Causes:**
 
 | Cause | Solution |
 |-------|----------|
-| Custom clean target deletes .efcpt/ | Exclude from clean |
+| Custom clean target deletes efcpt/ | Exclude from clean |
 | Permissions issue | Check write permissions on obj/ |
 | MSBuild incremental build disabled | Enable incremental builds |
 
@@ -448,15 +462,19 @@ dotnet build -c Debug &
 dotnet build -c Release &
 ```
 
-**Fingerprint Isolation:**
-- Each configuration has separate `obj/` directory
-- Each has independent `fingerprint.txt`
-- No collision or race conditions
+**Fingerprint Isolation - default is NOT isolated per configuration/TFM:**
+- `EfcptOutput` defaults to `$(BaseIntermediateOutputPath)efcpt\` (`obj/efcpt/`), and
+  `BaseIntermediateOutputPath` is the same `obj\` root regardless of `$(Configuration)` or
+  `$(TargetFramework)` - unlike `$(IntermediateOutputPath)`, which *is* per-configuration/TFM.
+- By default, `Debug` and `Release` builds of the same project **share** one
+  `obj/efcpt/fingerprint.txt` / `obj/efcpt/.efcpt.stamp` pair.
+- Building multiple configurations of the same project concurrently can race on that shared state.
+  If you need isolation, set `EfcptOutput` explicitly per configuration/TFM, e.g.
+  `<EfcptOutput>$(IntermediateOutputPath)efcpt\</EfcptOutput>`.
 
-**Location:**
+**Location (default, shared across configurations/TFMs):**
 ```
-obj/Debug/net8.0/.efcpt/fingerprint.txt
-obj/Release/net8.0/.efcpt/fingerprint.txt
+obj/efcpt/fingerprint.txt
 ```
 
 ## Performance Impact
@@ -514,7 +532,7 @@ Speedup: 37x - 300x faster
 **Never:**
 ```bash
 # ❌ Don't do this
-echo "FAKE123" > obj/Debug/net8.0/.efcpt/fingerprint.txt
+echo "FAKE123" > obj/efcpt/fingerprint.txt
 ```
 
 **Reason:**

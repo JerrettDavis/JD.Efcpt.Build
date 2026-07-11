@@ -495,13 +495,34 @@ public static class BuildTransitiveTargetsFactory
                     target.DependsOnTargets("EfcptComputeFingerprint");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
                 });
+                // Force-regenerate stamp invalidation (#191, prerequisite for VS #182 / VS Code
+                // #183 integrations): EfcptGenerateModels has MSBuild Inputs/Outputs incremental
+                // gating (Outputs="$(EfcptStampFile)") in addition to its Condition. Setting the
+                // Condition to also honor EfcptForceRegenerate is not enough by itself - if the
+                // stamp file is still up to date relative to Inputs, MSBuild would still consider
+                // the target's tasks up to date and skip them. This BeforeTargets hook runs
+                // immediately before EfcptGenerateModels's own Inputs/Outputs check (BeforeTargets
+                // hooks execute after DependsOnTargets but before the target's own up-to-date
+                // evaluation), so deleting the stamp file here makes Outputs missing and forces a
+                // genuine re-run for one build - the cleanest MSBuild-idiomatic way to defeat
+                // incremental gating without touching the Inputs/Outputs lists themselves.
+                t.Target("_EfcptForceRegenerateInvalidateStamp", target =>
+                {
+                    target.BeforeTargets(new EfcptGenerateModelsTarget());
+                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptForceRegenerate)' == 'true'");
+                    target.Message("[Efcpt] EfcptForceRegenerate=true - forcing full model regeneration (bypassing fingerprint/incremental cache) for this build.", "normal");
+                    target.Task("Delete", task =>
+                    {
+                        task.Param("Files", "$(EfcptStampFile)");
+                    }, "Exists('$(EfcptStampFile)')");
+                });
                 t.Target<EfcptGenerateModelsTarget>( target =>
                 {
                     target.BeforeTargets("CoreCompile");
                     target.DependsOnTargets("BeforeEfcptGeneration");
                     target.Inputs("$(_EfcptDacpacPath);$(_EfcptStagedConfig);$(_EfcptStagedRenaming)");
                     target.Outputs("$(EfcptStampFile)");
-                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and ('$(_EfcptFingerprintChanged)' == 'true' or !Exists('$(EfcptStampFile)'))");
+                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and ('$(_EfcptFingerprintChanged)' == 'true' or !Exists('$(EfcptStampFile)') or '$(EfcptForceRegenerate)' == 'true')");
                     target.Task("MakeDir", task =>
                     {
                         task.Param("Directories", "$(EfcptGeneratedDir)");
