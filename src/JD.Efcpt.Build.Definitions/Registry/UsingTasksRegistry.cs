@@ -20,6 +20,7 @@ public static class UsingTasksRegistry
         "CheckSdkVersion",
         "ComputeFingerprint",
         "DetectSqlProject",
+        "EfcptDoctor",
         "EnsureDacpacBuilt",
         "FinalizeBuildProfiling",
         "InitializeBuildProfiling",
