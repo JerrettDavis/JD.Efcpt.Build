@@ -9,6 +9,13 @@
     <TargetFrameworks>net472;net8.0;net9.0;net10.0</TargetFrameworks>
 
     <!--
+      PublicApiAnalyzers (#191: PUBLIC-API-STABILITY) locks this assembly's public surface.
+      Scoped to net10.0 only; see build/PublicApi.props for why (avoids a per-TFM
+      PublicAPI.*.txt baseline for net472).
+    -->
+    <PublicApiAnalyzerTfm>net10.0</PublicApiAnalyzerTfm>
+
+    <!--
       Not packed as its own NuGet package. This assembly is a build-time/runtime implementation
       detail shared between JD.Efcpt.Build.Tasks and JD.Efcpt.Cli via ProjectReference; its output
       DLL travels to Tasks consumers by being swept up alongside JD.Efcpt.Build.Tasks.dll
@@ -28,6 +35,8 @@
     <Nullable Condition="'$(TargetFramework)' == 'net472'">annotations</Nullable>
     <NoWarn Condition="'$(TargetFramework)' == 'net472'">$(NoWarn);CS8632</NoWarn>
   </PropertyGroup>
+
+  <Import Project="..\..\build\PublicApi.props" />
 
   <!-- Polyfills for net472: provides IsExternalInit, init accessors, etc. (records use these). -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net472'">

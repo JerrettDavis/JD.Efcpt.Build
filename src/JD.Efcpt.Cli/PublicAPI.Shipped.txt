@@ -1,0 +1,22 @@
+#nullable enable
+JD.Efcpt.Cli.Commands.DoctorCommand
+JD.Efcpt.Cli.Commands.InitCommand
+JD.Efcpt.Cli.Logging.ConsoleBuildLog
+JD.Efcpt.Cli.Logging.ConsoleBuildLog.ConsoleBuildLog() -> void
+JD.Efcpt.Cli.Logging.ConsoleBuildLog.Detail(string! message) -> void
+JD.Efcpt.Cli.Logging.ConsoleBuildLog.Error(string! code, string! message) -> void
+JD.Efcpt.Cli.Logging.ConsoleBuildLog.Error(string! message) -> void
+JD.Efcpt.Cli.Logging.ConsoleBuildLog.Info(string! message) -> void
+JD.Efcpt.Cli.Logging.ConsoleBuildLog.Log(JD.Efcpt.Build.Core.Logging.MessageLevel level, string! message, string? code = null) -> void
+JD.Efcpt.Cli.Logging.ConsoleBuildLog.Verbose.get -> bool
+JD.Efcpt.Cli.Logging.ConsoleBuildLog.Verbose.init -> void
+JD.Efcpt.Cli.Logging.ConsoleBuildLog.Warn(string! code, string! message) -> void
+JD.Efcpt.Cli.Logging.ConsoleBuildLog.Warn(string! message) -> void
+const JD.Efcpt.Cli.Commands.DoctorCommand.ExitNoViablePathAdvisory = 2 -> int
+const JD.Efcpt.Cli.Commands.DoctorCommand.ExitNoViablePathStrict = 1 -> int
+const JD.Efcpt.Cli.Commands.DoctorCommand.ExitUnexpectedError = 3 -> int
+const JD.Efcpt.Cli.Commands.DoctorCommand.ExitViable = 0 -> int
+static JD.Efcpt.Cli.Commands.DoctorCommand.Build() -> System.CommandLine.Command!
+static JD.Efcpt.Cli.Commands.DoctorCommand.Execute(JD.Efcpt.Cli.Logging.ConsoleBuildLog! log, JD.Efcpt.Build.Core.Diagnostics.DoctorInputs inputs, JD.Efcpt.Build.Core.Diagnostics.ISdkProbe! probe) -> int
+static JD.Efcpt.Cli.Commands.InitCommand.Build() -> System.CommandLine.Command!
+static JD.Efcpt.Cli.Commands.InitCommand.ExecuteAsync(JD.Efcpt.Cli.Logging.ConsoleBuildLog! log, string? outputDir, string? provider, string? dbContextName, string? rootNamespace, bool force, bool online, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<int>!

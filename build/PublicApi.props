@@ -1,0 +1,40 @@
+<Project>
+  <!--
+    Opt-in shared props for Microsoft.CodeAnalysis.PublicApiAnalyzers (issue #191:
+    PUBLIC-API-STABILITY). Import this explicitly from a project's .csproj - do NOT
+    import it via Directory.Build.props - so only the reusable, externally-consumable
+    library projects pick up the analyzer, not every project in the solution.
+
+    Multi-targeted projects (net472;net8.0;net9.0;net10.0) would otherwise need a
+    separate PublicAPI.Shipped.txt/.Unshipped.txt pair PER TargetFramework, because
+    net472 carries TFM-conditional polyfilled types and looser nullable annotations
+    that diverge from net8.0+, which would produce spurious per-TFM RS0016/RS0017
+    mismatches. To avoid that churn, the analyzer + AdditionalFiles are scoped to a
+    SINGLE canonical TFM via $(PublicApiAnalyzerTfm) - net10.0, the newest/most
+    complete TFM - which locks the real cross-consumer surface once.
+
+    Usage in an importing .csproj (multi-targeted project):
+      <PropertyGroup>
+        <PublicApiAnalyzerTfm>net10.0</PublicApiAnalyzerTfm>
+      </PropertyGroup>
+      <Import Project="..\..\build\PublicApi.props" />
+
+    Usage for a single-TFM project (e.g. netstandard2.0-only JD.Efcpt.Ide.Core, or
+    the net8.0-only JD.Efcpt.Cli): leave $(PublicApiAnalyzerTfm) unset. The analyzer
+    then applies unconditionally to that project's one TFM.
+  -->
+  <PropertyGroup>
+    <_PublicApiAnalyzerEnabled Condition="'$(PublicApiAnalyzerTfm)' == ''">true</_PublicApiAnalyzerEnabled>
+    <_PublicApiAnalyzerEnabled Condition="'$(PublicApiAnalyzerTfm)' != '' And '$(TargetFramework)' == '$(PublicApiAnalyzerTfm)'">true</_PublicApiAnalyzerEnabled>
+    <_PublicApiAnalyzerEnabled Condition="'$(_PublicApiAnalyzerEnabled)' == ''">false</_PublicApiAnalyzerEnabled>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(_PublicApiAnalyzerEnabled)' == 'true'">
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime;build;native;contentfiles;analyzers</IncludeAssets>
+    </PackageReference>
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+</Project>

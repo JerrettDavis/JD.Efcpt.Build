@@ -2,6 +2,13 @@
   <PropertyGroup>
     <!-- Multi-target for Framework MSBuild (net472) and .NET Core MSBuild (net8.0+) -->
     <TargetFrameworks>net472;net8.0;net9.0;net10.0</TargetFrameworks>
+
+    <!--
+      PublicApiAnalyzers (#191: PUBLIC-API-STABILITY) locks this assembly's public surface.
+      Scoped to net10.0 only; see build/PublicApi.props for why (avoids a per-TFM
+      PublicAPI.*.txt baseline for net472).
+    -->
+    <PublicApiAnalyzerTfm>net10.0</PublicApiAnalyzerTfm>
     <IsPackable>false</IsPackable>
     <AssemblyName>JD.Efcpt.Build.Tasks</AssemblyName>
     <RootNamespace>JD.Efcpt.Build.Tasks</RootNamespace>
@@ -27,6 +34,8 @@
     -->
     <GenerateDependencyFile>true</GenerateDependencyFile>
   </PropertyGroup>
+
+  <Import Project="..\..\build\PublicApi.props" />
 
   <ItemGroup>
     <!--

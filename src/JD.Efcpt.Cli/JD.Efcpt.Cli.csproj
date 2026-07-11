@@ -32,6 +32,13 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
+  <!--
+    PublicApiAnalyzers (#191: PUBLIC-API-STABILITY) locks this assembly's public surface.
+    Single-TFM project (net8.0), so build/PublicApi.props applies unconditionally - no
+    PublicApiAnalyzerTfm needed.
+  -->
+  <Import Project="..\..\build\PublicApi.props" />
+
   <ItemGroup>
     <PackageReference Include="System.CommandLine" />
   </ItemGroup>

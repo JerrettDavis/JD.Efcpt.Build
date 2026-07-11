@@ -1,0 +1,832 @@
+#nullable enable
+JD.Efcpt.Build.Tasks.AddSqlFileWarnings
+JD.Efcpt.Build.Tasks.AddSqlFileWarnings.AddSqlFileWarnings() -> void
+JD.Efcpt.Build.Tasks.AddSqlFileWarnings.DatabaseName.get -> string!
+JD.Efcpt.Build.Tasks.AddSqlFileWarnings.DatabaseName.set -> void
+JD.Efcpt.Build.Tasks.AddSqlFileWarnings.FilesProcessed.get -> int
+JD.Efcpt.Build.Tasks.AddSqlFileWarnings.FilesProcessed.set -> void
+JD.Efcpt.Build.Tasks.AddSqlFileWarnings.LogVerbosity.get -> string!
+JD.Efcpt.Build.Tasks.AddSqlFileWarnings.LogVerbosity.set -> void
+JD.Efcpt.Build.Tasks.AddSqlFileWarnings.ProjectPath.get -> string!
+JD.Efcpt.Build.Tasks.AddSqlFileWarnings.ProjectPath.set -> void
+JD.Efcpt.Build.Tasks.AddSqlFileWarnings.ScriptsDirectory.get -> string!
+JD.Efcpt.Build.Tasks.AddSqlFileWarnings.ScriptsDirectory.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.ApplyConfigOverrides() -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.ApplyOverrides.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.ApplyOverrides.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.DbContextName.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.DbContextName.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.DbContextNamespace.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.DbContextNamespace.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.DbContextOutputPath.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.DbContextOutputPath.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.DiscoverMultipleResultSets.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.DiscoverMultipleResultSets.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.EnableOnConfiguring.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.EnableOnConfiguring.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.GenerateMermaidDiagram.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.GenerateMermaidDiagram.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.GenerationType.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.GenerationType.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.IsUsingDefaultConfig.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.IsUsingDefaultConfig.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.LogVerbosity.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.LogVerbosity.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.MergeDacpacs.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.MergeDacpacs.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.ModelNamespace.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.ModelNamespace.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.OutputPath.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.OutputPath.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.PreserveCasingWithRegex.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.PreserveCasingWithRegex.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.ProjectPath.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.ProjectPath.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.RefreshObjectLists.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.RefreshObjectLists.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.RemoveDefaultSqlFromBool.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.RemoveDefaultSqlFromBool.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.RootNamespace.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.RootNamespace.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.SoftDeleteObsoleteFiles.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.SoftDeleteObsoleteFiles.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.SplitDbContext.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.SplitDbContext.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.StagedConfigPath.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.StagedConfigPath.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.T4TemplatePath.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.T4TemplatePath.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseAlternateResultSetDiscovery.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseAlternateResultSetDiscovery.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseDataAnnotations.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseDataAnnotations.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseDatabaseNames.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseDatabaseNames.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseDatabaseNamesForRoutines.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseDatabaseNamesForRoutines.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseDateOnlyTimeOnly.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseDateOnlyTimeOnly.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseDecimalAnnotationForSprocs.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseDecimalAnnotationForSprocs.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseHierarchyId.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseHierarchyId.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseInflector.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseInflector.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseInternalAccessForRoutines.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseInternalAccessForRoutines.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseLegacyInflector.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseLegacyInflector.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseManyToManyEntity.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseManyToManyEntity.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseNoNavigations.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseNoNavigations.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseNodaTime.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseNodaTime.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseNullableReferenceTypes.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseNullableReferenceTypes.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UsePrefixNavigationNaming.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UsePrefixNavigationNaming.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseSchemaFolders.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseSchemaFolders.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseSchemaNamespaces.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseSchemaNamespaces.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseSpatial.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseSpatial.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseT4.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseT4.set -> void
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseT4Split.get -> string!
+JD.Efcpt.Build.Tasks.ApplyConfigOverrides.UseT4Split.set -> void
+JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext
+JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.Deconstruct(out string! OverridePath, out string! ProjectDirectory, out string! SolutionDir, out bool ProbeSolutionDir, out string! DefaultsRoot, out System.Collections.Generic.IReadOnlyList<string!>! DirNames) -> void
+JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.DefaultsRoot.get -> string!
+JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.DefaultsRoot.init -> void
+JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.DirNames.get -> System.Collections.Generic.IReadOnlyList<string!>!
+JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.DirNames.init -> void
+JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.DirectoryResolutionContext() -> void
+JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.DirectoryResolutionContext(string! OverridePath, string! ProjectDirectory, string! SolutionDir, bool ProbeSolutionDir, string! DefaultsRoot, System.Collections.Generic.IReadOnlyList<string!>! DirNames) -> void
+JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.Equals(JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext other) -> bool
+JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.OverridePath.get -> string!
+JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.OverridePath.init -> void
+JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.ProbeSolutionDir.get -> bool
+JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.ProbeSolutionDir.init -> void
+JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.ProjectDirectory.get -> string!
+JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.ProjectDirectory.init -> void
+JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.SolutionDir.get -> string!
+JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.SolutionDir.init -> void
+JD.Efcpt.Build.Tasks.Chains.FileResolutionContext
+JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.Deconstruct(out string! OverridePath, out string! ProjectDirectory, out string! SolutionDir, out bool ProbeSolutionDir, out string! DefaultsRoot, out System.Collections.Generic.IReadOnlyList<string!>! FileNames) -> void
+JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.DefaultsRoot.get -> string!
+JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.DefaultsRoot.init -> void
+JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.Equals(JD.Efcpt.Build.Tasks.Chains.FileResolutionContext other) -> bool
+JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.FileNames.get -> System.Collections.Generic.IReadOnlyList<string!>!
+JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.FileNames.init -> void
+JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.FileResolutionContext() -> void
+JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.FileResolutionContext(string! OverridePath, string! ProjectDirectory, string! SolutionDir, bool ProbeSolutionDir, string! DefaultsRoot, System.Collections.Generic.IReadOnlyList<string!>! FileNames) -> void
+JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.OverridePath.get -> string!
+JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.OverridePath.init -> void
+JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.ProbeSolutionDir.get -> bool
+JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.ProbeSolutionDir.init -> void
+JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.ProjectDirectory.get -> string!
+JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.ProjectDirectory.init -> void
+JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.SolutionDir.get -> string!
+JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.SolutionDir.init -> void
+JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext
+JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.Deconstruct(out string! OverridePath, out string! ProjectDirectory, out string! SolutionDir, out bool ProbeSolutionDir, out string! DefaultsRoot, out System.Collections.Generic.IReadOnlyList<string!>! ResourceNames) -> void
+JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.DefaultsRoot.get -> string!
+JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.DefaultsRoot.init -> void
+JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.Equals(JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext other) -> bool
+JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.OverridePath.get -> string!
+JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.OverridePath.init -> void
+JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.ProbeSolutionDir.get -> bool
+JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.ProbeSolutionDir.init -> void
+JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.ProjectDirectory.get -> string!
+JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.ProjectDirectory.init -> void
+JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.ResourceNames.get -> System.Collections.Generic.IReadOnlyList<string!>!
+JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.ResourceNames.init -> void
+JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.ResourceResolutionContext() -> void
+JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.ResourceResolutionContext(string! OverridePath, string! ProjectDirectory, string! SolutionDir, bool ProbeSolutionDir, string! DefaultsRoot, System.Collections.Generic.IReadOnlyList<string!>! ResourceNames) -> void
+JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.SolutionDir.get -> string!
+JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.SolutionDir.init -> void
+JD.Efcpt.Build.Tasks.CheckSdkVersion
+JD.Efcpt.Build.Tasks.CheckSdkVersion.CacheHours.get -> int
+JD.Efcpt.Build.Tasks.CheckSdkVersion.CacheHours.set -> void
+JD.Efcpt.Build.Tasks.CheckSdkVersion.CheckSdkVersion() -> void
+JD.Efcpt.Build.Tasks.CheckSdkVersion.CurrentVersion.get -> string!
+JD.Efcpt.Build.Tasks.CheckSdkVersion.CurrentVersion.set -> void
+JD.Efcpt.Build.Tasks.CheckSdkVersion.ForceCheck.get -> bool
+JD.Efcpt.Build.Tasks.CheckSdkVersion.ForceCheck.set -> void
+JD.Efcpt.Build.Tasks.CheckSdkVersion.LatestVersion.get -> string!
+JD.Efcpt.Build.Tasks.CheckSdkVersion.LatestVersion.set -> void
+JD.Efcpt.Build.Tasks.CheckSdkVersion.PackageId.get -> string!
+JD.Efcpt.Build.Tasks.CheckSdkVersion.PackageId.set -> void
+JD.Efcpt.Build.Tasks.CheckSdkVersion.ProjectPath.get -> string!
+JD.Efcpt.Build.Tasks.CheckSdkVersion.ProjectPath.set -> void
+JD.Efcpt.Build.Tasks.CheckSdkVersion.UpdateAvailable.get -> bool
+JD.Efcpt.Build.Tasks.CheckSdkVersion.UpdateAvailable.set -> void
+JD.Efcpt.Build.Tasks.CheckSdkVersion.WarningLevel.get -> string!
+JD.Efcpt.Build.Tasks.CheckSdkVersion.WarningLevel.set -> void
+JD.Efcpt.Build.Tasks.ComputeFingerprint
+JD.Efcpt.Build.Tasks.ComputeFingerprint.ComputeFingerprint() -> void
+JD.Efcpt.Build.Tasks.ComputeFingerprint.ConfigPath.get -> string!
+JD.Efcpt.Build.Tasks.ComputeFingerprint.ConfigPath.set -> void
+JD.Efcpt.Build.Tasks.ComputeFingerprint.ConfigPropertyOverrides.get -> string!
+JD.Efcpt.Build.Tasks.ComputeFingerprint.ConfigPropertyOverrides.set -> void
+JD.Efcpt.Build.Tasks.ComputeFingerprint.DacpacPath.get -> string!
+JD.Efcpt.Build.Tasks.ComputeFingerprint.DacpacPath.set -> void
+JD.Efcpt.Build.Tasks.ComputeFingerprint.DetectGeneratedFileChanges.get -> string!
+JD.Efcpt.Build.Tasks.ComputeFingerprint.DetectGeneratedFileChanges.set -> void
+JD.Efcpt.Build.Tasks.ComputeFingerprint.Fingerprint.get -> string!
+JD.Efcpt.Build.Tasks.ComputeFingerprint.Fingerprint.set -> void
+JD.Efcpt.Build.Tasks.ComputeFingerprint.FingerprintFile.get -> string!
+JD.Efcpt.Build.Tasks.ComputeFingerprint.FingerprintFile.set -> void
+JD.Efcpt.Build.Tasks.ComputeFingerprint.GeneratedDir.get -> string!
+JD.Efcpt.Build.Tasks.ComputeFingerprint.GeneratedDir.set -> void
+JD.Efcpt.Build.Tasks.ComputeFingerprint.HasChanged.get -> string!
+JD.Efcpt.Build.Tasks.ComputeFingerprint.HasChanged.set -> void
+JD.Efcpt.Build.Tasks.ComputeFingerprint.LogVerbosity.get -> string!
+JD.Efcpt.Build.Tasks.ComputeFingerprint.LogVerbosity.set -> void
+JD.Efcpt.Build.Tasks.ComputeFingerprint.ProjectPath.get -> string!
+JD.Efcpt.Build.Tasks.ComputeFingerprint.ProjectPath.set -> void
+JD.Efcpt.Build.Tasks.ComputeFingerprint.RenamingPath.get -> string!
+JD.Efcpt.Build.Tasks.ComputeFingerprint.RenamingPath.set -> void
+JD.Efcpt.Build.Tasks.ComputeFingerprint.SchemaFingerprint.get -> string!
+JD.Efcpt.Build.Tasks.ComputeFingerprint.SchemaFingerprint.set -> void
+JD.Efcpt.Build.Tasks.ComputeFingerprint.TemplateDir.get -> string!
+JD.Efcpt.Build.Tasks.ComputeFingerprint.TemplateDir.set -> void
+JD.Efcpt.Build.Tasks.ComputeFingerprint.ToolVersion.get -> string!
+JD.Efcpt.Build.Tasks.ComputeFingerprint.ToolVersion.set -> void
+JD.Efcpt.Build.Tasks.ComputeFingerprint.UseConnectionStringMode.get -> string!
+JD.Efcpt.Build.Tasks.ComputeFingerprint.UseConnectionStringMode.set -> void
+JD.Efcpt.Build.Tasks.DbContextNameGenerator
+JD.Efcpt.Build.Tasks.Decorators.ProfileInputAttribute
+JD.Efcpt.Build.Tasks.Decorators.ProfileInputAttribute.Exclude.get -> bool
+JD.Efcpt.Build.Tasks.Decorators.ProfileInputAttribute.Exclude.set -> void
+JD.Efcpt.Build.Tasks.Decorators.ProfileInputAttribute.Name.get -> string?
+JD.Efcpt.Build.Tasks.Decorators.ProfileInputAttribute.Name.set -> void
+JD.Efcpt.Build.Tasks.Decorators.ProfileInputAttribute.ProfileInputAttribute() -> void
+JD.Efcpt.Build.Tasks.Decorators.ProfileOutputAttribute
+JD.Efcpt.Build.Tasks.Decorators.ProfileOutputAttribute.Exclude.get -> bool
+JD.Efcpt.Build.Tasks.Decorators.ProfileOutputAttribute.Exclude.set -> void
+JD.Efcpt.Build.Tasks.Decorators.ProfileOutputAttribute.Name.get -> string?
+JD.Efcpt.Build.Tasks.Decorators.ProfileOutputAttribute.Name.set -> void
+JD.Efcpt.Build.Tasks.Decorators.ProfileOutputAttribute.ProfileOutputAttribute() -> void
+JD.Efcpt.Build.Tasks.Decorators.ProfilingBehavior
+JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext
+JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext.Deconstruct(out Microsoft.Build.Utilities.TaskLoggingHelper! Logger, out string! TaskName, out JD.Efcpt.Build.Tasks.Profiling.BuildProfiler? Profiler) -> void
+JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext.Equals(JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext other) -> bool
+JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext.Logger.get -> Microsoft.Build.Utilities.TaskLoggingHelper!
+JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext.Logger.init -> void
+JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext.Profiler.get -> JD.Efcpt.Build.Tasks.Profiling.BuildProfiler?
+JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext.Profiler.init -> void
+JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext.TaskExecutionContext() -> void
+JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext.TaskExecutionContext(Microsoft.Build.Utilities.TaskLoggingHelper! Logger, string! TaskName, JD.Efcpt.Build.Tasks.Profiling.BuildProfiler? Profiler = null) -> void
+JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext.TaskName.get -> string!
+JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext.TaskName.init -> void
+JD.Efcpt.Build.Tasks.DetectSqlProject
+JD.Efcpt.Build.Tasks.DetectSqlProject.DSP.get -> string?
+JD.Efcpt.Build.Tasks.DetectSqlProject.DSP.set -> void
+JD.Efcpt.Build.Tasks.DetectSqlProject.DetectSqlProject() -> void
+JD.Efcpt.Build.Tasks.DetectSqlProject.IsSqlProject.get -> bool
+JD.Efcpt.Build.Tasks.DetectSqlProject.ProjectPath.get -> string?
+JD.Efcpt.Build.Tasks.DetectSqlProject.ProjectPath.set -> void
+JD.Efcpt.Build.Tasks.DetectSqlProject.SqlServerVersion.get -> string?
+JD.Efcpt.Build.Tasks.DetectSqlProject.SqlServerVersion.set -> void
+JD.Efcpt.Build.Tasks.EfcptDoctor
+JD.Efcpt.Build.Tasks.EfcptDoctor.AutoAcquireTool.get -> string!
+JD.Efcpt.Build.Tasks.EfcptDoctor.AutoAcquireTool.set -> void
+JD.Efcpt.Build.Tasks.EfcptDoctor.DotNetExe.get -> string!
+JD.Efcpt.Build.Tasks.EfcptDoctor.DotNetExe.set -> void
+JD.Efcpt.Build.Tasks.EfcptDoctor.EfcptDoctor() -> void
+JD.Efcpt.Build.Tasks.EfcptDoctor.HasViablePath.get -> bool
+JD.Efcpt.Build.Tasks.EfcptDoctor.HasViablePath.set -> void
+JD.Efcpt.Build.Tasks.EfcptDoctor.Messages.get -> string![]!
+JD.Efcpt.Build.Tasks.EfcptDoctor.Messages.set -> void
+JD.Efcpt.Build.Tasks.EfcptDoctor.OfflineMode.get -> string!
+JD.Efcpt.Build.Tasks.EfcptDoctor.OfflineMode.set -> void
+JD.Efcpt.Build.Tasks.EfcptDoctor.Strict.get -> string!
+JD.Efcpt.Build.Tasks.EfcptDoctor.Strict.set -> void
+JD.Efcpt.Build.Tasks.EfcptDoctor.TargetFramework.get -> string!
+JD.Efcpt.Build.Tasks.EfcptDoctor.TargetFramework.set -> void
+JD.Efcpt.Build.Tasks.EfcptDoctor.ToolCommand.get -> string!
+JD.Efcpt.Build.Tasks.EfcptDoctor.ToolCommand.set -> void
+JD.Efcpt.Build.Tasks.EfcptDoctor.ToolMode.get -> string!
+JD.Efcpt.Build.Tasks.EfcptDoctor.ToolMode.set -> void
+JD.Efcpt.Build.Tasks.EfcptDoctor.ToolPackageId.get -> string!
+JD.Efcpt.Build.Tasks.EfcptDoctor.ToolPackageId.set -> void
+JD.Efcpt.Build.Tasks.EfcptDoctor.ToolPath.get -> string!
+JD.Efcpt.Build.Tasks.EfcptDoctor.ToolPath.set -> void
+JD.Efcpt.Build.Tasks.EfcptDoctor.ToolVersion.get -> string!
+JD.Efcpt.Build.Tasks.EfcptDoctor.ToolVersion.set -> void
+JD.Efcpt.Build.Tasks.EfcptDoctor.Verdict.get -> string!
+JD.Efcpt.Build.Tasks.EfcptDoctor.Verdict.set -> void
+JD.Efcpt.Build.Tasks.EfcptDoctor.WorkingDirectory.get -> string!
+JD.Efcpt.Build.Tasks.EfcptDoctor.WorkingDirectory.set -> void
+JD.Efcpt.Build.Tasks.EnsureDacpacBuilt
+JD.Efcpt.Build.Tasks.EnsureDacpacBuilt.Configuration.get -> string!
+JD.Efcpt.Build.Tasks.EnsureDacpacBuilt.Configuration.set -> void
+JD.Efcpt.Build.Tasks.EnsureDacpacBuilt.DacpacPath.get -> string!
+JD.Efcpt.Build.Tasks.EnsureDacpacBuilt.DacpacPath.set -> void
+JD.Efcpt.Build.Tasks.EnsureDacpacBuilt.DotNetExe.get -> string!
+JD.Efcpt.Build.Tasks.EnsureDacpacBuilt.DotNetExe.set -> void
+JD.Efcpt.Build.Tasks.EnsureDacpacBuilt.EnsureDacpacBuilt() -> void
+JD.Efcpt.Build.Tasks.EnsureDacpacBuilt.LogVerbosity.get -> string!
+JD.Efcpt.Build.Tasks.EnsureDacpacBuilt.LogVerbosity.set -> void
+JD.Efcpt.Build.Tasks.EnsureDacpacBuilt.MsBuildExe.get -> string!
+JD.Efcpt.Build.Tasks.EnsureDacpacBuilt.MsBuildExe.set -> void
+JD.Efcpt.Build.Tasks.EnsureDacpacBuilt.ProjectPath.get -> string!
+JD.Efcpt.Build.Tasks.EnsureDacpacBuilt.ProjectPath.set -> void
+JD.Efcpt.Build.Tasks.EnsureDacpacBuilt.SqlProjPath.get -> string!
+JD.Efcpt.Build.Tasks.EnsureDacpacBuilt.SqlProjPath.set -> void
+JD.Efcpt.Build.Tasks.FinalizeBuildProfiling
+JD.Efcpt.Build.Tasks.FinalizeBuildProfiling.BuildSucceeded.get -> bool
+JD.Efcpt.Build.Tasks.FinalizeBuildProfiling.BuildSucceeded.set -> void
+JD.Efcpt.Build.Tasks.FinalizeBuildProfiling.FinalizeBuildProfiling() -> void
+JD.Efcpt.Build.Tasks.FinalizeBuildProfiling.OutputPath.get -> string!
+JD.Efcpt.Build.Tasks.FinalizeBuildProfiling.OutputPath.set -> void
+JD.Efcpt.Build.Tasks.FinalizeBuildProfiling.ProjectPath.get -> string!
+JD.Efcpt.Build.Tasks.FinalizeBuildProfiling.ProjectPath.set -> void
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.ConfigPath.get -> string?
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.ConfigPath.set -> void
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.Configuration.get -> string?
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.Configuration.set -> void
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.DacpacPath.get -> string?
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.DacpacPath.set -> void
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.EnableProfiling.get -> string!
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.EnableProfiling.set -> void
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.InitializeBuildProfiling() -> void
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.ProjectName.get -> string!
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.ProjectName.set -> void
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.ProjectPath.get -> string!
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.ProjectPath.set -> void
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.Provider.get -> string?
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.Provider.set -> void
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.RenamingPath.get -> string?
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.RenamingPath.set -> void
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.SqlProjectPath.get -> string?
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.SqlProjectPath.set -> void
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.TargetFramework.get -> string?
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.TargetFramework.set -> void
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.TemplateDir.get -> string?
+JD.Efcpt.Build.Tasks.InitializeBuildProfiling.TemplateDir.set -> void
+JD.Efcpt.Build.Tasks.MessageLevelHelpers
+JD.Efcpt.Build.Tasks.Profiling.ArtifactInfo
+JD.Efcpt.Build.Tasks.Profiling.ArtifactInfo.ArtifactInfo() -> void
+JD.Efcpt.Build.Tasks.Profiling.ArtifactInfo.Extensions.get -> System.Collections.Generic.Dictionary<string!, object?>?
+JD.Efcpt.Build.Tasks.Profiling.ArtifactInfo.Extensions.set -> void
+JD.Efcpt.Build.Tasks.Profiling.ArtifactInfo.Hash.get -> string?
+JD.Efcpt.Build.Tasks.Profiling.ArtifactInfo.Hash.set -> void
+JD.Efcpt.Build.Tasks.Profiling.ArtifactInfo.Path.get -> string!
+JD.Efcpt.Build.Tasks.Profiling.ArtifactInfo.Path.set -> void
+JD.Efcpt.Build.Tasks.Profiling.ArtifactInfo.Size.get -> long?
+JD.Efcpt.Build.Tasks.Profiling.ArtifactInfo.Size.set -> void
+JD.Efcpt.Build.Tasks.Profiling.ArtifactInfo.Type.get -> string!
+JD.Efcpt.Build.Tasks.Profiling.ArtifactInfo.Type.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration
+JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration.BuildConfiguration() -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration.ConfigPath.get -> string?
+JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration.ConfigPath.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration.ConnectionString.get -> string?
+JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration.ConnectionString.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration.DacpacPath.get -> string?
+JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration.DacpacPath.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration.Extensions.get -> System.Collections.Generic.Dictionary<string!, object?>?
+JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration.Extensions.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration.Provider.get -> string?
+JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration.Provider.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration.RenamingPath.get -> string?
+JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration.RenamingPath.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration.SqlProjectPath.get -> string?
+JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration.SqlProjectPath.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration.TemplateDir.get -> string?
+JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration.TemplateDir.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildGraph
+JD.Efcpt.Build.Tasks.Profiling.BuildGraph.BuildGraph() -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildGraph.Extensions.get -> System.Collections.Generic.Dictionary<string!, object?>?
+JD.Efcpt.Build.Tasks.Profiling.BuildGraph.Extensions.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildGraph.FailedTasks.get -> int
+JD.Efcpt.Build.Tasks.Profiling.BuildGraph.FailedTasks.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildGraph.Nodes.get -> System.Collections.Generic.List<JD.Efcpt.Build.Tasks.Profiling.BuildGraphNode!>!
+JD.Efcpt.Build.Tasks.Profiling.BuildGraph.Nodes.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildGraph.SkippedTasks.get -> int
+JD.Efcpt.Build.Tasks.Profiling.BuildGraph.SkippedTasks.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildGraph.SuccessfulTasks.get -> int
+JD.Efcpt.Build.Tasks.Profiling.BuildGraph.SuccessfulTasks.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildGraph.TotalTasks.get -> int
+JD.Efcpt.Build.Tasks.Profiling.BuildGraph.TotalTasks.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildGraphNode
+JD.Efcpt.Build.Tasks.Profiling.BuildGraphNode.BuildGraphNode() -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildGraphNode.Children.get -> System.Collections.Generic.List<JD.Efcpt.Build.Tasks.Profiling.BuildGraphNode!>!
+JD.Efcpt.Build.Tasks.Profiling.BuildGraphNode.Children.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildGraphNode.Extensions.get -> System.Collections.Generic.Dictionary<string!, object?>?
+JD.Efcpt.Build.Tasks.Profiling.BuildGraphNode.Extensions.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildGraphNode.Id.get -> string!
+JD.Efcpt.Build.Tasks.Profiling.BuildGraphNode.Id.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildGraphNode.ParentId.get -> string?
+JD.Efcpt.Build.Tasks.Profiling.BuildGraphNode.ParentId.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildGraphNode.Task.get -> JD.Efcpt.Build.Tasks.Profiling.TaskExecution!
+JD.Efcpt.Build.Tasks.Profiling.BuildGraphNode.Task.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildProfiler
+JD.Efcpt.Build.Tasks.Profiling.BuildProfiler.AddArtifact(JD.Efcpt.Build.Tasks.Profiling.ArtifactInfo! artifact) -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildProfiler.AddDiagnostic(JD.Efcpt.Build.Tasks.Profiling.DiagnosticLevel level, string! message, string? code = null) -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildProfiler.AddMetadata(string! key, object? value) -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildProfiler.BeginTask(string! taskName, string? initiator = null, System.Collections.Generic.Dictionary<string!, object?>? inputs = null) -> JD.Efcpt.Build.Tasks.Profiling.ITaskTracker!
+JD.Efcpt.Build.Tasks.Profiling.BuildProfiler.BuildProfiler(bool enabled, string! projectPath, string! projectName, string? targetFramework = null, string? configuration = null) -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildProfiler.Complete(string! outputPath) -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildProfiler.Enabled.get -> bool
+JD.Efcpt.Build.Tasks.Profiling.BuildProfiler.SetConfiguration(JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration! config) -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildProfilerManager
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.Artifacts.get -> System.Collections.Generic.List<JD.Efcpt.Build.Tasks.Profiling.ArtifactInfo!>!
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.Artifacts.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.BuildGraph.get -> JD.Efcpt.Build.Tasks.Profiling.BuildGraph!
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.BuildGraph.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.BuildRunOutput() -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.Configuration.get -> JD.Efcpt.Build.Tasks.Profiling.BuildConfiguration!
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.Configuration.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.Diagnostics.get -> System.Collections.Generic.List<JD.Efcpt.Build.Tasks.Profiling.DiagnosticMessage!>!
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.Diagnostics.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.Duration.get -> System.TimeSpan
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.Duration.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.EndTime.get -> System.DateTimeOffset?
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.EndTime.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.Extensions.get -> System.Collections.Generic.Dictionary<string!, object?>?
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.Extensions.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.Metadata.get -> System.Collections.Generic.Dictionary<string!, object?>!
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.Metadata.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.Project.get -> JD.Efcpt.Build.Tasks.Profiling.ProjectInfo!
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.Project.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.RunId.get -> string!
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.RunId.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.SchemaVersion.get -> string!
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.SchemaVersion.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.StartTime.get -> System.DateTimeOffset
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.StartTime.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.Status.get -> JD.Efcpt.Build.Tasks.Profiling.BuildStatus
+JD.Efcpt.Build.Tasks.Profiling.BuildRunOutput.Status.set -> void
+JD.Efcpt.Build.Tasks.Profiling.BuildStatus
+JD.Efcpt.Build.Tasks.Profiling.BuildStatus.Canceled = 3 -> JD.Efcpt.Build.Tasks.Profiling.BuildStatus
+JD.Efcpt.Build.Tasks.Profiling.BuildStatus.Failed = 1 -> JD.Efcpt.Build.Tasks.Profiling.BuildStatus
+JD.Efcpt.Build.Tasks.Profiling.BuildStatus.Skipped = 2 -> JD.Efcpt.Build.Tasks.Profiling.BuildStatus
+JD.Efcpt.Build.Tasks.Profiling.BuildStatus.Success = 0 -> JD.Efcpt.Build.Tasks.Profiling.BuildStatus
+JD.Efcpt.Build.Tasks.Profiling.DiagnosticLevel
+JD.Efcpt.Build.Tasks.Profiling.DiagnosticLevel.Error = 2 -> JD.Efcpt.Build.Tasks.Profiling.DiagnosticLevel
+JD.Efcpt.Build.Tasks.Profiling.DiagnosticLevel.Info = 0 -> JD.Efcpt.Build.Tasks.Profiling.DiagnosticLevel
+JD.Efcpt.Build.Tasks.Profiling.DiagnosticLevel.Warning = 1 -> JD.Efcpt.Build.Tasks.Profiling.DiagnosticLevel
+JD.Efcpt.Build.Tasks.Profiling.DiagnosticMessage
+JD.Efcpt.Build.Tasks.Profiling.DiagnosticMessage.Code.get -> string?
+JD.Efcpt.Build.Tasks.Profiling.DiagnosticMessage.Code.set -> void
+JD.Efcpt.Build.Tasks.Profiling.DiagnosticMessage.DiagnosticMessage() -> void
+JD.Efcpt.Build.Tasks.Profiling.DiagnosticMessage.Extensions.get -> System.Collections.Generic.Dictionary<string!, object?>?
+JD.Efcpt.Build.Tasks.Profiling.DiagnosticMessage.Extensions.set -> void
+JD.Efcpt.Build.Tasks.Profiling.DiagnosticMessage.Level.get -> JD.Efcpt.Build.Tasks.Profiling.DiagnosticLevel
+JD.Efcpt.Build.Tasks.Profiling.DiagnosticMessage.Level.set -> void
+JD.Efcpt.Build.Tasks.Profiling.DiagnosticMessage.Message.get -> string!
+JD.Efcpt.Build.Tasks.Profiling.DiagnosticMessage.Message.set -> void
+JD.Efcpt.Build.Tasks.Profiling.DiagnosticMessage.Timestamp.get -> System.DateTimeOffset
+JD.Efcpt.Build.Tasks.Profiling.DiagnosticMessage.Timestamp.set -> void
+JD.Efcpt.Build.Tasks.Profiling.ITaskTracker
+JD.Efcpt.Build.Tasks.Profiling.ITaskTracker.SetOutputs(System.Collections.Generic.Dictionary<string!, object?>! outputs) -> void
+JD.Efcpt.Build.Tasks.Profiling.JsonTimeSpanConverter
+JD.Efcpt.Build.Tasks.Profiling.JsonTimeSpanConverter.JsonTimeSpanConverter() -> void
+JD.Efcpt.Build.Tasks.Profiling.ProjectInfo
+JD.Efcpt.Build.Tasks.Profiling.ProjectInfo.Configuration.get -> string?
+JD.Efcpt.Build.Tasks.Profiling.ProjectInfo.Configuration.set -> void
+JD.Efcpt.Build.Tasks.Profiling.ProjectInfo.Extensions.get -> System.Collections.Generic.Dictionary<string!, object?>?
+JD.Efcpt.Build.Tasks.Profiling.ProjectInfo.Extensions.set -> void
+JD.Efcpt.Build.Tasks.Profiling.ProjectInfo.Name.get -> string!
+JD.Efcpt.Build.Tasks.Profiling.ProjectInfo.Name.set -> void
+JD.Efcpt.Build.Tasks.Profiling.ProjectInfo.Path.get -> string!
+JD.Efcpt.Build.Tasks.Profiling.ProjectInfo.Path.set -> void
+JD.Efcpt.Build.Tasks.Profiling.ProjectInfo.ProjectInfo() -> void
+JD.Efcpt.Build.Tasks.Profiling.ProjectInfo.TargetFramework.get -> string?
+JD.Efcpt.Build.Tasks.Profiling.ProjectInfo.TargetFramework.set -> void
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Diagnostics.get -> System.Collections.Generic.List<JD.Efcpt.Build.Tasks.Profiling.DiagnosticMessage!>!
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Diagnostics.set -> void
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Duration.get -> System.TimeSpan
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Duration.set -> void
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.EndTime.get -> System.DateTimeOffset?
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.EndTime.set -> void
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Extensions.get -> System.Collections.Generic.Dictionary<string!, object?>?
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Extensions.set -> void
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Initiator.get -> string?
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Initiator.set -> void
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Inputs.get -> System.Collections.Generic.Dictionary<string!, object?>!
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Inputs.set -> void
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Metadata.get -> System.Collections.Generic.Dictionary<string!, object?>!
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Metadata.set -> void
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Name.get -> string!
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Name.set -> void
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Outputs.get -> System.Collections.Generic.Dictionary<string!, object?>!
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Outputs.set -> void
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.StartTime.get -> System.DateTimeOffset
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.StartTime.set -> void
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Status.get -> JD.Efcpt.Build.Tasks.Profiling.TaskStatus
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Status.set -> void
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.TaskExecution() -> void
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Type.get -> string!
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Type.set -> void
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Version.get -> string?
+JD.Efcpt.Build.Tasks.Profiling.TaskExecution.Version.set -> void
+JD.Efcpt.Build.Tasks.Profiling.TaskStatus
+JD.Efcpt.Build.Tasks.Profiling.TaskStatus.Canceled = 3 -> JD.Efcpt.Build.Tasks.Profiling.TaskStatus
+JD.Efcpt.Build.Tasks.Profiling.TaskStatus.Failed = 1 -> JD.Efcpt.Build.Tasks.Profiling.TaskStatus
+JD.Efcpt.Build.Tasks.Profiling.TaskStatus.Skipped = 2 -> JD.Efcpt.Build.Tasks.Profiling.TaskStatus
+JD.Efcpt.Build.Tasks.Profiling.TaskStatus.Success = 0 -> JD.Efcpt.Build.Tasks.Profiling.TaskStatus
+JD.Efcpt.Build.Tasks.QuerySchemaMetadata
+JD.Efcpt.Build.Tasks.QuerySchemaMetadata.AllowCustomProviders.get -> bool
+JD.Efcpt.Build.Tasks.QuerySchemaMetadata.AllowCustomProviders.set -> void
+JD.Efcpt.Build.Tasks.QuerySchemaMetadata.ConnectionString.get -> string!
+JD.Efcpt.Build.Tasks.QuerySchemaMetadata.ConnectionString.set -> void
+JD.Efcpt.Build.Tasks.QuerySchemaMetadata.EfcptCustomProviders.get -> Microsoft.Build.Framework.ITaskItem![]!
+JD.Efcpt.Build.Tasks.QuerySchemaMetadata.EfcptCustomProviders.set -> void
+JD.Efcpt.Build.Tasks.QuerySchemaMetadata.LogVerbosity.get -> string!
+JD.Efcpt.Build.Tasks.QuerySchemaMetadata.LogVerbosity.set -> void
+JD.Efcpt.Build.Tasks.QuerySchemaMetadata.OutputDir.get -> string!
+JD.Efcpt.Build.Tasks.QuerySchemaMetadata.OutputDir.set -> void
+JD.Efcpt.Build.Tasks.QuerySchemaMetadata.ProjectPath.get -> string!
+JD.Efcpt.Build.Tasks.QuerySchemaMetadata.ProjectPath.set -> void
+JD.Efcpt.Build.Tasks.QuerySchemaMetadata.Provider.get -> string!
+JD.Efcpt.Build.Tasks.QuerySchemaMetadata.Provider.set -> void
+JD.Efcpt.Build.Tasks.QuerySchemaMetadata.ProviderSearchPaths.get -> string![]!
+JD.Efcpt.Build.Tasks.QuerySchemaMetadata.ProviderSearchPaths.set -> void
+JD.Efcpt.Build.Tasks.QuerySchemaMetadata.QuerySchemaMetadata() -> void
+JD.Efcpt.Build.Tasks.QuerySchemaMetadata.SchemaFingerprint.get -> string!
+JD.Efcpt.Build.Tasks.QuerySchemaMetadata.SchemaFingerprint.set -> void
+JD.Efcpt.Build.Tasks.RenameGeneratedFiles
+JD.Efcpt.Build.Tasks.RenameGeneratedFiles.GeneratedDir.get -> string!
+JD.Efcpt.Build.Tasks.RenameGeneratedFiles.GeneratedDir.set -> void
+JD.Efcpt.Build.Tasks.RenameGeneratedFiles.LogVerbosity.get -> string!
+JD.Efcpt.Build.Tasks.RenameGeneratedFiles.LogVerbosity.set -> void
+JD.Efcpt.Build.Tasks.RenameGeneratedFiles.ProjectPath.get -> string!
+JD.Efcpt.Build.Tasks.RenameGeneratedFiles.ProjectPath.set -> void
+JD.Efcpt.Build.Tasks.RenameGeneratedFiles.RenameGeneratedFiles() -> void
+JD.Efcpt.Build.Tasks.ResolveDbContextName
+JD.Efcpt.Build.Tasks.ResolveDbContextName.ConnectionString.get -> string!
+JD.Efcpt.Build.Tasks.ResolveDbContextName.ConnectionString.set -> void
+JD.Efcpt.Build.Tasks.ResolveDbContextName.DacpacPath.get -> string!
+JD.Efcpt.Build.Tasks.ResolveDbContextName.DacpacPath.set -> void
+JD.Efcpt.Build.Tasks.ResolveDbContextName.ExplicitDbContextName.get -> string!
+JD.Efcpt.Build.Tasks.ResolveDbContextName.ExplicitDbContextName.set -> void
+JD.Efcpt.Build.Tasks.ResolveDbContextName.LogVerbosity.get -> string!
+JD.Efcpt.Build.Tasks.ResolveDbContextName.LogVerbosity.set -> void
+JD.Efcpt.Build.Tasks.ResolveDbContextName.ProjectPath.get -> string!
+JD.Efcpt.Build.Tasks.ResolveDbContextName.ProjectPath.set -> void
+JD.Efcpt.Build.Tasks.ResolveDbContextName.ResolveDbContextName() -> void
+JD.Efcpt.Build.Tasks.ResolveDbContextName.ResolvedDbContextName.get -> string!
+JD.Efcpt.Build.Tasks.ResolveDbContextName.ResolvedDbContextName.set -> void
+JD.Efcpt.Build.Tasks.ResolveDbContextName.SqlProjPath.get -> string!
+JD.Efcpt.Build.Tasks.ResolveDbContextName.SqlProjPath.set -> void
+JD.Efcpt.Build.Tasks.ResolveDbContextName.UseConnectionStringMode.get -> string!
+JD.Efcpt.Build.Tasks.ResolveDbContextName.UseConnectionStringMode.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.AutoDetectWarningLevel.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.AutoDetectWarningLevel.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ConfigOverride.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ConfigOverride.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.Configuration.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.Configuration.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ConnectionStringSourceSearchPaths.get -> Microsoft.Build.Framework.ITaskItem![]!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ConnectionStringSourceSearchPaths.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.DefaultsRoot.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.DefaultsRoot.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.DumpResolvedInputs.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.DumpResolvedInputs.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptAppConfig.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptAppConfig.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptAppSettings.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptAppSettings.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptAwsRegion.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptAwsRegion.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptAwsSecretId.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptAwsSecretId.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptAwsSecretJsonKey.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptAwsSecretJsonKey.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptConnectionString.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptConnectionString.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptConnectionStringEnvVar.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptConnectionStringEnvVar.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptConnectionStringName.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptConnectionStringName.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptConnectionStringSource.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptConnectionStringSource.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptKeyVaultSecretName.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptKeyVaultSecretName.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptKeyVaultSecretVersion.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptKeyVaultSecretVersion.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptKeyVaultUri.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.EfcptKeyVaultUri.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.IsUsingDefaultConfig.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.IsUsingDefaultConfig.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.OfflineMode.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.OfflineMode.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.OutputDir.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.OutputDir.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ProbeSolutionDir.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ProbeSolutionDir.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ProjectDirectory.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ProjectDirectory.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ProjectFullPath.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ProjectFullPath.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ProjectReferences.get -> Microsoft.Build.Framework.ITaskItem![]!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ProjectReferences.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.RenamingOverride.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.RenamingOverride.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ResolveSqlProjAndInputs() -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ResolvedConfigPath.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ResolvedConfigPath.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ResolvedConnectionString.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ResolvedConnectionString.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ResolvedRenamingPath.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ResolvedRenamingPath.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ResolvedTemplateDir.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.ResolvedTemplateDir.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.SolutionDir.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.SolutionDir.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.SolutionPath.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.SolutionPath.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.SqlProjOverride.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.SqlProjOverride.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.SqlProjPath.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.SqlProjPath.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.TemplateDirOverride.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.TemplateDirOverride.set -> void
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.UseConnectionString.get -> string!
+JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.UseConnectionString.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt
+JD.Efcpt.Build.Tasks.RunEfcpt.AutoAcquireTool.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.AutoAcquireTool.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.ConfigPath.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.ConfigPath.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.ConnectionString.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.ConnectionString.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.DacpacPath.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.DacpacPath.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.DotNetExe.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.DotNetExe.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.LogVerbosity.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.LogVerbosity.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.OfflineMode.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.OfflineMode.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.OutputDir.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.OutputDir.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.ProjectPath.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.ProjectPath.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.Provider.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.Provider.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.RenamingPath.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.RenamingPath.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.RunEfcpt() -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.TargetFramework.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.TargetFramework.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.TemplateDir.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.TemplateDir.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.ToolCommand.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.ToolCommand.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.ToolMode.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.ToolMode.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.ToolPackageId.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.ToolPackageId.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.ToolPath.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.ToolPath.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.ToolRestore.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.ToolRestore.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.ToolVersion.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.ToolVersion.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.UseConnectionStringMode.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.UseConnectionStringMode.set -> void
+JD.Efcpt.Build.Tasks.RunEfcpt.WorkingDirectory.get -> string!
+JD.Efcpt.Build.Tasks.RunEfcpt.WorkingDirectory.set -> void
+JD.Efcpt.Build.Tasks.RunSqlPackage
+JD.Efcpt.Build.Tasks.RunSqlPackage.ConnectionString.get -> string!
+JD.Efcpt.Build.Tasks.RunSqlPackage.ConnectionString.set -> void
+JD.Efcpt.Build.Tasks.RunSqlPackage.DotNetExe.get -> string!
+JD.Efcpt.Build.Tasks.RunSqlPackage.DotNetExe.set -> void
+JD.Efcpt.Build.Tasks.RunSqlPackage.ExtractTarget.get -> string!
+JD.Efcpt.Build.Tasks.RunSqlPackage.ExtractTarget.set -> void
+JD.Efcpt.Build.Tasks.RunSqlPackage.ExtractedPath.get -> string!
+JD.Efcpt.Build.Tasks.RunSqlPackage.ExtractedPath.set -> void
+JD.Efcpt.Build.Tasks.RunSqlPackage.LogVerbosity.get -> string!
+JD.Efcpt.Build.Tasks.RunSqlPackage.LogVerbosity.set -> void
+JD.Efcpt.Build.Tasks.RunSqlPackage.ProjectPath.get -> string!
+JD.Efcpt.Build.Tasks.RunSqlPackage.ProjectPath.set -> void
+JD.Efcpt.Build.Tasks.RunSqlPackage.RunSqlPackage() -> void
+JD.Efcpt.Build.Tasks.RunSqlPackage.TargetDirectory.get -> string!
+JD.Efcpt.Build.Tasks.RunSqlPackage.TargetDirectory.set -> void
+JD.Efcpt.Build.Tasks.RunSqlPackage.TargetFramework.get -> string!
+JD.Efcpt.Build.Tasks.RunSqlPackage.TargetFramework.set -> void
+JD.Efcpt.Build.Tasks.RunSqlPackage.ToolPath.get -> string!
+JD.Efcpt.Build.Tasks.RunSqlPackage.ToolPath.set -> void
+JD.Efcpt.Build.Tasks.RunSqlPackage.ToolRestore.get -> string!
+JD.Efcpt.Build.Tasks.RunSqlPackage.ToolRestore.set -> void
+JD.Efcpt.Build.Tasks.RunSqlPackage.ToolVersion.get -> string!
+JD.Efcpt.Build.Tasks.RunSqlPackage.ToolVersion.set -> void
+JD.Efcpt.Build.Tasks.RunSqlPackage.WorkingDirectory.get -> string!
+JD.Efcpt.Build.Tasks.RunSqlPackage.WorkingDirectory.set -> void
+JD.Efcpt.Build.Tasks.Schema.CustomProviderException
+JD.Efcpt.Build.Tasks.Schema.CustomProviderException.Code.get -> string!
+JD.Efcpt.Build.Tasks.Schema.CustomProviderException.CustomProviderException(string! code, string! message) -> void
+JD.Efcpt.Build.Tasks.Schema.CustomProviderException.CustomProviderException(string! code, string! message, System.Exception? innerException) -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.DbContextName.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.DbContextName.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.DbContextNamespace.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.DbContextNamespace.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.DbContextOutputPath.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.DbContextOutputPath.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.DiscoverMultipleResultSets.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.DiscoverMultipleResultSets.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.EnableOnConfiguring.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.EnableOnConfiguring.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.GenerateMermaidDiagram.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.GenerateMermaidDiagram.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.GenerationType.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.GenerationType.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.MergeDacpacs.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.MergeDacpacs.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.ModelNamespace.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.ModelNamespace.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.OutputPath.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.OutputPath.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.PreserveCasingWithRegex.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.PreserveCasingWithRegex.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.ProjectPath.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.ProjectPath.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.RefreshObjectLists.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.RefreshObjectLists.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.RemoveDefaultSqlFromBool.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.RemoveDefaultSqlFromBool.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.RootNamespace.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.RootNamespace.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.SerializeConfigProperties() -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.SerializedProperties.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.SerializedProperties.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.SoftDeleteObsoleteFiles.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.SoftDeleteObsoleteFiles.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.SplitDbContext.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.SplitDbContext.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.T4TemplatePath.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.T4TemplatePath.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseAlternateResultSetDiscovery.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseAlternateResultSetDiscovery.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseDataAnnotations.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseDataAnnotations.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseDatabaseNames.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseDatabaseNames.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseDatabaseNamesForRoutines.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseDatabaseNamesForRoutines.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseDateOnlyTimeOnly.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseDateOnlyTimeOnly.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseDecimalAnnotationForSprocs.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseDecimalAnnotationForSprocs.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseHierarchyId.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseHierarchyId.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseInflector.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseInflector.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseInternalAccessForRoutines.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseInternalAccessForRoutines.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseLegacyInflector.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseLegacyInflector.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseManyToManyEntity.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseManyToManyEntity.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseNoNavigations.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseNoNavigations.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseNodaTime.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseNodaTime.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseNullableReferenceTypes.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseNullableReferenceTypes.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UsePrefixNavigationNaming.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UsePrefixNavigationNaming.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseSchemaFolders.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseSchemaFolders.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseSchemaNamespaces.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseSchemaNamespaces.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseSpatial.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseSpatial.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseT4.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseT4.set -> void
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseT4Split.get -> string!
+JD.Efcpt.Build.Tasks.SerializeConfigProperties.UseT4Split.set -> void
+JD.Efcpt.Build.Tasks.StageEfcptInputs
+JD.Efcpt.Build.Tasks.StageEfcptInputs.ConfigPath.get -> string!
+JD.Efcpt.Build.Tasks.StageEfcptInputs.ConfigPath.set -> void
+JD.Efcpt.Build.Tasks.StageEfcptInputs.LogVerbosity.get -> string!
+JD.Efcpt.Build.Tasks.StageEfcptInputs.LogVerbosity.set -> void
+JD.Efcpt.Build.Tasks.StageEfcptInputs.OutputDir.get -> string!
+JD.Efcpt.Build.Tasks.StageEfcptInputs.OutputDir.set -> void
+JD.Efcpt.Build.Tasks.StageEfcptInputs.ProjectDirectory.get -> string!
+JD.Efcpt.Build.Tasks.StageEfcptInputs.ProjectDirectory.set -> void
+JD.Efcpt.Build.Tasks.StageEfcptInputs.ProjectPath.get -> string!
+JD.Efcpt.Build.Tasks.StageEfcptInputs.ProjectPath.set -> void
+JD.Efcpt.Build.Tasks.StageEfcptInputs.RenamingPath.get -> string!
+JD.Efcpt.Build.Tasks.StageEfcptInputs.RenamingPath.set -> void
+JD.Efcpt.Build.Tasks.StageEfcptInputs.StageEfcptInputs() -> void
+JD.Efcpt.Build.Tasks.StageEfcptInputs.StagedConfigPath.get -> string!
+JD.Efcpt.Build.Tasks.StageEfcptInputs.StagedConfigPath.set -> void
+JD.Efcpt.Build.Tasks.StageEfcptInputs.StagedRenamingPath.get -> string!
+JD.Efcpt.Build.Tasks.StageEfcptInputs.StagedRenamingPath.set -> void
+JD.Efcpt.Build.Tasks.StageEfcptInputs.StagedTemplateDir.get -> string!
+JD.Efcpt.Build.Tasks.StageEfcptInputs.StagedTemplateDir.set -> void
+JD.Efcpt.Build.Tasks.StageEfcptInputs.TargetFramework.get -> string!
+JD.Efcpt.Build.Tasks.StageEfcptInputs.TargetFramework.set -> void
+JD.Efcpt.Build.Tasks.StageEfcptInputs.TemplateDir.get -> string!
+JD.Efcpt.Build.Tasks.StageEfcptInputs.TemplateDir.set -> void
+JD.Efcpt.Build.Tasks.StageEfcptInputs.TemplateOutputDir.get -> string!
+JD.Efcpt.Build.Tasks.StageEfcptInputs.TemplateOutputDir.set -> void
+const JD.Efcpt.Build.Tasks.Schema.CustomProviderException.AssemblyLoadFailedCode = "JD0018" -> string!
+const JD.Efcpt.Build.Tasks.Schema.CustomProviderException.CollidesWithBuiltInCode = "JD0019" -> string!
+const JD.Efcpt.Build.Tasks.Schema.CustomProviderException.MisconfiguredRegistrationCode = "JD0041" -> string!
+const JD.Efcpt.Build.Tasks.Schema.CustomProviderException.NoAdapterFoundCode = "JD0040" -> string!
+const JD.Efcpt.Build.Tasks.Schema.CustomProviderException.NotAllowedCode = "JD0017" -> string!
+override JD.Efcpt.Build.Tasks.AddSqlFileWarnings.Execute() -> bool
+override JD.Efcpt.Build.Tasks.ApplyConfigOverrides.Execute() -> bool
+override JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.GetHashCode() -> int
+override JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.GetHashCode() -> int
+override JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.GetHashCode() -> int
+override JD.Efcpt.Build.Tasks.CheckSdkVersion.Execute() -> bool
+override JD.Efcpt.Build.Tasks.ComputeFingerprint.Execute() -> bool
+override JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext.GetHashCode() -> int
+override JD.Efcpt.Build.Tasks.DetectSqlProject.Execute() -> bool
+override JD.Efcpt.Build.Tasks.EfcptDoctor.Execute() -> bool
+override JD.Efcpt.Build.Tasks.EnsureDacpacBuilt.Execute() -> bool
+override JD.Efcpt.Build.Tasks.FinalizeBuildProfiling.Execute() -> bool
+override JD.Efcpt.Build.Tasks.InitializeBuildProfiling.Execute() -> bool
+override JD.Efcpt.Build.Tasks.Profiling.JsonTimeSpanConverter.Read(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> System.TimeSpan
+override JD.Efcpt.Build.Tasks.Profiling.JsonTimeSpanConverter.Write(System.Text.Json.Utf8JsonWriter! writer, System.TimeSpan value, System.Text.Json.JsonSerializerOptions! options) -> void
+override JD.Efcpt.Build.Tasks.QuerySchemaMetadata.Execute() -> bool
+override JD.Efcpt.Build.Tasks.RenameGeneratedFiles.Execute() -> bool
+override JD.Efcpt.Build.Tasks.ResolveDbContextName.Execute() -> bool
+override JD.Efcpt.Build.Tasks.ResolveSqlProjAndInputs.Execute() -> bool
+override JD.Efcpt.Build.Tasks.RunEfcpt.Execute() -> bool
+override JD.Efcpt.Build.Tasks.RunSqlPackage.Execute() -> bool
+override JD.Efcpt.Build.Tasks.SerializeConfigProperties.Execute() -> bool
+override JD.Efcpt.Build.Tasks.StageEfcptInputs.Execute() -> bool
+static JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.operator !=(JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext left, JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext right) -> bool
+static JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.operator ==(JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext left, JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext right) -> bool
+static JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.operator !=(JD.Efcpt.Build.Tasks.Chains.FileResolutionContext left, JD.Efcpt.Build.Tasks.Chains.FileResolutionContext right) -> bool
+static JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.operator ==(JD.Efcpt.Build.Tasks.Chains.FileResolutionContext left, JD.Efcpt.Build.Tasks.Chains.FileResolutionContext right) -> bool
+static JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.operator !=(JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext left, JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext right) -> bool
+static JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.operator ==(JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext left, JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext right) -> bool
+static JD.Efcpt.Build.Tasks.DbContextNameGenerator.FromConnectionString(string? connectionString) -> string?
+static JD.Efcpt.Build.Tasks.DbContextNameGenerator.FromDacpac(string? dacpacPath) -> string?
+static JD.Efcpt.Build.Tasks.DbContextNameGenerator.FromSqlProject(string? sqlProjPath) -> string?
+static JD.Efcpt.Build.Tasks.DbContextNameGenerator.Generate(string? sqlProjPath, string? dacpacPath, string? connectionString) -> string!
+static JD.Efcpt.Build.Tasks.Decorators.ProfilingBehavior.ExecuteWithProfiling<T>(T! task, System.Func<JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext, bool>! coreLogic, JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext ctx) -> bool
+static JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext.operator !=(JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext left, JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext right) -> bool
+static JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext.operator ==(JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext left, JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext right) -> bool
+static JD.Efcpt.Build.Tasks.MessageLevelHelpers.Parse(string? value, JD.Efcpt.Build.Core.Logging.MessageLevel defaultValue) -> JD.Efcpt.Build.Core.Logging.MessageLevel
+static JD.Efcpt.Build.Tasks.MessageLevelHelpers.TryParse(string? value, out JD.Efcpt.Build.Core.Logging.MessageLevel result) -> bool
+static JD.Efcpt.Build.Tasks.Profiling.BuildProfilerManager.Complete(string! projectPath, string! outputPath) -> void
+static JD.Efcpt.Build.Tasks.Profiling.BuildProfilerManager.GetOrCreate(string! projectPath, bool enabled, string! projectName, string? targetFramework = null, string? configuration = null) -> JD.Efcpt.Build.Tasks.Profiling.BuildProfiler!
+static JD.Efcpt.Build.Tasks.Profiling.BuildProfilerManager.TryGet(string! projectPath) -> JD.Efcpt.Build.Tasks.Profiling.BuildProfiler?
+virtual JD.Efcpt.Build.Tasks.CheckSdkVersion.EmitVersionUpdateMessage() -> void
+~override JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.Equals(object obj) -> bool
+~override JD.Efcpt.Build.Tasks.Chains.DirectoryResolutionContext.ToString() -> string
+~override JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.Equals(object obj) -> bool
+~override JD.Efcpt.Build.Tasks.Chains.FileResolutionContext.ToString() -> string
+~override JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.Equals(object obj) -> bool
+~override JD.Efcpt.Build.Tasks.Chains.ResourceResolutionContext.ToString() -> string
+~override JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext.Equals(object obj) -> bool
+~override JD.Efcpt.Build.Tasks.Decorators.TaskExecutionContext.ToString() -> string
