@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using JD.Efcpt.Build.Tasks;
 using JD.Efcpt.Build.Tasks.Utilities;
 using JD.Efcpt.Build.Tests.Infrastructure;
@@ -42,6 +43,18 @@ public sealed class RunEfcptAutoAcquireTests(ITestOutputHelper output) : TinyBdd
 
         public bool IsGlobalToolInstalled(string toolCommand) =>
             throw new InvalidOperationException("IsGlobalToolInstalled should not be called when dnx is usable.");
+    }
+
+    /// <summary>
+    /// An <see cref="ISdkProbe"/> that reports dnx as fully unusable but a global tool as
+    /// resolvable on PATH - used to exercise the "!wouldUseManifest &amp;&amp;
+    /// Probe.IsGlobalToolInstalled" gating (#186 adversarial-review FIX 1 HIGH regression guard).
+    /// </summary>
+    private sealed class GlobalToolOnlySdkProbe : ISdkProbe
+    {
+        public bool IsDotNet10SdkInstalled(string dotnetExe) => false;
+        public bool IsDnxAvailable(string dotnetExe) => false;
+        public bool IsGlobalToolInstalled(string toolCommand) => true;
     }
 
     /// <summary>
@@ -92,11 +105,72 @@ public sealed class RunEfcptAutoAcquireTests(ITestOutputHelper output) : TinyBdd
         }
     }
 
+    /// <summary>
+    /// Writes a trivial fake executable into a scratch "tools" directory that appends
+    /// <paramref name="label"/> and its invocation arguments to <paramref name="captureFile"/>
+    /// and exits 0 - standing in for a real dotnet/global-tool invocation without spawning any
+    /// real process or touching the network.
+    /// </summary>
+    /// <remarks>
+    /// Cross-platform: on Windows this writes a <c>.cmd</c> script (invoked via
+    /// <c>cmd.exe /c</c> by <c>CommandNormalizationStrategy</c>). <c>.cmd</c>/<c>.bat</c> files
+    /// cannot be executed directly on Linux/macOS, so on non-Windows this instead writes a POSIX
+    /// shell script (no extension, shebang line) and marks it executable via
+    /// <see cref="File.SetUnixFileMode(string, UnixFileMode)"/> - <c>CommandNormalizationStrategy</c>
+    /// runs such a file directly with no wrapper on non-Windows.
+    /// </remarks>
     private static string WriteCaptureScript(TestFolder folder, string scriptName, string label, string captureFile)
     {
-        var path = Path.Combine(folder.CreateDir("tools"), scriptName);
-        File.WriteAllText(path, $"@echo off\r\necho {label} %* >> \"{captureFile}\"\r\nexit /b 0\r\n");
-        return path;
+        var toolsDir = folder.CreateDir("tools");
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            var path = Path.Combine(toolsDir, scriptName);
+            File.WriteAllText(path, $"@echo off\r\necho {label} %* >> \"{captureFile}\"\r\nexit /b 0\r\n");
+            return path;
+        }
+
+        var baseName = Path.GetFileNameWithoutExtension(scriptName);
+        var shPath = Path.Combine(toolsDir, baseName);
+        File.WriteAllText(shPath, $"#!/bin/sh\necho {label} \"$@\" >> \"{captureFile}\"\nexit 0\n");
+        TestFileSystem.MakeExecutable(shPath);
+        return shPath;
+    }
+
+    /// <summary>
+    /// Writes a real <c>.config/dotnet-tools.json</c> manifest into <paramref name="manifestDir"/>
+    /// listing the given tool (or none, if <paramref name="listsTool"/> is <see langword="false"/>
+    /// - a placeholder unrelated tool is listed instead, matching a manifest that exists but has
+    /// never had the efcpt tool installed into it).
+    /// </summary>
+    private static void WriteManifest(string manifestDir, bool listsTool, string toolPackageId = "ErikEJ.EFCorePowerTools.Cli", string toolCommand = "efcpt")
+    {
+        var configDir = Path.Combine(manifestDir, ".config");
+        Directory.CreateDirectory(configDir);
+
+        var toolsEntry = listsTool
+            ? $$"""
+                "{{toolPackageId.ToLowerInvariant()}}": {
+                      "version": "10.0.0",
+                      "commands": [ "{{toolCommand}}" ]
+                    }
+                """
+            : """
+              "some.other.tool": {
+                    "version": "1.0.0",
+                    "commands": [ "othertool" ]
+                  }
+              """;
+
+        File.WriteAllText(Path.Combine(configDir, "dotnet-tools.json"), $$"""
+            {
+              "version": 1,
+              "isRoot": true,
+              "tools": {
+                {{toolsEntry}}
+              }
+            }
+            """);
     }
 
     private sealed record SetupState(
@@ -417,6 +491,317 @@ public sealed class RunEfcptAutoAcquireTests(ITestOutputHelper output) : TinyBdd
             .And("'dotnet new tool-manifest' was invoked", r =>
                 File.ReadAllText(r.captureFile).Contains("new tool-manifest", StringComparison.OrdinalIgnoreCase))
             .And("'dotnet tool install ErikEJ.EFCorePowerTools.Cli --version \"10.*\"' was invoked", r =>
+                File.ReadAllText(r.captureFile).Contains("tool install ErikEJ.EFCorePowerTools.Cli --version", StringComparison.OrdinalIgnoreCase))
+            .Finally(r => r.folder.Dispose())
+            .AssertPassed();
+    }
+
+    // (f) #186 adversarial-review FIX 1: a manifest that already lists the tool is used exactly
+    // as-is - acquisition must NEVER be attempted, even with AutoAcquireTool=true.
+    [Scenario("A tool manifest that already lists the tool is used as-is: acquisition is never attempted")]
+    [Fact]
+    public async Task Manifest_listing_tool_skips_acquisition_entirely()
+    {
+        await Given("inputs for DACPAC mode with a pre-existing manifest listing the tool, a capturing fake dotnet, and a throwing tool acquirer", () =>
+            {
+                var setup = SetupForDacpacMode();
+                WriteManifest(setup.WorkingDir, listsTool: true);
+                var captureFile = Path.Combine(setup.Folder.Root, "dotnet-invocations.log");
+                var fakeDotNet = WriteCaptureScript(setup.Folder, "fake-dotnet.cmd", "DOTNET", captureFile);
+                return (setup, captureFile, fakeDotNet);
+            })
+            .When("task executes with AutoAcquireTool=true, ToolMode=auto, a throwing tool acquirer", ctx =>
+            {
+                var task = new RunEfcpt
+                {
+                    BuildEngine = ctx.setup.Engine,
+                    WorkingDirectory = ctx.setup.WorkingDir,
+                    DacpacPath = ctx.setup.DacpacPath,
+                    ConfigPath = ctx.setup.ConfigPath,
+                    RenamingPath = ctx.setup.RenamingPath,
+                    TemplateDir = ctx.setup.TemplateDir,
+                    OutputDir = ctx.setup.OutputDir,
+                    ToolMode = "auto",
+                    ToolPackageId = "ErikEJ.EFCorePowerTools.Cli",
+                    TargetFramework = "net8.0",
+                    OfflineMode = "false",
+                    AutoAcquireTool = "true",
+                    ToolPath = "",
+                    DotNetExe = ctx.fakeDotNet,
+                    Probe = new AllUnavailableSdkProbe(),
+                    ToolAcquirer = new ThrowingToolAcquirer()
+                };
+
+                var success = task.Execute();
+                return new CaptureResult(ctx.setup, task, success, ctx.captureFile);
+            })
+            .Then("task succeeds", r => r.Success)
+            .And("no error is logged", r => r.Setup.Engine.Errors.Count == 0)
+            .And("resolution chose 'dotnet tool run efcpt' against the pre-existing manifest", r =>
+            {
+                var lines = File.ReadAllLines(r.CaptureFile);
+                return lines.Length > 0 &&
+                       lines[^1].Contains("tool run", StringComparison.OrdinalIgnoreCase) &&
+                       lines[^1].Contains("efcpt", StringComparison.OrdinalIgnoreCase);
+            })
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    // (g) #186 adversarial-review FIX 1 HIGH regression guard: a global tool being resolvable on
+    // PATH must only skip acquisition when resolution would NOT use a manifest. When ToolMode
+    // forces manifest resolution, a global tool on PATH is irrelevant - acquisition still runs.
+    [Scenario("Global tool on PATH but ToolMode=tool-manifest forces manifest resolution: acquisition still runs (FIX 1 HIGH regression guard)")]
+    [Fact]
+    public async Task ToolManifestMode_with_global_tool_on_path_still_acquires()
+    {
+        await Given("inputs for DACPAC mode, ToolMode=tool-manifest, no manifest present, a global-tool-only probe, and a recording tool acquirer", () =>
+            {
+                var setup = SetupForDacpacMode();
+                var captureFile = Path.Combine(setup.Folder.Root, "dotnet-invocations.log");
+                var fakeDotNet = WriteCaptureScript(setup.Folder, "fake-dotnet.cmd", "DOTNET", captureFile);
+                var acquirer = new RecordingToolAcquirer();
+                return (setup, captureFile, fakeDotNet, acquirer);
+            })
+            .When("task executes with ToolMode=tool-manifest, AutoAcquireTool=true, Probe reports a global tool installed", ctx =>
+            {
+                var task = new RunEfcpt
+                {
+                    BuildEngine = ctx.setup.Engine,
+                    WorkingDirectory = ctx.setup.WorkingDir,
+                    DacpacPath = ctx.setup.DacpacPath,
+                    ConfigPath = ctx.setup.ConfigPath,
+                    RenamingPath = ctx.setup.RenamingPath,
+                    TemplateDir = ctx.setup.TemplateDir,
+                    OutputDir = ctx.setup.OutputDir,
+                    ToolMode = "tool-manifest",
+                    ToolPackageId = "ErikEJ.EFCorePowerTools.Cli",
+                    TargetFramework = "net8.0",
+                    OfflineMode = "false",
+                    AutoAcquireTool = "true",
+                    ToolPath = "",
+                    DotNetExe = ctx.fakeDotNet,
+                    Probe = new GlobalToolOnlySdkProbe(),
+                    ToolAcquirer = ctx.acquirer
+                };
+
+                var success = task.Execute();
+                return (Result: new CaptureResult(ctx.setup, task, success, ctx.captureFile), ctx.acquirer);
+            })
+            .Then("task succeeds", r => r.Result.Success)
+            .And("no error is logged", r => r.Result.Setup.Engine.Errors.Count == 0)
+            .And("acquisition ran despite a global tool being reported installed", r => r.acquirer.Requests.Count == 1)
+            .And("resolution chose 'dotnet tool run efcpt' (not the global tool)", r =>
+            {
+                var lines = File.ReadAllLines(r.Result.CaptureFile);
+                return lines.Length > 0 &&
+                       lines[^1].Contains("tool run", StringComparison.OrdinalIgnoreCase) &&
+                       lines[^1].Contains("efcpt", StringComparison.OrdinalIgnoreCase);
+            })
+            .Finally(r => r.Result.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    // (h) Companion to (g): when resolution would NOT use a manifest, a global tool on PATH DOES
+    // skip acquisition. ToolMode="auto" with no discovered manifest is used here - on Windows
+    // that means "no force" (global tool wins, matching the literal #186 scenario); on
+    // non-Windows RunEfcpt itself forces "auto" to manifest resolution with no manifest/ToolPath
+    // (see ToolModeUsesManifest/forceManifestOnNonWindows), so acquisition correctly runs there
+    // instead - both branches are asserted so this passes deterministically in Windows dev
+    // environments AND on the ubuntu-latest CI runner.
+    [Scenario("Global tool on PATH with ToolMode=auto and no discovered manifest: the global-tool skip and acquisition are mutually exclusive and agree with whether resolution would use a manifest")]
+    [Fact]
+    public async Task GlobalTool_on_path_with_auto_mode_matches_wouldUseManifest_gating()
+    {
+        await Given("inputs for DACPAC mode with a capturing fake dotnet + fake global tool, no manifest, and a recording tool acquirer", () =>
+            {
+                var setup = SetupForDacpacMode();
+                var dotNetCaptureFile = Path.Combine(setup.Folder.Root, "dotnet-invocations.log");
+                var globalToolCaptureFile = Path.Combine(setup.Folder.Root, "global-tool-invocations.log");
+                var fakeDotNet = WriteCaptureScript(setup.Folder, "fake-dotnet.cmd", "DOTNET", dotNetCaptureFile);
+                var fakeGlobalTool = WriteCaptureScript(setup.Folder, "fake-efcpt-global.cmd", "GLOBALTOOL", globalToolCaptureFile);
+                var acquirer = new RecordingToolAcquirer();
+                return (setup, dotNetCaptureFile, globalToolCaptureFile, fakeDotNet, fakeGlobalTool, acquirer);
+            })
+            .When("task executes with ToolMode=auto, AutoAcquireTool=true, no manifest, global tool on PATH", ctx =>
+            {
+                var task = new RunEfcpt
+                {
+                    BuildEngine = ctx.setup.Engine,
+                    WorkingDirectory = ctx.setup.WorkingDir,
+                    DacpacPath = ctx.setup.DacpacPath,
+                    ConfigPath = ctx.setup.ConfigPath,
+                    RenamingPath = ctx.setup.RenamingPath,
+                    TemplateDir = ctx.setup.TemplateDir,
+                    OutputDir = ctx.setup.OutputDir,
+                    ToolMode = "auto",
+                    ToolPackageId = "ErikEJ.EFCorePowerTools.Cli",
+                    ToolCommand = ctx.fakeGlobalTool,
+                    TargetFramework = "net8.0",
+                    OfflineMode = "false",
+                    AutoAcquireTool = "true",
+                    ToolPath = "",
+                    DotNetExe = ctx.fakeDotNet,
+                    Probe = new GlobalToolOnlySdkProbe(),
+                    ToolAcquirer = ctx.acquirer
+                };
+
+                var success = task.Execute();
+                return (ctx.setup, task, success, ctx.globalToolCaptureFile, ctx.acquirer);
+            })
+            .Then("task succeeds", r => r.success)
+            .And("no error is logged", r => r.setup.Engine.Errors.Count == 0)
+            .And("global tool used directly on Windows (no force); manifest acquisition used on non-Windows (forced 'auto'->manifest)", r =>
+            {
+                var globalToolInvoked = File.Exists(r.globalToolCaptureFile) &&
+                    File.ReadAllText(r.globalToolCaptureFile).Contains("GLOBALTOOL", StringComparison.Ordinal);
+                var acquisitionRan = r.acquirer.Requests.Count == 1;
+
+                return OperatingSystem.IsWindows()
+                    ? globalToolInvoked && !acquisitionRan
+                    : !globalToolInvoked && acquisitionRan;
+            })
+            .Finally(r => r.setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    // (i) #186 adversarial-review FIX 1: manifest present but doesn't list the tool,
+    // AutoAcquireTool=true -> bootstraps/installs into the EXISTING manifest directory (not a
+    // second, shadowing one).
+    [Scenario("A tool manifest present but not listing the tool: AutoAcquireTool=true installs the tool into the existing manifest directory")]
+    [Fact]
+    public async Task Manifest_present_without_tool_and_autoacquire_enabled_installs_into_existing_manifest()
+    {
+        await Given("inputs for DACPAC mode with a pre-existing manifest that does not list the tool, a capturing fake dotnet, and a recording tool acquirer", () =>
+            {
+                var setup = SetupForDacpacMode();
+                WriteManifest(setup.WorkingDir, listsTool: false);
+                var captureFile = Path.Combine(setup.Folder.Root, "dotnet-invocations.log");
+                var fakeDotNet = WriteCaptureScript(setup.Folder, "fake-dotnet.cmd", "DOTNET", captureFile);
+                var acquirer = new RecordingToolAcquirer();
+                return (setup, captureFile, fakeDotNet, acquirer);
+            })
+            .When("task executes with AutoAcquireTool=true, ToolMode=auto", ctx =>
+            {
+                var task = new RunEfcpt
+                {
+                    BuildEngine = ctx.setup.Engine,
+                    WorkingDirectory = ctx.setup.WorkingDir,
+                    DacpacPath = ctx.setup.DacpacPath,
+                    ConfigPath = ctx.setup.ConfigPath,
+                    RenamingPath = ctx.setup.RenamingPath,
+                    TemplateDir = ctx.setup.TemplateDir,
+                    OutputDir = ctx.setup.OutputDir,
+                    ToolMode = "auto",
+                    ToolPackageId = "ErikEJ.EFCorePowerTools.Cli",
+                    TargetFramework = "net8.0",
+                    OfflineMode = "false",
+                    AutoAcquireTool = "true",
+                    ToolPath = "",
+                    DotNetExe = ctx.fakeDotNet,
+                    Probe = new AllUnavailableSdkProbe(),
+                    ToolAcquirer = ctx.acquirer
+                };
+
+                var success = task.Execute();
+                return (Result: new CaptureResult(ctx.setup, task, success, ctx.captureFile), ctx.acquirer);
+            })
+            .Then("task succeeds", r => r.Result.Success)
+            .And("no error is logged", r => r.Result.Setup.Engine.Errors.Count == 0)
+            .And("exactly one acquisition request was recorded", r => r.acquirer.Requests.Count == 1)
+            .And("the request targets the EXISTING manifest directory, not a new/shadowing one", r =>
+                r.acquirer.Requests[0].ManifestDir.Equals(Path.GetFullPath(r.Result.Setup.WorkingDir), StringComparison.OrdinalIgnoreCase))
+            .And("resolution chose 'dotnet tool run efcpt' against the freshly-updated manifest", r =>
+            {
+                var lines = File.ReadAllLines(r.Result.CaptureFile);
+                return lines.Length > 0 &&
+                       lines[^1].Contains("tool run", StringComparison.OrdinalIgnoreCase) &&
+                       lines[^1].Contains("efcpt", StringComparison.OrdinalIgnoreCase);
+            })
+            .Finally(r => r.Result.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    // (j) #186 adversarial-review FIX 1: manifest present but doesn't list the tool,
+    // AutoAcquireTool=false -> JD0028 coded error, task returns false, and 'dotnet tool run' is
+    // NEVER invoked against the incomplete manifest (no doomed run).
+    [Scenario("A tool manifest present but not listing the tool: AutoAcquireTool=false reports the actionable JD0028 error instead of a doomed 'dotnet tool run'")]
+    [Fact]
+    public async Task Manifest_present_without_tool_and_autoacquire_disabled_reports_jd0028()
+    {
+        await Given("inputs for DACPAC mode with a pre-existing manifest that does not list the tool, a capturing fake dotnet, and a throwing tool acquirer", () =>
+            {
+                var setup = SetupForDacpacMode();
+                WriteManifest(setup.WorkingDir, listsTool: false);
+                var captureFile = Path.Combine(setup.Folder.Root, "dotnet-invocations.log");
+                var fakeDotNet = WriteCaptureScript(setup.Folder, "fake-dotnet.cmd", "DOTNET", captureFile);
+                return (setup, captureFile, fakeDotNet);
+            })
+            .When("task executes with AutoAcquireTool=false, ToolMode=auto", ctx =>
+            {
+                var task = new RunEfcpt
+                {
+                    BuildEngine = ctx.setup.Engine,
+                    WorkingDirectory = ctx.setup.WorkingDir,
+                    DacpacPath = ctx.setup.DacpacPath,
+                    ConfigPath = ctx.setup.ConfigPath,
+                    RenamingPath = ctx.setup.RenamingPath,
+                    TemplateDir = ctx.setup.TemplateDir,
+                    OutputDir = ctx.setup.OutputDir,
+                    ToolMode = "auto",
+                    ToolPackageId = "ErikEJ.EFCorePowerTools.Cli",
+                    TargetFramework = "net8.0",
+                    OfflineMode = "false",
+                    AutoAcquireTool = "false",
+                    ToolPath = "",
+                    DotNetExe = ctx.fakeDotNet,
+                    Probe = new AllUnavailableSdkProbe(),
+                    ToolAcquirer = new ThrowingToolAcquirer()
+                };
+
+                var success = task.Execute();
+                return new CaptureResult(ctx.setup, task, success, ctx.captureFile);
+            })
+            .Then("task fails", r => !r.Success)
+            .And("the error carries the JD0028 code", r => r.Setup.Engine.Errors.Any(e => e.Code == "JD0028"))
+            .And("the error message references remediation (tool install and EfcptAutoAcquireTool)", r =>
+                r.Setup.Engine.Errors.Any(e =>
+                    (e.Message?.Contains("dotnet tool install", StringComparison.OrdinalIgnoreCase) ?? false) &&
+                    (e.Message?.Contains("EfcptAutoAcquireTool", StringComparison.OrdinalIgnoreCase) ?? false)))
+            .And("'dotnet tool run' was never invoked (no doomed run against the incomplete manifest)", r =>
+                !File.Exists(r.CaptureFile) || !File.ReadAllText(r.CaptureFile).Contains("tool run", StringComparison.OrdinalIgnoreCase))
+            .Finally(r => r.Setup.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    // (k) #186 adversarial-review FIX 1 (idempotent rebuild): DefaultToolAcquirer must not
+    // re-issue 'dotnet new tool-manifest' when a manifest already exists at the target directory
+    // - only 'dotnet tool install' should run.
+    [Scenario("DefaultToolAcquirer skips 'dotnet new tool-manifest' when a manifest already exists at the target directory, issuing only 'dotnet tool install'")]
+    [Fact]
+    public async Task DefaultToolAcquirer_skips_new_manifest_when_one_already_exists()
+    {
+        await Given("a folder with an EXISTING manifest and a capturing fake dotnet", () =>
+            {
+                var folder = new TestFolder();
+                var manifestDir = folder.CreateDir("obj-efcpt");
+                WriteManifest(manifestDir, listsTool: false);
+                var captureFile = Path.Combine(folder.Root, "dotnet-invocations.log");
+                var fakeDotNet = WriteCaptureScript(folder, "fake-dotnet.cmd", "DOTNET", captureFile);
+                return (folder, manifestDir, captureFile, fakeDotNet);
+            })
+            .When("DefaultToolAcquirer.Acquire is called against the existing manifest directory", ctx =>
+            {
+                var acquirer = new DefaultToolAcquirer();
+                var request = new ToolAcquisitionRequest(ctx.manifestDir, ctx.fakeDotNet, "ErikEJ.EFCorePowerTools.Cli", "10.*");
+                var outcome = acquirer.Acquire(request, NullBuildLog.Instance);
+                return (ctx.folder, ctx.captureFile, outcome);
+            })
+            .Then("acquisition reports success", r => r.outcome.Success)
+            .And("'dotnet new tool-manifest' was NOT invoked (idempotent rebuild - manifest already exists)", r =>
+                !File.Exists(r.captureFile) || !File.ReadAllText(r.captureFile).Contains("new tool-manifest", StringComparison.OrdinalIgnoreCase))
+            .And("'dotnet tool install' WAS invoked", r =>
+                File.Exists(r.captureFile) &&
                 File.ReadAllText(r.captureFile).Contains("tool install ErikEJ.EFCorePowerTools.Cli --version", StringComparison.OrdinalIgnoreCase))
             .Finally(r => r.folder.Dispose())
             .AssertPassed();

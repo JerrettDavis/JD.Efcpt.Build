@@ -34,6 +34,42 @@ public sealed class EfcptDoctorTests(ITestOutputHelper output) : TinyBddXunitBas
 
     private sealed record DoctorResult(TestFolder Folder, EfcptDoctor Task, bool Success);
 
+    /// <summary>
+    /// Writes a real <c>.config/dotnet-tools.json</c> manifest into <paramref name="manifestDir"/>
+    /// - listing the efcpt tool when <paramref name="listsTool"/> is <see langword="true"/>, or an
+    /// unrelated placeholder tool otherwise (a manifest that exists but never had efcpt installed
+    /// into it).
+    /// </summary>
+    private static void WriteManifest(string manifestDir, bool listsTool)
+    {
+        var configDir = Path.Combine(manifestDir, ".config");
+        Directory.CreateDirectory(configDir);
+
+        var toolsEntry = listsTool
+            ? """
+              "erikej.efcorepowertools.cli": {
+                    "version": "10.0.0",
+                    "commands": [ "efcpt" ]
+                  }
+              """
+            : """
+              "some.other.tool": {
+                    "version": "1.0.0",
+                    "commands": [ "othertool" ]
+                  }
+              """;
+
+        File.WriteAllText(Path.Combine(configDir, "dotnet-tools.json"), $$"""
+            {
+              "version": 1,
+              "isRoot": true,
+              "tools": {
+                {{toolsEntry}}
+              }
+            }
+            """);
+    }
+
     [Scenario("On .NET 10+ with dnx usable, the verdict reports the dnx execution path and the task succeeds")]
     [Fact]
     public async Task Reports_dnx_path_for_dotnet10_with_dnx_usable()
@@ -213,6 +249,133 @@ public sealed class EfcptDoctorTests(ITestOutputHelper output) : TinyBddXunitBas
             .And("HasViablePath is false", r => !r.Task.HasViablePath)
             .And("the verdict mentions EfcptOfflineMode preventing acquisition", r =>
                 r.Task.Verdict.Contains("EfcptOfflineMode", StringComparison.OrdinalIgnoreCase))
+            .Finally(r => r.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    // #186 adversarial-review FIX 2: a manifest present but not listing the tool must consult
+    // autoAcquireEffective, matching RunEfcpt.AcquireToolIfNeeded's actual FIX 1 behavior - it is
+    // viable (will install into the existing manifest) only when auto-acquire is effective.
+    [Scenario("A tool manifest present but not listing the tool, with AutoAcquireTool=true: the verdict reports it will be installed into the existing manifest, and HasViablePath is true")]
+    [Fact]
+    public async Task Reports_viable_when_manifest_incomplete_and_autoacquire_enabled()
+    {
+        await Given("a doctor task targeting net8.0 with a manifest that does not list the tool and AutoAcquireTool=true", () =>
+            {
+                var folder = new TestFolder();
+                var workingDir = folder.CreateDir("obj");
+                WriteManifest(workingDir, listsTool: false);
+                var engine = new TestBuildEngine();
+                var task = new EfcptDoctor
+                {
+                    BuildEngine = engine,
+                    WorkingDirectory = workingDir,
+                    TargetFramework = "net8.0",
+                    ToolPackageId = "ErikEJ.EFCorePowerTools.Cli",
+                    ToolCommand = "efcpt",
+                    OfflineMode = "false",
+                    AutoAcquireTool = "true",
+                    Strict = "false",
+                    Probe = new AllUnavailableSdkProbe()
+                };
+                return (folder, task);
+            })
+            .When("the task executes", ctx =>
+            {
+                var success = ctx.task.Execute();
+                return new DoctorResult(ctx.folder, ctx.task, success);
+            })
+            .Then("the task succeeds", r => r.Success)
+            .And("HasViablePath is true", r => r.Task.HasViablePath)
+            .And("the verdict mentions EfcptAutoAcquireTool installing into the existing manifest", r =>
+                r.Task.Verdict.Contains("EfcptAutoAcquireTool", StringComparison.OrdinalIgnoreCase) &&
+                r.Task.Verdict.Contains("install", StringComparison.OrdinalIgnoreCase))
+            .Finally(r => r.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    [Scenario("A tool manifest present but not listing the tool, with AutoAcquireTool=false: the verdict offers the actionable 'dotnet tool install' remediation (not the misleading 'dotnet tool restore'), and HasViablePath is false")]
+    [Fact]
+    public async Task Reports_not_viable_when_manifest_incomplete_and_autoacquire_disabled()
+    {
+        await Given("a doctor task targeting net8.0 with a manifest that does not list the tool and AutoAcquireTool=false", () =>
+            {
+                var folder = new TestFolder();
+                var workingDir = folder.CreateDir("obj");
+                WriteManifest(workingDir, listsTool: false);
+                var engine = new TestBuildEngine();
+                var task = new EfcptDoctor
+                {
+                    BuildEngine = engine,
+                    WorkingDirectory = workingDir,
+                    TargetFramework = "net8.0",
+                    ToolPackageId = "ErikEJ.EFCorePowerTools.Cli",
+                    ToolCommand = "efcpt",
+                    OfflineMode = "false",
+                    AutoAcquireTool = "false",
+                    Strict = "false",
+                    Probe = new AllUnavailableSdkProbe()
+                };
+                return (folder, task);
+            })
+            .When("the task executes", ctx =>
+            {
+                var success = ctx.task.Execute();
+                return new DoctorResult(ctx.folder, ctx.task, success);
+            })
+            .Then("the task still succeeds (non-strict)", r => r.Success)
+            .And("HasViablePath is false", r => !r.Task.HasViablePath)
+            .And("the verdict offers 'dotnet tool install' remediation, not the misleading 'dotnet tool restore'", r =>
+                r.Task.Verdict.Contains("dotnet tool install", StringComparison.OrdinalIgnoreCase) &&
+                !r.Task.Verdict.Contains("dotnet tool restore", StringComparison.OrdinalIgnoreCase))
+            .And("the verdict mentions enabling EfcptAutoAcquireTool as a fix option", r =>
+                r.Task.Verdict.Contains("EfcptAutoAcquireTool=true", StringComparison.OrdinalIgnoreCase))
+            .Finally(r => r.Folder.Dispose())
+            .AssertPassed();
+    }
+
+    // Guards against a report that only surfaces TargetFramework/Verdict - each individual probe
+    // result must be independently visible in Messages for troubleshooting.
+    [Scenario("Messages includes each individual diagnostic field line (SDK10, dnx, manifest-lists-tool, global-tool, explicit-ToolPath), not just TargetFramework/Verdict")]
+    [Fact]
+    public async Task Reports_individual_diagnostic_field_lines()
+    {
+        await Given("a doctor task targeting net8.0 with a manifest that lists the tool and no explicit ToolPath", () =>
+            {
+                var folder = new TestFolder();
+                var workingDir = folder.CreateDir("obj");
+                WriteManifest(workingDir, listsTool: true);
+                var engine = new TestBuildEngine();
+                var task = new EfcptDoctor
+                {
+                    BuildEngine = engine,
+                    WorkingDirectory = workingDir,
+                    TargetFramework = "net8.0",
+                    ToolPackageId = "ErikEJ.EFCorePowerTools.Cli",
+                    ToolCommand = "efcpt",
+                    OfflineMode = "false",
+                    AutoAcquireTool = "true",
+                    Strict = "false",
+                    Probe = new AllUnavailableSdkProbe()
+                };
+                return (folder, task);
+            })
+            .When("the task executes", ctx =>
+            {
+                var success = ctx.task.Execute();
+                return new DoctorResult(ctx.folder, ctx.task, success);
+            })
+            .Then("the task succeeds", r => r.Success)
+            .And("Messages includes an SDK 10+ installed line", r =>
+                r.Task.Messages.Any(m => m.StartsWith("SDK 10+ installed:", StringComparison.Ordinal)))
+            .And("Messages includes a dnx available line", r =>
+                r.Task.Messages.Any(m => m.StartsWith("dnx available:", StringComparison.Ordinal)))
+            .And("Messages includes a manifest-lists-tool line reporting True", r =>
+                r.Task.Messages.Any(m => m.StartsWith("Manifest lists ", StringComparison.Ordinal) && m.Contains(": True", StringComparison.Ordinal)))
+            .And("Messages includes a global tool resolvable line", r =>
+                r.Task.Messages.Any(m => m.Contains("resolvable on PATH:", StringComparison.Ordinal)))
+            .And("Messages includes an explicit ToolPath line reporting '(not set)'", r =>
+                r.Task.Messages.Any(m => m.StartsWith("Explicit ToolPath:", StringComparison.Ordinal) && m.Contains("not set", StringComparison.Ordinal)))
             .Finally(r => r.Folder.Dispose())
             .AssertPassed();
     }
