@@ -317,6 +317,44 @@ tool via one of the above before building offline. ...
 
 ---
 
+### JD0028: Tool Manifest Resolution Not Configured
+**Severity**: Error
+**Task**: RunEfcpt
+
+Tool resolution would use a local dotnet tool manifest for the efcpt tool (`EfcptToolMode`
+resolves to `tool-manifest`, or `auto` with a discovered manifest directory), but that manifest is
+either absent or does not list the efcpt tool, and `EfcptAutoAcquireTool` is disabled (or cannot
+run because no `EfcptToolPackageId` is configured) - so the build stops with an actionable error
+instead of falling through to a guaranteed-failing `dotnet tool run` invocation.
+
+**Example**:
+```
+error JD0028: Tool resolution would use a local dotnet tool manifest for the efcpt tool, but a
+tool manifest was discovered at 'C:\repo\src\MyProject\obj\efcpt', but it does not list
+'ErikEJ.EFCorePowerTools.Cli'. EfcptAutoAcquireTool is 'false' (disabled, or no
+EfcptToolPackageId was configured to install), so it cannot bootstrap or complete the manifest
+automatically. Proceeding would guarantee a failing 'dotnet tool run' invocation, so the build is
+stopping now instead. Fix options: (1) run: dotnet tool install ErikEJ.EFCorePowerTools.Cli
+--version 10.* in 'C:\repo\src\MyProject\obj\efcpt' (or dotnet new tool-manifest && dotnet tool
+install ErikEJ.EFCorePowerTools.Cli --version 10.* if no manifest exists yet there); (2) set
+EfcptAutoAcquireTool=true so the build bootstraps/installs it automatically; or (3) set an
+explicit EfcptToolPath to a pre-installed efcpt executable. ...
+```
+
+**Resolution**:
+- Install the tool into the existing (or a new) manifest: `dotnet tool install
+  ErikEJ.EFCorePowerTools.Cli --version 10.*` in the manifest directory shown in the error (or
+  `dotnet new tool-manifest && dotnet tool install ErikEJ.EFCorePowerTools.Cli --version 10.*` if
+  no manifest exists there yet)
+- Or set `EfcptAutoAcquireTool=true` so the build bootstraps/installs it automatically at build
+  time (see JD0027 if that install itself then fails)
+- Or set `EfcptToolPath` to an explicit, pre-installed efcpt executable
+- Run `dotnet build -t:EfcptDoctor` for a diagnostic report of which execution path would be used
+  and why
+- See [tool-acquisition.md](tool-acquisition.md) for the full auto-acquisition workflow
+
+---
+
 ## Troubleshooting Tips
 
 ### General Troubleshooting Steps
