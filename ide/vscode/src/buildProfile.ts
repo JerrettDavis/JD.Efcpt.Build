@@ -16,11 +16,26 @@ export interface BuildProfileArtifact {
   size: number;
 }
 
-export interface BuildProfileDiagnostic {
+/**
+ * Raw diagnostic shape as written by JD.Efcpt.Build.Tasks.Profiling.DiagnosticMessage.
+ * The severity field is named `level` in the JSON (values "Info" / "Warning" /
+ * "Error") — see BuildRunOutput.cs. `severity` is accepted as a tolerant
+ * fallback but the canonical contract is `level`.
+ */
+export interface BuildProfileRawDiagnostic {
+  level?: string;
   severity?: string;
   code?: string;
   message?: string;
+  timestamp?: string;
   [key: string]: unknown;
+}
+
+/** Normalized diagnostic surfaced to the UI (severity derived from `level`). */
+export interface BuildProfileDiagnostic {
+  severity: string;
+  code?: string;
+  message?: string;
 }
 
 /** Raw shape of obj/efcpt/build-profile.json (subset this extension reads). */
@@ -38,7 +53,7 @@ export interface BuildProfileJson {
     configuration?: string;
   };
   artifacts?: BuildProfileArtifact[];
-  diagnostics?: BuildProfileDiagnostic[];
+  diagnostics?: BuildProfileRawDiagnostic[];
   [key: string]: unknown;
 }
 
@@ -82,7 +97,8 @@ export function parseBuildProfile(jsonText: string): ParsedBuildProfile {
   }
 
   const artifacts = Array.isArray(raw.artifacts) ? raw.artifacts : [];
-  const diagnostics = Array.isArray(raw.diagnostics) ? raw.diagnostics : [];
+  const rawDiagnostics = Array.isArray(raw.diagnostics) ? raw.diagnostics : [];
+  const diagnostics = rawDiagnostics.map(normalizeDiagnostic);
   const modelCount = artifacts.filter((a) => a && a.type === 'GeneratedModel').length;
 
   return {
@@ -96,6 +112,20 @@ export function parseBuildProfile(jsonText: string): ParsedBuildProfile {
     artifacts,
     diagnostics,
     projectName: raw.project?.name,
+  };
+}
+
+/**
+ * Normalizes a raw profile diagnostic into the UI shape. The .NET writer emits
+ * the severity as `level` ("Info" / "Warning" / "Error"); we accept `severity`
+ * as a tolerant fallback and lower-case it for consistent display.
+ */
+export function normalizeDiagnostic(raw: BuildProfileRawDiagnostic): BuildProfileDiagnostic {
+  const rawSeverity = raw.level ?? raw.severity ?? 'info';
+  return {
+    severity: String(rawSeverity).toLowerCase(),
+    code: raw.code,
+    message: raw.message,
   };
 }
 

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using JD.Efcpt.Build.Core.Diagnostics;
 using JD.Efcpt.Build.Core.Logging;
 #if NETFRAMEWORK
 using JD.Efcpt.Build.Tasks.Compatibility;
@@ -67,7 +68,9 @@ public static class ProcessRunner
         int? timeoutMs = null)
     {
         var normalized = CommandNormalizationStrategy.Normalize(fileName, args);
-        log.Info($"> {normalized.FileName} {normalized.Args}");
+        // Mask credentials (e.g. a connection string passed as a positional arg) before echoing
+        // the command line to the build log. The unmasked args are still passed to the process.
+        log.Info($"> {normalized.FileName} {SecretRedaction.MaskSecrets(normalized.Args)}");
 
         var psi = new ProcessStartInfo
         {
@@ -125,7 +128,7 @@ public static class ProcessRunner
                 -1,
                 stdoutBuilder.ToString(),
                 $"Process timed out after {timeout / 1000.0:0.#}s and was killed: " +
-                $"{normalized.FileName} {normalized.Args}");
+                $"{normalized.FileName} {SecretRedaction.MaskSecrets(normalized.Args)}");
         }
 
         // Ensure the async redirected-stream event handlers have finished flushing before we

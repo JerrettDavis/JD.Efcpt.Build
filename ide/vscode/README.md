@@ -25,7 +25,7 @@ This extension is a thin client over the existing MSBuild pipeline — it does n
 | Setting | Default | Description |
 |---|---|---|
 | `jdEfcpt.enableProfiling` | `true` | Passes `-p:EfcptEnableProfiling=true`, so builds write `obj/efcpt/build-profile.json` for the status bar/view to read. |
-| `jdEfcpt.buildVerbosity` | `"detailed"` | Value passed as `-p:EfcptLogVerbosity`. |
+| `jdEfcpt.buildVerbosity` | `"minimal"` | Value passed as `-p:EfcptLogVerbosity`. Defaults to `minimal` to reduce the chance of sensitive values appearing in build output. |
 | `jdEfcpt.dotnetPath` | `"dotnet"` | Path to the `dotnet` executable. |
 
 ## How regeneration works
@@ -33,10 +33,10 @@ This extension is a thin client over the existing MSBuild pipeline — it does n
 Running `JD.Efcpt: Regenerate Models` executes:
 
 ```
-dotnet build <proj> -p:EfcptForceRegenerate=true -p:EfcptEnableProfiling=true -p:EfcptLogVerbosity=detailed
+dotnet build <proj> -p:EfcptForceRegenerate=true -p:EfcptEnableProfiling=true -p:EfcptLogVerbosity=minimal
 ```
 
-as a VS Code task, with the `$jdEfcpt-msbuild` problem matcher attached for standard `path(line,col): error CSxxxx: msg` compiler diagnostics. Task output is also scanned for `JDxxxx` warning/error lines, which are added to the Problems panel separately from compiler diagnostics.
+as a VS Code task, with the `$jdEfcpt-msbuild` problem matcher attached for standard `path(line,col): error CSxxxx: msg` compiler diagnostics. Task output is also scanned for `JDxxxx` warning/error lines, which are added to the Problems panel separately from compiler diagnostics. Captured output is passed through a secret-redactor (masking `Password`/`Pwd`/`User ID`/`Uid` values) before it is written to the Output Channel, echoed to the terminal, or turned into diagnostics.
 
 Connection strings and other sensitive values are automatically redacted by JD.Efcpt.Build's profiling framework before they ever reach `build-profile.json` — see [Build Profiling: Security Considerations](https://github.com/JerrettDavis/JD.Efcpt.Build/blob/main/docs/user-guide/build-profiling.md#security-considerations).
 

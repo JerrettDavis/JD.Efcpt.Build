@@ -28,6 +28,31 @@ describe('buildProfile', () => {
       assert.strictEqual(profile.projectName, 'MyProject');
     });
 
+    it('normalizes the diagnostic `level` field (real schema) into severity', () => {
+      const profile = parseBuildProfile(readFixture('build-profile.success.json'));
+      assert.strictEqual(profile.diagnostics[0].severity, 'warning');
+      assert.strictEqual(profile.diagnostics[0].code, 'JD0001');
+
+      const failed = parseBuildProfile(readFixture('build-profile.failed.json'));
+      assert.strictEqual(failed.diagnostics[0].severity, 'error');
+      assert.strictEqual(failed.diagnostics[0].code, 'JD0011');
+    });
+
+    it('falls back to `severity` when `level` is absent, defaulting to info', () => {
+      const profile = parseBuildProfile(
+        JSON.stringify({
+          schemaVersion: '1.0.0',
+          status: 'Success',
+          diagnostics: [
+            { severity: 'Error', code: 'JD9999', message: 'legacy field' },
+            { code: 'JD0000', message: 'no severity at all' },
+          ],
+        })
+      );
+      assert.strictEqual(profile.diagnostics[0].severity, 'error');
+      assert.strictEqual(profile.diagnostics[1].severity, 'info');
+    });
+
     it('counts only artifacts of type GeneratedModel', () => {
       const profile = parseBuildProfile(readFixture('build-profile.success.json'));
       const nonModelArtifacts = profile.artifacts.filter((a) => a.type !== 'GeneratedModel');

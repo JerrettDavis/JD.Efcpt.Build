@@ -117,34 +117,72 @@ async function pickProject(): Promise<string | undefined> {
   return picked?.description;
 }
 
-async function regenerateModelsCommand(): Promise<void> {
-  const projectPath = await pickProject();
-  if (!projectPath) {
-    return;
-  }
-
-  statusBar?.setBuilding();
+function getMtimeMs(filePath: string): number | undefined {
   try {
-    const result = await runRegenerateTask(projectPath);
-    outputChannel?.appendLine(result.output);
-    applyJdDiagnostics(projectPath, result.diagnostics);
+    return fs.statSync(filePath).mtimeMs;
+  } catch {
+    return undefined;
+  }
+}
+
+async function regenerateModelsCommand(): Promise<void> {
+  // The entire body (including project discovery) is guarded so any failure
+  // surfaces via showErrorMessage + the output channel instead of an unhandled
+  // rejection.
+  try {
+    const projectPath = await pickProject();
+    if (!projectPath) {
+      return;
+    }
 
     const profilePath = path.join(path.dirname(projectPath), 'obj', 'efcpt', 'build-profile.json');
-    if (fs.existsSync(profilePath)) {
+    // Capture the profile's timestamp BEFORE the build so we can tell whether
+    // THIS run wrote it, rather than reusing a prior run's stale profile.
+    const preBuildMtime = getMtimeMs(profilePath);
+
+    statusBar?.setBuilding();
+
+    const result = await runRegenerateTask(projectPath);
+    outputChannel?.appendLine(result.output);
+
+    // Only clear+repopulate JD diagnostics when the build actually ran and
+    // produced output. A spawn failure (e.g. dotnet not on PATH) must not wipe
+    // diagnostics captured from a previous, real run.
+    if (!result.startFailed) {
+      applyJdDiagnostics(projectPath, result.diagnostics);
+    }
+
+    // Only trust build-profile.json if THIS run wrote it (mtime strictly newer,
+    // or the file is newly created). A stale profile from a prior successful
+    // build must never be presented as a fresh success after a failed/aborted run.
+    const postBuildMtime = getMtimeMs(profilePath);
+    const profileIsFresh =
+      postBuildMtime !== undefined &&
+      (preBuildMtime === undefined || postBuildMtime > preBuildMtime);
+
+    if (profileIsFresh) {
       await refreshFromProfile(profilePath);
-    } else if (result.exitCode !== 0) {
-      statusBar?.setFailed();
-    } else {
+    } else if (result.exitCode === 0 && !result.startFailed) {
+      // Build succeeded but wrote no fresh profile (e.g. profiling disabled).
+      // Show a neutral state rather than reusing a stale profile's model count.
       statusBar?.setIdle();
+      statusViewProvider?.update(undefined);
+    } else {
+      statusBar?.setFailed();
+      statusViewProvider?.update(undefined);
     }
 
     if (result.exitCode !== 0) {
+      const lead = result.startFailed
+        ? `JD.Efcpt.Build could not start the build for ${path.basename(projectPath)}`
+        : `JD.Efcpt.Build regeneration failed for ${path.basename(projectPath)} (exit code ${result.exitCode})`;
       void vscode.window.showErrorMessage(
-        `JD.Efcpt.Build regeneration failed for ${path.basename(projectPath)} (exit code ${result.exitCode}). See the JD.Efcpt.Build output channel for details.`
+        `${lead}. See the JD.Efcpt.Build output channel and the Terminal panel for details.`
       );
     }
   } catch (err) {
     statusBar?.setFailed();
+    outputChannel?.appendLine(`JD.Efcpt.Build regeneration error: ${(err as Error).message}`);
     void vscode.window.showErrorMessage(
       `JD.Efcpt.Build regeneration failed: ${(err as Error).message}`
     );
@@ -159,7 +197,10 @@ async function refreshFromProfile(profilePath: string): Promise<void> {
   let text: string;
   try {
     text = await fs.promises.readFile(profilePath, 'utf8');
-  } catch {
+  } catch (err) {
+    outputChannel?.appendLine(
+      `Could not read build-profile.json at ${profilePath}: ${(err as Error).message}`
+    );
     return;
   }
 

@@ -28,6 +28,6 @@
   ],
   "metadata": {},
   "diagnostics": [
-    { "severity": "warning", "code": "JD0001", "message": "Configuration file mismatch" }
+    { "level": "Warning", "code": "JD0001", "message": "Configuration file mismatch", "timestamp": "2024-01-11T12:01:00Z" }
   ]
 }

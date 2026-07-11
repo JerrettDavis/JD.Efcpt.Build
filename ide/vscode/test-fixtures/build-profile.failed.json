@@ -14,6 +14,6 @@
   "artifacts": [],
   "metadata": {},
   "diagnostics": [
-    { "severity": "error", "code": "JD0011", "message": "Failed to parse configuration file 'appsettings.json'" }
+    { "level": "Error", "code": "JD0011", "message": "Failed to parse configuration file 'appsettings.json'", "timestamp": "2024-01-11T12:05:10Z" }
   ]
 }

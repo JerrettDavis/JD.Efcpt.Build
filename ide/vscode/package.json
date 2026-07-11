@@ -78,12 +78,12 @@
         },
         "jdEfcpt.buildVerbosity": {
           "type": "string",
-          "default": "detailed",
+          "default": "minimal",
           "enum": [
             "minimal",
             "detailed"
           ],
-          "description": "Value passed as -p:EfcptLogVerbosity to the JD.Efcpt.Build MSBuild pipeline."
+          "description": "Value passed as -p:EfcptLogVerbosity to the JD.Efcpt.Build MSBuild pipeline. Defaults to 'minimal' to reduce the risk of sensitive values (e.g. connection strings) appearing in build output."
         },
         "jdEfcpt.dotnetPath": {
           "type": "string",

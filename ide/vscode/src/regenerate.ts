@@ -2,17 +2,25 @@ import * as vscode from 'vscode';
 import * as cp from 'child_process';
 import * as path from 'path';
 import { JdDiagnostic, parseJdDiagnostics } from './jdDiagnostics';
+import { redactSecrets } from './redact';
+import { awaitTaskCompletion } from './taskCompletion';
 
 export interface RegenerateResult {
   exitCode: number;
   projectPath: string;
+  /** Redacted build output (safe to pin in the Output Channel / diagnostics). */
   output: string;
   diagnostics: JdDiagnostic[];
+  /** True when `dotnet` could not even be started (e.g. ENOENT) — the build never ran. */
+  startFailed: boolean;
 }
 
 const TASK_TYPE = 'jdEfcpt-regenerate';
 const TASK_SOURCE = 'jdEfcpt';
 const PROBLEM_MATCHER = '$jdEfcpt-msbuild';
+
+/** Safety timeout so a task that never reports completion can't hang the command forever. */
+const TASK_TIMEOUT_MS = 10 * 60 * 1000;
 
 interface JdEfcptConfig {
   dotnetPath: string;
@@ -25,7 +33,7 @@ function getConfig(): JdEfcptConfig {
   return {
     dotnetPath: config.get<string>('dotnetPath', 'dotnet'),
     enableProfiling: config.get<boolean>('enableProfiling', true),
-    buildVerbosity: config.get<string>('buildVerbosity', 'detailed'),
+    buildVerbosity: config.get<string>('buildVerbosity', 'minimal'),
   };
 }
 
@@ -56,6 +64,11 @@ export function buildRegenerateArgs(projectPath: string, config: JdEfcptConfig =
  * output text to parse JDxxxx diagnostics per docs/user-guide/error-codes.md.
  * The pseudoterminal still streams output live to the integrated terminal,
  * so the user-visible behavior matches a normal task.
+ *
+ * Completion is detected by matching the TaskExecution *returned by*
+ * executeTask against onDidEndTaskProcess events (VS Code does not guarantee
+ * Task object identity across events), with a safety timeout so the command
+ * can never hang indefinitely.
  */
 export async function runRegenerateTask(projectPath: string): Promise<RegenerateResult> {
   const config = getConfig();
@@ -63,8 +76,15 @@ export async function runRegenerateTask(projectPath: string): Promise<Regenerate
   const projectName = path.basename(projectPath, path.extname(projectPath));
 
   let outputBuffer = '';
+  let startFailed = false;
   const writeEmitter = new vscode.EventEmitter<string>();
   const closeEmitter = new vscode.EventEmitter<number>();
+
+  const append = (text: string) => {
+    const redacted = redactSecrets(text);
+    outputBuffer += redacted;
+    writeEmitter.fire(redacted.replace(/\r?\n/g, '\r\n'));
+  };
 
   const pty: vscode.Pseudoterminal = {
     onDidWrite: writeEmitter.event,
@@ -74,21 +94,23 @@ export async function runRegenerateTask(projectPath: string): Promise<Regenerate
       try {
         child = cp.spawn(config.dotnetPath, args, { cwd: path.dirname(projectPath) });
       } catch (err) {
-        writeEmitter.fire(`${(err as Error).message}\r\n`);
+        startFailed = true;
+        append(`Failed to start '${config.dotnetPath}': ${(err as Error).message}\r\n`);
         closeEmitter.fire(1);
         return;
       }
 
-      const forward = (data: Buffer) => {
-        const text = data.toString();
-        outputBuffer += text;
-        writeEmitter.fire(text.replace(/\r?\n/g, '\r\n'));
-      };
+      const forward = (data: Buffer) => append(data.toString());
       child.stdout?.on('data', forward);
       child.stderr?.on('data', forward);
-      child.on('close', (code) => closeEmitter.fire(code ?? 0));
+      // A null exit code means the process was killed by a signal — treat as failure.
+      child.on('close', (code) => closeEmitter.fire(code ?? 1));
       child.on('error', (err) => {
-        writeEmitter.fire(`${err.message}\r\n`);
+        // Spawn failures (e.g. dotnet not on PATH / ENOENT) surface here rather
+        // than throwing. Record the message in the captured output so the error
+        // toast that points users at the Output Channel is not pointing at nothing.
+        startFailed = true;
+        append(`Failed to start '${config.dotnetPath}': ${err.message}\r\n`);
         closeEmitter.fire(1);
       });
     },
@@ -112,20 +134,25 @@ export async function runRegenerateTask(projectPath: string): Promise<Regenerate
     clear: true,
   };
 
-  const exitCode = await new Promise<number>((resolve) => {
-    const listener = vscode.tasks.onDidEndTaskProcess((e) => {
-      if (e.execution.task === task) {
-        listener.dispose();
-        resolve(e.exitCode ?? 0);
-      }
+  try {
+    const exitCode = await awaitTaskCompletion(task, {
+      executeTask: (t) => Promise.resolve(vscode.tasks.executeTask(t)),
+      onDidEndTaskProcess: (listener) =>
+        vscode.tasks.onDidEndTaskProcess((e) =>
+          listener({ execution: e.execution, exitCode: e.exitCode })
+        ),
+      timeoutMs: TASK_TIMEOUT_MS,
     });
-    void vscode.tasks.executeTask(task);
-  });
 
-  return {
-    exitCode,
-    projectPath,
-    output: outputBuffer,
-    diagnostics: parseJdDiagnostics(outputBuffer),
-  };
+    return {
+      exitCode,
+      projectPath,
+      output: outputBuffer,
+      diagnostics: parseJdDiagnostics(outputBuffer),
+      startFailed,
+    };
+  } finally {
+    writeEmitter.dispose();
+    closeEmitter.dispose();
+  }
 }

@@ -34,6 +34,20 @@ describe('jdDiagnostics', () => {
       assert.strictEqual(result?.severity, 'warning');
     });
 
+    it('strips the trailing MSBuild [project] suffix from the message', () => {
+      const result = parseJdDiagnosticLine(
+        'error JD0011: Failed to parse configuration file [C:\\repo\\src\\Project.csproj]'
+      );
+      assert.strictEqual(result?.message, 'Failed to parse configuration file');
+    });
+
+    it('keeps square-bracket content that is not a trailing suffix', () => {
+      const result = parseJdDiagnosticLine(
+        "warning JD0002: Connection string [primary] not found [C:\\repo\\Project.csproj]"
+      );
+      assert.strictEqual(result?.message, 'Connection string [primary] not found');
+    });
+
     it('returns null for a non-matching line', () => {
       assert.strictEqual(parseJdDiagnosticLine('Build succeeded.'), null);
     });

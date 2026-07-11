@@ -29,7 +29,9 @@ export function parseJdDiagnosticLine(line: string): JdDiagnostic | null {
   return {
     severity: severity as JdDiagnosticSeverity,
     code,
-    message: message.trim(),
+    // Strip the trailing MSBuild project-context suffix, e.g.
+    // " [C:\path\Project.csproj]", that MSBuild appends to task diagnostics.
+    message: message.replace(/\s*\[[^\]]*\]\s*$/, '').trim(),
   };
 }
 

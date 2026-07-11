@@ -34,7 +34,7 @@ suite('JD.Efcpt.Build diagnostics + status wiring', () => {
           { path: 'Customer.g.cs', type: 'GeneratedModel', size: 100 },
           { path: 'Order.g.cs', type: 'GeneratedModel', size: 120 },
         ],
-        diagnostics: [{ severity: 'warning', code: 'JD0001', message: 'Fixture diagnostic' }],
+        diagnostics: [{ level: 'Warning', code: 'JD0001', message: 'Fixture diagnostic' }],
       }),
       'utf8'
     );
