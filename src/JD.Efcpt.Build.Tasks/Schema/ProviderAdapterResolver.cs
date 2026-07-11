@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Reflection;
 using JD.Efcpt.Build.Tasks.Schema.Providers;
 
 namespace JD.Efcpt.Build.Tasks.Schema;
@@ -59,6 +60,9 @@ internal sealed class ProviderAdapterResolver
             // "mssql" is the only provider that remains bundled with the core package - see #189.
         };
 
+    private static readonly IReadOnlyDictionary<string, string> EmptyCustomProviderAssemblies =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
     private readonly ConcurrentDictionary<string, IProviderAdapter> _cache = new();
 
     /// <summary>
@@ -67,7 +71,7 @@ internal sealed class ProviderAdapterResolver
     /// call concurrently from multiple threads.
     /// </summary>
     /// <param name="normalizedProvider">
-    /// A provider name already normalized by <see cref="DatabaseProviderFactory.NormalizeProvider"/>.
+    /// A provider name already normalized by <see cref="DatabaseProviderFactory.NormalizeProvider(string)"/>.
     /// </param>
     /// <param name="providerSearchPaths">
     /// Additional directories to search for a satellite provider assembly, beyond the bundled
@@ -75,14 +79,31 @@ internal sealed class ProviderAdapterResolver
     /// consuming MSBuild project's <c>EfcptProviderSearchPath</c> item group (see
     /// <c>QuerySchemaMetadata.ProviderSearchPaths</c>). Ignored for providers resolved in-assembly.
     /// </param>
+    /// <param name="customProviderAssemblies">
+    /// Maps a registered custom provider key (see #184's <c>customProviders</c> plugin registry)
+    /// to the simple assembly name (without directory or <c>.dll</c> extension) that contains its
+    /// <see cref="IProviderAdapter"/>. Only consulted when <paramref name="normalizedProvider"/>
+    /// does not match a built-in provider - see <see cref="ResolveFromSatellitePackage"/>.
+    /// Ignored for providers resolved in-assembly.
+    /// </param>
     /// <returns>The resolved <see cref="IProviderAdapter"/> for the provider.</returns>
     /// <exception cref="ProviderDriverNotFoundException">
     /// Thrown when no adapter is registered for <paramref name="normalizedProvider"/> and no
     /// matching satellite assembly can be found in any searched directory, or when a matching
-    /// satellite assembly was found but could not be loaded or instantiated (see
+    /// built-in satellite assembly was found but could not be loaded or instantiated (see
     /// <see cref="Exception.InnerException"/> for the underlying cause in that case).
     /// </exception>
-    public IProviderAdapter Resolve(string normalizedProvider, IReadOnlyList<string>? providerSearchPaths = null)
+    /// <exception cref="CustomProviderException">
+    /// Thrown when <paramref name="normalizedProvider"/> resolves via
+    /// <paramref name="customProviderAssemblies"/> and its assembly could not be found, could not
+    /// be loaded or instantiated (<see cref="CustomProviderException.AssemblyLoadFailedCode"/>),
+    /// or was loaded but contains no concrete <see cref="IProviderAdapter"/>
+    /// (<see cref="CustomProviderException.NoAdapterFoundCode"/>).
+    /// </exception>
+    public IProviderAdapter Resolve(
+        string normalizedProvider,
+        IReadOnlyList<string>? providerSearchPaths = null,
+        IReadOnlyDictionary<string, string>? customProviderAssemblies = null)
     {
         if (AdapterFactoriesByProvider.TryGetValue(normalizedProvider, out var factory))
             return _cache.GetOrAdd(normalizedProvider, _ => factory());
@@ -91,7 +112,7 @@ internal sealed class ProviderAdapterResolver
         var cacheKey = BuildCacheKey(normalizedProvider, searchPaths);
 
         return _cache.GetOrAdd(cacheKey, _ =>
-            ResolveFromSatellitePackage(normalizedProvider, searchPaths)
+            ResolveFromSatellitePackage(normalizedProvider, searchPaths, customProviderAssemblies ?? EmptyCustomProviderAssemblies)
                 ?? throw new ProviderDriverNotFoundException(normalizedProvider));
     }
 
@@ -125,41 +146,147 @@ internal sealed class ProviderAdapterResolver
     /// Attempts to locate and load a satellite provider package's adapter assembly for
     /// <paramref name="normalizedProvider"/>, returning its <see cref="IProviderAdapter"/>
     /// instance, or <see langword="null"/> if no matching assembly is found in any searched
-    /// directory.
+    /// directory and <paramref name="normalizedProvider"/> is not a registered custom provider
+    /// key either.
     /// </summary>
+    /// <remarks>
+    /// DLL-name resolution tries, in order: (1) the built-in
+    /// <see cref="ProviderDriverNotFoundException.PackageSuffixesByProvider"/> suffix map -
+    /// unchanged, always matched first; (2) <paramref name="customProviderAssemblies"/> (#184) -
+    /// only consulted when <paramref name="normalizedProvider"/> doesn't match a built-in suffix,
+    /// so a custom key can never shadow a built-in provider's assembly name. If neither matches,
+    /// this returns <see langword="null"/> (unknown provider - <see cref="Resolve"/> turns that
+    /// into <see cref="ProviderDriverNotFoundException"/>).
+    /// </remarks>
     /// <exception cref="ProviderDriverNotFoundException">
-    /// Thrown when a matching assembly file was found but loading it or instantiating its
-    /// <see cref="IProviderAdapter"/> implementation failed for any reason (corrupt DLL, wrong
-    /// architecture, missing transitive dependency, no accessible parameterless constructor,
-    /// a constructor that throws, etc.). The original exception is preserved as
-    /// <see cref="Exception.InnerException"/>. This ensures a raw CLR loader exception never
-    /// reaches the MSBuild log in place of the actionable install guidance.
+    /// Thrown when a matching <i>built-in</i> satellite assembly file was found but loading it or
+    /// instantiating its <see cref="IProviderAdapter"/> implementation failed for any reason
+    /// (corrupt DLL, wrong architecture, missing transitive dependency, no accessible
+    /// parameterless constructor, a constructor that throws, etc.). The original exception is
+    /// preserved as <see cref="Exception.InnerException"/>. This ensures a raw CLR loader
+    /// exception never reaches the MSBuild log in place of the actionable install guidance.
+    /// </exception>
+    /// <exception cref="CustomProviderException">
+    /// Thrown when <paramref name="normalizedProvider"/> matches a key in
+    /// <paramref name="customProviderAssemblies"/> and its assembly could not be found on any
+    /// searched directory, or was found but failed to load or instantiate
+    /// (<see cref="CustomProviderException.AssemblyLoadFailedCode"/>), or loaded successfully but
+    /// contains no concrete <see cref="IProviderAdapter"/>
+    /// (<see cref="CustomProviderException.NoAdapterFoundCode"/>).
     /// </exception>
     internal static IProviderAdapter? ResolveFromSatellitePackage(
         string normalizedProvider,
-        IReadOnlyList<string> providerSearchPaths)
+        IReadOnlyList<string> providerSearchPaths,
+        IReadOnlyDictionary<string, string>? customProviderAssemblies = null)
     {
-        if (!ProviderDriverNotFoundException.PackageSuffixesByProvider.TryGetValue(normalizedProvider, out var suffix)
-            || suffix is null)
-            return null;
+        bool isCustom;
+        string assemblyFileName;
 
-        var assemblyFileName = $"JD.Efcpt.Build.{suffix}.dll";
+        if (ProviderDriverNotFoundException.PackageSuffixesByProvider.TryGetValue(normalizedProvider, out var suffix)
+            && suffix is not null)
+        {
+            isCustom = false;
+            assemblyFileName = $"JD.Efcpt.Build.{suffix}.dll";
+        }
+        else if (customProviderAssemblies is not null
+                 && customProviderAssemblies.TryGetValue(normalizedProvider, out var customAssemblyName)
+                 && !string.IsNullOrWhiteSpace(customAssemblyName))
+        {
+            isCustom = true;
+            assemblyFileName = $"{customAssemblyName}.dll";
+        }
+        else
+        {
+            return null;
+        }
+
         var assemblyPath = EnumerateCandidateDirectories(normalizedProvider, providerSearchPaths)
             .Select(dir => Path.Combine(dir, assemblyFileName))
             .FirstOrDefault(File.Exists);
 
         if (assemblyPath is null)
+        {
+            if (isCustom)
+                throw new CustomProviderException(
+                    CustomProviderException.AssemblyLoadFailedCode,
+                    $"Custom provider '{normalizedProvider}' is registered, but its assembly " +
+                    $"'{assemblyFileName}' was not found on any provider search path. Verify the " +
+                    "AssemblyName metadata on the matching @(EfcptCustomProvider) item and, if the " +
+                    "assembly isn't next to the task assembly, that its SearchPath metadata (or " +
+                    "@(EfcptProviderSearchPath)) points at the directory containing it.");
+
             return null;
+        }
 
         try
         {
             var assembly = ProviderAssemblyLoader.LoadFromPath(assemblyPath);
-            return CreateAdapterInstance(assembly);
+            var adapter = CreateAdapterInstance(assembly);
+
+            if (adapter is null && isCustom)
+                throw new CustomProviderException(
+                    CustomProviderException.NoAdapterFoundCode,
+                    $"Custom provider '{normalizedProvider}' assembly '{assemblyPath}' was loaded " +
+                    "successfully, but does not contain a concrete implementation of " +
+                    "IProviderAdapter (JD.Efcpt.Build.Tasks.Schema.IProviderAdapter, from the " +
+                    "JD.Efcpt.Build.Providers.Abstractions package). Every custom provider assembly " +
+                    "must contain exactly one such type.");
+
+            return adapter;
+        }
+        catch (CustomProviderException)
+        {
+            throw;
+        }
+        catch (ReflectionTypeLoadException rtle) when (isCustom)
+        {
+            // A missing/unresolvable transitive dependency surfaces as ReflectionTypeLoadException
+            // from Assembly.GetTypes() (inside CreateAdapterInstance) with the real cause buried in
+            // LoaderExceptions - flatten those into the message so the user sees the actual missing
+            // dependency (e.g. "Could not load file or assembly 'MongoDB.Driver...'") instead of the
+            // generic "Unable to load one or more of the requested types" text. Still fail-closed
+            // (JD0018), and preserve the original as InnerException.
+            throw new CustomProviderException(
+                CustomProviderException.AssemblyLoadFailedCode,
+                $"Custom provider '{normalizedProvider}' assembly '{assemblyPath}' was found, " +
+                $"but its types failed to load: {FlattenLoaderExceptions(rtle)}", rtle);
         }
         catch (Exception ex)
         {
+            if (isCustom)
+                throw new CustomProviderException(
+                    CustomProviderException.AssemblyLoadFailedCode,
+                    $"Custom provider '{normalizedProvider}' assembly '{assemblyPath}' was found, " +
+                    $"but failed to load or instantiate: {ex.Message}", ex);
+
             throw new ProviderDriverNotFoundException(normalizedProvider, ex);
         }
+    }
+
+    /// <summary>
+    /// Flattens the <see cref="ReflectionTypeLoadException.LoaderExceptions"/> of
+    /// <paramref name="ex"/> into a single human-readable string, joining the distinct underlying
+    /// loader-failure messages (typically a missing transitive dependency) so they surface in the
+    /// thrown <see cref="CustomProviderException"/> instead of being silently dropped behind the
+    /// generic "Unable to load one or more of the requested types" text.
+    /// </summary>
+    /// <param name="ex">The reflection type-load exception whose loader exceptions to flatten.</param>
+    /// <returns>
+    /// The joined distinct loader-exception messages, or <paramref name="ex"/>'s own message when
+    /// no loader-exception detail is available.
+    /// </returns>
+    internal static string FlattenLoaderExceptions(ReflectionTypeLoadException ex)
+    {
+        var messages = (ex.LoaderExceptions ?? [])
+            .Where(e => e is not null)
+            .Select(e => e!.Message)
+            .Where(m => !string.IsNullOrWhiteSpace(m))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        return messages.Length == 0
+            ? ex.Message
+            : string.Join("; ", messages);
     }
 
     /// <summary>

@@ -46,6 +46,11 @@ public static class BuildTransitivePropsFactory
                     group.Property<EfcptAwsRegion>( "", "'$(EfcptAwsRegion)'==''");
                     group.Property<EfcptAwsSecretJsonKey>( "", "'$(EfcptAwsSecretJsonKey)'==''");
                     group.Property<EfcptProvider>( "mssql", "'$(EfcptProvider)'==''");
+                    // customProviders plugin registry (#184): security opt-in gate. Custom
+                    // providers (registered via @(EfcptCustomProvider)) load and execute
+                    // third-party code at build time, so they are fail-closed (disabled) by
+                    // default - this must stay "false" here to preserve that default.
+                    group.Property<EfcptAllowCustomProviders>( "false", "'$(EfcptAllowCustomProviders)'==''");
                     group.Property<EfcptSolutionDir>( "$(SolutionDir)", "'$(EfcptSolutionDir)'==''");
                     group.Property<EfcptSolutionPath>( "$(SolutionPath)", "'$(EfcptSolutionPath)'==''");
                     group.Property<EfcptProbeSolutionDir>( "true", "'$(EfcptProbeSolutionDir)'==''");
@@ -169,6 +174,11 @@ public static class BuildTransitivePropsFactory
                     group.Property<EfcptAwsRegion>( "", "'$(EfcptAwsRegion)'==''");
                     group.Property<EfcptAwsSecretJsonKey>( "", "'$(EfcptAwsSecretJsonKey)'==''");
                     group.Property<EfcptProvider>( "mssql", "'$(EfcptProvider)'==''");
+                    // customProviders plugin registry (#184): security opt-in gate. Custom
+                    // providers (registered via @(EfcptCustomProvider)) load and execute
+                    // third-party code at build time, so they are fail-closed (disabled) by
+                    // default - this must stay "false" here to preserve that default.
+                    group.Property<EfcptAllowCustomProviders>( "false", "'$(EfcptAllowCustomProviders)'==''");
                     group.Property<EfcptSolutionDir>( "$(SolutionDir)", "'$(EfcptSolutionDir)'==''");
                     group.Property<EfcptSolutionPath>( "$(SolutionPath)", "'$(EfcptSolutionPath)'==''");
                     group.Property<EfcptProbeSolutionDir>( "true", "'$(EfcptProbeSolutionDir)'==''");
@@ -269,6 +279,10 @@ public static class BuildTransitivePropsFactory
     // Strongly-typed property names
 
     
+  public readonly struct EfcptAllowCustomProviders : IMsBuildPropertyName
+  {
+    public string Name => "EfcptAllowCustomProviders";
+  }
   public readonly struct EfcptAppConfig : IMsBuildPropertyName
   {
     public string Name => "EfcptAppConfig";

@@ -10,13 +10,20 @@
     <TargetFrameworks>net472;net8.0;net9.0;net10.0</TargetFrameworks>
 
     <!--
-      Not packed as its own NuGet package. This assembly is a build-time/runtime implementation
-      detail shared between the core Tasks assembly and satellite provider projects via
-      ProjectReference; its output DLL travels to consumers by being swept up alongside
-      JD.Efcpt.Build.Tasks.dll (CopyLocalLockFileAssemblies) into the existing tasks/{tfm} pack
-      glob in JD.Efcpt.Build.csproj. It never needs to be resolved as a standalone package.
+      Referenceable as its own NuGet package (#184): third-party authors implementing a custom
+      database provider (IProviderAdapter + ISchemaReader) need something installable to compile
+      against, without pulling in all of JD.Efcpt.Build.Tasks. This assembly remains the shared
+      contract between the core Tasks assembly and every satellite provider project (both
+      first-party, via ProjectReference, and third-party custom providers, via PackageReference);
+      its output DLL still also travels to JD.Efcpt.Build.Tasks consumers by being swept up
+      alongside JD.Efcpt.Build.Tasks.dll (CopyLocalLockFileAssemblies) into the existing
+      tasks/{tfm} pack glob in JD.Efcpt.Build.csproj - packing this project does not change that,
+      since IncludeBuildOutput/CopyLocalLockFileAssemblies behavior is independent of IsPackable.
+      AssemblyName and RootNamespace are kept exactly as they were so the reflective adapter cast
+      in ProviderAdapterResolver.CreateAdapterInstance continues to see the same assembly
+      identity across every load context.
     -->
-    <IsPackable>false</IsPackable>
+    <IsPackable>true</IsPackable>
 
     <AssemblyName>JD.Efcpt.Build.Providers.Abstractions</AssemblyName>
     <RootNamespace>JD.Efcpt.Build.Tasks.Schema</RootNamespace>
@@ -28,6 +35,19 @@
     <!-- Disable nullable and some warnings for net472, matching JD.Efcpt.Build.Tasks -->
     <Nullable Condition="'$(TargetFramework)' == 'net472'">annotations</Nullable>
     <NoWarn Condition="'$(TargetFramework)' == 'net472'">$(NoWarn);CS8632</NoWarn>
+
+    <!-- Package Identity (#184: referenceable contract package for custom provider authors) -->
+    <PackageId>JD.Efcpt.Build.Providers.Abstractions</PackageId>
+    <Authors>Jerrett Davis</Authors>
+    <Company>JDH Productions</Company>
+    <Title>JD.Efcpt.Build Custom Provider Contract</Title>
+    <Description>Contract for authoring custom JD.Efcpt.Build database providers</Description>
+    <PackageTags>efcore;entity-framework;ef-core-power-tools;efcpt;msbuild;database-first;provider;plugin</PackageTags>
+    <PackageProjectUrl>https://github.com/jerrettdavis/JD.Efcpt.Build</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jerrettdavis/JD.Efcpt.Build</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <!-- Polyfills for net472: provides IsExternalInit, init accessors, etc. (records use these). -->

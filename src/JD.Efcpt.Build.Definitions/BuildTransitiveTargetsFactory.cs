@@ -139,6 +139,12 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("Provider", "$(EfcptProvider)");
                         task.Param("LogVerbosity", "$(EfcptLogVerbosity)");
                         task.Param("ProviderSearchPaths", "@(EfcptProviderSearchPath)");
+                        // customProviders plugin registry (#184): @(EfcptCustomProvider) items
+                        // (identity=key, metadata AssemblyName/SearchPath) plus the
+                        // EfcptAllowCustomProviders security opt-in - see
+                        // JD.Efcpt.Build.Tasks.QuerySchemaMetadata.EfcptCustomProviders/AllowCustomProviders.
+                        task.Param("EfcptCustomProviders", "@(EfcptCustomProvider)");
+                        task.Param("AllowCustomProviders", "$(EfcptAllowCustomProviders)");
                         task.OutputProperty("SchemaFingerprint", "_EfcptSchemaFingerprint");
                     });
                     target.Message("Database schema fingerprint: $(_EfcptSchemaFingerprint)", "normal");
@@ -280,6 +286,12 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("Provider", "$(EfcptProvider)");
                         task.Param("LogVerbosity", "$(EfcptLogVerbosity)");
                         task.Param("ProviderSearchPaths", "@(EfcptProviderSearchPath)");
+                        // customProviders plugin registry (#184): @(EfcptCustomProvider) items
+                        // (identity=key, metadata AssemblyName/SearchPath) plus the
+                        // EfcptAllowCustomProviders security opt-in - see
+                        // JD.Efcpt.Build.Tasks.QuerySchemaMetadata.EfcptCustomProviders/AllowCustomProviders.
+                        task.Param("EfcptCustomProviders", "@(EfcptCustomProvider)");
+                        task.Param("AllowCustomProviders", "$(EfcptAllowCustomProviders)");
                         task.OutputProperty("SchemaFingerprint", "_EfcptSchemaFingerprint");
                     });
                 });

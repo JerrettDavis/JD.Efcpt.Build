@@ -1,4 +1,5 @@
 using System.Text.Json;
+using JD.Efcpt.Build.Core.Providers;
 using JD.Efcpt.Build.Tasks.Decorators;
 using JD.Efcpt.Build.Tasks.Schema;
 using Microsoft.Build.Framework;
@@ -73,6 +74,40 @@ public sealed class QuerySchemaMetadata : Task
     public string[] ProviderSearchPaths { get; set; } = [];
 
     /// <summary>
+    /// Registers custom database providers (#184's <c>customProviders</c> plugin registry),
+    /// loaded via the same satellite-package assembly-resolution machinery as built-in providers
+    /// (see <see cref="ProviderSearchPaths"/> / #189).
+    /// </summary>
+    /// <remarks>
+    /// Populated from the consuming project's <c>@(EfcptCustomProvider)</c> item group. Each
+    /// item's identity is the custom provider key (the value <see cref="Provider"/> is set to, to
+    /// select it); its <c>AssemblyName</c> metadata is the simple assembly name (without
+    /// directory or <c>.dll</c> extension) containing the provider's <see cref="IProviderAdapter"/>;
+    /// its optional <c>SearchPath</c> metadata is an additional directory to search for that
+    /// assembly, appended to <see cref="ProviderSearchPaths"/>. A custom provider key that
+    /// collides with a built-in provider key or alias fails the build with <c>JD0019</c>. Using a
+    /// registered custom provider key as <see cref="Provider"/> requires
+    /// <see cref="AllowCustomProviders"/> to be enabled - see the remarks there.
+    /// </remarks>
+    [ProfileInput]
+    public ITaskItem[] EfcptCustomProviders { get; set; } = [];
+
+    /// <summary>
+    /// Security opt-in gate for custom database providers registered via
+    /// <see cref="EfcptCustomProviders"/> (#184).
+    /// </summary>
+    /// <remarks>
+    /// Custom providers load and execute third-party code at build time. This is fail-closed
+    /// (disabled) by default: if <see cref="Provider"/> resolves to a registered custom provider
+    /// key while this is not <see langword="true"/>, the task fails fast with <c>JD0017</c>
+    /// before any custom provider assembly is loaded. When enabled and a custom provider is
+    /// actually used, a build warning is logged noting that third-party code executes at build
+    /// time. Has no effect on built-in providers, which are never gated.
+    /// </remarks>
+    [ProfileInput]
+    public bool AllowCustomProviders { get; set; }
+
+    /// <summary>
     /// Computed schema fingerprint (output).
     /// </summary>
     [Output]
@@ -94,15 +129,50 @@ public sealed class QuerySchemaMetadata : Task
 
         try
         {
+            // #184: validate, build the custom provider registry, and enforce the security gate
+            // BEFORE any assembly (built-in or custom) is loaded. The validation and collision
+            // checks run UNCONDITIONALLY over every @(EfcptCustomProvider) item - even the ones the
+            // active Provider doesn't select - so a misconfigured registration is diagnosed with a
+            // precise JD0041/JD0019 code instead of silently disappearing or resurfacing later as a
+            // misleading generic JD0014.
+            ValidateCustomProviderRegistrations(EfcptCustomProviders);
+
+            var customProviderAssemblies = BuildCustomProviderAssemblyMap(EfcptCustomProviders);
+            var effectiveSearchPaths = CombineSearchPaths(ProviderSearchPaths, EfcptCustomProviders);
+
+            CheckForBuiltInCollisions(EfcptCustomProviders);
+
+            var providerIsBuiltIn = TryNormalizeBuiltIn(Provider, out _);
+            var isCustomProviderSelected = !providerIsBuiltIn
+                && !string.IsNullOrWhiteSpace(Provider)
+                && customProviderAssemblies.Keys.Any(k => string.Equals(k, Provider, StringComparison.OrdinalIgnoreCase));
+
+            if (isCustomProviderSelected && !AllowCustomProviders)
+            {
+                throw new CustomProviderException(
+                    CustomProviderException.NotAllowedCode,
+                    $"Provider '{Provider}' is a custom provider. Custom providers load and execute " +
+                    "third-party code at build time and are disabled by default. Set " +
+                    "<EfcptAllowCustomProviders>true</EfcptAllowCustomProviders> to enable.");
+            }
+
+            if (isCustomProviderSelected)
+            {
+                log.Warn($"Provider '{Provider}' is a custom provider. Its assembly executes " +
+                         "third-party code at build time - only enable custom providers you trust.");
+            }
+
             // Normalize and validate provider
-            var normalizedProvider = DatabaseProviderFactory.NormalizeProvider(Provider);
-            var providerDisplayName = DatabaseProviderFactory.GetProviderDisplayName(normalizedProvider);
+            var normalizedProvider = DatabaseProviderFactory.NormalizeProvider(Provider, customProviderAssemblies.Keys.ToArray());
+            var providerDisplayName = providerIsBuiltIn
+                ? DatabaseProviderFactory.GetProviderDisplayName(normalizedProvider)
+                : $"custom provider '{normalizedProvider}'";
 
             // Validate connection using the appropriate provider
-            ValidateConnection(normalizedProvider, ConnectionString, ProviderSearchPaths, log);
+            ValidateConnection(normalizedProvider, ConnectionString, effectiveSearchPaths, customProviderAssemblies, log);
 
             // Create schema reader for the provider
-            var reader = DatabaseProviderFactory.CreateSchemaReader(normalizedProvider, ProviderSearchPaths);
+            var reader = DatabaseProviderFactory.CreateSchemaReader(normalizedProvider, effectiveSearchPaths, customProviderAssemblies);
 
             log.Detail($"Reading schema metadata from {providerDisplayName} database...");
             var schema = reader.ReadSchema(ConnectionString);
@@ -115,7 +185,7 @@ public sealed class QuerySchemaMetadata : Task
 
             if (ctx.Logger.HasLoggedErrors)
                 return true;
-            
+
             // Write schema model to disk for diagnostics
             Directory.CreateDirectory(OutputDir);
             var schemaPath = Path.Combine(OutputDir, "schema-model.json");
@@ -124,6 +194,11 @@ public sealed class QuerySchemaMetadata : Task
             log.Detail($"Schema model written to: {schemaPath}");
 
             return true;
+        }
+        catch (CustomProviderException ex)
+        {
+            log.Error(ex.Code, ex.Message);
+            return false;
         }
         catch (NotSupportedException ex)
         {
@@ -141,19 +216,156 @@ public sealed class QuerySchemaMetadata : Task
         string provider,
         string connectionString,
         IReadOnlyList<string> providerSearchPaths,
+        IReadOnlyDictionary<string, string> customProviderAssemblies,
         BuildLog log)
     {
         try
         {
-            using var connection = DatabaseProviderFactory.CreateConnection(provider, connectionString, providerSearchPaths);
+            using var connection = DatabaseProviderFactory.CreateConnection(
+                provider, connectionString, providerSearchPaths, customProviderAssemblies);
             connection.Open();
             log.Detail("Database connection validated successfully.");
+        }
+        catch (CustomProviderException)
+        {
+            // Let ExecuteCore's catch surface this with its own JD-coded (JD0018/JD0040) message
+            // instead of being masked by the generic JD0013 connection-failure wording below.
+            throw;
         }
         catch (Exception ex)
         {
             log.Error("JD0013",
                 $"Failed to connect to database: {ex.Message}. Verify server accessibility and credentials.");
             throw;
+        }
+    }
+
+    /// <summary>
+    /// Eagerly validates every <see cref="EfcptCustomProviders"/> item's shape, throwing
+    /// <see cref="CustomProviderException"/> (<see cref="CustomProviderException.MisconfiguredRegistrationCode"/>,
+    /// <c>JD0041</c>) for a blank provider key, a missing <c>AssemblyName</c> metadata value, or a
+    /// duplicate provider key.
+    /// </summary>
+    /// <remarks>
+    /// Runs over all items regardless of which provider is selected (like
+    /// <see cref="CheckForBuiltInCollisions"/>), so a broken registration produces an actionable
+    /// <c>JD0041</c> at the earliest possible point rather than being silently skipped by
+    /// <see cref="BuildCustomProviderAssemblyMap"/> and later falling through to a misleading
+    /// generic <c>JD0014</c>.
+    /// </remarks>
+    private static void ValidateCustomProviderRegistrations(ITaskItem[] items)
+    {
+        var seenKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var item in items)
+        {
+            var key = item.ItemSpec.Trim();
+            if (key.Length == 0)
+            {
+                throw new CustomProviderException(
+                    CustomProviderException.MisconfiguredRegistrationCode,
+                    "An @(EfcptCustomProvider) item has a blank provider key (Include); each " +
+                    "custom provider must specify a non-empty key.");
+            }
+
+            var assemblyName = item.GetMetadata("AssemblyName");
+            if (string.IsNullOrWhiteSpace(assemblyName))
+            {
+                throw new CustomProviderException(
+                    CustomProviderException.MisconfiguredRegistrationCode,
+                    $"Custom provider '{key}' is missing required AssemblyName metadata. Add " +
+                    "<AssemblyName>...</AssemblyName> to the @(EfcptCustomProvider) item.");
+            }
+
+            if (!seenKeys.Add(key))
+            {
+                throw new CustomProviderException(
+                    CustomProviderException.MisconfiguredRegistrationCode,
+                    $"Custom provider key '{key}' is declared more than once.");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Builds the custom provider key -&gt; simple assembly name map from
+    /// <see cref="EfcptCustomProviders"/>, keyed case-insensitively. Assumes the items have
+    /// already passed <see cref="ValidateCustomProviderRegistrations"/> (so every item has a
+    /// non-blank key and <c>AssemblyName</c>); items are otherwise defensively skipped.
+    /// </summary>
+    private static IReadOnlyDictionary<string, string> BuildCustomProviderAssemblyMap(ITaskItem[] items)
+    {
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var item in items)
+        {
+            var key = item.ItemSpec.Trim();
+            if (key.Length == 0)
+                continue;
+
+            var assemblyName = item.GetMetadata("AssemblyName");
+            if (!string.IsNullOrWhiteSpace(assemblyName))
+                map[key] = assemblyName;
+        }
+
+        return map;
+    }
+
+    /// <summary>
+    /// Combines <paramref name="providerSearchPaths"/> with each custom provider item's optional
+    /// <c>SearchPath</c> metadata.
+    /// </summary>
+    private static string[] CombineSearchPaths(string[] providerSearchPaths, ITaskItem[] customProviders)
+    {
+        var extraSearchPaths = customProviders
+            .Select(i => i.GetMetadata("SearchPath"))
+            .Where(p => !string.IsNullOrWhiteSpace(p));
+
+        return [.. providerSearchPaths, .. extraSearchPaths];
+    }
+
+    /// <summary>
+    /// Throws <see cref="CustomProviderException"/> (<see cref="CustomProviderException.CollidesWithBuiltInCode"/>,
+    /// <c>JD0019</c>) if any <see cref="EfcptCustomProviders"/> item's identity collides
+    /// (case-insensitively) with a built-in provider key or alias.
+    /// </summary>
+    private static void CheckForBuiltInCollisions(ITaskItem[] customProviders)
+    {
+        foreach (var item in customProviders)
+        {
+            var key = item.ItemSpec.Trim();
+            if (key.Length == 0)
+                continue;
+
+            if (TryNormalizeBuiltIn(key, out var canonical))
+            {
+                throw new CustomProviderException(
+                    CustomProviderException.CollidesWithBuiltInCode,
+                    $"Custom provider key '{key}' collides with the built-in provider '{canonical}'. " +
+                    "Choose a different key for your custom provider.");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Attempts to normalize <paramref name="provider"/> as a built-in provider alias only -
+    /// never admits a custom provider key. Returns <see langword="false"/> (without throwing) for
+    /// both an unrecognized alias and a null/empty/whitespace input, so callers can use this as a
+    /// pure "is this a built-in provider" check without having to special-case empty input
+    /// themselves.
+    /// </summary>
+    private static bool TryNormalizeBuiltIn(string provider, out string canonical)
+    {
+        canonical = "";
+        if (string.IsNullOrWhiteSpace(provider))
+            return false;
+
+        try
+        {
+            canonical = ProviderNames.Normalize(provider);
+            return true;
+        }
+        catch (NotSupportedException)
+        {
+            return false;
         }
     }
 }

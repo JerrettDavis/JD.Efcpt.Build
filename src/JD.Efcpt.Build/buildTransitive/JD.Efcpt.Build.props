@@ -23,6 +23,7 @@
     <EfcptAwsRegion Condition="'$(EfcptAwsRegion)'==''"></EfcptAwsRegion>
     <EfcptAwsSecretJsonKey Condition="'$(EfcptAwsSecretJsonKey)'==''"></EfcptAwsSecretJsonKey>
     <EfcptProvider Condition="'$(EfcptProvider)'==''">mssql</EfcptProvider>
+    <EfcptAllowCustomProviders Condition="'$(EfcptAllowCustomProviders)'==''">false</EfcptAllowCustomProviders>
     <EfcptSolutionDir Condition="'$(EfcptSolutionDir)'==''">$(SolutionDir)</EfcptSolutionDir>
     <EfcptSolutionPath Condition="'$(EfcptSolutionPath)'==''">$(SolutionPath)</EfcptSolutionPath>
     <EfcptProbeSolutionDir Condition="'$(EfcptProbeSolutionDir)'==''">true</EfcptProbeSolutionDir>

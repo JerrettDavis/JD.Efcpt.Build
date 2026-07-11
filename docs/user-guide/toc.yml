@@ -12,6 +12,8 @@
   href: connection-string-mode.md
 - name: Connection-String Sources
   href: connection-string-sources.md
+- name: Custom Providers
+  href: custom-providers.md
 - name: T4 Templates
   href: t4-templates.md
 - name: CI/CD Integration

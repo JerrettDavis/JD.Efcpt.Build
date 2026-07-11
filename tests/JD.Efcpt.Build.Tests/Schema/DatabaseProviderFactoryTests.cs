@@ -204,6 +204,86 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
 
     #endregion
 
+    #region NormalizeProvider(string, customProviderKeys) Gatekeeper Tests (#184)
+
+    [Scenario("Admits a registered custom provider key")]
+    [Fact]
+    public async Task Admits_registered_custom_provider_key()
+    {
+        await Given("a custom provider key and a matching registered set", () => ("acme-mongo", (IReadOnlyCollection<string>)["acme-mongo"]))
+            .When("normalized with the custom registry", t => DatabaseProviderFactory.NormalizeProvider(t.Item1, t.Item2))
+            .Then("returns the key as its own canonical form", result => result == "acme-mongo")
+            .AssertPassed();
+    }
+
+    [Scenario("Admits a registered custom provider key case-insensitively")]
+    [Fact]
+    public async Task Admits_registered_custom_provider_key_case_insensitively()
+    {
+        await Given("a differently-cased custom provider key input", () => ("Acme-Mongo", (IReadOnlyCollection<string>)["acme-mongo"]))
+            .When("normalized with the custom registry", t => DatabaseProviderFactory.NormalizeProvider(t.Item1, t.Item2))
+            .Then("returns the lowercased canonical form", result => result == "acme-mongo")
+            .AssertPassed();
+    }
+
+    [Scenario("Rejects an unregistered custom provider key when the registry is null")]
+    [Fact]
+    public async Task Rejects_unregistered_custom_provider_key_when_registry_null()
+    {
+        await Given("an unregistered provider key and a null custom registry", () => "acme-mongo")
+            .When("normalized with no custom registry", p =>
+            {
+                try
+                {
+                    DatabaseProviderFactory.NormalizeProvider(p, null);
+                    return (Exception?)null;
+                }
+                catch (Exception ex)
+                {
+                    return ex;
+                }
+            })
+            .Then("throws NotSupportedException", ex => ex is NotSupportedException)
+            .AssertPassed();
+    }
+
+    [Scenario("Rejects a custom provider key not present in the registered set")]
+    [Fact]
+    public async Task Rejects_custom_provider_key_not_in_registry()
+    {
+        await Given("a provider key absent from the registered set", () => ("acme-mongo", (IReadOnlyCollection<string>)["other-provider"]))
+            .When("normalized with the custom registry", t =>
+            {
+                try
+                {
+                    DatabaseProviderFactory.NormalizeProvider(t.Item1, t.Item2);
+                    return (Exception?)null;
+                }
+                catch (Exception ex)
+                {
+                    return ex;
+                }
+            })
+            .Then("throws NotSupportedException", ex => ex is NotSupportedException)
+            .AssertPassed();
+    }
+
+    [Scenario("Built-in providers still normalize correctly with a non-empty custom registry present (no shadowing)")]
+    [Theory]
+    [InlineData("mssql", "mssql")]
+    [InlineData("postgres", "postgres")]
+    [InlineData("SqlServer", "mssql")]
+    public async Task Builtin_providers_normalize_with_custom_registry_present(string input, string expected)
+    {
+        await Given("a built-in provider input and a custom registry containing an unrelated key",
+                () => (input, (IReadOnlyCollection<string>)["acme-mongo"]))
+            .When("normalized with the custom registry", t => DatabaseProviderFactory.NormalizeProvider(t.Item1, t.Item2))
+            .Then($"returns '{expected}' - the built-in switch wins, never shadowed", result => result == expected)
+            .AssertPassed();
+    }
+
+    #endregion
+
     #region CreateConnection Tests
 
     [Scenario("Creates SQL Server connection")]
@@ -385,6 +465,101 @@ public sealed partial class DatabaseProviderFactoryTests(ITestOutputHelper outpu
         await Given("firebird provider and a matching search path", () => ("firebird", FirebirdSearchPaths))
             .When("schema reader created", t => DatabaseProviderFactory.CreateSchemaReader(t.Item1, t.Item2))
             .Then("returns FirebirdSchemaReader", reader => reader is FirebirdSchemaReader)
+            .AssertPassed();
+    }
+
+    #endregion
+
+    #region Custom Provider Registry Threading Tests (#184)
+
+    private static string CreateTempCustomProviderDirectory(string assemblyFileName)
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "efcpt-factory-custom-provider-tests-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        var fixturePath = Path.Combine(AppContext.BaseDirectory, "JD.Efcpt.Build.TestProvider.dll");
+        File.Copy(fixturePath, Path.Combine(dir, assemblyFileName), overwrite: true);
+        return dir;
+    }
+
+    [Scenario("CreateSchemaReader threads the custom provider registry through to the resolver")]
+    [Fact]
+    public async Task Create_schema_reader_threads_custom_registry()
+    {
+        var tempDir = CreateTempCustomProviderDirectory("Acme.Efcpt.Mongo.dll");
+        try
+        {
+            var customMap = new Dictionary<string, string> { ["acme-mongo"] = "Acme.Efcpt.Mongo" };
+
+            await Given("a registered custom provider key, matching search path, and assembly map",
+                    () => ("acme-mongo", (IReadOnlyList<string>)[tempDir], (IReadOnlyDictionary<string, string>)customMap))
+                .When("schema reader created via the registry-aware overload",
+                    t => DatabaseProviderFactory.CreateSchemaReader(t.Item1, t.Item2, t.Item3))
+                .Then("returns a schema reader that reads SchemaModel.Empty through the real adapter",
+                    reader => reader.ReadSchema("ignored") == SchemaModel.Empty)
+                .AssertPassed();
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Scenario("CreateConnection threads the custom provider registry through to the resolver")]
+    [Fact]
+    public async Task Create_connection_threads_custom_registry()
+    {
+        var tempDir = CreateTempCustomProviderDirectory("Acme.Efcpt.Mongo.dll");
+        try
+        {
+            var customMap = new Dictionary<string, string> { ["acme-mongo"] = "Acme.Efcpt.Mongo" };
+
+            // TestProviderAdapter.CreateConnection deliberately throws NotSupportedException -
+            // reaching that exception (rather than ProviderDriverNotFoundException or
+            // NotSupportedException from NormalizeProvider) proves the registry was threaded all
+            // the way through to the real, reflection-loaded adapter instance.
+            await Given("a registered custom provider key, matching search path, and assembly map",
+                    () => ("acme-mongo", (IReadOnlyList<string>)[tempDir], (IReadOnlyDictionary<string, string>)customMap))
+                .When("connection creation attempted via the registry-aware overload", t =>
+                {
+                    try
+                    {
+                        DatabaseProviderFactory.CreateConnection(t.Item1, "ignored", t.Item2, t.Item3);
+                        return (Exception?)null;
+                    }
+                    catch (Exception ex)
+                    {
+                        return ex;
+                    }
+                })
+                .Then("reaches the real custom adapter's CreateConnection", ex =>
+                    ex is NotSupportedException && ex.Message.Contains("TestProviderAdapter"))
+                .AssertPassed();
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Scenario("An unregistered custom provider key still throws NotSupportedException")]
+    [Fact]
+    public async Task Unregistered_custom_provider_key_still_throws()
+    {
+        await Given("an unregistered provider key and an empty custom registry",
+                () => ("acme-mongo", (IReadOnlyDictionary<string, string>)new Dictionary<string, string>()))
+            .When("schema reader creation attempted", t =>
+            {
+                try
+                {
+                    DatabaseProviderFactory.CreateSchemaReader(t.Item1, null, t.Item2);
+                    return (Exception?)null;
+                }
+                catch (Exception ex)
+                {
+                    return ex;
+                }
+            })
+            .Then("throws NotSupportedException", ex => ex is NotSupportedException)
             .AssertPassed();
     }
 

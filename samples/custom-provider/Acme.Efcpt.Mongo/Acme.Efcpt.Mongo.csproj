@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!--
+      Sample custom provider (#184): a minimal, real IProviderAdapter implementation showing what
+      a third-party custom provider assembly looks like. It builds as an ordinary class library -
+      no database, no efcpt pipeline, no MSBuild targets are involved - so it stays green in CI
+      with no real database and no NuGet package to publish.
+
+      A real-world custom provider you intend to distribute (rather than keep private to one
+      solution) would typically multi-target net472;net8.0;net9.0;net10.0 to match every MSBuild
+      host JD.Efcpt.Build itself supports - see
+      src/JD.Efcpt.Build.Providers.Abstractions/JD.Efcpt.Build.Providers.Abstractions.csproj for
+      that pattern. This sample single-targets net10.0 to keep it simple.
+    -->
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Acme.Efcpt.Mongo</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      In your own custom provider project, replace this ProjectReference with:
+        dotnet add package JD.Efcpt.Build.Providers.Abstractions
+      A ProjectReference is used here only because this sample lives inside the
+      JD.Efcpt.Build repository itself and builds against the in-repo source instead of a
+      published package.
+    -->
+    <ProjectReference Include="../../../src/JD.Efcpt.Build.Providers.Abstractions/JD.Efcpt.Build.Providers.Abstractions.csproj" />
+  </ItemGroup>
+</Project>
