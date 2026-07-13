@@ -22,6 +22,6 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
       - name: Component Detection
-        uses: advanced-security/component-detection-dependency-submission-action@v0.1.1
+        uses: advanced-security/component-detection-dependency-submission-action@v0.1.4
         with:
           directoryExclusionList: 'samples/**/*;tests/**/*'

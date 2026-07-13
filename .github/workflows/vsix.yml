@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@v3
 
       - name: Restore
         run: msbuild ide/vs/JD.Efcpt.VsExtension/JD.Efcpt.VsExtension.csproj /t:Restore /p:Configuration=Release
@@ -71,7 +71,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@v3
 
       - name: Restore
         run: msbuild ide/vs/JD.Efcpt.VsExtension/JD.Efcpt.VsExtension.csproj /t:Restore /p:Configuration=Release
