@@ -50,8 +50,10 @@
       Override vulnerable AWSSDK.Core transitive dependency from Snowflake.Data. This quirk was
       carried over unchanged from JD.Efcpt.Build.Tasks.csproj when Snowflake was extracted - do
       not drop it without re-checking Snowflake.Data's current AWSSDK.Core requirement.
+      Snowflake.Data 5.7.0 -> AWSSDK.S3 4.0.20.4 requires AWSSDK.Core >= 4.0.3.28, so the override
+      must stay at or above that floor (aligned here with the centrally-managed package version).
     -->
-    <PackageReference Include="AWSSDK.Core" VersionOverride="4.0.3.18" />
+    <PackageReference Include="AWSSDK.Core" VersionOverride="4.0.100.6" />
   </ItemGroup>
 
   <!-- Polyfills for net472: provides IsExternalInit, init accessors, etc. -->

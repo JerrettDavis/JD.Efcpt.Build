@@ -721,7 +721,7 @@
       "jd.efcpt.build.snowflake": {
         "type": "Project",
         "dependencies": {
-          "AWSSDK.Core": "[4.0.3.18, )",
+          "AWSSDK.Core": "[4.0.100.6, )",
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
           "Snowflake.Data": "[5.7.0, )"
         }
