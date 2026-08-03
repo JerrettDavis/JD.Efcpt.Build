@@ -306,7 +306,7 @@
         "type": "Project",
         "dependencies": {
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "PatternKit.Core": "[0.147.14, )",
+          "PatternKit.Core": "[0.147.15, )",
           "System.IO.Hashing": "[10.0.10, )",
           "System.Text.Json": "[10.0.10, )"
         }
@@ -316,9 +316,9 @@
       },
       "PatternKit.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.147.14, )",
-        "resolved": "0.147.14",
-        "contentHash": "h8aATo0yA7vlwiqD6XMMyFwcJVPimwSBL0D2iKlDqtl4epxtZ4jZuPRzw9Mp4j8YkA/fNYiOvIkI8r8Z//bJlA==",
+        "requested": "[0.147.15, )",
+        "resolved": "0.147.15",
+        "contentHash": "Es4KPgpMDpdQQrVf0ml6xmL7AZadYXX33vUNKFZ3rM7bm61Dd7ggfb9pSsyIOv+3cBYFjXdmic2izdeqo51uZA==",
         "dependencies": {
           "System.Threading.Tasks.Extensions": "4.6.3"
         }
@@ -499,7 +499,7 @@
         "type": "Project",
         "dependencies": {
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "PatternKit.Core": "[0.147.14, )",
+          "PatternKit.Core": "[0.147.15, )",
           "System.IO.Hashing": "[10.0.10, )"
         }
       },
@@ -508,9 +508,9 @@
       },
       "PatternKit.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.147.14, )",
-        "resolved": "0.147.14",
-        "contentHash": "h8aATo0yA7vlwiqD6XMMyFwcJVPimwSBL0D2iKlDqtl4epxtZ4jZuPRzw9Mp4j8YkA/fNYiOvIkI8r8Z//bJlA=="
+        "requested": "[0.147.15, )",
+        "resolved": "0.147.15",
+        "contentHash": "Es4KPgpMDpdQQrVf0ml6xmL7AZadYXX33vUNKFZ3rM7bm61Dd7ggfb9pSsyIOv+3cBYFjXdmic2izdeqo51uZA=="
       },
       "System.IO.Hashing": {
         "type": "CentralTransitive",
@@ -693,7 +693,7 @@
         "type": "Project",
         "dependencies": {
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "PatternKit.Core": "[0.147.14, )",
+          "PatternKit.Core": "[0.147.15, )",
           "System.IO.Hashing": "[10.0.10, )"
         }
       },
@@ -702,9 +702,9 @@
       },
       "PatternKit.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.147.14, )",
-        "resolved": "0.147.14",
-        "contentHash": "h8aATo0yA7vlwiqD6XMMyFwcJVPimwSBL0D2iKlDqtl4epxtZ4jZuPRzw9Mp4j8YkA/fNYiOvIkI8r8Z//bJlA=="
+        "requested": "[0.147.15, )",
+        "resolved": "0.147.15",
+        "contentHash": "Es4KPgpMDpdQQrVf0ml6xmL7AZadYXX33vUNKFZ3rM7bm61Dd7ggfb9pSsyIOv+3cBYFjXdmic2izdeqo51uZA=="
       },
       "System.IO.Hashing": {
         "type": "CentralTransitive",
@@ -897,7 +897,7 @@
         "type": "Project",
         "dependencies": {
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "PatternKit.Core": "[0.147.14, )",
+          "PatternKit.Core": "[0.147.15, )",
           "System.IO.Hashing": "[10.0.10, )"
         }
       },
@@ -906,9 +906,9 @@
       },
       "PatternKit.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.147.14, )",
-        "resolved": "0.147.14",
-        "contentHash": "h8aATo0yA7vlwiqD6XMMyFwcJVPimwSBL0D2iKlDqtl4epxtZ4jZuPRzw9Mp4j8YkA/fNYiOvIkI8r8Z//bJlA=="
+        "requested": "[0.147.15, )",
+        "resolved": "0.147.15",
+        "contentHash": "Es4KPgpMDpdQQrVf0ml6xmL7AZadYXX33vUNKFZ3rM7bm61Dd7ggfb9pSsyIOv+3cBYFjXdmic2izdeqo51uZA=="
       },
       "System.IO.Hashing": {
         "type": "CentralTransitive",

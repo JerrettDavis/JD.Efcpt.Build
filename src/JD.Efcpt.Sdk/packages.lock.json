@@ -4,9 +4,9 @@
     "net9.0": {
       "JD.MSBuild.Fluent": {
         "type": "Direct",
-        "requested": "[1.3.25, )",
-        "resolved": "1.3.25",
-        "contentHash": "Oatm6bf2nILzXd7inO8tEeuoQINlSlktNBt6HUAC8rMHMAW+IROLCMl/NdEAuTYm1j4m73ZYAsYK7lgHwn2Ohg=="
+        "requested": "[1.3.26, )",
+        "resolved": "1.3.26",
+        "contentHash": "7yLJ4QdpUiasDdz/csMy2OdiX9W/QU0IzOYfE/d0bpdZsQL3KcfSB2tFnTVWX0nHsrCB6BUXtUMVVvcTOvOOPQ=="
       }
     }
   }
