@@ -20,11 +20,11 @@
       },
       "TinyBDD.Xunit": {
         "type": "Direct",
-        "requested": "[0.19.31, )",
-        "resolved": "0.19.31",
-        "contentHash": "PNkUiaUF/EafnQlalUI3ODDdNmH6qalcUaHIx+GvCFUYLBqrm++4WKmg6266WxlJIZ0UO5RpCrpmQG0iTlcomw==",
+        "requested": "[0.19.32, )",
+        "resolved": "0.19.32",
+        "contentHash": "8ZCFfbiuOFbk5UtXz0lGewC/8XZ1p6dh3lUtt5WgeEmsF60MdJk/y8T1LxU8euoG5mxqZKe2pSSQ3EamTRugrQ==",
         "dependencies": {
-          "TinyBDD": "0.19.31",
+          "TinyBDD": "0.19.32",
           "xunit.abstractions": "2.0.3",
           "xunit.extensibility.core": "2.9.3"
         }
@@ -210,8 +210,8 @@
       },
       "TinyBDD": {
         "type": "Transitive",
-        "resolved": "0.19.31",
-        "contentHash": "kuYL/KtD22/MQLenIKpGHYICVc+/X1BFn13tpGMNqfDDSnUEiq8rlAfHLznkB7k4qehV0xWQYA3mekhT0Fhwgw==",
+        "resolved": "0.19.32",
+        "contentHash": "0G/CYyvD7s9r3RZQxN1adtPsiuoEZ4/sJ0QpuWovWlv1TQ2Z4lDNBVQO+uMaZLhnIMiP+nIdNJUR1AbqEHAH4w==",
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection": "10.0.8",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.8"
@@ -274,7 +274,7 @@
         "type": "Project",
         "dependencies": {
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "PatternKit.Core": "[0.147.15, )",
+          "PatternKit.Core": "[0.147.17, )",
           "System.IO.Hashing": "[10.0.10, )"
         }
       },
@@ -301,9 +301,9 @@
       },
       "PatternKit.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.147.15, )",
-        "resolved": "0.147.15",
-        "contentHash": "Es4KPgpMDpdQQrVf0ml6xmL7AZadYXX33vUNKFZ3rM7bm61Dd7ggfb9pSsyIOv+3cBYFjXdmic2izdeqo51uZA=="
+        "requested": "[0.147.17, )",
+        "resolved": "0.147.17",
+        "contentHash": "w+URD3sTeIuLOZnlL6LrDN2l5648FK/s4QdEQQCjGZDQcLkFvip390krMtO4ctb/iERKkxCxxihGiw3Z5ZBnug=="
       },
       "System.IO.Hashing": {
         "type": "CentralTransitive",
