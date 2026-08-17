@@ -4,19 +4,19 @@
     "net10.0": {
       "AWSSDK.SecretsManager": {
         "type": "Direct",
-        "requested": "[4.0.100.7, )",
-        "resolved": "4.0.100.7",
-        "contentHash": "68ATM6mDicWYIPH1PkZUbFbyCbCwhxpoEDSTfCSDHtm3BbwWGyKIJ7jGRpzkg9BBjpLsPGkqhaubaOH4+F7xEQ==",
+        "requested": "[4.0.100.8, )",
+        "resolved": "4.0.100.8",
+        "contentHash": "mLM4RgOQfaxkDgmHWnwWpEer/10AI5w0R6FC6VMX8JninfACEVXT4J/OARA403dOA1D7t/dQf36mLL4M3hiADQ==",
         "dependencies": {
-          "AWSSDK.Core": "[4.0.100.9, 5.0.0)"
+          "AWSSDK.Core": "[4.0.101, 5.0.0)"
         }
       },
       "jd.efcpt.build.core": {
         "type": "Project",
         "dependencies": {
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "PatternKit.Core": "[0.147.17, )",
-          "System.IO.Hashing": "[10.0.10, )"
+          "PatternKit.Core": "[0.147.19, )",
+          "System.IO.Hashing": "[10.0.11, )"
         }
       },
       "jd.efcpt.build.providers.abstractions": {
@@ -24,21 +24,21 @@
       },
       "AWSSDK.Core": {
         "type": "CentralTransitive",
-        "requested": "[4.0.100.9, )",
-        "resolved": "4.0.100.9",
-        "contentHash": "OPYy41jZjXwxxcYRotaq24HDrwUnVtBB/mvg1IwB9D1ICXAtHqMa1sp2hpmlVJCZwjlcrPcTCJIejInvV1vp5g=="
+        "requested": "[4.0.101, )",
+        "resolved": "4.0.101",
+        "contentHash": "7Q0z0fLpy+w6h4G5z/qZ6PYGzZ0DgYjYkVdGMnhtjkgQaKX+Sjm0YxfFxFILRewxC4o6wwnrbvwaSj41LgRRfg=="
       },
       "PatternKit.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.147.17, )",
-        "resolved": "0.147.17",
-        "contentHash": "w+URD3sTeIuLOZnlL6LrDN2l5648FK/s4QdEQQCjGZDQcLkFvip390krMtO4ctb/iERKkxCxxihGiw3Z5ZBnug=="
+        "requested": "[0.147.19, )",
+        "resolved": "0.147.19",
+        "contentHash": "/E5n6At02T65pbg4fLJmMBvOr36Cs5pbM8ZjcihA6aqjU4eAxV2Jz4AYRDn3u8gFI9npqNb14XE1UiVf1s8m1g=="
       },
       "System.IO.Hashing": {
         "type": "CentralTransitive",
-        "requested": "[10.0.10, )",
-        "resolved": "10.0.10",
-        "contentHash": "eE839zyWZD/UBZYzP2lu9fhHX6RWe63/jz3Jxf+JumzO/db+Vc2s7CMiDwxk9ti2NTUft2tdRx31Rw2OjKbecA=="
+        "requested": "[10.0.11, )",
+        "resolved": "10.0.11",
+        "contentHash": "OzKDcIRkeNJeC8qAsbn8yJXnfTLP1dtkWILe+T56Gf/z+IkAASi7sMqLqJQat08j5z/mRN5xVtoAwbkMNMoBUQ=="
       }
     }
   }
