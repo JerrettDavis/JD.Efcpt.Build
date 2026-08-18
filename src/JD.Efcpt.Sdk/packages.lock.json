@@ -1,6 +1,22 @@
 {
   "version": 2,
   "dependencies": {
+    "net10.0": {
+      "JD.MSBuild.Fluent": {
+        "type": "Direct",
+        "requested": "[1.3.28, )",
+        "resolved": "1.3.28",
+        "contentHash": "oC7CwJTl/ASnjypTt7hmWu3nxKv8W+Xo629Z0s5PtJV87Gy6erNwYaxoPPF/0mvl7e2gXrg5IG5XnH8ZcLIdPA=="
+      }
+    },
+    "net8.0": {
+      "JD.MSBuild.Fluent": {
+        "type": "Direct",
+        "requested": "[1.3.28, )",
+        "resolved": "1.3.28",
+        "contentHash": "oC7CwJTl/ASnjypTt7hmWu3nxKv8W+Xo629Z0s5PtJV87Gy6erNwYaxoPPF/0mvl7e2gXrg5IG5XnH8ZcLIdPA=="
+      }
+    },
     "net9.0": {
       "JD.MSBuild.Fluent": {
         "type": "Direct",
