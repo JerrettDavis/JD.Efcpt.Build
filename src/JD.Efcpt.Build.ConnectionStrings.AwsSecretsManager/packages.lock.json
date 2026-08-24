@@ -1,176 +1,21 @@
 {
   "version": 2,
   "dependencies": {
-    ".NETFramework,Version=v4.7.2": {
-      "AWSSDK.SecretsManager": {
-        "type": "Direct",
-        "requested": "[4.0.100.8, )",
-        "resolved": "4.0.100.8",
-        "contentHash": "mLM4RgOQfaxkDgmHWnwWpEer/10AI5w0R6FC6VMX8JninfACEVXT4J/OARA403dOA1D7t/dQf36mLL4M3hiADQ==",
-        "dependencies": {
-          "AWSSDK.Core": "[4.0.101, 5.0.0)"
-        }
-      },
-      "Microsoft.NETFramework.ReferenceAssemblies": {
-        "type": "Direct",
-        "requested": "[1.0.3, )",
-        "resolved": "1.0.3",
-        "contentHash": "vUc9Npcs14QsyOD01tnv/m8sQUnGTGOw1BCmKcv77LBJY7OxhJ+zJF7UD/sCL3lYNFuqmQEVlkfS4Quif6FyYg==",
-        "dependencies": {
-          "Microsoft.NETFramework.ReferenceAssemblies.net472": "1.0.3"
-        }
-      },
-      "PolySharp": {
-        "type": "Direct",
-        "requested": "[1.16.0, )",
-        "resolved": "1.16.0",
-        "contentHash": "3kdIIceBPumwjw279FuiVMfVENT2cGASXJgcigdySsbX2dJB8ofUgG6i47yqF/k1qu6fvNR3csrSekZPviR6kQ=="
-      },
-      "System.Text.Json": {
-        "type": "Direct",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "X2rXQy7g8KEUvWVbAz6vOk6byI1eMgmzFeXbKxq4BfZCfFy5S91K+K+hd4ZBlSp0wL1Y8FyGRXs6+hvABTjwQw==",
-        "dependencies": {
-          "Microsoft.Bcl.AsyncInterfaces": "10.0.11",
-          "System.Buffers": "4.6.1",
-          "System.IO.Pipelines": "10.0.11",
-          "System.Memory": "4.6.3",
-          "System.Runtime.CompilerServices.Unsafe": "6.1.2",
-          "System.Text.Encodings.Web": "10.0.11",
-          "System.Threading.Tasks.Extensions": "4.6.3",
-          "System.ValueTuple": "4.6.2"
-        }
-      },
-      "Microsoft.Bcl.AsyncInterfaces": {
-        "type": "Transitive",
-        "resolved": "10.0.11",
-        "contentHash": "pUkYI1f99hY9giu/MRaEVN53RO7skXwR7FGtVvFJCK5ezdg5i0W+z1yj/91X5aKv07xGuSB5n1g/Zt2P4Ooq6g==",
-        "dependencies": {
-          "System.Threading.Tasks.Extensions": "4.6.3"
-        }
-      },
-      "Microsoft.NETFramework.ReferenceAssemblies.net472": {
-        "type": "Transitive",
-        "resolved": "1.0.3",
-        "contentHash": "0E7evZXHXaDYYiLRfpyXvCh+yzM2rNTyuZDI+ZO7UUqSc6GfjePiXTdqJGtgIKUwdI81tzQKmaWprnUiPj9hAw=="
-      },
-      "System.Buffers": {
-        "type": "Transitive",
-        "resolved": "4.6.1",
-        "contentHash": "N8GXpmiLMtljq7gwvyS+1QvKT/W2J8sNAvx+HVg4NGmsG/H+2k/y9QI23auLJRterrzCiDH+IWAw4V/GPwsMlw=="
-      },
-      "System.IO.Pipelines": {
-        "type": "Transitive",
-        "resolved": "10.0.11",
-        "contentHash": "rg8LPOZ62quw3aTnsQNh9rssncaMs69WEM1DiJdDkV+o4Llb2s5Pasy5Bulfm8zL+pE4gDcSQo7V2zW2jvxwYg==",
-        "dependencies": {
-          "System.Buffers": "4.6.1",
-          "System.Memory": "4.6.3",
-          "System.Threading.Tasks.Extensions": "4.6.3"
-        }
-      },
-      "System.Memory": {
-        "type": "Transitive",
-        "resolved": "4.6.3",
-        "contentHash": "qdcDOgnFZY40+Q9876JUHnlHu7bosOHX8XISRoH94fwk6hgaeQGSgfZd8srWRZNt5bV9ZW2TljcegDNxsf+96A==",
-        "dependencies": {
-          "System.Buffers": "4.6.1",
-          "System.Numerics.Vectors": "4.6.1",
-          "System.Runtime.CompilerServices.Unsafe": "6.1.2"
-        }
-      },
-      "System.Numerics.Vectors": {
-        "type": "Transitive",
-        "resolved": "4.6.1",
-        "contentHash": "sQxefTnhagrhoq2ReR0D/6K0zJcr9Hrd6kikeXsA1I8kOCboTavcUC4r7TSfpKFeE163uMuxZcyfO1mGO3EN8Q=="
-      },
-      "System.Runtime.CompilerServices.Unsafe": {
-        "type": "Transitive",
-        "resolved": "6.1.2",
-        "contentHash": "2hBr6zdbIBTDE3EhK7NSVNdX58uTK6iHW/P/Axmm9sl1xoGSLqDvMtpecn226TNwHByFokYwJmt/aQQNlO5CRw=="
-      },
-      "System.Text.Encodings.Web": {
-        "type": "Transitive",
-        "resolved": "10.0.11",
-        "contentHash": "R7H2/Oqr3onFff/JKDpfRjwxcQZlocF/eQ0ce8go/OTjqz+6LEp/fZK8j1YnDobtysChATEg7krVq4hQJ3IoeQ==",
-        "dependencies": {
-          "System.Buffers": "4.6.1",
-          "System.Memory": "4.6.3",
-          "System.Runtime.CompilerServices.Unsafe": "6.1.2"
-        }
-      },
-      "System.Threading.Tasks.Extensions": {
-        "type": "Transitive",
-        "resolved": "4.6.3",
-        "contentHash": "7sCiwilJLYbTZELaKnc7RecBBXWXA+xMLQWZKWawBxYjp6DBlSE3v9/UcvKBvr1vv2tTOhipiogM8rRmxlhrVA==",
-        "dependencies": {
-          "System.Runtime.CompilerServices.Unsafe": "6.1.2"
-        }
-      },
-      "System.ValueTuple": {
-        "type": "Transitive",
-        "resolved": "4.6.2",
-        "contentHash": "yQgmjfFximrNm9LIV3mL6T5MzjeC+epeE5rl4hXxAlYmxby7RM1dPSkIKXk9HNkl6G54h2JHOmLD46+Pey+IRg=="
-      },
-      "jd.efcpt.build.core": {
-        "type": "Project",
-        "dependencies": {
-          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "PatternKit.Core": "[0.147.19, )",
-          "System.IO.Hashing": "[10.0.11, )",
-          "System.Text.Json": "[10.0.11, )"
-        }
-      },
-      "jd.efcpt.build.providers.abstractions": {
-        "type": "Project"
-      },
-      "AWSSDK.Core": {
-        "type": "CentralTransitive",
-        "requested": "[4.0.101, )",
-        "resolved": "4.0.101",
-        "contentHash": "7Q0z0fLpy+w6h4G5z/qZ6PYGzZ0DgYjYkVdGMnhtjkgQaKX+Sjm0YxfFxFILRewxC4o6wwnrbvwaSj41LgRRfg==",
-        "dependencies": {
-          "System.Buffers": "4.5.1",
-          "System.Memory": "4.5.5",
-          "System.Text.Json": "8.0.6"
-        }
-      },
-      "PatternKit.Core": {
-        "type": "CentralTransitive",
-        "requested": "[0.147.19, )",
-        "resolved": "0.147.19",
-        "contentHash": "/E5n6At02T65pbg4fLJmMBvOr36Cs5pbM8ZjcihA6aqjU4eAxV2Jz4AYRDn3u8gFI9npqNb14XE1UiVf1s8m1g==",
-        "dependencies": {
-          "System.Threading.Tasks.Extensions": "4.6.3"
-        }
-      },
-      "System.IO.Hashing": {
-        "type": "CentralTransitive",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "OzKDcIRkeNJeC8qAsbn8yJXnfTLP1dtkWILe+T56Gf/z+IkAASi7sMqLqJQat08j5z/mRN5xVtoAwbkMNMoBUQ==",
-        "dependencies": {
-          "System.Buffers": "4.6.1",
-          "System.Memory": "4.6.3"
-        }
-      }
-    },
     "net10.0": {
       "AWSSDK.SecretsManager": {
         "type": "Direct",
-        "requested": "[4.0.100.8, )",
-        "resolved": "4.0.100.8",
-        "contentHash": "mLM4RgOQfaxkDgmHWnwWpEer/10AI5w0R6FC6VMX8JninfACEVXT4J/OARA403dOA1D7t/dQf36mLL4M3hiADQ==",
+        "requested": "[4.0.100.10, )",
+        "resolved": "4.0.100.10",
+        "contentHash": "dsGAGP6R5XuHB5P261qcFMgIylEc1vweTP51mTJvD8YdAn68WEMXBgyfsqSn5D4JgXFX7kV4eVZKncfv+91/iw==",
         "dependencies": {
-          "AWSSDK.Core": "[4.0.101, 5.0.0)"
+          "AWSSDK.Core": "[4.0.102, 5.0.0)"
         }
       },
       "jd.efcpt.build.core": {
         "type": "Project",
         "dependencies": {
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "PatternKit.Core": "[0.147.19, )",
+          "PatternKit.Core": "[0.147.20, )",
           "System.IO.Hashing": "[10.0.11, )"
         }
       },
@@ -179,95 +24,15 @@
       },
       "AWSSDK.Core": {
         "type": "CentralTransitive",
-        "requested": "[4.0.101, )",
-        "resolved": "4.0.101",
-        "contentHash": "7Q0z0fLpy+w6h4G5z/qZ6PYGzZ0DgYjYkVdGMnhtjkgQaKX+Sjm0YxfFxFILRewxC4o6wwnrbvwaSj41LgRRfg=="
+        "requested": "[4.0.102, )",
+        "resolved": "4.0.102",
+        "contentHash": "sjkYreyNPlYTnAxdnqd3MBoeTNZHXOzV9lKULS5VAn+6MJIqu87aZLlm56KhDANOBXRxwDJIW668ZlsFhaB6Zw=="
       },
       "PatternKit.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.147.19, )",
-        "resolved": "0.147.19",
-        "contentHash": "/E5n6At02T65pbg4fLJmMBvOr36Cs5pbM8ZjcihA6aqjU4eAxV2Jz4AYRDn3u8gFI9npqNb14XE1UiVf1s8m1g=="
-      },
-      "System.IO.Hashing": {
-        "type": "CentralTransitive",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "OzKDcIRkeNJeC8qAsbn8yJXnfTLP1dtkWILe+T56Gf/z+IkAASi7sMqLqJQat08j5z/mRN5xVtoAwbkMNMoBUQ=="
-      }
-    },
-    "net8.0": {
-      "AWSSDK.SecretsManager": {
-        "type": "Direct",
-        "requested": "[4.0.100.8, )",
-        "resolved": "4.0.100.8",
-        "contentHash": "mLM4RgOQfaxkDgmHWnwWpEer/10AI5w0R6FC6VMX8JninfACEVXT4J/OARA403dOA1D7t/dQf36mLL4M3hiADQ==",
-        "dependencies": {
-          "AWSSDK.Core": "[4.0.101, 5.0.0)"
-        }
-      },
-      "jd.efcpt.build.core": {
-        "type": "Project",
-        "dependencies": {
-          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "PatternKit.Core": "[0.147.19, )",
-          "System.IO.Hashing": "[10.0.11, )"
-        }
-      },
-      "jd.efcpt.build.providers.abstractions": {
-        "type": "Project"
-      },
-      "AWSSDK.Core": {
-        "type": "CentralTransitive",
-        "requested": "[4.0.101, )",
-        "resolved": "4.0.101",
-        "contentHash": "7Q0z0fLpy+w6h4G5z/qZ6PYGzZ0DgYjYkVdGMnhtjkgQaKX+Sjm0YxfFxFILRewxC4o6wwnrbvwaSj41LgRRfg=="
-      },
-      "PatternKit.Core": {
-        "type": "CentralTransitive",
-        "requested": "[0.147.19, )",
-        "resolved": "0.147.19",
-        "contentHash": "/E5n6At02T65pbg4fLJmMBvOr36Cs5pbM8ZjcihA6aqjU4eAxV2Jz4AYRDn3u8gFI9npqNb14XE1UiVf1s8m1g=="
-      },
-      "System.IO.Hashing": {
-        "type": "CentralTransitive",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "OzKDcIRkeNJeC8qAsbn8yJXnfTLP1dtkWILe+T56Gf/z+IkAASi7sMqLqJQat08j5z/mRN5xVtoAwbkMNMoBUQ=="
-      }
-    },
-    "net9.0": {
-      "AWSSDK.SecretsManager": {
-        "type": "Direct",
-        "requested": "[4.0.100.8, )",
-        "resolved": "4.0.100.8",
-        "contentHash": "mLM4RgOQfaxkDgmHWnwWpEer/10AI5w0R6FC6VMX8JninfACEVXT4J/OARA403dOA1D7t/dQf36mLL4M3hiADQ==",
-        "dependencies": {
-          "AWSSDK.Core": "[4.0.101, 5.0.0)"
-        }
-      },
-      "jd.efcpt.build.core": {
-        "type": "Project",
-        "dependencies": {
-          "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "PatternKit.Core": "[0.147.19, )",
-          "System.IO.Hashing": "[10.0.11, )"
-        }
-      },
-      "jd.efcpt.build.providers.abstractions": {
-        "type": "Project"
-      },
-      "AWSSDK.Core": {
-        "type": "CentralTransitive",
-        "requested": "[4.0.101, )",
-        "resolved": "4.0.101",
-        "contentHash": "7Q0z0fLpy+w6h4G5z/qZ6PYGzZ0DgYjYkVdGMnhtjkgQaKX+Sjm0YxfFxFILRewxC4o6wwnrbvwaSj41LgRRfg=="
-      },
-      "PatternKit.Core": {
-        "type": "CentralTransitive",
-        "requested": "[0.147.19, )",
-        "resolved": "0.147.19",
-        "contentHash": "/E5n6At02T65pbg4fLJmMBvOr36Cs5pbM8ZjcihA6aqjU4eAxV2Jz4AYRDn3u8gFI9npqNb14XE1UiVf1s8m1g=="
+        "requested": "[0.147.20, )",
+        "resolved": "0.147.20",
+        "contentHash": "WnqZ3iOjekEzDV4fxq+kA+blAXzFOz9rPKqbu2dFiCOY1qgJg2biai8ocUZ3oDLkhq4H2cZHe/tOoxnvdDp86A=="
       },
       "System.IO.Hashing": {
         "type": "CentralTransitive",
