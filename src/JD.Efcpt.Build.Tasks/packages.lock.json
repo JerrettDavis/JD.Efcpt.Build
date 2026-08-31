@@ -50,9 +50,9 @@
       },
       "PatternKit.Core": {
         "type": "Direct",
-        "requested": "[0.147.20, )",
-        "resolved": "0.147.20",
-        "contentHash": "WnqZ3iOjekEzDV4fxq+kA+blAXzFOz9rPKqbu2dFiCOY1qgJg2biai8ocUZ3oDLkhq4H2cZHe/tOoxnvdDp86A=="
+        "requested": "[0.147.22, )",
+        "resolved": "0.147.22",
+        "contentHash": "xu0h/OSWGZRX7OPG0kwDmQkoYbAoI9rp8HjWe2RvKyueQiU6vaoC8hb4r8mf9Ptp7BTYYe3UNm185EAgCzts2w=="
       },
       "System.IO.Hashing": {
         "type": "Direct",
@@ -246,7 +246,7 @@
         "type": "Project",
         "dependencies": {
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "PatternKit.Core": "[0.147.20, )",
+          "PatternKit.Core": "[0.147.22, )",
           "System.IO.Hashing": "[10.0.11, )"
         }
       },
