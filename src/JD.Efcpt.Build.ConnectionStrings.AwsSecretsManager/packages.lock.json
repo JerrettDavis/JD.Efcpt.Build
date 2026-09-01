@@ -4,18 +4,18 @@
     "net10.0": {
       "AWSSDK.SecretsManager": {
         "type": "Direct",
-        "requested": "[4.0.100.10, )",
-        "resolved": "4.0.100.10",
-        "contentHash": "dsGAGP6R5XuHB5P261qcFMgIylEc1vweTP51mTJvD8YdAn68WEMXBgyfsqSn5D4JgXFX7kV4eVZKncfv+91/iw==",
+        "requested": "[4.0.100.11, )",
+        "resolved": "4.0.100.11",
+        "contentHash": "rRIcSPtDixaP/XeoyfVX8a0DQ2uFAGtgslCoNEj6ay2ISAmRP17jaK/O2Ae1scZuGNpsjI1pBQCguumsiQSJ4w==",
         "dependencies": {
-          "AWSSDK.Core": "[4.0.102, 5.0.0)"
+          "AWSSDK.Core": "[4.0.102.1, 5.0.0)"
         }
       },
       "jd.efcpt.build.core": {
         "type": "Project",
         "dependencies": {
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "PatternKit.Core": "[0.147.20, )",
+          "PatternKit.Core": "[0.147.22, )",
           "System.IO.Hashing": "[10.0.11, )"
         }
       },
@@ -24,15 +24,15 @@
       },
       "AWSSDK.Core": {
         "type": "CentralTransitive",
-        "requested": "[4.0.102, )",
-        "resolved": "4.0.102",
-        "contentHash": "sjkYreyNPlYTnAxdnqd3MBoeTNZHXOzV9lKULS5VAn+6MJIqu87aZLlm56KhDANOBXRxwDJIW668ZlsFhaB6Zw=="
+        "requested": "[4.0.102.1, )",
+        "resolved": "4.0.102.1",
+        "contentHash": "vsf+/o+S/euH/wG7bO1cha+OWaHvjgvpDeGFO6l3Vcdio9GlSfXkZDD2BogMuAJ+/jDyqqSgqmYVolPKV9ie/A=="
       },
       "PatternKit.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.147.20, )",
-        "resolved": "0.147.20",
-        "contentHash": "WnqZ3iOjekEzDV4fxq+kA+blAXzFOz9rPKqbu2dFiCOY1qgJg2biai8ocUZ3oDLkhq4H2cZHe/tOoxnvdDp86A=="
+        "requested": "[0.147.22, )",
+        "resolved": "0.147.22",
+        "contentHash": "xu0h/OSWGZRX7OPG0kwDmQkoYbAoI9rp8HjWe2RvKyueQiU6vaoC8hb4r8mf9Ptp7BTYYe3UNm185EAgCzts2w=="
       },
       "System.IO.Hashing": {
         "type": "CentralTransitive",
