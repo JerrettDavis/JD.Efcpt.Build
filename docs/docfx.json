@@ -14,7 +14,9 @@
             "**/docs/**",
             "**/tests/**",
             "**/*.Tests/**",
-            "**/samples/**"
+            "**/samples/**",
+            "**/ide/vscode/test-fixtures/**",
+            "**/src/JD.Efcpt.Build.Templates/templates/**"
           ]
         }
       ],
