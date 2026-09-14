@@ -1,18 +1,18 @@
 {
   "version": 2,
   "dependencies": {
-    "net9.0": {
+    "net8.0": {
       "PatternKit.Core": {
         "type": "Direct",
-        "requested": "[0.147.23, )",
-        "resolved": "0.147.23",
-        "contentHash": "dbqY6eb6mEKmNl6B5W2RzazhIxp12J6KKgPNaFMz8N+iyNz7xpUdWaqgzmHuSuuVq4Jt+lKtZA0V4cUnLoNiGw=="
+        "requested": "[0.147.24, )",
+        "resolved": "0.147.24",
+        "contentHash": "eMbPlSEjKykiqIzvw1Y15sRqD3bIip2lxsDFPyKnGeD4+e7ekblr0sc+Div9E6KpKADZaMybrcXQtsPgEDFsFA=="
       },
       "System.IO.Hashing": {
         "type": "Direct",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "OzKDcIRkeNJeC8qAsbn8yJXnfTLP1dtkWILe+T56Gf/z+IkAASi7sMqLqJQat08j5z/mRN5xVtoAwbkMNMoBUQ=="
+        "requested": "[10.0.12, )",
+        "resolved": "10.0.12",
+        "contentHash": "jDix4bBMYnpZdSPcnY+KDV6ik3SRMzpMKby/bZl/XUwIiflwRNAFZ0oOl61R/pSaveIJ8t1gs2BUlrGsPs/bcg=="
       },
       "jd.efcpt.build.providers.abstractions": {
         "type": "Project"
