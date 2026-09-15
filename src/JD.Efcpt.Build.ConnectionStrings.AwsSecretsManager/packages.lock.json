@@ -1,22 +1,22 @@
 {
   "version": 2,
   "dependencies": {
-    "net9.0": {
+    "net10.0": {
       "AWSSDK.SecretsManager": {
         "type": "Direct",
-        "requested": "[4.0.100.12, )",
-        "resolved": "4.0.100.12",
-        "contentHash": "LteVwosj9CXxrCTTut3bJBe5CCJMAWqoZj1/cYPevhLv5lz9WX00mr9mGZ/q3NwtD28cH62i81S63MuCs4zpIw==",
+        "requested": "[4.0.100.13, )",
+        "resolved": "4.0.100.13",
+        "contentHash": "UFFgfyVJWVhgVInUubtj0VDMlq01a6FZPB7S6PAkux7wqmiMQZrTD3b8TLovNpuw8MlzkmCTp2P2c1UPV635mA==",
         "dependencies": {
-          "AWSSDK.Core": "[4.0.102.3, 5.0.0)"
+          "AWSSDK.Core": "[4.0.102.4, 5.0.0)"
         }
       },
       "jd.efcpt.build.core": {
         "type": "Project",
         "dependencies": {
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "PatternKit.Core": "[0.147.22, )",
-          "System.IO.Hashing": "[10.0.11, )"
+          "PatternKit.Core": "[0.147.24, )",
+          "System.IO.Hashing": "[10.0.12, )"
         }
       },
       "jd.efcpt.build.providers.abstractions": {
@@ -24,21 +24,21 @@
       },
       "AWSSDK.Core": {
         "type": "CentralTransitive",
-        "requested": "[4.0.102.3, )",
-        "resolved": "4.0.102.3",
-        "contentHash": "hGysXQOtru5CQmROaDLQURs5HK3W385ClLodTKZcLnd6o64YDOwvBaQrjYlfU9BEVLv7sdDR/ZRaATjpdBJ5Xw=="
+        "requested": "[4.0.102.5, )",
+        "resolved": "4.0.102.4",
+        "contentHash": "cFMZnb05RV290HDdybtgR5b/ypkLekeaoHde4tiQHLmgegGLMmcEKsvThnLm1PJOeWSNFcBxzC5fomOvWiW24A=="
       },
       "PatternKit.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.147.22, )",
-        "resolved": "0.147.22",
-        "contentHash": "xu0h/OSWGZRX7OPG0kwDmQkoYbAoI9rp8HjWe2RvKyueQiU6vaoC8hb4r8mf9Ptp7BTYYe3UNm185EAgCzts2w=="
+        "requested": "[0.147.24, )",
+        "resolved": "0.147.24",
+        "contentHash": "eMbPlSEjKykiqIzvw1Y15sRqD3bIip2lxsDFPyKnGeD4+e7ekblr0sc+Div9E6KpKADZaMybrcXQtsPgEDFsFA=="
       },
       "System.IO.Hashing": {
         "type": "CentralTransitive",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "OzKDcIRkeNJeC8qAsbn8yJXnfTLP1dtkWILe+T56Gf/z+IkAASi7sMqLqJQat08j5z/mRN5xVtoAwbkMNMoBUQ=="
+        "requested": "[10.0.12, )",
+        "resolved": "10.0.12",
+        "contentHash": "jDix4bBMYnpZdSPcnY+KDV6ik3SRMzpMKby/bZl/XUwIiflwRNAFZ0oOl61R/pSaveIJ8t1gs2BUlrGsPs/bcg=="
       }
     }
   }
