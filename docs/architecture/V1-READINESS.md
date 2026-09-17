@@ -30,4 +30,6 @@ Repository-native auto-merge is enabled. Opt in on a reviewed PR with `gh pr mer
 
 ## Separately tracked roadmap
 
+The final dependency audit also found a blocked Dependabot security update in the VS Code test toolchain: Mocha's `serialize-javascript` range selected a vulnerable release. The extension now overrides that development dependency to `^7.1.1`, and compatible transitive patches resolve the remaining npm audit findings. Remove the override only when the upstream test tools select a fixed version themselves. Extension lint, compilation, unit/integration tests, packaging, and `npm audit` verify this maintenance path.
+
 The issue's post-v1.0 items remain non-blocking: CLI (#181), Visual Studio (#182), VS Code (#183), custom providers (#184), secret sources (#188), split drivers (#189), and worktree test compatibility (#190). Their merged implementations do not replace any of the required gates above.
