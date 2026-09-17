@@ -4,7 +4,7 @@
 
 **Goal:** Finish every required readiness item, land green on main, and demonstrate automatic merging without bypassing checks.
 
-**Architecture:** Retain the existing integration suite, API baselines, and provider samples. Extend the task test project to select its runtime, run all seven providers on .NET 8/9/10 across Windows/Linux/macOS, and retain machine-readable results. Make the required VSIX check unconditional for PRs and enable native auto-merge for Dependabot PRs.
+**Architecture:** Retain the existing integration suite, API baselines, and provider samples. Extend the task test project to select its runtime, run all seven providers on .NET 8/9/10 across Windows/Linux/macOS, and retain machine-readable results. Make the required VSIX check unconditional for PRs and verify repository-native auto-merge.
 
 **Tech stack:** .NET, xUnit, MSBuild, GitHub Actions, DocFX.
 
@@ -14,7 +14,7 @@
 
 - [x] Audit the issue, merged PRs, source, CI history, repository merge settings, and required checks. The stale closure is not completion evidence.
 - [ ] Expand runtime testing in `tests/JD.Efcpt.Build.Tests` and its test provider fixture using `EfcptTestFramework`. Run the non-integration suite on net8.0/net9.0/net10.0. Add `.github/workflows/provider-compat.yml` with three OSes and three runtimes; assert passing connection and schema-reader tests for all seven providers in every TRX report.
-- [ ] Remove PR path filtering from `.github/workflows/vsix.yml` so required `Build, package` is always reported. Add a trusted, checkout-free Dependabot workflow that requests native auto-merge and leaves all required gates in force. Verify an actual PR automatically merges after checks succeed.
+- [ ] Remove PR path filtering from `.github/workflows/vsix.yml` so required `Build, package` is always reported. Verify an actual PR automatically merges after checks succeed with all required gates in force.
 - [ ] Review API/config stability, design-time guard, SDK cache, acquisition, offline behavior, all seven samples, and docs. Correct documentation drift and record concrete evidence in `docs/architecture/V1-READINESS.md`.
 - [ ] Submit project listings to awesome-dotnet and awesome-entity-framework-core following their contribution guidelines; record submission URLs. Acceptance requires submission, not upstream approval.
 - [ ] Run local tests and workflow validation. Open a PR, enable auto-merge, fix any failing checks, and verify merged main CI, documentation, packaging, and compatibility runs.

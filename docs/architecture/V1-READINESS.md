@@ -26,7 +26,7 @@ This records the acceptance evidence for [issue #191](https://github.com/Jerrett
 
 `Build, package` was required on every PR while `vsix.yml` filtered PR events by path. Unrelated changes therefore could never produce the required check. The workflow now runs for every PR, preserving the VSIX gate. GitHub documents this failure mode under [troubleshooting required status checks](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks).
 
-`dependabot-auto-merge.yml` requests native auto-merge for non-draft, same-repository Dependabot PRs. It runs without checking out PR code and does not bypass branch protection. Human PRs opt in with `gh pr merge --auto --squash`. When renaming or filtering workflows, check required contexts against actual PR checks to avoid another indefinitely expected status.
+Repository-native auto-merge is enabled. Opt in on a reviewed PR with `gh pr merge --auto --squash`; GitHub waits for the required checks. This closeout uses that path to verify merging without an admin bypass and then checks the resulting main workflows. When renaming or filtering workflows, check required contexts against actual PR checks to avoid another indefinitely expected status.
 
 ## Separately tracked roadmap
 
