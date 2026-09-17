@@ -2,9 +2,11 @@
   <PropertyGroup>
     <!--
       Single-target: this fixture only needs to run wherever JD.Efcpt.Build.Tests runs
-      (net10.0). It is never packed or shipped - see the remarks below.
+      (net10.0 by default, or EfcptTestFramework in the compatibility matrix).
+      It is never packed or shipped - see the remarks below.
     -->
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework Condition="'$(EfcptTestFramework)' == ''">net10.0</TargetFramework>
+    <TargetFramework Condition="'$(EfcptTestFramework)' != ''">$(EfcptTestFramework)</TargetFramework>
     <IsPackable>false</IsPackable>
     <AssemblyName>JD.Efcpt.Build.TestProvider</AssemblyName>
     <RootNamespace>JD.Efcpt.Build.TestProvider</RootNamespace>

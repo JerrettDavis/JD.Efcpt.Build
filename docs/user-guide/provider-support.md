@@ -126,7 +126,7 @@ Set the database provider and connection string:
 ### Limitations
 
 - Requires a live database connection at build time
-- No incremental caching (regenerates on every build unless you implement custom fingerprinting)
+- Schema metadata is queried on each enabled build; generation is skipped when the schema/configuration fingerprint is unchanged
 - Not suitable for CI/CD environments where database connections are unavailable or ephemeral
 
 ### Workaround: Generate Offline, Commit Models
@@ -141,8 +141,8 @@ This approach trades automation for portability:
 
 ```xml
 <!-- Only regenerate in local development -->
-<PropertyGroup Condition="'$(GITHUB_ACTIONS)' != 'true'">
-  <EfcptEnabled>true</EfcptEnabled>
+<PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+  <EfcptEnabled>false</EfcptEnabled>
 </PropertyGroup>
 ```
 
@@ -228,7 +228,7 @@ Account=myaccount;User=user;Password=pwd;Warehouse=mywarehouse;Database=mydb;Sch
 
 ### "Provider not supported" error
 
-Ensure the provider value matches the supported list above. Common typos: `sqlserver` (should be `mssql`), `psql` (should be `postgres`).
+Ensure the provider value matches the supported list above. `sqlserver` and `sql-server` are supported aliases for `mssql`; `postgresql` and `pgsql` are aliases for `postgres`. `psql` is not supported.
 
 ### Connection string not found
 

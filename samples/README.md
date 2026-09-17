@@ -4,6 +4,22 @@ This directory contains sample projects demonstrating various usage patterns of 
 
 ## Sample Overview
 
+### Seven-provider reference set
+
+Each reference includes a project, `efcpt-config.json`, and committed model output that builds with `EfcptEnabled=false`:
+
+| Provider | Reference |
+|---|---|
+| SQL Server | [provider-mssql](provider-mssql/README.md) |
+| PostgreSQL | [provider-postgres](provider-postgres/README.md) |
+| MySQL | [provider-mysql](provider-mysql/README.md) |
+| Oracle | [provider-oracle](provider-oracle/README.md) |
+| Snowflake | [provider-snowflake](provider-snowflake/README.md) (entities only) |
+| Firebird | [provider-firebird](provider-firebird/README.md) |
+| SQLite | [provider-sqlite](provider-sqlite/README.md) |
+
+These are compilable reference models. Live database and tool execution coverage is maintained separately in the integration suite.
+
 ### SDK Mode Samples
 
 | Sample | Description | Key Features |

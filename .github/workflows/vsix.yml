@@ -8,9 +8,7 @@ on:
       - '.github/workflows/vsix.yml'
   pull_request:
     branches: [ main ]
-    paths:
-      - 'ide/vs/**'
-      - '.github/workflows/vsix.yml'
+    # Required by branch protection: path filtering leaves unrelated PRs waiting forever.
 
 # A new push supersedes an in-progress run for the same ref, so a hung run is
 # cancelled the moment the fix is pushed instead of tying up a runner for hours.

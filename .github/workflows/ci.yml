@@ -247,6 +247,8 @@ jobs:
             # entities-only (no first-party EF Core runtime provider exists for Snowflake) - see
             # samples/provider-snowflake/README.md.
             "samples/provider-postgres/ProviderPostgres.sln"
+            "samples/provider-mssql/EntityFrameworkCoreProject/EntityFrameworkCoreProject.csproj"
+            "samples/provider-sqlite/EntityFrameworkCoreProject/EntityFrameworkCoreProject.csproj"
             "samples/provider-mysql/ProviderMySql.sln"
             "samples/provider-oracle/ProviderOracle.sln"
             "samples/provider-firebird/ProviderFirebird.sln"
@@ -430,4 +432,3 @@ jobs:
             --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
             --api-key "${{ secrets.GITHUB_TOKEN }}" \
             --skip-duplicate
-
