@@ -26,3 +26,4 @@ packages/
 
 # CI-generated dependency reports
 outdated.txt
+TestResults/

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/ErikEJ/EFCorePowerTools/master/samples/efcpt-config.schema.json",
+  "names": {
+    "root-namespace": "EntityFrameworkCoreProject",
+    "dbcontext-name": "AppDbContext",
+    "dbcontext-namespace": "EntityFrameworkCoreProject.Generated",
+    "model-namespace": "EntityFrameworkCoreProject.Generated"
+  },
+  "code-generation": {
+    "use-t4": false,
+    "enable-on-configuring": false,
+    "use-nullable-reference-types": true
+  },
+  "tables": [{ "name": "Customers" }]
+}

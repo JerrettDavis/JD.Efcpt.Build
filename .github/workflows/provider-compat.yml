@@ -1,0 +1,61 @@
+name: Provider Compatibility
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: provider-compat-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  providers:
+    name: providers (${{ matrix.os }}, ${{ matrix.framework }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        framework: [net8.0, net9.0, net10.0]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+      - name: Test all seven providers on selected runtime
+        run: >-
+          dotnet test tests/JD.Efcpt.Build.Tests/JD.Efcpt.Build.Tests.csproj
+          --configuration Release
+          -p:EfcptTestFramework=${{ matrix.framework }}
+          --filter "Category!=Integration"
+          --logger "trx;LogFileName=providers.trx"
+          --results-directory TestResults/providers
+      - name: Verify seven-provider coverage
+        shell: pwsh
+        run: ./build/verify-provider-results.ps1 -Path TestResults/providers/providers.trx
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: providers-${{ matrix.os }}-${{ matrix.framework }}
+          path: TestResults/providers
+          if-no-files-found: error
+
+  provider-compatibility:
+    if: always()
+    needs: providers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every runtime and OS
+        env:
+          RESULT: ${{ needs.providers.result }}
+        run: test "$RESULT" = success

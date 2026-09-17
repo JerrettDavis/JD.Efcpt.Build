@@ -120,13 +120,19 @@ public sealed partial class DirectDacpacTests(ITestOutputHelper output) : TinyBd
             UseShellExecute = false
         };
 
-        var process = System.Diagnostics.Process.Start(psi)!;
+        // MSBuildLocator configures this test host for its runtime (8/9/10).
+        // A child dotnet CLI must select its own SDK instead of inheriting those paths.
+        foreach (var key in new[] { "MSBUILD_EXE_PATH", "MSBuildSDKsPath", "MSBuildExtensionsPath" })
+            psi.Environment.Remove(key);
+
+        using var process = System.Diagnostics.Process.Start(psi)!;
+        var stdout = process.StandardOutput.ReadToEndAsync();
+        var stderr = process.StandardError.ReadToEndAsync();
         process.WaitForExit();
 
         if (process.ExitCode != 0)
         {
-            var stderr = process.StandardError.ReadToEnd();
-            throw new InvalidOperationException($"Failed to build DACPAC: {stderr}");
+            throw new InvalidOperationException($"Failed to build DACPAC: {stdout.GetAwaiter().GetResult()}\n{stderr.GetAwaiter().GetResult()}");
         }
 
         // Find and copy the built DACPAC
@@ -403,4 +409,3 @@ public sealed partial class DirectDacpacTests(ITestOutputHelper output) : TinyBd
             .AssertPassed();
     }
 }
-

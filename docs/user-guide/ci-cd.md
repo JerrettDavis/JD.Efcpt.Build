@@ -499,6 +499,18 @@ Enable caching for the efcpt intermediate directory to skip regeneration when sc
 
 ## efcpt Compatibility
 
+The [Provider Compatibility workflow](https://github.com/JerrettDavis/JD.Efcpt.Build/actions/workflows/provider-compat.yml) runs the task unit suite on .NET 8, 9, and 10 on Windows, Linux, and macOS. Each of its nine jobs checks passing connection and schema-reader tests for SQL Server, PostgreSQL, MySQL, Oracle, Snowflake, Firebird, and SQLite, covering 63 provider/runtime/OS combinations. TRX reports are uploaded as artifacts; missing or skipped provider cases fail verification.
+
+This matrix exercises driver loading, connection construction, and schema-reader logic. Live database tests remain in the Linux integration suite; Snowflake live tests require an account. The separate upstream-tool workflow below tests actual efcpt execution.
+
+To reproduce one runtime locally:
+
+```sh
+dotnet test tests/JD.Efcpt.Build.Tests/JD.Efcpt.Build.Tests.csproj -c Release -p:EfcptTestFramework=net8.0 --filter "Category!=Integration"
+```
+
+Install the .NET 8/9/10 SDKs first. `EfcptTestFramework` selects the task test host and its fixture; the default remains `net10.0`.
+
 The `efcpt` CLI is an external tool whose release lines track EF Core versions, so an upstream release can change scaffolding behavior. A scheduled workflow guards against this by weekly rebuilding a sample against the latest `efcpt` per supported EF Core line. See [efcpt Compatibility](efcpt-compatibility.md) for the supported version matrix and how the guard works.
 
 ## Next Steps
