@@ -4,9 +4,9 @@
     "net8.0": {
       "PatternKit.Core": {
         "type": "Direct",
-        "requested": "[0.147.24, )",
-        "resolved": "0.147.24",
-        "contentHash": "eMbPlSEjKykiqIzvw1Y15sRqD3bIip2lxsDFPyKnGeD4+e7ekblr0sc+Div9E6KpKADZaMybrcXQtsPgEDFsFA=="
+        "requested": "[0.147.26, )",
+        "resolved": "0.147.26",
+        "contentHash": "nDzRCSuCQQp4w7UdNxyGVy7QSpz5/svIDuuVkdryA1rDgkhs/SyLrVwTWO5IBhBX6NS+JCaZQ0X0UsO/tt+3rw=="
       },
       "System.IO.Hashing": {
         "type": "Direct",

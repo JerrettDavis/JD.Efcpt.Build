@@ -10,9 +10,9 @@
       },
       "Snowflake.Data": {
         "type": "Direct",
-        "requested": "[6.1.0, )",
-        "resolved": "6.1.0",
-        "contentHash": "cxiyiq4FZ0W7rPgIbQHArZ8Jvf1eyVc1rM68Boj9jpVLKkjzUjTIHSB9xY200nAhirH1kzOFYepNgvCrzRT8lQ==",
+        "requested": "[6.2.0, )",
+        "resolved": "6.2.0",
+        "contentHash": "xaCDDfMQopchwm/2LyP0quPcM6kwcS2tSf04tp8KSFEGeKMEPiZgstJESwpIwor+M/O0Gi+39dOQv2W4x9xiTQ==",
         "dependencies": {
           "AWSSDK.S3": "4.0.101.4",
           "Apache.Arrow": "23.0.0",
