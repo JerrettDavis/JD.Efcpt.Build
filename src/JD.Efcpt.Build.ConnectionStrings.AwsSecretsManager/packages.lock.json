@@ -15,7 +15,7 @@
         "type": "Project",
         "dependencies": {
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "PatternKit.Core": "[0.147.26, )",
+          "PatternKit.Core": "[0.147.27, )",
           "System.IO.Hashing": "[10.0.12, )"
         }
       },
@@ -24,15 +24,15 @@
       },
       "AWSSDK.Core": {
         "type": "CentralTransitive",
-        "requested": "[4.0.102.6, )",
+        "requested": "[4.0.102.7, )",
         "resolved": "4.0.102.6",
         "contentHash": "YwUi9qpz/OHqwEgsf8I5jj1aC/xkkjmF91R8Yx6yD66dhOiORgQJynYQk0fzI4xdhBgUaw8SRGbMkLRrvL+CNA=="
       },
       "PatternKit.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.147.26, )",
-        "resolved": "0.147.26",
-        "contentHash": "nDzRCSuCQQp4w7UdNxyGVy7QSpz5/svIDuuVkdryA1rDgkhs/SyLrVwTWO5IBhBX6NS+JCaZQ0X0UsO/tt+3rw=="
+        "requested": "[0.147.27, )",
+        "resolved": "0.147.27",
+        "contentHash": "z/VLiqxzmJeL2hUiGp4jKXO5g6w0mH6odh7QAn8x2EMvqdlt9kbw0EJa6IcKYGZAcD0fJn67wkpq9+HxQvJPsQ=="
       },
       "System.IO.Hashing": {
         "type": "CentralTransitive",
