@@ -4,15 +4,15 @@
     "net10.0": {
       "AWSSDK.Core": {
         "type": "Direct",
-        "requested": "[4.0.102.7, )",
-        "resolved": "4.0.102.7",
-        "contentHash": "wkAO8OXXaOuSIeZp415wkrl4+mOkYVaqXMOT14Il4PK/gt5GYxWqktb7o5K4LaX8orm9m2JpqJictVT48PGQVA=="
+        "requested": "[4.0.102.8, )",
+        "resolved": "4.0.102.8",
+        "contentHash": "90B9Skhl+ORbtWNXrrmGdGhGvAfZiPmZafRYrB/xHelZjePIwPvXioqz9UiiF1vo21eDLzTnXh5EC4RjbNWsFQ=="
       },
       "coverlet.collector": {
         "type": "Direct",
-        "requested": "[10.0.1, )",
-        "resolved": "10.0.1",
-        "contentHash": "27jXSV/0DbVqF5jDrAxuQFZ9oaz6gmG03p8ttxAFk+X0M4woFYj7MoWDLCna5EGLb0CE6OE7X6ZH3Wt5smTtaA=="
+        "requested": "[10.1.0, )",
+        "resolved": "10.1.0",
+        "contentHash": "SlYCIHnBYxINSUpR75SiM5JEmnx11pqT+Ac/C/fUqTTA0dLPl9eYzmFXKKuxmQhL3ZdTQl4PBD3YdAxAauaKLQ=="
       },
       "Microsoft.Build.Framework": {
         "type": "Direct",
@@ -111,11 +111,11 @@
       },
       "TinyBDD.Xunit": {
         "type": "Direct",
-        "requested": "[0.19.42, )",
-        "resolved": "0.19.42",
-        "contentHash": "eUr8rKoWVAIfa+alLKjmckaGBlJ5ijsDNIfplqz1Jp+36EXsqwOzoACXMWt9z4jbLceVti7hwbvov0aeGOaZQg==",
+        "requested": "[0.19.43, )",
+        "resolved": "0.19.43",
+        "contentHash": "YrmYkaki7wWuEQiMRIWjIHaOfPOK61q+AUPAxMiI4XLorr67mEDzEijc9BAMcLSmkvG4664si42XXuVwB1sMiw==",
         "dependencies": {
-          "TinyBDD": "0.19.42",
+          "TinyBDD": "0.19.43",
           "xunit.abstractions": "2.0.3",
           "xunit.extensibility.core": "2.9.3"
         }
@@ -678,8 +678,8 @@
       },
       "TinyBDD": {
         "type": "Transitive",
-        "resolved": "0.19.42",
-        "contentHash": "DdByYowx7+JLrNa3Gr2pCJIvF5hPClvM5A6qsg75fjsw4oeAOGzvw+Al1wKRoaJydD9ecxUiIX0UXy8RJbf0hw==",
+        "resolved": "0.19.43",
+        "contentHash": "nuKlC0kQyN6eExgAca2dnWJDRsMYWSooz3cKIe3a3/gKY/zBX0w4o7CDiVnnj0YdPcAYrQcYlDUGEhn/eOT5Uw==",
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection": "10.0.8",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.8"
@@ -779,7 +779,7 @@
         "dependencies": {
           "AWSSDK.Core": "[4.0.101, )",
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "Snowflake.Data": "[6.2.0, )"
+          "Snowflake.Data": "[6.3.0, )"
         }
       },
       "jd.efcpt.build.sqlite": {
@@ -826,7 +826,7 @@
       },
       "Microsoft.Data.SqlClient": {
         "type": "CentralTransitive",
-        "requested": "[7.1.0, )",
+        "requested": "[7.1.1, )",
         "resolved": "6.1.4",
         "contentHash": "lQcSog5LLImg4yNEuuG6ccvdzXnCvER8Rms9Ngk9zB4Q8na4f+S7/abSoC7gnEltBg4e5xTnLAWmMLIOtLg4pg==",
         "dependencies": {
@@ -890,9 +890,9 @@
       },
       "Snowflake.Data": {
         "type": "CentralTransitive",
-        "requested": "[6.2.0, )",
-        "resolved": "6.2.0",
-        "contentHash": "xaCDDfMQopchwm/2LyP0quPcM6kwcS2tSf04tp8KSFEGeKMEPiZgstJESwpIwor+M/O0Gi+39dOQv2W4x9xiTQ==",
+        "requested": "[6.3.0, )",
+        "resolved": "6.3.0",
+        "contentHash": "vG+nT5Oe78RBGPYmnOp1R+cBM6ZM1kwg89IWQmAkQ/yV9n0BuTawnbZSIEnVA6YfRrfYEmpbWNZSqpjrlW1saQ==",
         "dependencies": {
           "AWSSDK.S3": "4.0.101.4",
           "Apache.Arrow": "23.0.0",
