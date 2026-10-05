@@ -4,9 +4,9 @@
     "net10.0": {
       "coverlet.collector": {
         "type": "Direct",
-        "requested": "[10.0.1, )",
-        "resolved": "10.0.1",
-        "contentHash": "27jXSV/0DbVqF5jDrAxuQFZ9oaz6gmG03p8ttxAFk+X0M4woFYj7MoWDLCna5EGLb0CE6OE7X6ZH3Wt5smTtaA=="
+        "requested": "[10.1.0, )",
+        "resolved": "10.1.0",
+        "contentHash": "SlYCIHnBYxINSUpR75SiM5JEmnx11pqT+Ac/C/fUqTTA0dLPl9eYzmFXKKuxmQhL3ZdTQl4PBD3YdAxAauaKLQ=="
       },
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
@@ -20,11 +20,11 @@
       },
       "TinyBDD.Xunit": {
         "type": "Direct",
-        "requested": "[0.19.42, )",
-        "resolved": "0.19.42",
-        "contentHash": "eUr8rKoWVAIfa+alLKjmckaGBlJ5ijsDNIfplqz1Jp+36EXsqwOzoACXMWt9z4jbLceVti7hwbvov0aeGOaZQg==",
+        "requested": "[0.19.43, )",
+        "resolved": "0.19.43",
+        "contentHash": "YrmYkaki7wWuEQiMRIWjIHaOfPOK61q+AUPAxMiI4XLorr67mEDzEijc9BAMcLSmkvG4664si42XXuVwB1sMiw==",
         "dependencies": {
-          "TinyBDD": "0.19.42",
+          "TinyBDD": "0.19.43",
           "xunit.abstractions": "2.0.3",
           "xunit.extensibility.core": "2.9.3"
         }
@@ -210,8 +210,8 @@
       },
       "TinyBDD": {
         "type": "Transitive",
-        "resolved": "0.19.42",
-        "contentHash": "DdByYowx7+JLrNa3Gr2pCJIvF5hPClvM5A6qsg75fjsw4oeAOGzvw+Al1wKRoaJydD9ecxUiIX0UXy8RJbf0hw==",
+        "resolved": "0.19.43",
+        "contentHash": "nuKlC0kQyN6eExgAca2dnWJDRsMYWSooz3cKIe3a3/gKY/zBX0w4o7CDiVnnj0YdPcAYrQcYlDUGEhn/eOT5Uw==",
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection": "10.0.8",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.8"
@@ -266,7 +266,7 @@
         "type": "Project",
         "dependencies": {
           "Azure.Identity": "[1.21.0, )",
-          "Azure.Security.KeyVault.Secrets": "[4.11.1, )",
+          "Azure.Security.KeyVault.Secrets": "[4.11.2, )",
           "JD.Efcpt.Build.Core": "[1.0.0, )"
         }
       },
@@ -292,9 +292,9 @@
       },
       "Azure.Security.KeyVault.Secrets": {
         "type": "CentralTransitive",
-        "requested": "[4.11.1, )",
-        "resolved": "4.11.1",
-        "contentHash": "/yFMJGQYPPvBSrupjJ388qqXZ1h70Yrer1vG+z+jddgovEmIE7IhShU6ZGIi24IPArY8HBH6FFtgVK369TWhmQ==",
+        "requested": "[4.11.2, )",
+        "resolved": "4.11.2",
+        "contentHash": "23VoXpEhSw7jLuG4qKx3tHjosBf02NOtwrjh/HOIpKSL5iHIDur5xWmR78wQ9WDQk+ganZH4Lx2nYmthTQ3Phw==",
         "dependencies": {
           "Azure.Core": "1.54.0"
         }

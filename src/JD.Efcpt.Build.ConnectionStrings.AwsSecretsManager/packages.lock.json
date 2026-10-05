@@ -4,11 +4,11 @@
     "net10.0": {
       "AWSSDK.SecretsManager": {
         "type": "Direct",
-        "requested": "[4.0.100.14, )",
-        "resolved": "4.0.100.14",
-        "contentHash": "TjKOvrGaCLwntfWCYRwmORpNFH5ey46rCLRY/gU1Myt+f/kvzANMod7nLNrhSZm7ITrANLu0QyirOgWGPoJS7w==",
+        "requested": "[4.0.100.15, )",
+        "resolved": "4.0.100.15",
+        "contentHash": "rT7ynrNzVwjrKVOPncko6lCkd2oZCZV7Fq9BW1bnEP9IZurexHz+Gqg+TNN1CCCh4J9HNnd8vIuSg29IX9FxMA==",
         "dependencies": {
-          "AWSSDK.Core": "[4.0.102.6, 5.0.0)"
+          "AWSSDK.Core": "[4.0.102.8, 5.0.0)"
         }
       },
       "jd.efcpt.build.core": {
@@ -24,9 +24,9 @@
       },
       "AWSSDK.Core": {
         "type": "CentralTransitive",
-        "requested": "[4.0.102.7, )",
-        "resolved": "4.0.102.6",
-        "contentHash": "YwUi9qpz/OHqwEgsf8I5jj1aC/xkkjmF91R8Yx6yD66dhOiORgQJynYQk0fzI4xdhBgUaw8SRGbMkLRrvL+CNA=="
+        "requested": "[4.0.102.8, )",
+        "resolved": "4.0.102.8",
+        "contentHash": "90B9Skhl+ORbtWNXrrmGdGhGvAfZiPmZafRYrB/xHelZjePIwPvXioqz9UiiF1vo21eDLzTnXh5EC4RjbNWsFQ=="
       },
       "PatternKit.Core": {
         "type": "CentralTransitive",
