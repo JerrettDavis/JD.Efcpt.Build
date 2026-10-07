@@ -14,8 +14,10 @@ These targets are executed as part of the build pipeline:
 | `EfcptStageInputs` | Stages config and templates | After DACPAC/schema |
 | `EfcptApplyConfigOverrides` | Applies MSBuild property overrides to staged config | After staging |
 | `EfcptComputeFingerprint` | Detects if regeneration needed | After overrides |
-| `EfcptGenerateModels` | Runs `efcpt` CLI | When fingerprint changes |
-| `EfcptAddToCompile` | Adds `.g.cs` files to compilation | Before C# compile |
+| `EfcptGenerateModels` | Runs `efcpt` CLI | When fingerprint changes, and `EfcptMermaidOnly != 'true'` |
+| `EfcptGenerateMermaid` | Runs `efcpt` CLI with Mermaid-only overrides; moves the `.md`, deletes `.g.cs` leftovers | When fingerprint changes, replaces `EfcptGenerateModels` when `EfcptMermaidOnly=true` |
+| `EfcptAddToCompile` | Adds `.g.cs` files to compilation | Before C# compile, skipped when `EfcptMermaidOnly=true` |
+| `_EfcptApplyMermaidOnlyOverrides` | Forces `generate-mermaid-diagram=true` and `type=dbcontext` on the staged config | Before `EfcptApplyConfigOverrides`, only when `EfcptMermaidOnly=true` |
 
 ## MSBuild Tasks
 

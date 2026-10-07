@@ -183,13 +183,12 @@ public sealed partial class SqlProjectTargetGenerationTests(ITestOutputHelper ou
         // Act
         var targetsContent = File.ReadAllText(targetsPath);
 
-        // Assert - the stamp-invalidation target exists, is hooked in immediately before
-        // EfcptGenerateModels (so it runs before that target's Inputs/Outputs up-to-date check),
-        // is gated on EfcptForceRegenerate=true, and deletes the stamp file so the Outputs of
-        // EfcptGenerateModels are genuinely missing (defeating the incremental gate) rather than
-        // relying solely on the Condition change above (#191).
+        // Assert - the stamp-invalidation target exists and is hooked in immediately before both
+        // generation targets, so it runs before their Inputs/Outputs up-to-date checks. It is gated
+        // on EfcptForceRegenerate=true and deletes the stamp file so generation is not prevented by
+        // the incremental gate (#191).
         Assert.Contains(
-            "<Target Name=\"_EfcptForceRegenerateInvalidateStamp\" BeforeTargets=\"EfcptGenerateModels\"",
+            "<Target Name=\"_EfcptForceRegenerateInvalidateStamp\" BeforeTargets=\"EfcptGenerateModels;_EfcptGenerateMermaid\"",
             targetsContent);
 
         var invalidationTargetLine = targetsContent.Split('\n')
@@ -198,15 +197,16 @@ public sealed partial class SqlProjectTargetGenerationTests(ITestOutputHelper ou
 
         Assert.Contains("<Delete Condition=\"Exists('$(EfcptStampFile)')\" Files=\"$(EfcptStampFile)\" />", targetsContent);
 
-        // And the invalidation target must appear before EfcptGenerateModels in document order,
+        // And the invalidation target must appear before both generation targets in document order,
         // since BeforeTargets ordering relative to sibling BeforeTargets hooks can depend on
         // declaration order for readability/debuggability even though MSBuild itself doesn't
         // require it.
         var invalidationIndex = targetsContent.IndexOf("<Target Name=\"_EfcptForceRegenerateInvalidateStamp\"", StringComparison.Ordinal);
         var generateModelsIndex = targetsContent.IndexOf("<Target Name=\"EfcptGenerateModels\"", StringComparison.Ordinal);
+        var generateMermaidIndex = targetsContent.IndexOf("<Target Name=\"_EfcptGenerateMermaid\"", StringComparison.Ordinal);
         Assert.True(invalidationIndex >= 0 && generateModelsIndex >= 0 && invalidationIndex < generateModelsIndex);
+        Assert.True(invalidationIndex < generateMermaidIndex);
 
-        _output.WriteLine("✓ _EfcptForceRegenerateInvalidateStamp is correctly wired before EfcptGenerateModels");
+        _output.WriteLine("✓ _EfcptForceRegenerateInvalidateStamp is correctly wired before both generation targets");
     }
 }
-

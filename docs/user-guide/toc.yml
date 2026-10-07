@@ -36,3 +36,5 @@
   href: troubleshooting.md
 - name: API Reference
   href: api-reference.md
+- name: Mermaid-Only Generation
+  href: mermaid-only.md
