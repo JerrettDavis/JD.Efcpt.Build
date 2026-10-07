@@ -176,14 +176,57 @@
     </ComputeFingerprint>
   </Target>
   <Target Name="BeforeEfcptGeneration" DependsOnTargets="EfcptComputeFingerprint" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'" />
-  <Target Name="_EfcptForceRegenerateInvalidateStamp" BeforeTargets="EfcptGenerateModels" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptForceRegenerate)' == 'true'">
-    <Message Text="[Efcpt] EfcptForceRegenerate=true - forcing full model regeneration (bypassing fingerprint/incremental cache) for this build." Importance="normal" />
+  <Target Name="_EfcptForceRegenerateInvalidateStamp" BeforeTargets="EfcptGenerateModels;_EfcptGenerateMermaid" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptForceRegenerate)' == 'true'">
+    <Message Text="[Efcpt] EfcptForceRegenerate=true - forcing generation (bypassing fingerprint/incremental cache) for this build." Importance="normal" />
     <Delete Condition="Exists('$(EfcptStampFile)')" Files="$(EfcptStampFile)" />
   </Target>
-  <Target Name="EfcptGenerateModels" BeforeTargets="CoreCompile" DependsOnTargets="BeforeEfcptGeneration" Inputs="$(_EfcptDacpacPath);$(_EfcptStagedConfig);$(_EfcptStagedRenaming)" Outputs="$(EfcptStampFile)" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and ('$(_EfcptFingerprintChanged)' == 'true' or !Exists('$(EfcptStampFile)') or '$(EfcptForceRegenerate)' == 'true')">
+  <Target Name="EfcptGenerateModels" BeforeTargets="CoreCompile" DependsOnTargets="BeforeEfcptGeneration" Inputs="$(_EfcptDacpacPath);$(_EfcptStagedConfig);$(_EfcptStagedRenaming)" Outputs="$(EfcptStampFile)" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptMermaidOnly)' != 'true' and ('$(_EfcptFingerprintChanged)' == 'true' or !Exists('$(EfcptStampFile)') or '$(EfcptForceRegenerate)' == 'true')">
     <MakeDir Directories="$(EfcptGeneratedDir)" />
     <RunEfcpt AutoAcquireTool="$(EfcptAutoAcquireTool)" ConfigPath="$(_EfcptStagedConfig)" ConnectionString="$(_EfcptResolvedConnectionString)" DacpacPath="$(_EfcptDacpacPath)" DotNetExe="$(EfcptDotNetExe)" LogVerbosity="$(EfcptLogVerbosity)" OfflineMode="$(EfcptOfflineMode)" OutputDir="$(EfcptGeneratedDir)" ProjectPath="$(MSBuildProjectFullPath)" Provider="$(EfcptProvider)" RenamingPath="$(_EfcptStagedRenaming)" TargetFramework="$(TargetFramework)" TemplateDir="$(_EfcptStagedTemplateDir)" ToolCommand="$(EfcptToolCommand)" ToolMode="$(EfcptToolMode)" ToolPackageId="$(EfcptToolPackageId)" ToolPath="$(EfcptToolPath)" ToolRestore="$(EfcptToolRestore)" ToolVersion="$(EfcptToolVersion)" UseConnectionStringMode="$(_EfcptUseConnectionString)" WorkingDirectory="$(EfcptOutput)" />
     <RenameGeneratedFiles GeneratedDir="$(EfcptGeneratedDir)" LogVerbosity="$(EfcptLogVerbosity)" />
+    <WriteLinesToFile File="$(EfcptStampFile)" Lines="$(_EfcptFingerprint)" Overwrite="true" />
+  </Target>
+  <!--Mermaid-only (#246): when EfcptMermaidOnly=true, force the config-overrides pass
+       (EfcptApplyConfigOverrides -> EfcptSerializeConfigProperties) to set
+       generate-mermaid-diagram=true and type=dbcontext so the upstream efcpt CLI writes
+       the .md Mermaid file plus only the DbContext .g.cs (which EfcptGenerateMermaid
+       then deletes). Hooked BeforeTargets EfcptApplyConfigOverrides so the staged
+       config JSON + serialized CLI args both reflect the override by the time
+       EfcptComputeFingerprint / RunEfcpt run.-->
+  <Target Name="_EfcptApplyMermaidOnlyOverrides" BeforeTargets="EfcptApplyConfigOverrides" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptMermaidOnly)' == 'true'">
+    <Message Text="[Efcpt] EfcptMermaidOnly=true - forcing generate-mermaid-diagram=true and type=dbcontext on the staged efcpt config." Importance="high" />
+    <PropertyGroup>
+      <EfcptConfigGenerateMermaidDiagram>true</EfcptConfigGenerateMermaidDiagram>
+      <EfcptConfigGenerationType>dbcontext</EfcptConfigGenerationType>
+    </PropertyGroup>
+  </Target>
+  <!--Mermaid-only (#246): the public target enables Mermaid-only overrides before delegating
+       to the private generation target. The private target mirrors EfcptGenerateModels
+       but moves the .md Mermaid file to $(EfcptMermaidOutputDir) and deletes the leftover
+       .g.cs files so nothing is added to Compile. Reuses the same RunEfcpt task and the
+       same fingerprint-driven incremental Inputs/Outputs gate as EfcptGenerateModels.-->
+  <Target Name="EfcptGenerateMermaid" DependsOnTargets="_EfcptEnableMermaidOnly;_EfcptGenerateMermaid" />
+  <Target Name="_EfcptEnableMermaidOnly" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'">
+    <Message Text="[Efcpt] Standalone EfcptGenerateMermaid enables Mermaid-only config overrides before generation." Importance="high" />
+    <PropertyGroup>
+      <EfcptMermaidOnly>true</EfcptMermaidOnly>
+    </PropertyGroup>
+  </Target>
+  <Target Name="_EfcptGenerateMermaid" BeforeTargets="CoreCompile" DependsOnTargets="EfcptComputeFingerprint" Inputs="$(_EfcptDacpacPath);$(_EfcptStagedConfig);$(_EfcptStagedRenaming)" Outputs="$(EfcptStampFile)" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptMermaidOnly)' == 'true' and ('$(_EfcptFingerprintChanged)' == 'true' or !Exists('$(EfcptStampFile)') or '$(EfcptForceRegenerate)' == 'true')">
+    <Message Text="[Efcpt] EfcptGenerateMermaid: generating Mermaid ER diagram only (DbContext/entity generation suppressed)." Importance="high" />
+    <MakeDir Directories="$(EfcptGeneratedDir)" />
+    <MakeDir Directories="$(EfcptMermaidOutputDir)" />
+    <RunEfcpt AutoAcquireTool="$(EfcptAutoAcquireTool)" ConfigPath="$(_EfcptStagedConfig)" ConnectionString="$(_EfcptResolvedConnectionString)" DacpacPath="$(_EfcptDacpacPath)" DotNetExe="$(EfcptDotNetExe)" LogVerbosity="$(EfcptLogVerbosity)" OfflineMode="$(EfcptOfflineMode)" OutputDir="$(EfcptGeneratedDir)" ProjectPath="$(MSBuildProjectFullPath)" Provider="$(EfcptProvider)" RenamingPath="$(_EfcptStagedRenaming)" TargetFramework="$(TargetFramework)" TemplateDir="$(_EfcptStagedTemplateDir)" ToolCommand="$(EfcptToolCommand)" ToolMode="$(EfcptToolMode)" ToolPackageId="$(EfcptToolPackageId)" ToolPath="$(EfcptToolPath)" ToolRestore="$(EfcptToolRestore)" ToolVersion="$(EfcptToolVersion)" UseConnectionStringMode="$(_EfcptUseConnectionString)" WorkingDirectory="$(EfcptOutput)" />
+    <RenameGeneratedFiles GeneratedDir="$(EfcptGeneratedDir)" LogVerbosity="$(EfcptLogVerbosity)" />
+    <ItemGroup>
+      <_EfcptMermaidOutput Include="$(EfcptGeneratedDir)**\*.md" Exclude="$(EfcptMermaidOutputDir)**\*.md" />
+    </ItemGroup>
+    <Move Condition="'@(_EfcptMermaidOutput)' != ''" DestinationFolder="$(EfcptMermaidOutputDir)" SourceFiles="@(_EfcptMermaidOutput)" />
+    <ItemGroup>
+      <_EfcptMermaidLeftover Include="$(EfcptGeneratedDir)**\*.g.cs" />
+    </ItemGroup>
+    <Delete Condition="'@(_EfcptMermaidLeftover)' != ''" Files="@(_EfcptMermaidLeftover)" />
+    <Message Text="[Efcpt] EfcptGenerateMermaid: Mermaid diagram written to $(EfcptMermaidOutputDir); .g.cs files removed." Importance="high" />
     <WriteLinesToFile File="$(EfcptStampFile)" Lines="$(_EfcptFingerprint)" Overwrite="true" />
   </Target>
   <Target Name="AfterEfcptGeneration" AfterTargets="EfcptGenerateModels" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'" />
@@ -226,7 +269,7 @@
     <Delete Condition="'@(_EfcptConfigurationFiles)' != ''" Files="@(_EfcptConfigurationFiles)" />
     <Message Text="Removed DbContext and configuration files from Models project" Importance="normal" Condition="'$(_EfcptHasFilesToCopy)' == 'true'" />
   </Target>
-  <Target Name="EfcptAddToCompile" BeforeTargets="CoreCompile" DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpacBuilt;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels;EfcptCopyDataToDataProject" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'">
+  <Target Name="EfcptAddToCompile" BeforeTargets="CoreCompile" DependsOnTargets="EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpacBuilt;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels;EfcptCopyDataToDataProject" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptMermaidOnly)' != 'true'">
     <ItemGroup>
       <Compile Include="$(EfcptGeneratedDir)**\*.g.cs" Condition="'$(EfcptSplitOutputs)' != 'true'" />
       <Compile Include="$(EfcptGeneratedDir)Models\**\*.g.cs" Condition="'$(EfcptSplitOutputs)' == 'true'" />

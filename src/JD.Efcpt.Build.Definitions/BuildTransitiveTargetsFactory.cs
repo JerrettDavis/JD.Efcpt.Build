@@ -508,9 +508,9 @@ public static class BuildTransitiveTargetsFactory
                 // incremental gating without touching the Inputs/Outputs lists themselves.
                 t.Target("_EfcptForceRegenerateInvalidateStamp", target =>
                 {
-                    target.BeforeTargets(new EfcptGenerateModelsTarget());
+                    target.BeforeTargets("EfcptGenerateModels;_EfcptGenerateMermaid");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptForceRegenerate)' == 'true'");
-                    target.Message("[Efcpt] EfcptForceRegenerate=true - forcing full model regeneration (bypassing fingerprint/incremental cache) for this build.", "normal");
+                    target.Message("[Efcpt] EfcptForceRegenerate=true - forcing generation (bypassing fingerprint/incremental cache) for this build.", "normal");
                     target.Task("Delete", task =>
                     {
                         task.Param("Files", "$(EfcptStampFile)");
@@ -522,7 +522,7 @@ public static class BuildTransitiveTargetsFactory
                     target.DependsOnTargets("BeforeEfcptGeneration");
                     target.Inputs("$(_EfcptDacpacPath);$(_EfcptStagedConfig);$(_EfcptStagedRenaming)");
                     target.Outputs("$(EfcptStampFile)");
-                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and ('$(_EfcptFingerprintChanged)' == 'true' or !Exists('$(EfcptStampFile)') or '$(EfcptForceRegenerate)' == 'true')");
+                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptMermaidOnly)' != 'true' and ('$(_EfcptFingerprintChanged)' == 'true' or !Exists('$(EfcptStampFile)') or '$(EfcptForceRegenerate)' == 'true')");
                     target.Task("MakeDir", task =>
                     {
                         task.Param("Directories", "$(EfcptGeneratedDir)");
@@ -556,6 +556,105 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("GeneratedDir", "$(EfcptGeneratedDir)");
                         task.Param("LogVerbosity", "$(EfcptLogVerbosity)");
                     });
+                    target.Task("WriteLinesToFile", task =>
+                    {
+                        task.Param("File", "$(EfcptStampFile)");
+                        task.Param("Lines", "$(_EfcptFingerprint)");
+                        task.Param("Overwrite", "true");
+                    });
+                });
+                // Mermaid-only (#246): forces the config-overrides pass to set generate-mermaid-diagram=true
+                // and type=dbcontext so the upstream efcpt CLI writes the .md Mermaid file plus only the
+                // DbContext .g.cs (which _EfcptGenerateMermaid then deletes).
+                t.Target("_EfcptApplyMermaidOnlyOverrides", target =>
+                {
+                    target.BeforeTargets("EfcptApplyConfigOverrides");
+                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptMermaidOnly)' == 'true'");
+                    target.Message("[Efcpt] EfcptMermaidOnly=true - forcing generate-mermaid-diagram=true and type=dbcontext on the staged efcpt config.", "high");
+                    target.PropertyGroup(null, group =>
+                    {
+                        group.Property("EfcptConfigGenerateMermaidDiagram", "true");
+                        group.Property("EfcptConfigGenerationType", "dbcontext");
+                    });
+                });
+                // Mermaid-only (#246): the public target enables Mermaid-only overrides before
+                // delegating to the private generation target.
+                t.Target("EfcptGenerateMermaid", target =>
+                {
+                    target.DependsOnTargets("_EfcptEnableMermaidOnly;_EfcptGenerateMermaid");
+                });
+                t.Target("_EfcptEnableMermaidOnly", target =>
+                {
+                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
+                    target.Message("[Efcpt] Standalone EfcptGenerateMermaid enables Mermaid-only config overrides before generation.", "high");
+                    target.PropertyGroup(null, group =>
+                    {
+                        group.Property("EfcptMermaidOnly", "true");
+                    });
+                });
+                t.Target("_EfcptGenerateMermaid", target =>
+                {
+                    target.BeforeTargets("CoreCompile");
+                    target.DependsOnTargets("EfcptComputeFingerprint");
+                    target.Inputs("$(_EfcptDacpacPath);$(_EfcptStagedConfig);$(_EfcptStagedRenaming)");
+                    target.Outputs("$(EfcptStampFile)");
+                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptMermaidOnly)' == 'true' and ('$(_EfcptFingerprintChanged)' == 'true' or !Exists('$(EfcptStampFile)') or '$(EfcptForceRegenerate)' == 'true')");
+                    target.Message("[Efcpt] EfcptGenerateMermaid: generating Mermaid ER diagram only (DbContext/entity generation suppressed).", "high");
+                    target.Task("MakeDir", task =>
+                    {
+                        task.Param("Directories", "$(EfcptGeneratedDir)");
+                    });
+                    target.Task("MakeDir", task =>
+                    {
+                        task.Param("Directories", "$(EfcptMermaidOutputDir)");
+                    });
+                    target.Task("RunEfcpt", task =>
+                    {
+                        task.Param("ToolMode", "$(EfcptToolMode)");
+                        task.Param("ToolPackageId", "$(EfcptToolPackageId)");
+                        task.Param("ToolVersion", "$(EfcptToolVersion)");
+                        task.Param("ToolRestore", "$(EfcptToolRestore)");
+                        task.Param("ToolCommand", "$(EfcptToolCommand)");
+                        task.Param("ToolPath", "$(EfcptToolPath)");
+                        task.Param("DotNetExe", "$(EfcptDotNetExe)");
+                        task.Param("OfflineMode", "$(EfcptOfflineMode)");
+                        task.Param("AutoAcquireTool", "$(EfcptAutoAcquireTool)");
+                        task.Param("WorkingDirectory", "$(EfcptOutput)");
+                        task.Param("DacpacPath", "$(_EfcptDacpacPath)");
+                        task.Param("ConnectionString", "$(_EfcptResolvedConnectionString)");
+                        task.Param("UseConnectionStringMode", "$(_EfcptUseConnectionString)");
+                        task.Param("Provider", "$(EfcptProvider)");
+                        task.Param("ConfigPath", "$(_EfcptStagedConfig)");
+                        task.Param("RenamingPath", "$(_EfcptStagedRenaming)");
+                        task.Param("TemplateDir", "$(_EfcptStagedTemplateDir)");
+                        task.Param("OutputDir", "$(EfcptGeneratedDir)");
+                        task.Param("TargetFramework", "$(TargetFramework)");
+                        task.Param("ProjectPath", "$(MSBuildProjectFullPath)");
+                        task.Param("LogVerbosity", "$(EfcptLogVerbosity)");
+                    });
+                    target.Task("RenameGeneratedFiles", task =>
+                    {
+                        task.Param("GeneratedDir", "$(EfcptGeneratedDir)");
+                        task.Param("LogVerbosity", "$(EfcptLogVerbosity)");
+                    });
+                    target.ItemGroup(null, group =>
+                    {
+                        group.Include("_EfcptMermaidOutput", "$(EfcptGeneratedDir)**\\*.md", item => item.Exclude("$(EfcptMermaidOutputDir)**\\*.md"));
+                    });
+                    target.Task("Move", task =>
+                    {
+                        task.Param("SourceFiles", "@(_EfcptMermaidOutput)");
+                        task.Param("DestinationFolder", "$(EfcptMermaidOutputDir)");
+                    }, "'@(_EfcptMermaidOutput)' != ''");
+                    target.ItemGroup(null, group =>
+                    {
+                        group.Include("_EfcptMermaidLeftover", "$(EfcptGeneratedDir)**\\*.g.cs");
+                    });
+                    target.Task("Delete", task =>
+                    {
+                        task.Param("Files", "@(_EfcptMermaidLeftover)");
+                    }, "'@(_EfcptMermaidLeftover)' != ''");
+                    target.Message("[Efcpt] EfcptGenerateMermaid: Mermaid diagram written to $(EfcptMermaidOutputDir); .g.cs files removed.", "high");
                     target.Task("WriteLinesToFile", task =>
                     {
                         task.Param("File", "$(EfcptStampFile)");
@@ -645,7 +744,7 @@ public static class BuildTransitiveTargetsFactory
                 {
                     target.BeforeTargets("CoreCompile");
                     target.DependsOnTargets("EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpacBuilt;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels;EfcptCopyDataToDataProject");
-                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
+                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptMermaidOnly)' != 'true'");
                     target.ItemGroup(null, group =>
                     {
                         group.Include("Compile", "$(EfcptGeneratedDir)Models\\**\\*.g.cs", null, "'$(EfcptSplitOutputs)' == 'true'");

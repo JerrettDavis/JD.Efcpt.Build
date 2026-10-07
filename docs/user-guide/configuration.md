@@ -35,6 +35,15 @@ Set these properties in your `.csproj` file or `Directory.Build.props`.
 | `EfcptFingerprintFile` | `$(EfcptOutput)fingerprint.txt` | Fingerprint cache location |
 | `EfcptStampFile` | `$(EfcptOutput).efcpt.stamp` | Generation stamp file |
 
+### Mermaid-Only Properties
+
+These control the diagram-only generation mode requested in [#246](https://github.com/JerrettDavis/JD.Efcpt.Build/issues/246). When `EfcptMermaidOnly=true`, the regular `EfcptGenerateModels` + `EfcptAddToCompile` pipeline is skipped and `EfcptGenerateMermaid` runs in its place. See [Mermaid-only generation](mermaid-only.md) for the full guide.
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `EfcptMermaidOnly` | `false` | When `true`, swap the regular DbContext/entity generation for `EfcptGenerateMermaid` (see below). |
+| `EfcptMermaidOutputDir` | `$(EfcptGeneratedDir)Mermaid\` | Directory the `.md` Mermaid diagram is written to. The leftover `.g.cs` files written by `efcpt` are deleted before this directory is populated. |
+
 ### Connection String Properties
 
 | Property | Default | Description |

@@ -80,6 +80,11 @@ public static class BuildTransitivePropsFactory
                     group.Property<EfcptFingerprintFile>( "$(EfcptOutput)fingerprint.txt", "'$(EfcptFingerprintFile)'==''");
                     group.Property<EfcptStampFile>( "$(EfcptOutput).efcpt.stamp", "'$(EfcptStampFile)'==''");
                     group.Property<EfcptDetectGeneratedFileChanges>( "false", "'$(EfcptDetectGeneratedFileChanges)'==''");
+                    // Mermaid-only (#246): when EfcptMermaidOnly=true, the regular EfcptGenerateModels +
+                    // EfcptAddToCompile pipeline is replaced by EfcptGenerateMermaid, which emits only the
+                    // Mermaid ER diagram (.md) and no DbContext/entity .g.cs files.
+                    group.Property<EfcptMermaidOnly>( "false", "'$(EfcptMermaidOnly)'==''");
+                    group.Property<EfcptMermaidOutputDir>( "$(EfcptGeneratedDir)Mermaid\\", "'$(EfcptMermaidOutputDir)'==''");
                     // Extension-facing forced regeneration (#191, prerequisite for VS #182 / VS
                     // Code #183 integrations): when true, bypasses the fingerprint/incremental
                     // cache for one build and always re-runs EfcptGenerateModels. Must stay
@@ -527,6 +532,14 @@ public static class BuildTransitivePropsFactory
   public readonly struct EfcptFingerprintFile : IMsBuildPropertyName
   {
     public string Name => "EfcptFingerprintFile";
+  }
+  public readonly struct EfcptMermaidOnly : IMsBuildPropertyName
+  {
+    public string Name => "EfcptMermaidOnly";
+  }
+  public readonly struct EfcptMermaidOutputDir : IMsBuildPropertyName
+  {
+    public string Name => "EfcptMermaidOutputDir";
   }
   public readonly struct EfcptForceRegenerate : IMsBuildPropertyName
   {

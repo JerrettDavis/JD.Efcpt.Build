@@ -40,6 +40,13 @@
     <EfcptFingerprintFile Condition="'$(EfcptFingerprintFile)'==''">$(EfcptOutput)fingerprint.txt</EfcptFingerprintFile>
     <EfcptStampFile Condition="'$(EfcptStampFile)'==''">$(EfcptOutput).efcpt.stamp</EfcptStampFile>
     <EfcptDetectGeneratedFileChanges Condition="'$(EfcptDetectGeneratedFileChanges)'==''">false</EfcptDetectGeneratedFileChanges>
+    <!--Mermaid-only (#246): when EfcptMermaidOnly=true, the regular EfcptGenerateModels +
+      EfcptAddToCompile pipeline is replaced by EfcptGenerateMermaid, which emits only the
+      Mermaid ER diagram (.md) and no DbContext/entity .g.cs files. The leftover .g.cs
+      efcpt writes is deleted; the .md is moved to EfcptMermaidOutputDir. See
+      docs/user-guide/mermaid-only.md.-->
+    <EfcptMermaidOnly Condition="'$(EfcptMermaidOnly)'==''">false</EfcptMermaidOnly>
+    <EfcptMermaidOutputDir Condition="'$(EfcptMermaidOutputDir)'==''">$(EfcptGeneratedDir)Mermaid\</EfcptMermaidOutputDir>
     <EfcptForceRegenerate Condition="'$(EfcptForceRegenerate)'==''">false</EfcptForceRegenerate>
     <EfcptLogVerbosity Condition="'$(EfcptLogVerbosity)'==''">minimal</EfcptLogVerbosity>
     <EfcptDumpResolvedInputs Condition="'$(EfcptDumpResolvedInputs)'==''">false</EfcptDumpResolvedInputs>
