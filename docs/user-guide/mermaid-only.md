@@ -35,14 +35,35 @@ This runs the Mermaid target in isolation. It still needs a DACPAC, `.sqlproj`, 
 
 The diagram is rewritten on every build that touches the schema. It is committed to source control alongside the rest of the docs.
 
+### From a code-first DbContext
+
+For a code-first model, enable the separate post-build target. This path reads the EF model from the compiled project rather than reverse engineering a database, and suppresses the database-first generation/compile targets:
+
+```xml
+<PropertyGroup>
+  <EfcptCodeFirstMermaid>true</EfcptCodeFirstMermaid>
+  <EfcptCodeFirstDbContextName>ApplicationDbContext</EfcptCodeFirstDbContextName>
+</PropertyGroup>
+```
+
+This inspects the built EF Core model and writes `$(EfcptMermaidOutputDir)$(MSBuildProjectName).$(TargetFramework).md`. It does not require a database connection or query database data. If the context is in a different project, set `EfcptCodeFirstStartupAssembly` to the built startup assembly.
+
+Context creation follows design-time conventions: an `IDesignTimeDbContextFactory<TContext>` in the context or startup assembly takes precedence, then `CreateHostBuilder`/`CreateWebHostBuilder` in the startup assembly, then a parameterless context constructor. When the project contains several contexts, set `EfcptCodeFirstDbContextName`. Run only the explicit target with `dotnet build -t:EfcptGenerateMermaidFromDbContext` to generate the diagram on demand.
+
+The factory or host startup code runs as part of generation and may have its own side effects. The target does not call `EnsureCreated`, run migrations, or query rows.
+
 ## Properties
 
 | Property | Default | Description |
 |----------|---------|-------------|
 | `EfcptMermaidOnly` | `false` | When `true`, the regular DbContext/entity generation is replaced with `EfcptGenerateMermaid`. |
 | `EfcptMermaidOutputDir` | `$(EfcptGeneratedDir)Mermaid\` | Where the `.md` Mermaid file lands after the leftover `.g.cs` files are deleted. |
+| `EfcptCodeFirstMermaid` | `false` | When `true`, skip database-first generation and generate a diagram from the built code-first EF model. |
+| `EfcptCodeFirstDbContextName` | *(empty)* | Context type name to select when the assembly contains multiple contexts. |
+| `EfcptCodeFirstStartupAssembly` | *(empty)* | Built startup assembly to use for design-time factory and host discovery when it differs from the context assembly. |
+| `EfcptCodeFirstCliPath` | Package-bundled CLI | Override the packaged helper CLI assembly path. |
 
-Both are also documented in [Configuration](configuration.md#mermaid-only-properties).
+These properties are also documented in [Configuration](configuration.md#mermaid-only-properties).
 
 ## Caveats
 

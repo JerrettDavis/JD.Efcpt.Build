@@ -263,6 +263,23 @@ JD.Efcpt.Build.Tasks.EfcptDoctor.Verdict.set -> void
 JD.Efcpt.Build.Tasks.EfcptDoctor.WorkingDirectory.get -> string!
 JD.Efcpt.Build.Tasks.EfcptDoctor.WorkingDirectory.set -> void
 JD.Efcpt.Build.Tasks.EnsureDacpacBuilt
+JD.Efcpt.Build.Tasks.GenerateDbContextMermaid
+JD.Efcpt.Build.Tasks.GenerateDbContextMermaid.AssemblyPath.get -> string!
+JD.Efcpt.Build.Tasks.GenerateDbContextMermaid.AssemblyPath.set -> void
+JD.Efcpt.Build.Tasks.GenerateDbContextMermaid.CliPath.get -> string!
+JD.Efcpt.Build.Tasks.GenerateDbContextMermaid.CliPath.set -> void
+JD.Efcpt.Build.Tasks.GenerateDbContextMermaid.ContextName.get -> string!
+JD.Efcpt.Build.Tasks.GenerateDbContextMermaid.ContextName.set -> void
+JD.Efcpt.Build.Tasks.GenerateDbContextMermaid.DotNetExe.get -> string!
+JD.Efcpt.Build.Tasks.GenerateDbContextMermaid.DotNetExe.set -> void
+override JD.Efcpt.Build.Tasks.GenerateDbContextMermaid.Execute() -> bool
+JD.Efcpt.Build.Tasks.GenerateDbContextMermaid.GenerateDbContextMermaid() -> void
+JD.Efcpt.Build.Tasks.GenerateDbContextMermaid.OutputPath.get -> string!
+JD.Efcpt.Build.Tasks.GenerateDbContextMermaid.OutputPath.set -> void
+JD.Efcpt.Build.Tasks.GenerateDbContextMermaid.StartupAssemblyPath.get -> string!
+JD.Efcpt.Build.Tasks.GenerateDbContextMermaid.StartupAssemblyPath.set -> void
+JD.Efcpt.Build.Tasks.GenerateDbContextMermaid.WorkingDirectory.get -> string!
+JD.Efcpt.Build.Tasks.GenerateDbContextMermaid.WorkingDirectory.set -> void
 JD.Efcpt.Build.Tasks.EnsureDacpacBuilt.Configuration.get -> string!
 JD.Efcpt.Build.Tasks.EnsureDacpacBuilt.Configuration.set -> void
 JD.Efcpt.Build.Tasks.EnsureDacpacBuilt.DacpacPath.get -> string!

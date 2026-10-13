@@ -88,7 +88,8 @@ public static class BuildTransitivePropsFactory
                     group.Property<EfcptCodeFirstMermaid>( "false", "'$(EfcptCodeFirstMermaid)'==''");
                     group.Property<EfcptCodeFirstDbContextName>( "", "'$(EfcptCodeFirstDbContextName)'==''");
                     group.Property<EfcptCodeFirstStartupAssembly>( "", "'$(EfcptCodeFirstStartupAssembly)'==''");
-                    group.Property<EfcptCodeFirstCliPath>( "$(MSBuildThisFileDirectory)..\\tools\\JD.Efcpt.Cli.dll", "'$(EfcptCodeFirstCliPath)'==''");
+                    group.Property<EfcptCodeFirstCliPath>( "$(MSBuildThisFileDirectory)..\\tools\\JD.Efcpt.Cli.dll", "'$(EfcptCodeFirstCliPath)'=='' and Exists('$(MSBuildThisFileDirectory)..\\tools\\JD.Efcpt.Cli.dll')");
+                    group.Property<EfcptCodeFirstCliPath>( "$(MSBuildThisFileDirectory)..\\..\\JD.Efcpt.Cli\\bin\\$(Configuration)\\net8.0\\JD.Efcpt.Cli.dll", "'$(EfcptCodeFirstCliPath)'==''");
                     // Extension-facing forced regeneration (#191, prerequisite for VS #182 / VS
                     // Code #183 integrations): when true, bypasses the fingerprint/incremental
                     // cache for one build and always re-runs EfcptGenerateModels. Must stay
@@ -710,7 +711,6 @@ public static class BuildTransitivePropsFactory
     public string Name => "EfcptUpdateCheckCacheHours";
   }
 }
-
 
 
 

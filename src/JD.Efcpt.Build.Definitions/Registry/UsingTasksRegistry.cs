@@ -23,6 +23,7 @@ public static class UsingTasksRegistry
         "EfcptDoctor",
         "EnsureDacpacBuilt",
         "FinalizeBuildProfiling",
+        "GenerateDbContextMermaid",
         "InitializeBuildProfiling",
         "QuerySchemaMetadata",
         "RenameGeneratedFiles",

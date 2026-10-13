@@ -43,6 +43,10 @@ These control the diagram-only generation mode requested in [#246](https://githu
 |----------|---------|-------------|
 | `EfcptMermaidOnly` | `false` | When `true`, swap the regular DbContext/entity generation for `EfcptGenerateMermaid` (see below). |
 | `EfcptMermaidOutputDir` | `$(EfcptGeneratedDir)Mermaid\` | Directory the `.md` Mermaid diagram is written to. The leftover `.g.cs` files written by `efcpt` are deleted before this directory is populated. |
+| `EfcptCodeFirstMermaid` | `false` | When `true`, skip database-first code generation and generate a Mermaid diagram from the built code-first EF model after the build. |
+| `EfcptCodeFirstDbContextName` | *(empty)* | DbContext type name to select when the context assembly contains multiple contexts. |
+| `EfcptCodeFirstStartupAssembly` | *(empty)* | Path to a built startup assembly for design-time discovery when startup and context projects differ. |
+| `EfcptCodeFirstCliPath` | Package-bundled CLI | Override the helper CLI assembly path used for code-first generation. |
 
 ### Connection String Properties
 

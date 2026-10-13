@@ -16,6 +16,7 @@ These targets are executed as part of the build pipeline:
 | `EfcptComputeFingerprint` | Detects if regeneration needed | After overrides |
 | `EfcptGenerateModels` | Runs `efcpt` CLI | When fingerprint changes, and `EfcptMermaidOnly != 'true'` |
 | `EfcptGenerateMermaid` | Runs `efcpt` CLI with Mermaid-only overrides; moves the `.md`, deletes `.g.cs` leftovers | When fingerprint changes, replaces `EfcptGenerateModels` when `EfcptMermaidOnly=true` |
+| `EfcptGenerateMermaidFromDbContext` | Builds the project and exports the selected code-first EF model to Mermaid Markdown | Explicit invocation; otherwise when `EfcptCodeFirstMermaid=true` after `Build` |
 | `EfcptAddToCompile` | Adds `.g.cs` files to compilation | Before C# compile, skipped when `EfcptMermaidOnly=true` |
 | `_EfcptApplyMermaidOnlyOverrides` | Forces `generate-mermaid-diagram=true` and `type=dbcontext` on the staged config | Before `EfcptApplyConfigOverrides`, only when `EfcptMermaidOnly=true` |
 
@@ -283,6 +284,17 @@ Applies MSBuild property overrides to the staged `efcpt-config.json` file. This 
 | `EfcptTemplateDir` | `Template` | T4 template directory |
 | `EfcptOutput` | `$(BaseIntermediateOutputPath)efcpt\` | Intermediate staging directory |
 | `EfcptGeneratedDir` | `$(EfcptOutput)Generated\` | Generated code output directory |
+
+### Mermaid Properties
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `EfcptMermaidOnly` | `false` | Replaces database-first C# generation with Mermaid-only output. |
+| `EfcptMermaidOutputDir` | `$(EfcptGeneratedDir)Mermaid\` | Directory for generated Mermaid Markdown files. |
+| `EfcptCodeFirstMermaid` | `false` | Skips database-first C# generation and writes a diagram from the built code-first EF model after `Build`. |
+| `EfcptCodeFirstDbContextName` | *(empty)* | DbContext type name when multiple contexts are available. |
+| `EfcptCodeFirstStartupAssembly` | *(empty)* | Built startup assembly for design-time discovery when it differs from the context assembly. |
+| `EfcptCodeFirstCliPath` | Package-bundled CLI | Override the helper CLI assembly path used for code-first generation. |
 
 ### Connection String Properties
 

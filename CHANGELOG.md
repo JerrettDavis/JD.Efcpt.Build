@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 - `EfcptMermaidOnly` MSBuild property and `EfcptGenerateMermaid` target for Mermaid-only generation (#246). When `EfcptMermaidOnly=true`, the regular DbContext/entity generation is replaced by a run that emits only the Mermaid ER diagram (a `.md` file written to `$(EfcptMermaidOutputDir)`, default `$(EfcptGeneratedDir)Mermaid\`); no `.g.cs` files are added to the host project's `Compile` list. Can also be invoked standalone via `dotnet build -t:EfcptGenerateMermaid`.
+- Opt-in code-first Mermaid generation from a built DbContext via EF design-time factory, startup host, or parameterless-constructor discovery. This skips database-first code generation; invoke with `EfcptCodeFirstMermaid=true` or `dotnet build -t:EfcptGenerateMermaidFromDbContext`.
 
 ## [0.15.47] - 2026-07-07
 

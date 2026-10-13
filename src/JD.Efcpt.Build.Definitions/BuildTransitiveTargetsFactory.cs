@@ -511,19 +511,19 @@ public static class BuildTransitiveTargetsFactory
                 t.Target("_EfcptGenerateMermaidFromDbContext", target =>
                 {
                     target.AfterTargets("Build");
-                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(EfcptCodeFirstMermaid)' == 'true' and '$(DesignTimeBuild)' != 'true' and '$(_EfcptIsSqlProject)' != 'true'");
-                    target.PropertyGroup(null, group =>
-                    {
-                        group.Property("_EfcptCodeFirstContextArgument", "--context &quot;$(EfcptCodeFirstDbContextName)&quot;", "'$(EfcptCodeFirstDbContextName)' != ''");
-                        group.Property("_EfcptCodeFirstStartupArgument", "--startup-assembly &quot;$(EfcptCodeFirstStartupAssembly)&quot;", "'$(EfcptCodeFirstStartupAssembly)' != ''");
-                    });
+                    target.Condition("'$(EfcptCodeFirstMermaid)' == 'true' and '$(DesignTimeBuild)' != 'true' and '$(_EfcptIsSqlProject)' != 'true'");
                     target.Task("MakeDir", task =>
                     {
                         task.Param("Directories", "$(EfcptMermaidOutputDir)");
                     });
-                    target.Task("Exec", task =>
+                    target.Task("GenerateDbContextMermaid", task =>
                     {
-                        task.Param("Command", "&quot;$(EfcptDotNetExe)&quot; &quot;$(EfcptCodeFirstCliPath)&quot; mermaid-from-dbcontext --assembly &quot;$(TargetPath)&quot; $(_EfcptCodeFirstContextArgument) $(_EfcptCodeFirstStartupArgument) --output &quot;$(EfcptMermaidOutputDir)$(MSBuildProjectName).$(TargetFramework).md&quot;");
+                        task.Param("DotNetExe", "$(EfcptDotNetExe)");
+                        task.Param("CliPath", "$(EfcptCodeFirstCliPath)");
+                        task.Param("AssemblyPath", "$(TargetPath)");
+                        task.Param("ContextName", "$(EfcptCodeFirstDbContextName)");
+                        task.Param("StartupAssemblyPath", "$(EfcptCodeFirstStartupAssembly)");
+                        task.Param("OutputPath", "$(EfcptMermaidOutputDir)$(MSBuildProjectName).$(TargetFramework).md");
                         task.Param("WorkingDirectory", "$(MSBuildProjectDirectory)");
                     });
                 });
@@ -554,7 +554,7 @@ public static class BuildTransitiveTargetsFactory
                     target.DependsOnTargets("BeforeEfcptGeneration");
                     target.Inputs("$(_EfcptDacpacPath);$(_EfcptStagedConfig);$(_EfcptStagedRenaming)");
                     target.Outputs("$(EfcptStampFile)");
-                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptMermaidOnly)' != 'true' and ('$(_EfcptFingerprintChanged)' == 'true' or !Exists('$(EfcptStampFile)') or '$(EfcptForceRegenerate)' == 'true')");
+                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptMermaidOnly)' != 'true' and '$(EfcptCodeFirstMermaid)' != 'true' and ('$(_EfcptFingerprintChanged)' == 'true' or !Exists('$(EfcptStampFile)') or '$(EfcptForceRegenerate)' == 'true')");
                     target.Task("MakeDir", task =>
                     {
                         task.Param("Directories", "$(EfcptGeneratedDir)");
@@ -601,7 +601,7 @@ public static class BuildTransitiveTargetsFactory
                 t.Target("_EfcptApplyMermaidOnlyOverrides", target =>
                 {
                     target.BeforeTargets("EfcptApplyConfigOverrides");
-                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptMermaidOnly)' == 'true'");
+                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptMermaidOnly)' == 'true' and '$(EfcptCodeFirstMermaid)' != 'true'");
                     target.Message("[Efcpt] EfcptMermaidOnly=true - forcing generate-mermaid-diagram=true and type=dbcontext on the staged efcpt config.", "high");
                     target.PropertyGroup(null, group =>
                     {
@@ -630,7 +630,7 @@ public static class BuildTransitiveTargetsFactory
                     target.DependsOnTargets("EfcptComputeFingerprint");
                     target.Inputs("$(_EfcptDacpacPath);$(_EfcptStagedConfig);$(_EfcptStagedRenaming)");
                     target.Outputs("$(EfcptStampFile)");
-                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptMermaidOnly)' == 'true' and ('$(_EfcptFingerprintChanged)' == 'true' or !Exists('$(EfcptStampFile)') or '$(EfcptForceRegenerate)' == 'true')");
+                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptMermaidOnly)' == 'true' and '$(EfcptCodeFirstMermaid)' != 'true' and ('$(_EfcptFingerprintChanged)' == 'true' or !Exists('$(EfcptStampFile)') or '$(EfcptForceRegenerate)' == 'true')");
                     target.Message("[Efcpt] EfcptGenerateMermaid: generating Mermaid ER diagram only (DbContext/entity generation suppressed).", "high");
                     target.Task("MakeDir", task =>
                     {
@@ -776,7 +776,7 @@ public static class BuildTransitiveTargetsFactory
                 {
                     target.BeforeTargets("CoreCompile");
                     target.DependsOnTargets("EfcptResolveInputs;EfcptUseDirectDacpac;EfcptEnsureDacpacBuilt;EfcptStageInputs;EfcptComputeFingerprint;EfcptGenerateModels;EfcptCopyDataToDataProject");
-                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptMermaidOnly)' != 'true'");
+                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptMermaidOnly)' != 'true' and '$(EfcptCodeFirstMermaid)' != 'true'");
                     target.ItemGroup(null, group =>
                     {
                         group.Include("Compile", "$(EfcptGeneratedDir)Models\\**\\*.g.cs", null, "'$(EfcptSplitOutputs)' == 'true'");
@@ -1025,7 +1025,3 @@ public static class BuildTransitiveTargetsFactory
     public string Name => "EfcptValidateSplitOutputs";
   }
 }
-
-
-
-
