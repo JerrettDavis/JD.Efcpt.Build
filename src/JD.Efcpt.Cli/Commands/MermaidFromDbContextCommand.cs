@@ -5,7 +5,7 @@ using System.Text;
 
 namespace JD.Efcpt.Cli.Commands;
 
-public static class MermaidFromDbContextCommand
+internal static class MermaidFromDbContextCommand
 {
     public static Command Build()
     {
@@ -18,6 +18,10 @@ public static class MermaidFromDbContextCommand
         {
             Description = "DbContext type name when the project contains more than one context."
         };
+        var startupAssemblyOption = new Option<string?>("--startup-assembly")
+        {
+            Description = "Optional startup-project assembly used for design-time host and factory discovery."
+        };
         var outputOption = new Option<string>("--output")
         {
             Description = "Path to the Mermaid Markdown output file.",
@@ -28,18 +32,20 @@ public static class MermaidFromDbContextCommand
         {
             assemblyOption,
             contextOption,
+            startupAssemblyOption,
             outputOption
         };
 
         command.SetAction(parseResult => Execute(
             parseResult.GetValue(assemblyOption)!,
             parseResult.GetValue(contextOption),
+            parseResult.GetValue(startupAssemblyOption),
             parseResult.GetValue(outputOption)!));
 
         return command;
     }
 
-    public static int Execute(string assemblyPath, string? contextName, string outputPath)
+    public static int Execute(string assemblyPath, string? contextName, string? startupAssemblyPath, string outputPath)
     {
         try
         {
@@ -47,19 +53,36 @@ public static class MermaidFromDbContextCommand
             if (!File.Exists(fullAssemblyPath))
                 throw new FileNotFoundException("The project assembly was not found.", fullAssemblyPath);
 
-            var loadContext = new ProjectAssemblyLoadContext(fullAssemblyPath);
+            var fullStartupAssemblyPath = string.IsNullOrWhiteSpace(startupAssemblyPath)
+                ? fullAssemblyPath
+                : Path.GetFullPath(startupAssemblyPath);
+            if (!File.Exists(fullStartupAssemblyPath))
+                throw new FileNotFoundException("The startup-project assembly was not found.", fullStartupAssemblyPath);
+
+            var loadContext = new ProjectAssemblyLoadContext(fullAssemblyPath, fullStartupAssemblyPath);
             try
             {
                 var projectAssembly = loadContext.LoadFromAssemblyPath(fullAssemblyPath);
+                var startupAssembly = string.Equals(fullAssemblyPath, fullStartupAssemblyPath, StringComparison.OrdinalIgnoreCase)
+                    ? projectAssembly
+                    : loadContext.LoadFromAssemblyPath(fullStartupAssemblyPath);
                 var contextType = FindDbContextType(projectAssembly, contextName);
-                using var context = CreateDbContext(projectAssembly, contextType);
-                var markdown = RenderModel(context.GetType().GetProperty("Model")!.GetValue(context)!);
+                var context = CreateDbContext(projectAssembly, startupAssembly, contextType);
+                try
+                {
+                    var actualContext = context is HostOwnedContext ownedContext ? ownedContext.Context : context;
+                    var markdown = RenderModel(actualContext.GetType().GetProperty("Model")!.GetValue(actualContext)!);
 
-                var fullOutputPath = Path.GetFullPath(outputPath);
-                Directory.CreateDirectory(Path.GetDirectoryName(fullOutputPath)!);
-                File.WriteAllText(fullOutputPath, markdown, new UTF8Encoding(false));
-                Console.WriteLine($"Generated Mermaid ER diagram: {fullOutputPath}");
-                return 0;
+                    var fullOutputPath = Path.GetFullPath(outputPath);
+                    Directory.CreateDirectory(Path.GetDirectoryName(fullOutputPath)!);
+                    File.WriteAllText(fullOutputPath, markdown, new UTF8Encoding(false));
+                    Console.WriteLine($"Generated Mermaid ER diagram: {fullOutputPath}");
+                    return 0;
+                }
+                finally
+                {
+                    (context as IDisposable)?.Dispose();
+                }
             }
             finally
             {
@@ -98,10 +121,10 @@ public static class MermaidFromDbContextCommand
         };
     }
 
-    private static object CreateDbContext(Assembly assembly, Type contextType)
+    private static object CreateDbContext(Assembly assembly, Assembly startupAssembly, Type contextType)
     {
         var factoryInterfaceName = "Microsoft.EntityFrameworkCore.Design.IDesignTimeDbContextFactory`1";
-        var factories = GetLoadableTypes(assembly)
+        var factories = GetLoadableTypes(assembly).Concat(GetLoadableTypes(startupAssembly))
             .Where(type => !type.IsAbstract && !type.IsInterface)
             .SelectMany(type => type.GetInterfaces()
                 .Where(contract => contract.IsGenericType &&
@@ -124,7 +147,7 @@ public static class MermaidFromDbContextCommand
                 ?? throw new InvalidOperationException($"Design-time factory '{factories[0].FullName}' returned null.");
         }
 
-        var host = TryCreateHostContext(assembly, contextType);
+        var host = TryCreateHostContext(startupAssembly, contextType);
         if (host is not null)
             return host;
 
@@ -158,15 +181,22 @@ public static class MermaidFromDbContextCommand
             throw new InvalidOperationException($"'{builderFactory.Name}' did not produce a host with a service provider.");
         }
 
-        var scopeFactory = services.GetService(typeof(IServiceScopeFactory)) as IServiceScopeFactory;
+        var scopeFactoryType = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(GetLoadableTypes)
+            .SelectMany(type => type.GetInterfaces().Append(type))
+            .FirstOrDefault(type => type.FullName == "Microsoft.Extensions.DependencyInjection.IServiceScopeFactory");
+        var scopeFactory = scopeFactoryType is null ? null : services.GetService(scopeFactoryType);
         if (scopeFactory is null)
         {
             (host as IDisposable)?.Dispose();
             throw new InvalidOperationException("The application host did not provide an IServiceScopeFactory.");
         }
 
-        var scope = scopeFactory.CreateScope();
-        var context = scope.ServiceProvider.GetService(contextType);
+        var scope = scopeFactory.GetType().GetMethod("CreateScope", Type.EmptyTypes)!.Invoke(scopeFactory, null) as IDisposable
+            ?? throw new InvalidOperationException("The application host could not create a service scope.");
+        var scopedServices = scope.GetType().GetProperty("ServiceProvider")!.GetValue(scope) as IServiceProvider
+            ?? throw new InvalidOperationException("The application host scope did not expose a service provider.");
+        var context = scopedServices.GetService(contextType);
         if (context is null)
         {
             scope.Dispose();
@@ -185,12 +215,11 @@ public static class MermaidFromDbContextCommand
                 InvokeStringExtension("GetTableName", entity) ?? ReadString(entity, "Name"),
                 InvokeStringExtension("GetSchema", entity),
                 InvokeEnumerable(entity, "GetProperties").Select(property => new PropertyShape(
-                    ReadString(property, "Name"),
+                    InvokeStringExtension("GetColumnName", property) ?? ReadString(property, "Name"),
                     ReadType(property, "ClrType"),
                     ReadBool(property, "IsNullable"),
                     property)).ToArray(),
-                InvokeEnumerable(entity, "GetKeys")
-                    .FirstOrDefault(key => ReadBool(key, "IsPrimaryKey")) is { } primaryKey
+                entity.GetType().GetMethod("FindPrimaryKey", Type.EmptyTypes)?.Invoke(entity, null) is { } primaryKey
                     ? InvokeEnumerable(primaryKey, "Properties").Select(property => ReadString(property, "Name")).ToHashSet(StringComparer.Ordinal)
                     : new HashSet<string>(StringComparer.Ordinal)))
             .OrderBy(entity => entity.Schema, StringComparer.Ordinal)
@@ -202,7 +231,7 @@ public static class MermaidFromDbContextCommand
 
         var identifiers = entityTypes.ToDictionary(
             entity => entity.Instance,
-            entity => MermaidIdentifier(entity.Table),
+            entity => MermaidIdentifier(string.IsNullOrWhiteSpace(entity.Schema) ? entity.Table : $"{entity.Schema}_{entity.Table}"),
             ReferenceEqualityComparer.Instance);
         var output = new StringBuilder("# Entity Relationship Diagram\n\n```mermaid\nerDiagram\n");
         foreach (var entity in entityTypes)
@@ -326,7 +355,7 @@ public static class MermaidFromDbContextCommand
 
     private sealed record PropertyShape(string Name, string TypeName, bool Nullable, object Instance);
 
-    private sealed class HostOwnedContext(object context, IServiceScope scope, IDisposable? host) : IDisposable
+    private sealed class HostOwnedContext(object context, IDisposable scope, IDisposable? host) : IDisposable
     {
         public object Context { get; } = context;
 
@@ -338,19 +367,31 @@ public static class MermaidFromDbContextCommand
         }
     }
 
-    private sealed class ProjectAssemblyLoadContext(string mainAssemblyPath) : AssemblyLoadContext(isCollectible: true)
+    private sealed class ProjectAssemblyLoadContext : AssemblyLoadContext
     {
-        private readonly AssemblyDependencyResolver _resolver = new(mainAssemblyPath);
+        private readonly AssemblyDependencyResolver[] _resolvers;
+
+        public ProjectAssemblyLoadContext(params string[] assemblyPaths) : base(isCollectible: true)
+        {
+            _resolvers = assemblyPaths
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select(path => new AssemblyDependencyResolver(path))
+                .ToArray();
+        }
 
         protected override Assembly? Load(AssemblyName assemblyName)
         {
-            var path = _resolver.ResolveAssemblyToPath(assemblyName);
+            var path = _resolvers
+                .Select(resolver => resolver.ResolveAssemblyToPath(assemblyName))
+                .FirstOrDefault(resolvedPath => resolvedPath is not null);
             return path is null ? null : LoadFromAssemblyPath(path);
         }
 
         protected override IntPtr LoadUnmanagedDll(string unmanagedDllName)
         {
-            var path = _resolver.ResolveUnmanagedDllToPath(unmanagedDllName);
+            var path = _resolvers
+                .Select(resolver => resolver.ResolveUnmanagedDllToPath(unmanagedDllName))
+                .FirstOrDefault(resolvedPath => resolvedPath is not null);
             return path is null ? IntPtr.Zero : LoadUnmanagedDllFromPath(path);
         }
     }

@@ -45,6 +45,9 @@
                       ReferenceOutputAssembly="true"
                       PrivateAssets="All"
                       IncludeAssets="Compile" />
+    <ProjectReference Include="../JD.Efcpt.Cli/JD.Efcpt.Cli.csproj"
+                      ReferenceOutputAssembly="false"
+                      PrivateAssets="All" />
   </ItemGroup>
 
   <!--
@@ -113,6 +116,11 @@
       <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net8.0/runtimes/**/*" Pack="true" PackagePath="tasks/net8.0/runtimes" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net8.0/runtimes')" />
       <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net9.0/runtimes/**/*" Pack="true" PackagePath="tasks/net9.0/runtimes" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net9.0/runtimes')" />
       <None Include="../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net10.0/runtimes/**/*" Pack="true" PackagePath="tasks/net10.0/runtimes" Condition="Exists('../JD.Efcpt.Build.Tasks/bin/$(Configuration)/net10.0/runtimes')" />
+
+      <!-- CLI host used by the opt-in code-first DbContext Mermaid target. -->
+      <None Include="../JD.Efcpt.Cli/bin/$(Configuration)/net8.0/*.dll" Pack="true" PackagePath="tools" />
+      <None Include="../JD.Efcpt.Cli/bin/$(Configuration)/net8.0/*.deps.json" Pack="true" PackagePath="tools" />
+      <None Include="../JD.Efcpt.Cli/bin/$(Configuration)/net8.0/*.runtimeconfig.json" Pack="true" PackagePath="tools" />
     </ItemGroup>
   </Target>
 
@@ -123,5 +131,4 @@
   </ItemGroup>
 
 </Project>
-
 

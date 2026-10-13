@@ -85,6 +85,10 @@ public static class BuildTransitivePropsFactory
                     // Mermaid ER diagram (.md) and no DbContext/entity .g.cs files.
                     group.Property<EfcptMermaidOnly>( "false", "'$(EfcptMermaidOnly)'==''");
                     group.Property<EfcptMermaidOutputDir>( "$(EfcptGeneratedDir)Mermaid\\", "'$(EfcptMermaidOutputDir)'==''");
+                    group.Property<EfcptCodeFirstMermaid>( "false", "'$(EfcptCodeFirstMermaid)'==''");
+                    group.Property<EfcptCodeFirstDbContextName>( "", "'$(EfcptCodeFirstDbContextName)'==''");
+                    group.Property<EfcptCodeFirstStartupAssembly>( "", "'$(EfcptCodeFirstStartupAssembly)'==''");
+                    group.Property<EfcptCodeFirstCliPath>( "$(MSBuildThisFileDirectory)..\\tools\\JD.Efcpt.Cli.dll", "'$(EfcptCodeFirstCliPath)'==''");
                     // Extension-facing forced regeneration (#191, prerequisite for VS #182 / VS
                     // Code #183 integrations): when true, bypasses the fingerprint/incremental
                     // cache for one build and always re-runs EfcptGenerateModels. Must stay
@@ -541,6 +545,22 @@ public static class BuildTransitivePropsFactory
   {
     public string Name => "EfcptMermaidOutputDir";
   }
+  public readonly struct EfcptCodeFirstMermaid : IMsBuildPropertyName
+  {
+    public string Name => "EfcptCodeFirstMermaid";
+  }
+  public readonly struct EfcptCodeFirstDbContextName : IMsBuildPropertyName
+  {
+    public string Name => "EfcptCodeFirstDbContextName";
+  }
+  public readonly struct EfcptCodeFirstStartupAssembly : IMsBuildPropertyName
+  {
+    public string Name => "EfcptCodeFirstStartupAssembly";
+  }
+  public readonly struct EfcptCodeFirstCliPath : IMsBuildPropertyName
+  {
+    public string Name => "EfcptCodeFirstCliPath";
+  }
   public readonly struct EfcptForceRegenerate : IMsBuildPropertyName
   {
     public string Name => "EfcptForceRegenerate";
@@ -690,7 +710,6 @@ public static class BuildTransitivePropsFactory
     public string Name => "EfcptUpdateCheckCacheHours";
   }
 }
-
 
 
 

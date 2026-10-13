@@ -4,7 +4,8 @@ using JD.Efcpt.Cli.Commands;
 var rootCommand = new RootCommand("jd-efcpt: CLI companion for JD.Efcpt.Build (init, doctor).")
 {
     InitCommand.Build(),
-    DoctorCommand.Build()
+    DoctorCommand.Build(),
+    MermaidFromDbContextCommand.Build()
 };
 
 var parseResult = rootCommand.Parse(args);

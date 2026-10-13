@@ -176,6 +176,20 @@
     </ComputeFingerprint>
   </Target>
   <Target Name="BeforeEfcptGeneration" DependsOnTargets="EfcptComputeFingerprint" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'" />
+  <Target Name="EfcptGenerateMermaidFromDbContext" DependsOnTargets="_EfcptEnableCodeFirstMermaid;Build;_EfcptGenerateMermaidFromDbContext" />
+  <Target Name="_EfcptEnableCodeFirstMermaid">
+    <PropertyGroup>
+      <EfcptCodeFirstMermaid>true</EfcptCodeFirstMermaid>
+    </PropertyGroup>
+  </Target>
+  <Target Name="_EfcptGenerateMermaidFromDbContext" AfterTargets="Build" Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptCodeFirstMermaid)' == 'true' and '$(DesignTimeBuild)' != 'true' and '$(_EfcptIsSqlProject)' != 'true'">
+    <PropertyGroup>
+      <_EfcptCodeFirstContextArgument Condition="'$(EfcptCodeFirstDbContextName)' != ''">--context &quot;$(EfcptCodeFirstDbContextName)&quot;</_EfcptCodeFirstContextArgument>
+      <_EfcptCodeFirstStartupArgument Condition="'$(EfcptCodeFirstStartupAssembly)' != ''">--startup-assembly &quot;$(EfcptCodeFirstStartupAssembly)&quot;</_EfcptCodeFirstStartupArgument>
+    </PropertyGroup>
+    <MakeDir Directories="$(EfcptMermaidOutputDir)" />
+    <Exec Command="&quot;$(EfcptDotNetExe)&quot; &quot;$(EfcptCodeFirstCliPath)&quot; mermaid-from-dbcontext --assembly &quot;$(TargetPath)&quot; $(_EfcptCodeFirstContextArgument) $(_EfcptCodeFirstStartupArgument) --output &quot;$(EfcptMermaidOutputDir)$(MSBuildProjectName).$(TargetFramework).md&quot;" WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
   <Target Name="_EfcptForceRegenerateInvalidateStamp" BeforeTargets="EfcptGenerateModels;_EfcptGenerateMermaid" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptForceRegenerate)' == 'true'">
     <Message Text="[Efcpt] EfcptForceRegenerate=true - forcing generation (bypassing fingerprint/incremental cache) for this build." Importance="normal" />
     <Delete Condition="Exists('$(EfcptStampFile)')" Files="$(EfcptStampFile)" />

@@ -47,6 +47,11 @@
       docs/user-guide/mermaid-only.md.-->
     <EfcptMermaidOnly Condition="'$(EfcptMermaidOnly)'==''">false</EfcptMermaidOnly>
     <EfcptMermaidOutputDir Condition="'$(EfcptMermaidOutputDir)'==''">$(EfcptGeneratedDir)Mermaid\</EfcptMermaidOutputDir>
+    <EfcptCodeFirstMermaid Condition="'$(EfcptCodeFirstMermaid)'==''">false</EfcptCodeFirstMermaid>
+    <EfcptCodeFirstDbContextName Condition="'$(EfcptCodeFirstDbContextName)'==''"></EfcptCodeFirstDbContextName>
+    <EfcptCodeFirstStartupAssembly Condition="'$(EfcptCodeFirstStartupAssembly)'==''"></EfcptCodeFirstStartupAssembly>
+    <EfcptCodeFirstCliPath Condition="'$(EfcptCodeFirstCliPath)'=='' and Exists('$(MSBuildThisFileDirectory)..\tools\JD.Efcpt.Cli.dll')">$(MSBuildThisFileDirectory)..\tools\JD.Efcpt.Cli.dll</EfcptCodeFirstCliPath>
+    <EfcptCodeFirstCliPath Condition="'$(EfcptCodeFirstCliPath)'==''">$(MSBuildThisFileDirectory)..\..\JD.Efcpt.Cli\bin\$(Configuration)\net8.0\JD.Efcpt.Cli.dll</EfcptCodeFirstCliPath>
     <EfcptForceRegenerate Condition="'$(EfcptForceRegenerate)'==''">false</EfcptForceRegenerate>
     <EfcptLogVerbosity Condition="'$(EfcptLogVerbosity)'==''">minimal</EfcptLogVerbosity>
     <EfcptDumpResolvedInputs Condition="'$(EfcptDumpResolvedInputs)'==''">false</EfcptDumpResolvedInputs>

@@ -495,6 +495,38 @@ public static class BuildTransitiveTargetsFactory
                     target.DependsOnTargets("EfcptComputeFingerprint");
                     target.Condition("'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'");
                 });
+                // Code-first Mermaid generation is a separate post-build path: EF tooling must
+                // load the compiled application and discover its design-time DbContext.
+                t.Target("EfcptGenerateMermaidFromDbContext", target =>
+                {
+                    target.DependsOnTargets("_EfcptEnableCodeFirstMermaid;Build;_EfcptGenerateMermaidFromDbContext");
+                });
+                t.Target("_EfcptEnableCodeFirstMermaid", target =>
+                {
+                    target.PropertyGroup(null, group =>
+                    {
+                        group.Property("EfcptCodeFirstMermaid", "true");
+                    });
+                });
+                t.Target("_EfcptGenerateMermaidFromDbContext", target =>
+                {
+                    target.AfterTargets("Build");
+                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(EfcptCodeFirstMermaid)' == 'true' and '$(DesignTimeBuild)' != 'true' and '$(_EfcptIsSqlProject)' != 'true'");
+                    target.PropertyGroup(null, group =>
+                    {
+                        group.Property("_EfcptCodeFirstContextArgument", "--context &quot;$(EfcptCodeFirstDbContextName)&quot;", "'$(EfcptCodeFirstDbContextName)' != ''");
+                        group.Property("_EfcptCodeFirstStartupArgument", "--startup-assembly &quot;$(EfcptCodeFirstStartupAssembly)&quot;", "'$(EfcptCodeFirstStartupAssembly)' != ''");
+                    });
+                    target.Task("MakeDir", task =>
+                    {
+                        task.Param("Directories", "$(EfcptMermaidOutputDir)");
+                    });
+                    target.Task("Exec", task =>
+                    {
+                        task.Param("Command", "&quot;$(EfcptDotNetExe)&quot; &quot;$(EfcptCodeFirstCliPath)&quot; mermaid-from-dbcontext --assembly &quot;$(TargetPath)&quot; $(_EfcptCodeFirstContextArgument) $(_EfcptCodeFirstStartupArgument) --output &quot;$(EfcptMermaidOutputDir)$(MSBuildProjectName).$(TargetFramework).md&quot;");
+                        task.Param("WorkingDirectory", "$(MSBuildProjectDirectory)");
+                    });
+                });
                 // Force-regenerate stamp invalidation (#191, prerequisite for VS #182 / VS Code
                 // #183 integrations): EfcptGenerateModels has MSBuild Inputs/Outputs incremental
                 // gating (Outputs="$(EfcptStampFile)") in addition to its Condition. Setting the
@@ -993,8 +1025,6 @@ public static class BuildTransitiveTargetsFactory
     public string Name => "EfcptValidateSplitOutputs";
   }
 }
-
-
 
 
 
