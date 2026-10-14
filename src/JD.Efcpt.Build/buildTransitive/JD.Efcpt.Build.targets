@@ -183,9 +183,9 @@
       <EfcptCodeFirstMermaid>true</EfcptCodeFirstMermaid>
     </PropertyGroup>
   </Target>
-  <Target Name="_EfcptGenerateMermaidFromDbContext" AfterTargets="Build" Condition="'$(EfcptCodeFirstMermaid)' == 'true' and '$(DesignTimeBuild)' != 'true' and '$(_EfcptIsSqlProject)' != 'true'">
+  <Target Name="_EfcptGenerateMermaidFromDbContext" AfterTargets="Build" Condition="'$(EfcptCodeFirstMermaid)' == 'true' and '$(DesignTimeBuild)' != 'true' and '$(IsCrossTargetingBuild)' != 'true' and '$(_EfcptIsSqlProject)' != 'true'">
     <MakeDir Directories="$(EfcptMermaidOutputDir)" />
-    <GenerateDbContextMermaid AssemblyPath="$(TargetPath)" CliPath="$(EfcptCodeFirstCliPath)" ContextName="$(EfcptCodeFirstDbContextName)" DotNetExe="$(EfcptDotNetExe)" OutputPath="$(EfcptMermaidOutputDir)$(MSBuildProjectName).$(TargetFramework).md" StartupAssemblyPath="$(EfcptCodeFirstStartupAssembly)" WorkingDirectory="$(MSBuildProjectDirectory)" />
+    <GenerateDbContextMermaid AssemblyPath="$(TargetPath)" CliPath="$(EfcptCodeFirstCliPath)" ContextName="$(EfcptCodeFirstDbContextName)" DotNetExe="$(EfcptDotNetExe)" OutputPath="$([System.IO.Path]::Combine('$(EfcptMermaidOutputDir)', '$(MSBuildProjectName).$(TargetFramework).md'))" StartupAssemblyPath="$(EfcptCodeFirstStartupAssembly)" WorkingDirectory="$(MSBuildProjectDirectory)" />
   </Target>
   <Target Name="_EfcptForceRegenerateInvalidateStamp" BeforeTargets="EfcptGenerateModels;_EfcptGenerateMermaid" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true' and '$(EfcptForceRegenerate)' == 'true'">
     <Message Text="[Efcpt] EfcptForceRegenerate=true - forcing generation (bypassing fingerprint/incremental cache) for this build." Importance="normal" />

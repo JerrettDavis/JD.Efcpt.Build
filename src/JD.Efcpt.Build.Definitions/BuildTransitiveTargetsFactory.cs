@@ -511,7 +511,7 @@ public static class BuildTransitiveTargetsFactory
                 t.Target("_EfcptGenerateMermaidFromDbContext", target =>
                 {
                     target.AfterTargets("Build");
-                    target.Condition("'$(EfcptCodeFirstMermaid)' == 'true' and '$(DesignTimeBuild)' != 'true' and '$(_EfcptIsSqlProject)' != 'true'");
+                    target.Condition("'$(EfcptCodeFirstMermaid)' == 'true' and '$(DesignTimeBuild)' != 'true' and '$(IsCrossTargetingBuild)' != 'true' and '$(_EfcptIsSqlProject)' != 'true'");
                     target.Task("MakeDir", task =>
                     {
                         task.Param("Directories", "$(EfcptMermaidOutputDir)");
@@ -523,7 +523,7 @@ public static class BuildTransitiveTargetsFactory
                         task.Param("AssemblyPath", "$(TargetPath)");
                         task.Param("ContextName", "$(EfcptCodeFirstDbContextName)");
                         task.Param("StartupAssemblyPath", "$(EfcptCodeFirstStartupAssembly)");
-                        task.Param("OutputPath", "$(EfcptMermaidOutputDir)$(MSBuildProjectName).$(TargetFramework).md");
+                        task.Param("OutputPath", "$([System.IO.Path]::Combine('$(EfcptMermaidOutputDir)', '$(MSBuildProjectName).$(TargetFramework).md'))");
                         task.Param("WorkingDirectory", "$(MSBuildProjectDirectory)");
                     });
                 });

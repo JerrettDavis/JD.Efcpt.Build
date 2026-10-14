@@ -29,7 +29,9 @@ public sealed partial class MermaidFromDbContextCommandTests(ITestOutputHelper o
                 var factory = Run(fixture, "StoreContext", "store.md");
                 var hosted = Run(fixture, "HostedContext", "hosted.md");
                 var parameterless = Run(fixture, "ParameterlessContext", "parameterless.md");
-                return new TestResult(fixture, ambiguous, factory, hosted, parameterless);
+                var ambiguousShortName = Run(fixture, "DuplicateContext", "duplicate.md");
+                var abstractContext = Run(fixture, "AbstractContext", "abstract.md");
+                return new TestResult(fixture, ambiguous, factory, hosted, parameterless, ambiguousShortName, abstractContext);
             })
             .Then("multiple contexts require a selector and each design-time creation pattern produces a diagram", result =>
             {
@@ -42,13 +44,22 @@ public sealed partial class MermaidFromDbContextCommandTests(ITestOutputHelper o
                     throw new InvalidOperationException($"Host-based Mermaid generation failed: {result.Hosted.Output}");
                 if (result.Parameterless.ExitCode != 0)
                     throw new InvalidOperationException($"Parameterless context generation failed: {result.Parameterless.Output}");
+                if (result.AmbiguousShortName.ExitCode == 0 ||
+                    !result.AmbiguousShortName.Output.Contains("is ambiguous", StringComparison.Ordinal))
+                    throw new InvalidOperationException($"Expected an ambiguous short-name diagnostic. Output: {result.AmbiguousShortName.Output}");
+                if (result.AbstractContext.ExitCode == 0 ||
+                    !result.AbstractContext.Output.Contains("was not found", StringComparison.Ordinal))
+                    throw new InvalidOperationException($"Expected abstract contexts to be excluded from discovery. Output: {result.AbstractContext.Output}");
 
                 var markdown = File.ReadAllText(Path.Combine(result.Fixture.Folder.Root, "store.md"));
                 foreach (var expected in new[]
                          {
-                             "store_records {",
+                             "CodeFirst_Store {",
+                             "CodeFirst_First_Second_Record {",
+                             "CodeFirst_First_Second_Record_2 {",
                              "string store_title",
-                             "||--|{",
+                             "string store_title_2",
+                             "||--o{",
                              "int StoreId FK"
                          })
                 {
@@ -62,15 +73,24 @@ public sealed partial class MermaidFromDbContextCommandTests(ITestOutputHelper o
                     throw new InvalidOperationException("The host-created context did not produce its Mermaid file.");
                 if (!File.Exists(result.Fixture.BuildDiagramPath))
                     throw new InvalidOperationException("The post-build target did not create a Mermaid diagram.");
+                if (!File.Exists(Path.Combine(result.Fixture.Folder.Root, "Code First", "Generated", "CodeFirst.net10.0-windows.md")))
+                    throw new InvalidOperationException("The post-build target did not create a diagram for the second target framework.");
                 var buildDiagram = File.ReadAllText(result.Fixture.BuildDiagramPath);
-                if (!buildDiagram.Contains("store_records {", StringComparison.Ordinal))
+                if (!buildDiagram.Contains("CodeFirst_Store {", StringComparison.Ordinal))
                     throw new InvalidOperationException($"The post-build target did not export the selected context model: {buildDiagram}");
                 return true;
             })
             .Finally(result => result.Fixture.Dispose())
             .AssertPassed();
 
-    private sealed record TestResult(Fixture Fixture, RunResult Ambiguous, RunResult Factory, RunResult Hosted, RunResult Parameterless);
+    private sealed record TestResult(
+        Fixture Fixture,
+        RunResult Ambiguous,
+        RunResult Factory,
+        RunResult Hosted,
+        RunResult Parameterless,
+        RunResult AmbiguousShortName,
+        RunResult AbstractContext);
 
     private static Fixture BuildFixture()
     {
@@ -82,7 +102,8 @@ public sealed partial class MermaidFromDbContextCommandTests(ITestOutputHelper o
         var projectContent = """
             <Project Sdk="Microsoft.NET.Sdk">
               <PropertyGroup>
-                <TargetFramework>net10.0</TargetFramework>
+                <TargetFrameworks>net10.0;net10.0-windows</TargetFrameworks>
+                <EnableWindowsTargeting>true</EnableWindowsTargeting>
                 <ImplicitUsings>enable</ImplicitUsings>
                 <Nullable>enable</Nullable>
               </PropertyGroup>
@@ -90,7 +111,7 @@ public sealed partial class MermaidFromDbContextCommandTests(ITestOutputHelper o
               <PropertyGroup>
                 <EfcptCodeFirstMermaid>true</EfcptCodeFirstMermaid>
                 <EfcptCodeFirstDbContextName>StoreContext</EfcptCodeFirstDbContextName>
-                <EfcptMermaidOutputDir>$(MSBuildProjectDirectory)/Generated/</EfcptMermaidOutputDir>
+                <EfcptMermaidOutputDir>$(MSBuildProjectDirectory)/Generated</EfcptMermaidOutputDir>
               </PropertyGroup>
               <Import Project="__EFCPT_BUILD_ROOT__/JD.Efcpt.Build.targets" />
               <ItemGroup>
@@ -110,7 +131,11 @@ public sealed partial class MermaidFromDbContextCommandTests(ITestOutputHelper o
 
             namespace CodeFirst;
 
-            public sealed class StoreContext(DbContextOptions<StoreContext> options) : DbContext(options)
+            public abstract class AbstractContext(DbContextOptions options) : DbContext(options)
+            {
+            }
+
+            public sealed class StoreContext(DbContextOptions<StoreContext> options) : AbstractContext(options)
             {
                 protected override void OnModelCreating(ModelBuilder modelBuilder)
                 {
@@ -119,7 +144,8 @@ public sealed partial class MermaidFromDbContextCommandTests(ITestOutputHelper o
                         entity.ToTable("store_records");
                         entity.HasKey(item => item.Id);
                         entity.Property(item => item.Id).HasColumnName("store_id");
-                        entity.Property(item => item.Title).HasColumnName("store_title");
+                        entity.Property(item => item.Title).HasColumnName("store-title");
+                        entity.Property<string>("StoreName").HasColumnName("store_title");
                         entity.HasMany(item => item.Products).WithOne(item => item.Store).HasForeignKey(item => item.StoreId);
                     });
                     modelBuilder.Entity<Product>(entity =>
@@ -127,6 +153,8 @@ public sealed partial class MermaidFromDbContextCommandTests(ITestOutputHelper o
                         entity.ToTable("product_records");
                         entity.HasKey(item => item.Id);
                     });
+                    modelBuilder.Entity<First_Second.Record>().HasKey(item => item.Id);
+                    modelBuilder.Entity<First.Second_Record>().HasKey(item => item.Id);
                 }
 
                 public DbSet<Store> Stores => Set<Store>();
@@ -189,6 +217,36 @@ public sealed partial class MermaidFromDbContextCommandTests(ITestOutputHelper o
             {
                 public int Id { get; set; }
             }
+
+            public static class First
+            {
+                public sealed class DuplicateContext : DbContext
+                {
+                    public DuplicateContext() { }
+                }
+
+                public sealed class Second_Record
+                {
+                    public int Id { get; set; }
+                }
+            }
+
+            public static class Second
+            {
+                public sealed class DuplicateContext : DbContext
+                {
+                    public DuplicateContext() { }
+                }
+            }
+
+            public static class First_Second
+            {
+                public sealed class Record
+                {
+                    public int Id { get; set; }
+                }
+            }
+
             """);
 
         var build = RunProcess("dotnet", projectDir, ["build", projectPath, "--nologo", "-v:q"]);

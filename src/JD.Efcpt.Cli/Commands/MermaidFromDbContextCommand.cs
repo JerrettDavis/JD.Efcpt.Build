@@ -101,17 +101,28 @@ internal static class MermaidFromDbContextCommand
     private static Type FindDbContextType(Assembly assembly, string? contextName)
     {
         var dbContextTypes = GetLoadableTypes(assembly)
-            .Where(IsDbContext)
+            .Where(type => IsDbContext(type) && !type.IsAbstract && !type.ContainsGenericParameters)
             .OrderBy(type => type.FullName, StringComparer.Ordinal)
             .ToArray();
 
         if (!string.IsNullOrWhiteSpace(contextName))
         {
-            var selected = dbContextTypes.FirstOrDefault(type =>
-                string.Equals(type.FullName, contextName, StringComparison.Ordinal) ||
-                string.Equals(type.Name, contextName, StringComparison.Ordinal));
-            return selected ?? throw new InvalidOperationException(
-                $"DbContext '{contextName}' was not found. Discovered contexts: {FormatTypes(dbContextTypes)}");
+            var fullNameMatch = dbContextTypes.FirstOrDefault(type =>
+                string.Equals(type.FullName, contextName, StringComparison.Ordinal));
+            if (fullNameMatch is not null)
+                return fullNameMatch;
+
+            var shortNameMatches = dbContextTypes
+                .Where(type => string.Equals(type.Name, contextName, StringComparison.Ordinal))
+                .ToArray();
+            return shortNameMatches.Length switch
+            {
+                1 => shortNameMatches[0],
+                > 1 => throw new InvalidOperationException(
+                    $"DbContext name '{contextName}' is ambiguous. Use a fully qualified name: {FormatTypes(shortNameMatches)}"),
+                _ => throw new InvalidOperationException(
+                    $"DbContext '{contextName}' was not found. Discovered contexts: {FormatTypes(dbContextTypes)}")
+            };
         }
 
         return dbContextTypes.Length switch
@@ -219,8 +230,7 @@ internal static class MermaidFromDbContextCommand
         var entityTypes = InvokeEnumerable(model, "GetEntityTypes")
             .Select(entity => new EntityShape(
                 entity,
-                InvokeStringExtension("GetTableName", entity) ?? ReadString(entity, "Name"),
-                InvokeStringExtension("GetSchema", entity),
+                ReadString(entity, "Name"),
                 InvokeEnumerable(entity, "GetProperties").Select(property => new PropertyShape(
                         InvokeStringExtension("GetColumnName", property) ?? ReadString(property, "Name"),
                         ReadString(property, "Name"),
@@ -235,25 +245,30 @@ internal static class MermaidFromDbContextCommand
                     .SelectMany(foreignKey => ReadEnumerableProperty(foreignKey, "Properties"))
                     .Select(property => ReadString(property, "Name"))
                     .ToHashSet(StringComparer.Ordinal)))
-            .OrderBy(entity => entity.Schema, StringComparer.Ordinal)
-            .ThenBy(entity => entity.Table, StringComparer.Ordinal)
+            .OrderBy(entity => entity.Name, StringComparer.Ordinal)
             .ToArray();
 
         if (entityTypes.Length == 0)
             throw new InvalidOperationException("The selected DbContext model contains no entity types.");
 
-        var identifiers = entityTypes.ToDictionary(
-            entity => entity.Instance,
-            entity => MermaidIdentifier(string.IsNullOrWhiteSpace(entity.Schema) ? entity.Table : $"{entity.Schema}_{entity.Table}"),
-            ReferenceEqualityComparer.Instance);
+        var entityIdentifiers = CreateUniqueIdentifiers(entityTypes.Select(entity => entity.Name));
+        var identifiers = entityTypes
+            .Select((entity, index) => (entity.Instance, Identifier: entityIdentifiers[index]))
+            .ToDictionary(pair => pair.Instance, pair => pair.Identifier, ReferenceEqualityComparer.Instance);
         var output = new StringBuilder("# Entity Relationship Diagram\n\n```mermaid\nerDiagram\n");
         foreach (var entity in entityTypes)
         {
             output.Append("  ").Append(identifiers[entity.Instance]).AppendLine(" {");
-            foreach (var property in entity.Properties)
+            var properties = entity.Properties
+                .OrderBy(property => property.Name, StringComparer.Ordinal)
+                .ThenBy(property => property.ClrName, StringComparer.Ordinal)
+                .ToArray();
+            var propertyIdentifiers = CreateUniqueIdentifiers(properties.Select(property => property.Name));
+            for (var index = 0; index < properties.Length; index++)
             {
+                var property = properties[index];
                 output.Append("    ").Append(MermaidType(property.TypeName)).Append(' ')
-                    .Append(MermaidIdentifier(property.Name));
+                    .Append(propertyIdentifiers[index]);
                 if (entity.PrimaryKey.Contains(property.ClrName))
                     output.Append(" PK");
                 if (entity.ForeignKeys.Contains(property.ClrName))
@@ -276,8 +291,10 @@ internal static class MermaidFromDbContextCommand
                 continue;
             var required = ReadBool(foreignKey, "IsRequired");
             var unique = ReadBool(foreignKey, "IsUnique");
-            var principalCardinality = unique ? "||" : "||";
-            var dependentCardinality = unique ? (required ? "||" : "|o") : (required ? "|{" : "o{");
+            var principalCardinality = required ? "||" : "o|";
+            var dependentCardinality = unique
+                ? (ReadBool(foreignKey, "IsRequiredDependent") ? "||" : "o|")
+                : "o{";
             var label = string.Join(", ", ReadEnumerableProperty(foreignKey, "Properties").Select(property => ReadString(property, "Name")));
             output.Append("  ").Append(principalId).Append(' ').Append(principalCardinality).Append("--")
                 .Append(dependentCardinality).Append(' ').Append(identifiers[entity.Instance])
@@ -381,6 +398,20 @@ internal static class MermaidFromDbContextCommand
     private static string FormatTypes(IEnumerable<Type> types)
         => string.Join(", ", types.Select(type => type.FullName));
 
+    private static string[] CreateUniqueIdentifiers(IEnumerable<string> values)
+    {
+        var used = new HashSet<string>(StringComparer.Ordinal);
+        return values.Select(value =>
+        {
+            var identifier = MermaidIdentifier(value);
+            var candidate = identifier;
+            var suffix = 2;
+            while (!used.Add(candidate))
+                candidate = $"{identifier}_{suffix++}";
+            return candidate;
+        }).ToArray();
+    }
+
     private static string MermaidIdentifier(string value)
     {
         var identifier = new string(value.Select(character => char.IsLetterOrDigit(character) || character == '_' ? character : '_').ToArray());
@@ -401,8 +432,7 @@ internal static class MermaidFromDbContextCommand
 
     private sealed record EntityShape(
         object Instance,
-        string Table,
-        string? Schema,
+        string Name,
         IReadOnlyList<PropertyShape> Properties,
         HashSet<string> PrimaryKey,
         HashSet<string> ForeignKeys);
