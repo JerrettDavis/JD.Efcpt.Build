@@ -499,7 +499,8 @@ public static class BuildTransitiveTargetsFactory
                 // load the compiled application and discover its design-time DbContext.
                 t.Target("EfcptGenerateMermaidFromDbContext", target =>
                 {
-                    target.DependsOnTargets("_EfcptEnableCodeFirstMermaid;Build;_EfcptGenerateMermaidFromDbContext");
+                    target.DependsOnTargets("_EfcptDispatchCodeFirstMermaid;_EfcptGenerateMermaidFromDbContextForTargetFramework");
+                    target.Condition("'$(EfcptEnabled)' == 'true'");
                 });
                 t.Target("_EfcptEnableCodeFirstMermaid", target =>
                 {
@@ -508,10 +509,30 @@ public static class BuildTransitiveTargetsFactory
                         group.Property("EfcptCodeFirstMermaid", "true");
                     });
                 });
+                t.Target("_EfcptDispatchCodeFirstMermaid", target =>
+                {
+                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(IsCrossTargetingBuild)' == 'true'");
+                    target.ItemGroup(null, group =>
+                    {
+                        group.Include("_EfcptCodeFirstTargetFramework", "$(TargetFrameworks)");
+                    });
+                    target.Task("MSBuild", task =>
+                    {
+                        task.Param("Projects", "$(MSBuildProjectFullPath)");
+                        task.Param("Targets", "_EfcptGenerateMermaidFromDbContextForTargetFramework");
+                        task.Param("Properties", "TargetFramework=%(_EfcptCodeFirstTargetFramework.Identity);EfcptCodeFirstMermaid=true;Configuration=$(Configuration)");
+                        task.Param("BuildInParallel", "true");
+                    });
+                });
+                t.Target("_EfcptGenerateMermaidFromDbContextForTargetFramework", target =>
+                {
+                    target.DependsOnTargets("_EfcptEnableCodeFirstMermaid;Build;_EfcptGenerateMermaidFromDbContext");
+                    target.Condition("'$(IsCrossTargetingBuild)' != 'true'");
+                });
                 t.Target("_EfcptGenerateMermaidFromDbContext", target =>
                 {
                     target.AfterTargets("Build");
-                    target.Condition("'$(EfcptCodeFirstMermaid)' == 'true' and '$(DesignTimeBuild)' != 'true' and '$(IsCrossTargetingBuild)' != 'true' and '$(_EfcptIsSqlProject)' != 'true'");
+                    target.Condition("'$(EfcptEnabled)' == 'true' and '$(EfcptCodeFirstMermaid)' == 'true' and '$(DesignTimeBuild)' != 'true' and '$(IsCrossTargetingBuild)' != 'true' and '$(_EfcptIsSqlProject)' != 'true'");
                     target.Task("MakeDir", task =>
                     {
                         task.Param("Directories", "$(EfcptMermaidOutputDir)");

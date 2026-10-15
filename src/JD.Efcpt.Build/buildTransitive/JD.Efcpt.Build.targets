@@ -177,13 +177,20 @@
     </ComputeFingerprint>
   </Target>
   <Target Name="BeforeEfcptGeneration" DependsOnTargets="EfcptComputeFingerprint" Condition="'$(EfcptEnabled)' == 'true' and '$(_EfcptIsSqlProject)' != 'true'" />
-  <Target Name="EfcptGenerateMermaidFromDbContext" DependsOnTargets="_EfcptEnableCodeFirstMermaid;Build;_EfcptGenerateMermaidFromDbContext" />
+  <Target Name="EfcptGenerateMermaidFromDbContext" DependsOnTargets="_EfcptDispatchCodeFirstMermaid;_EfcptGenerateMermaidFromDbContextForTargetFramework" Condition="'$(EfcptEnabled)' == 'true'" />
   <Target Name="_EfcptEnableCodeFirstMermaid">
     <PropertyGroup>
       <EfcptCodeFirstMermaid>true</EfcptCodeFirstMermaid>
     </PropertyGroup>
   </Target>
-  <Target Name="_EfcptGenerateMermaidFromDbContext" AfterTargets="Build" Condition="'$(EfcptCodeFirstMermaid)' == 'true' and '$(DesignTimeBuild)' != 'true' and '$(IsCrossTargetingBuild)' != 'true' and '$(_EfcptIsSqlProject)' != 'true'">
+  <Target Name="_EfcptDispatchCodeFirstMermaid" Condition="'$(EfcptEnabled)' == 'true' and '$(IsCrossTargetingBuild)' == 'true'">
+    <ItemGroup>
+      <_EfcptCodeFirstTargetFramework Include="$(TargetFrameworks)" />
+    </ItemGroup>
+    <MSBuild BuildInParallel="true" Projects="$(MSBuildProjectFullPath)" Properties="TargetFramework=%(_EfcptCodeFirstTargetFramework.Identity);EfcptCodeFirstMermaid=true;Configuration=$(Configuration)" Targets="_EfcptGenerateMermaidFromDbContextForTargetFramework" />
+  </Target>
+  <Target Name="_EfcptGenerateMermaidFromDbContextForTargetFramework" DependsOnTargets="_EfcptEnableCodeFirstMermaid;Build;_EfcptGenerateMermaidFromDbContext" Condition="'$(IsCrossTargetingBuild)' != 'true'" />
+  <Target Name="_EfcptGenerateMermaidFromDbContext" AfterTargets="Build" Condition="'$(EfcptEnabled)' == 'true' and '$(EfcptCodeFirstMermaid)' == 'true' and '$(DesignTimeBuild)' != 'true' and '$(IsCrossTargetingBuild)' != 'true' and '$(_EfcptIsSqlProject)' != 'true'">
     <MakeDir Directories="$(EfcptMermaidOutputDir)" />
     <GenerateDbContextMermaid AssemblyPath="$(TargetPath)" CliPath="$(EfcptCodeFirstCliPath)" ContextName="$(EfcptCodeFirstDbContextName)" DotNetExe="$(EfcptDotNetExe)" OutputPath="$([System.IO.Path]::Combine('$(EfcptMermaidOutputDir)', '$(MSBuildProjectName).$(TargetFramework).md'))" StartupAssemblyPath="$(EfcptCodeFirstStartupAssembly)" WorkingDirectory="$(MSBuildProjectDirectory)" />
   </Target>

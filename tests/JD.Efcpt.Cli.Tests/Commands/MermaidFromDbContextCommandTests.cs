@@ -12,7 +12,7 @@ namespace JD.Efcpt.Cli.Tests.Commands;
 [Collection(nameof(AssemblySetup))]
 public sealed partial class MermaidFromDbContextCommandTests(ITestOutputHelper output) : TinyBddXunitBase(output)
 {
-    private sealed record Fixture(TestFolder Folder, string AssemblyPath, string BuildDiagramPath) : IDisposable
+    private sealed record Fixture(TestFolder Folder, string ProjectPath, string AssemblyPath, string BuildDiagramPath) : IDisposable
     {
         public void Dispose() => Folder.Dispose();
     }
@@ -22,7 +22,7 @@ public sealed partial class MermaidFromDbContextCommandTests(ITestOutputHelper o
     [Scenario("Design-time factory, application host, and parameterless discovery generate Mermaid without connecting to a database")]
     [Fact]
     public async Task Generates_diagram_from_code_first_model()
-        => await Given("a compiled code-first project with multiple DbContexts", BuildFixture)
+        => await Given("a compiled code-first project with multiple DbContexts", () => BuildFixture())
             .When("testing context selection and design-time creation patterns", fixture =>
             {
                 var ambiguous = Run(fixture, null, "ambiguous.md");
@@ -83,6 +83,35 @@ public sealed partial class MermaidFromDbContextCommandTests(ITestOutputHelper o
             .Finally(result => result.Fixture.Dispose())
             .AssertPassed();
 
+    [Scenario("Standalone code-first Mermaid generation is enabled for each target framework and honors EfcptEnabled")]
+    [Fact]
+    public async Task Standalone_target_dispatches_code_first_generation_to_inner_builds()
+        => await Given("a multi-targeted project with code-first Mermaid unset and EfcptEnabled=false", () => BuildFixture(enableCodeFirstMermaid: false))
+            .When("invoking the standalone target with EfcptEnabled=false and then true", fixture =>
+            {
+                var disabled = RunStandalone(fixture);
+                var disabledGeneratedDiagrams =
+                    File.Exists(Path.Combine(fixture.Folder.Root, "Code First", "Generated", "CodeFirst.net10.0.md")) ||
+                    File.Exists(Path.Combine(fixture.Folder.Root, "Code First", "Generated", "CodeFirst.net10.0-windows.md"));
+                var enabled = RunStandalone(fixture, "EfcptEnabled=true");
+                return new StandaloneResult(fixture, disabled, disabledGeneratedDiagrams, enabled);
+            })
+            .Then("the disabled invocation skips generation and the enabled invocation generates diagrams for each target framework", result =>
+            {
+                if (result.Disabled.ExitCode != 0)
+                    throw new InvalidOperationException($"The disabled standalone target failed: {result.Disabled.Output}");
+                if (result.DisabledGeneratedDiagrams)
+                    throw new InvalidOperationException("The standalone target generated diagrams while EfcptEnabled=false.");
+                if (result.Enabled.ExitCode != 0)
+                    throw new InvalidOperationException($"The enabled standalone target failed: {result.Enabled.Output}");
+                if (!File.Exists(Path.Combine(result.Fixture.Folder.Root, "Code First", "Generated", "CodeFirst.net10.0.md")) ||
+                    !File.Exists(Path.Combine(result.Fixture.Folder.Root, "Code First", "Generated", "CodeFirst.net10.0-windows.md")))
+                    throw new InvalidOperationException($"The standalone target did not generate diagrams for each target framework: {result.Enabled.Output}");
+                return true;
+            })
+            .Finally(result => result.Fixture.Dispose())
+            .AssertPassed();
+
     private sealed record TestResult(
         Fixture Fixture,
         RunResult Ambiguous,
@@ -92,13 +121,22 @@ public sealed partial class MermaidFromDbContextCommandTests(ITestOutputHelper o
         RunResult AmbiguousShortName,
         RunResult AbstractContext);
 
-    private static Fixture BuildFixture()
+    private sealed record StandaloneResult(
+        Fixture Fixture,
+        (int ExitCode, string Output) Disabled,
+        bool DisabledGeneratedDiagrams,
+        (int ExitCode, string Output) Enabled);
+
+    private static Fixture BuildFixture(bool enableCodeFirstMermaid = true)
     {
         var folder = new TestFolder();
         var projectDir = Path.Combine(folder.Root, "Code First");
         Directory.CreateDirectory(projectDir);
         var buildRoot = Path.Combine(FindRepoRoot(), "src", "JD.Efcpt.Build").Replace('\\', '/');
         var projectPath = Path.Combine(projectDir, "CodeFirst.csproj");
+        var codeFirstProperty = enableCodeFirstMermaid
+            ? "    <EfcptCodeFirstMermaid>true</EfcptCodeFirstMermaid>\n"
+            : "    <EfcptEnabled>false</EfcptEnabled>\n";
         var projectContent = """
             <Project Sdk="Microsoft.NET.Sdk">
               <PropertyGroup>
@@ -109,7 +147,7 @@ public sealed partial class MermaidFromDbContextCommandTests(ITestOutputHelper o
               </PropertyGroup>
               <Import Project="__EFCPT_BUILD_ROOT__/JD.Efcpt.Build.props" />
               <PropertyGroup>
-                <EfcptCodeFirstMermaid>true</EfcptCodeFirstMermaid>
+            __CODE_FIRST_PROPERTY__
                 <EfcptCodeFirstDbContextName>StoreContext</EfcptCodeFirstDbContextName>
                 <EfcptMermaidOutputDir>$(MSBuildProjectDirectory)/Generated</EfcptMermaidOutputDir>
               </PropertyGroup>
@@ -121,7 +159,8 @@ public sealed partial class MermaidFromDbContextCommandTests(ITestOutputHelper o
                 <FrameworkReference Include="Microsoft.AspNetCore.App" />
               </ItemGroup>
             </Project>
-            """.Replace("__EFCPT_BUILD_ROOT__", buildRoot, StringComparison.Ordinal);
+            """.Replace("__EFCPT_BUILD_ROOT__", buildRoot, StringComparison.Ordinal)
+                .Replace("__CODE_FIRST_PROPERTY__", codeFirstProperty.TrimEnd('\n'), StringComparison.Ordinal);
         File.WriteAllText(projectPath, projectContent);
         File.WriteAllText(Path.Combine(projectDir, "Contexts.cs"), """
             using Microsoft.EntityFrameworkCore;
@@ -249,16 +288,34 @@ public sealed partial class MermaidFromDbContextCommandTests(ITestOutputHelper o
 
             """);
 
-        var build = RunProcess("dotnet", projectDir, ["build", projectPath, "--nologo", "-v:q"]);
+        var buildConfiguration = BuildConfiguration();
+        var build = RunProcess("dotnet", projectDir, ["build", projectPath, "--configuration", buildConfiguration, "--nologo", "-v:q"]);
         if (build.ExitCode != 0)
         {
             folder.Dispose();
             throw new InvalidOperationException($"Could not build the code-first test fixture: {build.Output}");
         }
 
-        var assemblyPath = Path.Combine(projectDir, "bin", "Debug", "net10.0", "CodeFirst.dll");
+        var assemblyPath = Path.Combine(projectDir, "bin", buildConfiguration, "net10.0", "CodeFirst.dll");
         var buildDiagramPath = Path.Combine(projectDir, "Generated", "CodeFirst.net10.0.md");
-        return new Fixture(folder, assemblyPath, buildDiagramPath);
+        return new Fixture(folder, projectPath, assemblyPath, buildDiagramPath);
+    }
+
+    private static (int ExitCode, string Output) RunStandalone(Fixture fixture, string? property = null)
+    {
+        var arguments = new List<string>
+        {
+            "msbuild",
+            fixture.ProjectPath,
+            "-target:EfcptGenerateMermaidFromDbContext",
+            "--nologo",
+            "-v:q",
+            $"-p:Configuration={BuildConfiguration()}"
+        };
+        if (property is not null)
+            arguments.Add($"-p:{property}");
+
+        return RunProcess("dotnet", Path.GetDirectoryName(fixture.ProjectPath)!, arguments);
     }
 
     private static RunResult Run(Fixture fixture, string? contextName, string outputFile)
