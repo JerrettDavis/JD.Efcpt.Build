@@ -4,20 +4,20 @@
     "net10.0": {
       "Microsoft.Build.Framework": {
         "type": "Direct",
-        "requested": "[18.10.1, )",
-        "resolved": "18.10.1",
-        "contentHash": "nL8dvvg9V/6PJQ92iQheiGnpkgS/VTBV2py8XM0pzxRYc8byHY83IuriHa3YXkLf3KMWnKlkdoTTt0c5irOXZQ==",
+        "requested": "[18.11.0, )",
+        "resolved": "18.11.0",
+        "contentHash": "g0Uuh7+iNZ0rX3tWiG2z8mWP/gOWn967UcbtlTwmal85yYttp5miVljm744u/0LsAuC3gIKIiHWR6Zg1OIDnvA==",
         "dependencies": {
-          "Microsoft.NET.StringTools": "[18.10.1]"
+          "Microsoft.NET.StringTools": "[18.11.0]"
         }
       },
       "Microsoft.Build.Utilities.Core": {
         "type": "Direct",
-        "requested": "[18.10.1, )",
-        "resolved": "18.10.1",
-        "contentHash": "MXBaRIyOuy55jMsv8YMUEsyM9itWaPnfB56qe2St9fYF1YavL4MnCZovKP4Q1AiR1+RgMyLql3OfNbghDM3PbA==",
+        "requested": "[18.11.0, )",
+        "resolved": "18.11.0",
+        "contentHash": "vENSscllKBclnB7A/K++YKSbW3I371v/7buxbvUMVJlnLHvt8DqGQN6CvKrNNHsbjdyevxy/KqTFVqNmdG4pvg==",
         "dependencies": {
-          "Microsoft.Build.Framework": "[18.10.1]"
+          "Microsoft.Build.Framework": "[18.11.0]"
         }
       },
       "Microsoft.CodeAnalysis.PublicApiAnalyzers": {
@@ -47,15 +47,15 @@
       },
       "PatternKit.Core": {
         "type": "Direct",
-        "requested": "[0.147.28, )",
-        "resolved": "0.147.28",
-        "contentHash": "iblKmf7yBRVMYRWAjBPB3C4ILOqk8SApREkUNhtJ1mJEtERbrX13Dd4C4sZECPU3H/gauAaJbKBSXjPtWzsMBw=="
+        "requested": "[0.147.29, )",
+        "resolved": "0.147.29",
+        "contentHash": "03hGXjcX9nhS9AdQREakMupjLa6Bumh8+2R8Xw5gyFZqc4aJar0n34poGcI+15Xw/Rgid3fYVDFJFwazbLZyuQ=="
       },
       "System.IO.Hashing": {
         "type": "Direct",
-        "requested": "[10.0.12, )",
-        "resolved": "10.0.12",
-        "contentHash": "jDix4bBMYnpZdSPcnY+KDV6ik3SRMzpMKby/bZl/XUwIiflwRNAFZ0oOl61R/pSaveIJ8t1gs2BUlrGsPs/bcg=="
+        "requested": "[10.0.13, )",
+        "resolved": "10.0.13",
+        "contentHash": "ZlcywyQ7FJmgOV2nctdfOEPGS0kRK8T2CdOoPr6F4HPYpmjSo6GQfj3yTyOzNO6B+2U84/JKSPkJJMWqLmVsMw=="
       },
       "Azure.Core": {
         "type": "Transitive",
@@ -243,8 +243,8 @@
         "type": "Project",
         "dependencies": {
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "PatternKit.Core": "[0.147.28, )",
-          "System.IO.Hashing": "[10.0.12, )"
+          "PatternKit.Core": "[0.147.29, )",
+          "System.IO.Hashing": "[10.0.13, )"
         }
       },
       "jd.efcpt.build.providers.abstractions": {
@@ -263,9 +263,9 @@
       },
       "Microsoft.NET.StringTools": {
         "type": "CentralTransitive",
-        "requested": "[18.10.1, )",
-        "resolved": "18.10.1",
-        "contentHash": "/fIQMMIRzamkho+Teh7K0G8YaH85s2meFwxjFleBJ1DMnX2RHnRjg4xyWoFbmj260Vl4W2b1r7CuvbMAC+W+nQ=="
+        "requested": "[18.11.0, )",
+        "resolved": "18.11.0",
+        "contentHash": "46dxu08YSKeHQXbBlz/HYfVnSMJnfF1nM4v3tmfHVqIdBaz5eF8GrxWz6nl8mM3fGHZIOcp/Pr8I2zZCdb6CLA=="
       }
     }
   }

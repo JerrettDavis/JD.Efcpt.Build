@@ -1,24 +1,18 @@
 {
   "version": 2,
   "dependencies": {
-    "net10.0": {
-      "Microsoft.CodeAnalysis.PublicApiAnalyzers": {
-        "type": "Direct",
-        "requested": "[5.6.0, )",
-        "resolved": "5.6.0",
-        "contentHash": "W4kJGezNIKLzo0Ak5FAQDFvkMf2U7DtGL4THmHyRSApfKsKt5V+eX/bU0ZLKAt/uf9Bb2o1bi0YDKj/GRB/vYQ=="
-      },
+    "net8.0": {
       "PatternKit.Core": {
         "type": "Direct",
-        "requested": "[0.147.28, )",
-        "resolved": "0.147.28",
-        "contentHash": "iblKmf7yBRVMYRWAjBPB3C4ILOqk8SApREkUNhtJ1mJEtERbrX13Dd4C4sZECPU3H/gauAaJbKBSXjPtWzsMBw=="
+        "requested": "[0.147.29, )",
+        "resolved": "0.147.29",
+        "contentHash": "03hGXjcX9nhS9AdQREakMupjLa6Bumh8+2R8Xw5gyFZqc4aJar0n34poGcI+15Xw/Rgid3fYVDFJFwazbLZyuQ=="
       },
       "System.IO.Hashing": {
         "type": "Direct",
-        "requested": "[10.0.12, )",
-        "resolved": "10.0.12",
-        "contentHash": "jDix4bBMYnpZdSPcnY+KDV6ik3SRMzpMKby/bZl/XUwIiflwRNAFZ0oOl61R/pSaveIJ8t1gs2BUlrGsPs/bcg=="
+        "requested": "[10.0.13, )",
+        "resolved": "10.0.13",
+        "contentHash": "ZlcywyQ7FJmgOV2nctdfOEPGS0kRK8T2CdOoPr6F4HPYpmjSo6GQfj3yTyOzNO6B+2U84/JKSPkJJMWqLmVsMw=="
       },
       "jd.efcpt.build.providers.abstractions": {
         "type": "Project"

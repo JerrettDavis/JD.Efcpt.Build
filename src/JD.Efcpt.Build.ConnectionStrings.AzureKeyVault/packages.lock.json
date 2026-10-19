@@ -150,8 +150,8 @@
         "type": "Project",
         "dependencies": {
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "PatternKit.Core": "[0.147.28, )",
-          "System.IO.Hashing": "[10.0.12, )"
+          "PatternKit.Core": "[0.147.29, )",
+          "System.IO.Hashing": "[10.0.13, )"
         }
       },
       "jd.efcpt.build.providers.abstractions": {
@@ -159,15 +159,15 @@
       },
       "PatternKit.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.147.28, )",
-        "resolved": "0.147.28",
-        "contentHash": "iblKmf7yBRVMYRWAjBPB3C4ILOqk8SApREkUNhtJ1mJEtERbrX13Dd4C4sZECPU3H/gauAaJbKBSXjPtWzsMBw=="
+        "requested": "[0.147.29, )",
+        "resolved": "0.147.29",
+        "contentHash": "03hGXjcX9nhS9AdQREakMupjLa6Bumh8+2R8Xw5gyFZqc4aJar0n34poGcI+15Xw/Rgid3fYVDFJFwazbLZyuQ=="
       },
       "System.IO.Hashing": {
         "type": "CentralTransitive",
-        "requested": "[10.0.12, )",
-        "resolved": "10.0.12",
-        "contentHash": "jDix4bBMYnpZdSPcnY+KDV6ik3SRMzpMKby/bZl/XUwIiflwRNAFZ0oOl61R/pSaveIJ8t1gs2BUlrGsPs/bcg=="
+        "requested": "[10.0.13, )",
+        "resolved": "10.0.13",
+        "contentHash": "ZlcywyQ7FJmgOV2nctdfOEPGS0kRK8T2CdOoPr6F4HPYpmjSo6GQfj3yTyOzNO6B+2U84/JKSPkJJMWqLmVsMw=="
       }
     }
   }
