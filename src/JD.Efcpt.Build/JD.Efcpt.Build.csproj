@@ -119,9 +119,9 @@
   <ItemGroup>
     <PackageReference Include="AWSSDK.Core" VersionOverride="4.0.7.1" />
     <PackageReference Include="Microsoft.Data.SqlClient" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" PrivateAssets="All" />
     <None Include="defaults/**/*.*" Pack="true" PackagePath="build/Defaults" />
   </ItemGroup>
 
 </Project>
-
 

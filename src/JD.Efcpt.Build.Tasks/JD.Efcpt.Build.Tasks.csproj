@@ -75,6 +75,8 @@
   -->
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" VersionOverride="6.1.4" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Condition="'$(TargetFramework)' != 'net472'" PrivateAssets="All" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" VersionOverride="8.0.2" Condition="'$(TargetFramework)' == 'net472'" PrivateAssets="All" />
     <!--
       Snowflake.Data (and its AWSSDK.Core VersionOverride quirk) moved to the
       JD.Efcpt.Build.Snowflake satellite package - see that project's csproj. Do not add it back

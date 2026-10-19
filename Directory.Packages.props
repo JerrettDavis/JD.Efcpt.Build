@@ -33,6 +33,7 @@
     <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
     <PackageVersion Include="System.CommandLine" Version="2.0.13" />
     <PackageVersion Include="System.IO.Hashing" Version="10.0.13" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.21" />
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="9.0.18" />
     <PackageVersion Include="System.Text.Json" Version="10.0.13" />
     <PackageVersion Include="Testcontainers.FirebirdSql" Version="4.16.0" />

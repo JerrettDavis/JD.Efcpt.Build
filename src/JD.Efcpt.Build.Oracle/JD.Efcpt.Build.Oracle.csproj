@@ -54,6 +54,7 @@
 
   <ItemGroup Condition="'$(TargetFramework)' != 'net472'">
     <PackageReference Include="Oracle.ManagedDataAccess.Core" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" PrivateAssets="All" />
   </ItemGroup>
 
   <!-- Polyfills for net472: provides IsExternalInit, init accessors, etc. -->
