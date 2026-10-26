@@ -150,7 +150,7 @@
         "type": "Project",
         "dependencies": {
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "PatternKit.Core": "[0.147.29, )",
+          "PatternKit.Core": "[0.147.31, )",
           "System.IO.Hashing": "[10.0.13, )"
         }
       },
@@ -159,9 +159,9 @@
       },
       "PatternKit.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.147.29, )",
-        "resolved": "0.147.29",
-        "contentHash": "03hGXjcX9nhS9AdQREakMupjLa6Bumh8+2R8Xw5gyFZqc4aJar0n34poGcI+15Xw/Rgid3fYVDFJFwazbLZyuQ=="
+        "requested": "[0.147.31, )",
+        "resolved": "0.147.31",
+        "contentHash": "X0g3hBSTkRBA4kAiL+81v0ot4LTM2mQLC9wgoV32Yj+isT3382nnO525t7DkE8jXHmxhjwrA3CCKw1+yMpQ0MA=="
       },
       "System.IO.Hashing": {
         "type": "CentralTransitive",
