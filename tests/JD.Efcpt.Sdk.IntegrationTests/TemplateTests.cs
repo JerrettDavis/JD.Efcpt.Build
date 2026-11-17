@@ -147,8 +147,13 @@ public partial class TemplateTests : IDisposable
 </configuration>";
         await File.WriteAllTextAsync(Path.Combine(_testDirectory, "nuget.config"), nugetConfig);
 
-        // Create global.json
+        // Match the repository SDK so nested SQL task hosts use the same MSBuild.
         var globalJson = $@"{{
+  ""sdk"": {{
+    ""version"": ""10.0.100"",
+    ""rollForward"": ""latestFeature"",
+    ""allowPrerelease"": false
+  }},
   ""msbuild-sdks"": {{
     ""JD.Efcpt.Sdk"": ""{TemplateTestFixture.SdkVersion}""
   }}
@@ -307,8 +312,13 @@ public partial class TemplateTests : IDisposable
             await File.WriteAllTextAsync(nugetConfigPath, nugetConfig);
         }
 
-        // Create global.json
+        // Match the repository SDK so nested SQL task hosts use the same MSBuild.
         var globalJson = $@"{{
+  ""sdk"": {{
+    ""version"": ""10.0.100"",
+    ""rollForward"": ""latestFeature"",
+    ""allowPrerelease"": false
+  }},
   ""msbuild-sdks"": {{
     ""JD.Efcpt.Sdk"": ""{TemplateTestFixture.SdkVersion}""
   }}
