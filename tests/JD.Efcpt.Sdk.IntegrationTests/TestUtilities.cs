@@ -6,6 +6,16 @@ namespace JD.Efcpt.Sdk.IntegrationTests;
 public static class TestUtilities
 {
     /// <summary>
+    /// Keeps build servers from outliving a command and holding its redirected output open.
+    /// </summary>
+    public static void ConfigureIsolatedBuildProcess(System.Diagnostics.ProcessStartInfo startInfo)
+    {
+        startInfo.Environment["MSBUILDDISABLENODEREUSE"] = "1";
+        startInfo.Environment["DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER"] = "1";
+        startInfo.Environment["UseSharedCompilation"] = "false";
+    }
+
+    /// <summary>
     /// Finds the repository root directory.
     /// </summary>
     public static string FindRepoRoot()
