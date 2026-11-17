@@ -152,6 +152,18 @@ public class TestProjectBuilder : IDisposable
         ProjectDirectory = Path.Combine(_testDirectory, projectName);
         Directory.CreateDirectory(ProjectDirectory);
 
+        // Temporary projects do not inherit the repository's SDK constraint.
+        // MSBuild.Sdk.SqlProj 3.3.0 supports SDKs through .NET 10.
+        File.WriteAllText(Path.Combine(_testDirectory, "global.json"), """
+        {
+          "sdk": {
+            "version": "10.0.100",
+            "rollForward": "latestFeature",
+            "allowPrerelease": false
+          }
+        }
+        """);
+
         // Create nuget.config with shared global packages folder for caching
         var globalPackagesFolder = GetSharedGlobalPackagesFolder();
         var nugetConfig = $@"<?xml version=""1.0"" encoding=""utf-8""?>
