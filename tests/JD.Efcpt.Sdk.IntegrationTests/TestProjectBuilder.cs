@@ -323,6 +323,7 @@ public class TestProjectBuilder : IDisposable
         var outputBuilder = new StringBuilder();
         var errorBuilder = new StringBuilder();
 
+        TestUtilities.ConfigureIsolatedBuildProcess(psi);
         using var process = new Process { StartInfo = psi };
 
         process.OutputDataReceived += (_, e) =>
@@ -430,6 +431,7 @@ public class TestProjectBuilder : IDisposable
         var outputBuilder = new StringBuilder();
         var errorBuilder = new StringBuilder();
 
+        TestUtilities.ConfigureIsolatedBuildProcess(psi);
         using var process = new Process { StartInfo = psi };
 
         process.OutputDataReceived += (_, e) =>
@@ -532,6 +534,7 @@ public class TestProjectBuilder : IDisposable
             CreateNoWindow = true
         };
 
+        TestUtilities.ConfigureIsolatedBuildProcess(psi);
         using var process = new Process { StartInfo = psi };
         process.Start();
         process.WaitForExit(60000); // 60 second timeout for tool restore

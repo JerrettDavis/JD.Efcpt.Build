@@ -100,6 +100,7 @@ public static class AssemblyFixture
             CreateNoWindow = true
         };
 
+        TestUtilities.ConfigureIsolatedBuildProcess(restorePsi);
         using var restoreProcess = Process.Start(restorePsi)!;
         await restoreProcess.WaitForExitAsync();
 
@@ -121,6 +122,7 @@ public static class AssemblyFixture
             CreateNoWindow = true
         };
 
+        TestUtilities.ConfigureIsolatedBuildProcess(buildPsi);
         using var buildProcess = Process.Start(buildPsi)!;
         await buildProcess.WaitForExitAsync();
 
@@ -144,6 +146,7 @@ public static class AssemblyFixture
             CreateNoWindow = true
         };
 
+        TestUtilities.ConfigureIsolatedBuildProcess(psi);
         using var process = Process.Start(psi)!;
         var outputTask = process.StandardOutput.ReadToEndAsync();
         var errorTask = process.StandardError.ReadToEndAsync();

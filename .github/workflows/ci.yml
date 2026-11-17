@@ -22,7 +22,7 @@ env:
 
 jobs:
   pr-checks:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -102,6 +102,7 @@ jobs:
           path: coverage-report
 
       - name: Add coverage summary to PR
+        if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v3.0.5
         with:
           recreate: true
@@ -140,7 +141,7 @@ jobs:
   #     the full suite. See tests tagged `[Trait("Category", "Integration")]`.
   build-test-matrix:
     name: build-test-matrix
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
@@ -180,7 +181,7 @@ jobs:
   # covered by the integration tests in `pr-checks`).
   samples-build:
     name: samples-build
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
