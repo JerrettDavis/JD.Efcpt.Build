@@ -452,6 +452,7 @@ public partial class TemplateTests : IDisposable
             CreateNoWindow = true
         };
 
+        TestUtilities.ConfigureIsolatedBuildProcess(psi);
         using var process = System.Diagnostics.Process.Start(psi)!;
         await process.WaitForExitAsync();
     }
@@ -469,6 +470,7 @@ public partial class TemplateTests : IDisposable
             CreateNoWindow = true
         };
 
+        TestUtilities.ConfigureIsolatedBuildProcess(psi);
         using var process = System.Diagnostics.Process.Start(psi)!;
         var outputTask = process.StandardOutput.ReadToEndAsync();
         var errorTask = process.StandardError.ReadToEndAsync();

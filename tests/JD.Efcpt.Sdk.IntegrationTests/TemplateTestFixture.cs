@@ -125,6 +125,7 @@ public class TemplateTestFixture : IDisposable
                     CreateNoWindow = true
                 };
 
+                TestUtilities.ConfigureIsolatedBuildProcess(psi);
                 using var process = Process.Start(psi)!;
                 var outputTask = process.StandardOutput.ReadToEndAsync();
                 var errorTask = process.StandardError.ReadToEndAsync();
@@ -268,6 +269,7 @@ public class TemplateTestFixture : IDisposable
             CreateNoWindow = true
         };
 
+        TestUtilities.ConfigureIsolatedBuildProcess(psi);
         using var process = Process.Start(psi)!;
         var outputTask = process.StandardOutput.ReadToEndAsync();
         var errorTask = process.StandardError.ReadToEndAsync();
@@ -322,6 +324,7 @@ public class TemplateTestFixture : IDisposable
                 CreateNoWindow = true
             };
 
+            TestUtilities.ConfigureIsolatedBuildProcess(psi);
             using var process = Process.Start(psi);
             if (process != null)
             {
