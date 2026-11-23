@@ -10,9 +10,9 @@
       },
       "JD.MSBuild.Fluent": {
         "type": "Direct",
-        "requested": "[1.3.38, )",
-        "resolved": "1.3.38",
-        "contentHash": "EdJUdS6SeOXpZVLEm9CiPX3UWtmseqnFBnrAGtyJeAIUWSl6hz6WLZm2CKuSvxWOQCpc7z49tvC4l1JeK+tLnA=="
+        "requested": "[1.3.39, )",
+        "resolved": "1.3.39",
+        "contentHash": "QbrI6ewPpobl/RldTk83Bz75IOWCvU13ZoT+TteF2LUadeHx+vliWtwkuBbQ/6+87cHIEyYv3pKrcLcN2Y2CXQ=="
       },
       "Microsoft.Data.SqlClient": {
         "type": "Direct",
@@ -192,7 +192,7 @@
         "type": "Project",
         "dependencies": {
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "PatternKit.Core": "[0.147.36, )",
+          "PatternKit.Core": "[0.147.37, )",
           "System.IO.Hashing": "[11.0.0, )"
         }
       },
@@ -207,7 +207,7 @@
           "Microsoft.Build.Framework": "[18.12.2, )",
           "Microsoft.Build.Utilities.Core": "[18.12.2, )",
           "Microsoft.Data.SqlClient": "[6.1.4, )",
-          "PatternKit.Core": "[0.147.36, )",
+          "PatternKit.Core": "[0.147.37, )",
           "System.IO.Hashing": "[11.0.0, )"
         }
       },
@@ -237,9 +237,9 @@
       },
       "PatternKit.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.147.36, )",
-        "resolved": "0.147.36",
-        "contentHash": "nOwCH8+01mF74wTgf2cPW4/VhCXCh3XJUEKnlXkBk/pfl3gQ4aj2SCpkD5KEOalG8+GozBrvDwA1fzqfGYVd2Q=="
+        "requested": "[0.147.37, )",
+        "resolved": "0.147.37",
+        "contentHash": "nc1Mw0H+3h2eCLb9ypxF912mMrr3s2aA0/V85DUm2VpeQ4EX5OerYVRKvKYaBjVjWngzysMT/2ZBmhdfS2Gxsw=="
       },
       "System.IO.Hashing": {
         "type": "CentralTransitive",
@@ -263,9 +263,9 @@
       },
       "JD.MSBuild.Fluent": {
         "type": "Direct",
-        "requested": "[1.3.38, )",
-        "resolved": "1.3.38",
-        "contentHash": "EdJUdS6SeOXpZVLEm9CiPX3UWtmseqnFBnrAGtyJeAIUWSl6hz6WLZm2CKuSvxWOQCpc7z49tvC4l1JeK+tLnA=="
+        "requested": "[1.3.39, )",
+        "resolved": "1.3.39",
+        "contentHash": "QbrI6ewPpobl/RldTk83Bz75IOWCvU13ZoT+TteF2LUadeHx+vliWtwkuBbQ/6+87cHIEyYv3pKrcLcN2Y2CXQ=="
       },
       "Microsoft.Data.SqlClient": {
         "type": "Direct",
@@ -453,7 +453,7 @@
         "type": "Project",
         "dependencies": {
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "PatternKit.Core": "[0.147.36, )",
+          "PatternKit.Core": "[0.147.37, )",
           "System.IO.Hashing": "[11.0.0, )"
         }
       },
@@ -468,7 +468,7 @@
           "Microsoft.Build.Framework": "[18.12.2, )",
           "Microsoft.Build.Utilities.Core": "[18.12.2, )",
           "Microsoft.Data.SqlClient": "[6.1.4, )",
-          "PatternKit.Core": "[0.147.36, )",
+          "PatternKit.Core": "[0.147.37, )",
           "System.IO.Hashing": "[11.0.0, )"
         }
       },
@@ -498,9 +498,9 @@
       },
       "PatternKit.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.147.36, )",
-        "resolved": "0.147.36",
-        "contentHash": "nOwCH8+01mF74wTgf2cPW4/VhCXCh3XJUEKnlXkBk/pfl3gQ4aj2SCpkD5KEOalG8+GozBrvDwA1fzqfGYVd2Q=="
+        "requested": "[0.147.37, )",
+        "resolved": "0.147.37",
+        "contentHash": "nc1Mw0H+3h2eCLb9ypxF912mMrr3s2aA0/V85DUm2VpeQ4EX5OerYVRKvKYaBjVjWngzysMT/2ZBmhdfS2Gxsw=="
       },
       "System.IO.Hashing": {
         "type": "CentralTransitive",
@@ -528,9 +528,9 @@
       },
       "JD.MSBuild.Fluent": {
         "type": "Direct",
-        "requested": "[1.3.38, )",
-        "resolved": "1.3.38",
-        "contentHash": "EdJUdS6SeOXpZVLEm9CiPX3UWtmseqnFBnrAGtyJeAIUWSl6hz6WLZm2CKuSvxWOQCpc7z49tvC4l1JeK+tLnA=="
+        "requested": "[1.3.39, )",
+        "resolved": "1.3.39",
+        "contentHash": "QbrI6ewPpobl/RldTk83Bz75IOWCvU13ZoT+TteF2LUadeHx+vliWtwkuBbQ/6+87cHIEyYv3pKrcLcN2Y2CXQ=="
       },
       "Microsoft.Data.SqlClient": {
         "type": "Direct",
@@ -715,7 +715,7 @@
         "type": "Project",
         "dependencies": {
           "JD.Efcpt.Build.Providers.Abstractions": "[1.0.0, )",
-          "PatternKit.Core": "[0.147.36, )",
+          "PatternKit.Core": "[0.147.37, )",
           "System.IO.Hashing": "[11.0.0, )"
         }
       },
@@ -730,7 +730,7 @@
           "Microsoft.Build.Framework": "[18.12.2, )",
           "Microsoft.Build.Utilities.Core": "[18.12.2, )",
           "Microsoft.Data.SqlClient": "[6.1.4, )",
-          "PatternKit.Core": "[0.147.36, )",
+          "PatternKit.Core": "[0.147.37, )",
           "System.IO.Hashing": "[11.0.0, )"
         }
       },
@@ -760,9 +760,9 @@
       },
       "PatternKit.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.147.36, )",
-        "resolved": "0.147.36",
-        "contentHash": "nOwCH8+01mF74wTgf2cPW4/VhCXCh3XJUEKnlXkBk/pfl3gQ4aj2SCpkD5KEOalG8+GozBrvDwA1fzqfGYVd2Q=="
+        "requested": "[0.147.37, )",
+        "resolved": "0.147.37",
+        "contentHash": "nc1Mw0H+3h2eCLb9ypxF912mMrr3s2aA0/V85DUm2VpeQ4EX5OerYVRKvKYaBjVjWngzysMT/2ZBmhdfS2Gxsw=="
       },
       "System.IO.Hashing": {
         "type": "CentralTransitive",
@@ -782,4 +782,4 @@
       }
     }
   }
-}
+}
