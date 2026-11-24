@@ -37,7 +37,8 @@
     <PackageVersion Include="System.CommandLine" Version="3.0.0" />
     <PackageVersion Include="System.IO.Hashing" Version="11.0.0" />
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.13" />
-    <PackageVersion Include="System.Text.Json" Version="11.0.0" />
+    <PackageVersion Include="System.Text.Json" Version="10.0.14" Condition="'$(TargetFramework)' == 'net472' or '$(TargetFramework)' == 'net8.0' or '$(TargetFramework)' == 'net9.0'" />
+    <PackageVersion Include="System.Text.Json" Version="11.0.0" Condition="'$(TargetFramework)' != 'net472' and '$(TargetFramework)' != 'net8.0' and '$(TargetFramework)' != 'net9.0'" />
     <PackageVersion Include="Testcontainers.FirebirdSql" Version="4.17.0" />
     <PackageVersion Include="Testcontainers.MsSql" Version="4.17.0" />
     <PackageVersion Include="Testcontainers.MySql" Version="4.17.0" />
