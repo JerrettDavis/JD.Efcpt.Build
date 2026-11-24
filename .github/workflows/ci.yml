@@ -21,6 +21,36 @@ env:
   INCLUDE_SYMBOLS: true
 
 jobs:
+  release-version:
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v5
+        with:
+          versionSpec: '7.0.x'
+
+      - name: Run GitVersion
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v5
+
+      - name: Verify release version outputs
+        env:
+          PACKAGE_VERSION: ${{ steps.gitversion.outputs.semVer }}
+          ASSEMBLY_VERSION: ${{ steps.gitversion.outputs.assemblySemVer }}
+          FILE_VERSION: ${{ steps.gitversion.outputs.assemblySemFileVer }}
+        run: test -n "$PACKAGE_VERSION" && test -n "$ASSEMBLY_VERSION" && test -n "$FILE_VERSION"
+
   pr-checks:
     if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
@@ -306,7 +336,7 @@ jobs:
       - name: Install GitVersion
         uses: gittools/actions/gitversion/setup@v5
         with:
-          versionSpec: '6.x'
+          versionSpec: '7.0.x'
 
       - name: Run GitVersion
         id: gitversion
